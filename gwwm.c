@@ -41,7 +41,7 @@ enum tinywl_cursor_mode {
 struct tinywl_server {
   struct wl_display *wl_display;
   struct wlr_backend *backend;
-  struct wlr_compositor *compositor;
+  struct wlr_compositor        *compositor;
   struct wlr_renderer *renderer;
   struct wlr_allocator *allocator;
   struct wlr_scene *scene;
@@ -161,7 +161,9 @@ static void keyboard_handle_modifiers(struct wl_listener *listener,
 }
 
 static bool handle_keybinding(struct tinywl_server *server, xkb_keysym_t sym) {
-  scm_run_hook(scm_variable_ref(scm_c_lookup("keyboard-pass-hook")), scm_list_1(scm_from_int(sym))  )   ;
+  scm_run_hook(scm_variable_ref(scm_c_lookup("keyboard-pass-hook")),
+               scm_list_2(scm_from_pointer((void *)(server), NULL)
+                          , scm_from_int(sym)));
 
   /*
    * Here we handle compositor keybindings. This is when the compositor is
@@ -174,10 +176,6 @@ static bool handle_keybinding(struct tinywl_server *server, xkb_keysym_t sym) {
   case XKB_KEY_Escape:
     wl_display_terminate(server->wl_display);
     break;
-  case XKB_KEY_d:
-    if (fork() == 0) {
-      execl("/bin/sh", "/bin/sh", "-c", "alacritty", (void *)NULL);
-    }
   case XKB_KEY_F1:
     /* Cycle to the next view */
     if (wl_list_length(&server->views) < 2) {
@@ -721,17 +719,14 @@ static void server_new_xdg_surface(struct wl_listener *listener, void *data) {
 
 static void inner_main(void *closure, int argc, char *argv[]) {
 
-   wlr_log_init(WLR_DEBUG, NULL);
+  wlr_log_init(WLR_DEBUG, NULL);
   char *startup_cmd = NULL;
-
   int c;
   while ((c = getopt(argc, argv, "s:h")) != -1) {
     switch (c) {
     case 's':
       startup_cmd = optarg;
       break;
-    case 'l':
-      scm_c_primitive_load(optarg);
     default:
       printf("Usage: %s [-s startup command]\n", argv[0]);
     }
@@ -884,11 +879,11 @@ static void inner_main(void *closure, int argc, char *argv[]) {
    * loop configuration to listen to libinput events, DRM events, generate
    * frame events at the refresh rate, and so on. */
   wlr_log(WLR_INFO, "Running Wayland compositor on WAYLAND_DISPLAY=%s", socket);
-  //scm_set_current_module(SCM module);
-  scm_c_define_module("gwwm user" ,NULL ,NULL);
   scm_c_primitive_load("lisp/gwwm/init.scm");
+  //  scm_variable_ref(scm_c_lookup("wl_display_run")) ;
   wl_display_run(server.wl_display);
-  scm_run_hook(scm_variable_ref(scm_c_lookup("shutdown-hook")), scm_list_1(scm_from_int(1)));
+  scm_run_hook(scm_variable_ref(scm_c_lookup("shutdown-hook")),
+               scm_list_1(scm_from_int(1)));
   /* Once wl_display_run returns, we shut down the server. */
   wl_display_destroy_clients(server.wl_display);
   wl_display_destroy(server.wl_display);
