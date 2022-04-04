@@ -25,6 +25,7 @@
 #include <wlr/types/wlr_seat.h>
 #include <wlr/types/wlr_xcursor_manager.h>
 #include <wlr/types/wlr_xdg_shell.h>
+#include <wlr/types/wlr_layer_shell_v1.h>
 
 #include <wlr/util/log.h>
 #include <wlr/xwayland.h>
@@ -41,7 +42,7 @@ enum tinywl_cursor_mode {
 struct tinywl_server {
   struct wl_display *wl_display;
   struct wlr_backend *backend;
-  struct wlr_compositor        *compositor;
+  struct wlr_compositor *compositor;
   struct wlr_renderer *renderer;
   struct wlr_allocator *allocator;
   struct wlr_scene *scene;
@@ -161,9 +162,9 @@ static void keyboard_handle_modifiers(struct wl_listener *listener,
 }
 
 static bool handle_keybinding(struct tinywl_server *server, xkb_keysym_t sym) {
-  scm_run_hook(scm_variable_ref(scm_c_lookup("keyboard-pass-hook")),
-               scm_list_2(scm_from_pointer((void *)(server), NULL)
-                          , scm_from_int(sym)));
+  scm_run_hook(
+      scm_variable_ref(scm_c_lookup("keyboard-pass-hook")),
+      scm_list_2(scm_from_pointer((void *)(server), NULL), scm_from_int(sym)));
 
   /*
    * Here we handle compositor keybindings. This is when the compositor is
@@ -352,7 +353,7 @@ static void process_cursor_resize(struct tinywl_server *server, uint32_t time) {
    * Resizing the grabbed view can be a little bit complicated, because we
    * could be resizing from any corner or edge. This not only resizes the view
    * on one or two axes, but can also move the view if you resize from the top
-   * or left edges (or top-left corner).
+   * or left edgzes (or top-left corner).
    *
    * Note that I took some shortcuts here. In a more fleshed-out compositor,
    * you'd wait for the client to prepare a buffer at the new size, then
@@ -545,7 +546,7 @@ static void server_new_output(struct wl_listener *listener, void *data) {
   /* Configures the output created by the backend to use our allocator
    * and our renderer. Must be done once, before commiting the output */
   wlr_output_init_render(wlr_output, server->allocator, server->renderer);
-
+  // struct wlr_renderer *renderer= wlr_backend_get_r
   /* Some backends don't have modes. DRM+KMS does, and we need to set a mode
    * before we can use the output. The mode is a tuple of (width, height,
    * refresh rate), and each monitor supports only a specific set of modes. We
@@ -869,6 +870,7 @@ static void inner_main(void *closure, int argc, char *argv[]) {
   wl_display_init_shm(server.wl_display);
   wlr_gamma_control_manager_v1_create(server.wl_display);
   wlr_idle_create(server.wl_display);
+  wlr_layer_shell_v1_create(server.wl_display);
   if (startup_cmd) {
     if (fork() == 0) {
       execl("/bin/sh", "/bin/sh", "-c", startup_cmd, (void *)NULL);
@@ -880,7 +882,6 @@ static void inner_main(void *closure, int argc, char *argv[]) {
    * frame events at the refresh rate, and so on. */
   wlr_log(WLR_INFO, "Running Wayland compositor on WAYLAND_DISPLAY=%s", socket);
   scm_c_primitive_load("lisp/gwwm/init.scm");
-  //  scm_variable_ref(scm_c_lookup("wl_display_run")) ;
   wl_display_run(server.wl_display);
   scm_run_hook(scm_variable_ref(scm_c_lookup("shutdown-hook")),
                scm_list_1(scm_from_int(1)));

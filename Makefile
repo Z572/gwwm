@@ -15,15 +15,18 @@ xdg-shell-protocol.h:
 	$(WAYLAND_SCANNER) server-header \
 		$(WAYLAND_PROTOCOLS)/stable/xdg-shell/xdg-shell.xml $@
 
-gwwm: gwwm.c xdg-shell-protocol.h
+wlr-layer-shell-unstable-v1-protocol.h:
+	$(WAYLAND_SCANNER) server-header \
+		./protocol/wlr-layer-shell-unstable-v1.xml  $@
+
+gwwm: gwwm.c xdg-shell-protocol.h wlr-layer-shell-unstable-v1-protocol.h
 	$(CC) $(CFLAGS) $(LIBS)\
 		-g -Werror -I. \
 		-DWLR_USE_UNSTABLE \
 		-o $@ $< \
 
-
 clean:
-	rm -f gwwm xdg-shell-protocol.h xdg-shell-protocol.c
+	rm -f gwwm xdg-shell-protocol.h xdg-shell-protocol.c wlr-layer-shell-unstable-v1-protocol.h wlr-layer-shell-unstable-v1-protocol.c
 
 .DEFAULT_GOAL=gwwm
 .PHONY: clean
