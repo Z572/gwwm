@@ -18,6 +18,7 @@
 #include <wlr/types/wlr_idle.h>
 #include <wlr/types/wlr_input_device.h>
 #include <wlr/types/wlr_keyboard.h>
+#include <wlr/types/wlr_layer_shell_v1.h>
 #include <wlr/types/wlr_output.h>
 #include <wlr/types/wlr_output_layout.h>
 #include <wlr/types/wlr_pointer.h>
@@ -25,7 +26,6 @@
 #include <wlr/types/wlr_seat.h>
 #include <wlr/types/wlr_xcursor_manager.h>
 #include <wlr/types/wlr_xdg_shell.h>
-#include <wlr/types/wlr_layer_shell_v1.h>
 
 #include <wlr/util/log.h>
 #include <wlr/xwayland.h>
@@ -103,7 +103,11 @@ struct tinywl_keyboard {
   struct wl_listener modifiers;
   struct wl_listener key;
 };
-
+/* static SCM get_tinywl_server_wl_display(SCM *server) { */
+/*   struct tinywl_server *server2 = (scm_to_pointer(*server)); */
+/*   struct wl_display *display = server2->wl_display; */
+/*   return scm_from_pointer(display, NULL); */
+/* } */
 static void focus_view(struct tinywl_view *view, struct wlr_surface *surface) {
   /* Note: this function only deals with keyboard focus. */
   if (view == NULL) {
@@ -161,44 +165,12 @@ static void keyboard_handle_modifiers(struct wl_listener *listener,
                                      &keyboard->device->keyboard->modifiers);
 }
 
-static bool handle_keybinding(struct tinywl_server *server, xkb_keysym_t sym) {
-  scm_run_hook(
-      scm_variable_ref(scm_c_lookup("keyboard-pass-hook")),
-      scm_list_2(scm_from_pointer((void *)(server), NULL), scm_from_int(sym)));
-
-  /*
-   * Here we handle compositor keybindings. This is when the compositor is
-   * processing keys, rather than passing them on to the client for its own
-   * processing.
-   *
-   * This function assumes Alt is held down.
-   */
-  switch (sym) {
-  case XKB_KEY_Escape:
-    wl_display_terminate(server->wl_display);
-    break;
-  case XKB_KEY_F1:
-    /* Cycle to the next view */
-    if (wl_list_length(&server->views) < 2) {
-      break;
-    }
-    struct tinywl_view *next_view =
-        wl_container_of(server->views.prev, next_view, link);
-    focus_view(next_view, next_view->xdg_surface->surface);
-    break;
-  default:
-    return false;
-  }
-  return true;
-}
-
 static void keyboard_handle_key(struct wl_listener *listener, void *data) {
   /* This event is raised when a key is pressed or released. */
   struct tinywl_keyboard *keyboard = wl_container_of(listener, keyboard, key);
   struct tinywl_server *server = keyboard->server;
   struct wlr_event_keyboard_key *event = data;
   struct wlr_seat *seat = server->seat;
-
   /* Translate libinput keycode -> xkbcommon */
   uint32_t keycode = event->keycode + 8;
   /* Get a list of keysyms based on the keymap for this keyboard */
@@ -212,8 +184,12 @@ static void keyboard_handle_key(struct wl_listener *listener, void *data) {
       event->state == WL_KEYBOARD_KEY_STATE_PRESSED) {
     /* If alt is held down and this button was _pressed_, we attempt to
      * process it as a compositor keybinding. */
+
     for (int i = 0; i < nsyms; i++) {
-      handled = handle_keybinding(server, syms[i]);
+      handled = scm_to_bool(scm_call_2(scm_c_public_ref("gwwm init", "handle-keybinding"),
+          /* scm_variable_ref(scm_c_lookup("handle-keybinding")), */
+          scm_from_pointer(server->wl_display, NULL),
+          scm_from_int(syms[i]))); // handle_keybinding(server, syms[i]);
     }
   }
 
@@ -313,6 +289,7 @@ static void seat_request_set_selection(struct wl_listener *listener,
    * usually when the user copies something. wlroots allows compositors to
    * ignore such requests if they so choose, but in tinywl we always honor
    */
+  wlr_log(WLR_INFO, "set_selection");
   struct tinywl_server *server =
       wl_container_of(listener, server, request_set_selection);
   struct wlr_seat_request_set_selection_event *event = data;
@@ -738,7 +715,9 @@ static void inner_main(void *closure, int argc, char *argv[]) {
   struct tinywl_server server;
   /* The Wayland display is managed by libwayland. It handles accepting
    * clients from the Unix socket, manging Wayland globals, and so on. */
-  server.wl_display = wl_display_create();
+  scm_c_primitive_load("lisp/gwwm/init.scm");
+  server.wl_display = (struct wl_display *)(scm_to_pointer(scm_call_1(scm_c_public_ref("wayland display" ,"unwrap-wl-display"),
+                                                scm_c_public_ref("gwwm init", "gwwm-wl-display")))); // wl_display_create();
   /* The backend is a wlroots feature which abstracts the underlying input and
    * output hardware. The autocreate option will choose the most suitable
    * backend based on the current environment, such as opening an X11 window
@@ -852,6 +831,7 @@ static void inner_main(void *closure, int argc, char *argv[]) {
                 &server.request_set_selection);
 
   /* Add a Unix socket to the Wayland display. */
+  //  scm_c_primitive_load("lisp/gwwm/init.scm");
   const char *socket = wl_display_add_socket_auto(server.wl_display);
   if (!socket) {
     wlr_backend_destroy(server.backend);
@@ -866,24 +846,28 @@ static void inner_main(void *closure, int argc, char *argv[]) {
 
   /* Set the WAYLAND_DISPLAY environment variable to our socket and run the
    * startup command if requested. */
+
   setenv("WAYLAND_DISPLAY", socket, true);
   wl_display_init_shm(server.wl_display);
   wlr_gamma_control_manager_v1_create(server.wl_display);
   wlr_idle_create(server.wl_display);
   wlr_layer_shell_v1_create(server.wl_display);
-  if (startup_cmd) {
-    if (fork() == 0) {
-      execl("/bin/sh", "/bin/sh", "-c", startup_cmd, (void *)NULL);
-    }
-  }
+
   /* Run the Wayland event loop. This does not return until you exit the
    * compositor. Starting the backend rigged up all of the necessary event
    * loop configuration to listen to libinput events, DRM events, generate
    * frame events at the refresh rate, and so on. */
   wlr_log(WLR_INFO, "Running Wayland compositor on WAYLAND_DISPLAY=%s", socket);
-  scm_c_primitive_load("lisp/gwwm/init.scm");
+  // scm_set_current_module (scm_c_resolve_module ("gwwm"));
+
+    if (startup_cmd) {
+      if (fork() == 0) {
+        execl("/bin/sh", "/bin/sh", "-c", startup_cmd, (void *)NULL);
+    }
+  }
   wl_display_run(server.wl_display);
-  scm_run_hook(scm_variable_ref(scm_c_lookup("shutdown-hook")),
+  scm_run_hook(scm_c_public_ref("gwwm init", "shutdown-hook"),
+               /* scm_variable_ref(scm_c_lookup("shutdown-hook")), */
                scm_list_1(scm_from_int(1)));
   /* Once wl_display_run returns, we shut down the server. */
   wl_display_destroy_clients(server.wl_display);
