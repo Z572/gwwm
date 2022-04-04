@@ -186,7 +186,8 @@ static void keyboard_handle_key(struct wl_listener *listener, void *data) {
      * process it as a compositor keybinding. */
 
     for (int i = 0; i < nsyms; i++) {
-      handled = scm_to_bool(scm_call_2(scm_c_public_ref("gwwm init", "handle-keybinding"),
+      handled = scm_to_bool(scm_call_2(
+          scm_c_public_ref("gwwm init", "handle-keybinding"),
           /* scm_variable_ref(scm_c_lookup("handle-keybinding")), */
           scm_from_pointer(server->wl_display, NULL),
           scm_from_int(syms[i]))); // handle_keybinding(server, syms[i]);
@@ -716,8 +717,10 @@ static void inner_main(void *closure, int argc, char *argv[]) {
   /* The Wayland display is managed by libwayland. It handles accepting
    * clients from the Unix socket, manging Wayland globals, and so on. */
   scm_c_primitive_load("lisp/gwwm/init.scm");
-  server.wl_display = (struct wl_display *)(scm_to_pointer(scm_call_1(scm_c_public_ref("wayland display" ,"unwrap-wl-display"),
-                                                scm_c_public_ref("gwwm init", "gwwm-wl-display")))); // wl_display_create();
+  server.wl_display = (struct wl_display *)(scm_to_pointer(
+      scm_call_1(scm_c_public_ref("wayland display", "unwrap-wl-display"),
+                 scm_c_public_ref("gwwm init",
+                                  "gwwm-wl-display")))); // wl_display_create();
   /* The backend is a wlroots feature which abstracts the underlying input and
    * output hardware. The autocreate option will choose the most suitable
    * backend based on the current environment, such as opening an X11 window
@@ -832,7 +835,9 @@ static void inner_main(void *closure, int argc, char *argv[]) {
 
   /* Add a Unix socket to the Wayland display. */
   //  scm_c_primitive_load("lisp/gwwm/init.scm");
-  const char *socket = wl_display_add_socket_auto(server.wl_display);
+  const char *socket = scm_to_utf8_string(scm_call_0(scm_c_public_ref(
+      "gwwm init",
+      "gwwm-init-socket"))); // wl_display_add_socket_auto(server.wl_display);
   if (!socket) {
     wlr_backend_destroy(server.backend);
   }
@@ -847,8 +852,7 @@ static void inner_main(void *closure, int argc, char *argv[]) {
   /* Set the WAYLAND_DISPLAY environment variable to our socket and run the
    * startup command if requested. */
 
-  setenv("WAYLAND_DISPLAY", socket, true);
-  wl_display_init_shm(server.wl_display);
+  // wl_display_init_shm(server.wl_display);
   wlr_gamma_control_manager_v1_create(server.wl_display);
   wlr_idle_create(server.wl_display);
   wlr_layer_shell_v1_create(server.wl_display);
@@ -860,9 +864,9 @@ static void inner_main(void *closure, int argc, char *argv[]) {
   wlr_log(WLR_INFO, "Running Wayland compositor on WAYLAND_DISPLAY=%s", socket);
   // scm_set_current_module (scm_c_resolve_module ("gwwm"));
 
-    if (startup_cmd) {
-      if (fork() == 0) {
-        execl("/bin/sh", "/bin/sh", "-c", startup_cmd, (void *)NULL);
+  if (startup_cmd) {
+    if (fork() == 0) {
+      execl("/bin/sh", "/bin/sh", "-c", startup_cmd, (void *)NULL);
     }
   }
   wl_display_run(server.wl_display);
