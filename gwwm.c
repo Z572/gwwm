@@ -730,7 +730,10 @@ static void inner_main(void *closure, int argc, char *argv[]) {
    * output hardware. The autocreate option will choose the most suitable
    * backend based on the current environment, such as opening an X11 window
    * if an X11 server is running. */
-  server.backend = wlr_backend_autocreate(server.wl_display);
+  server.backend = (struct wlr_backend *)(scm_to_pointer(
+      scm_call_1(scm_c_public_ref("wlroots backend", "unwrap-wlr-backend"),
+                 scm_c_public_ref("gwwm init",
+                                  "gwwm-server-backend")))); //wlr_backend_autocreate(server.wl_display);
 
   /* Autocreates a renderer, either Pixman, GLES2 or Vulkan for us. The user
    * can also specify a renderer using the WLR_RENDERER env var.

@@ -8,9 +8,11 @@
   #:use-module (ice-9 getopt-long)
   #:use-module (system foreign)
   #:use-module (srfi srfi-1)
+  #:use-module (wlroots backend)
   #:export (handle-keybinding
             shutdown-hook
             gwwm-wl-display
+            gwwm-server-backend
             gwwm-init-socket
             gwwm-run!))
 ;;(define-values (program-name arguments) (car+cdr (program-arguments)))
@@ -42,6 +44,7 @@ gwwm [options]
 
 (define gwwm-wl-display (wl-display-create))
 (wl-display-init-shm gwwm-wl-display)
+(define gwwm-server-backend (wlr-backend-autocreate gwwm-wl-display))
 (define (gwwm-init-socket)
   (and=> (wl-display-add-socket-auto gwwm-wl-display)
          (lambda (a)
