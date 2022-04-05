@@ -49,8 +49,11 @@ gwwm [options]
 
 (define gwwm-wl-display (wl-display-create))
 (wl-display-init-shm gwwm-wl-display)
+(pk 'a)
 (define gwwm-server-backend (wlr-backend-autocreate gwwm-wl-display))
+(pk gwwm-server-backend)
 (define-public gwwm-server-renderer (wlr-renderer-autocreate gwwm-server-backend))
+(pk 'c)
 (define-public gwwm-server-allocator (wlr-allocator-autocreate gwwm-server-backend gwwm-server-renderer))
 (define-public gwwm-server-compositor (wlr-compositor-create gwwm-wl-display gwwm-server-renderer))
 (define-public gwwm-server-data-device-manager (wlr-data-device-manager-create gwwm-wl-display))
@@ -69,6 +72,7 @@ gwwm [options]
   )
 
 (define (gwwm-run!)
+  (pk 'run!)
   (unless (string-null? startup-cmd)
     (fork+exec startup-cmd))
 
