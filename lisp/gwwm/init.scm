@@ -13,6 +13,7 @@
   #:use-module (wlroots render allocator)
   #:use-module (wlroots types compositor)
   #:use-module (wlroots types data-device)
+  #:use-module (wlroots types output-layout)
   #:export (handle-keybinding
             shutdown-hook
             gwwm-wl-display
@@ -55,6 +56,7 @@ gwwm [options]
 (define-public gwwm-server-data-device-manager (wlr-data-device-manager-create gwwm-wl-display))
 
 (wlr-renderer-init-wl-display gwwm-server-renderer gwwm-wl-display)
+(define-public gwwm-server-output-layout (wlr-output-layout-create))
 (define (gwwm-init-socket)
   (let ((socket (wl-display-add-socket-auto gwwm-wl-display)))
     (if socket

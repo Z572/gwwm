@@ -175,6 +175,13 @@ struct wlr_allocator *server_allocator (void) {
                  scm_c_public_ref("gwwm init",
                                   "gwwm-server-allocator"))));
 }
+static
+struct wlr_output_layout *server_output_layout (void) {
+  return (struct wlr_output_layout *)(scm_to_pointer(
+      scm_call_1(scm_c_public_ref("wlroots types output-layout", "unwrap-wlr-output-layout"),
+                 scm_c_public_ref("gwwm init",
+                                  "gwwm-server-output-layout"))));
+}
 
 static void keyboard_handle_modifiers(struct wl_listener *listener,
                                       void *data) {
@@ -585,7 +592,7 @@ static void server_new_output(struct wl_listener *listener, void *data) {
    * display, which Wayland clients can see to find out information about the
    * output (such as DPI, scale factor, manufacturer, etc).
    */
-  wlr_output_layout_add_auto(server->output_layout, wlr_output);
+  wlr_output_layout_add_auto(server_output_layout(), wlr_output);
 }
 
 static void xdg_toplevel_map(struct wl_listener *listener, void *data) {
@@ -783,7 +790,7 @@ static void inner_main(void *closure, int argc, char *argv[]) {
 
   /* Creates an output layout, which a wlroots utility for working with an
    * arrangement of screens in a physical layout. */
-  server.output_layout = wlr_output_layout_create();
+  /* server.output_layout = wlr_output_layout_create(); */
 
   /* Configure a listener to be notified when new outputs are available on the
    * backend. */
@@ -798,7 +805,7 @@ static void inner_main(void *closure, int argc, char *argv[]) {
    * necessary.
    */
   server.scene = wlr_scene_create();
-  wlr_scene_attach_output_layout(server.scene, server.output_layout);
+  wlr_scene_attach_output_layout(server.scene, server_output_layout());
 
   /* Set up the xdg-shell. The xdg-shell is a Wayland protocol which is used
    * for application windows. For more detail on shells, refer to my article:
@@ -815,7 +822,7 @@ static void inner_main(void *closure, int argc, char *argv[]) {
    * image shown on screen.
    */
   server.cursor = wlr_cursor_create();
-  wlr_cursor_attach_output_layout(server.cursor, server.output_layout);
+  wlr_cursor_attach_output_layout(server.cursor, server_output_layout());
 
   /* Creates an xcursor manager, another wlroots utility which loads up
    * Xcursor themes to source cursor images from and makes sure that cursor
