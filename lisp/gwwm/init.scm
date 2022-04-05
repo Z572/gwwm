@@ -12,6 +12,7 @@
   #:use-module (wlroots render renderer)
   #:use-module (wlroots render allocator)
   #:use-module (wlroots types compositor)
+  #:use-module (wlroots types data-device)
   #:export (handle-keybinding
             shutdown-hook
             gwwm-wl-display
@@ -51,6 +52,7 @@ gwwm [options]
 (define-public gwwm-server-renderer (wlr-renderer-autocreate gwwm-server-backend))
 (define-public gwwm-server-allocator (wlr-allocator-autocreate gwwm-server-backend gwwm-server-renderer))
 (define-public gwwm-server-compositor (wlr-compositor-create gwwm-wl-display gwwm-server-renderer))
+(define-public gwwm-server-data-device-manager (wlr-data-device-manager-create gwwm-wl-display))
 
 (wlr-renderer-init-wl-display gwwm-server-renderer gwwm-wl-display)
 (define (gwwm-init-socket)
