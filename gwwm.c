@@ -59,6 +59,9 @@ struct tinywl_server {
   struct wl_listener cursor_axis;
   struct wl_listener cursor_frame;
 
+  struct wlr_layer_shell_v1 *layer_shell;
+  struct wl_listener request_new_surface;
+
   struct wlr_seat *seat;
   struct wl_listener new_input;
   struct wl_listener request_cursor;
@@ -637,7 +640,21 @@ static void xdg_toplevel_request_move(struct wl_listener *listener,
   struct tinywl_view *view = wl_container_of(listener, view, request_move);
   begin_interactive(view, TINYWL_CURSOR_MOVE, 0);
 }
+static void layer_shell_request_new_surface(struct wl_listener *listener,
+                                            void *data){
+  wlr_log(WLR_INFO, "layer_shell_request_new_surface" );
+    struct tinywl_server *server =
+      wl_container_of(listener, server, request_new_surface);
+    struct wlr_layer_shell_v1 *layer_shell=data;
+    //layer_shell->events.new_surface
+    /* /\* if (layer_shell->) *\/ */
+    /* struct tinywl_view *view = calloc(1, sizeof(struct tinywl_view)); */
+    /* view->server=server; */
+    /* view->xdg_surface= layer_shell; */
+    /* view->scene_node= wlr_scene_xdg_surface_create(&view->server->scene->node, view->xdg_surface); */
+    /* view->scene_node->data=view; */
 
+}
 static void xdg_toplevel_request_resize(struct wl_listener *listener,
                                         void *data) {
   /* This event is raised when a client would like to begin an interactive
@@ -699,24 +716,12 @@ static void server_new_xdg_surface(struct wl_listener *listener, void *data) {
 static void inner_main(void *closure, int argc, char *argv[]) {
 
   wlr_log_init(WLR_DEBUG, NULL);
-  char *startup_cmd = NULL;
-  int c;
-  while ((c = getopt(argc, argv, "s:h")) != -1) {
-    switch (c) {
-    case 's':
-      startup_cmd = optarg;
-      break;
-    default:
-      printf("Usage: %s [-s startup command]\n", argv[0]);
-    }
-  }
-  if (optind < argc) {
-    printf("Usage: %s [-s startup command]\n", argv[0]);
-  }
+  scm_c_primitive_load("lisp/gwwm/init.scm");
+
   struct tinywl_server server;
   /* The Wayland display is managed by libwayland. It handles accepting
    * clients from the Unix socket, manging Wayland globals, and so on. */
-  scm_c_primitive_load("lisp/gwwm/init.scm");
+
   server.wl_display = (struct wl_display *)(scm_to_pointer(
       scm_call_1(scm_c_public_ref("wayland display", "unwrap-wl-display"),
                  scm_c_public_ref("gwwm init",
@@ -855,7 +860,10 @@ static void inner_main(void *closure, int argc, char *argv[]) {
   // wl_display_init_shm(server.wl_display);
   wlr_gamma_control_manager_v1_create(server.wl_display);
   wlr_idle_create(server.wl_display);
-  wlr_layer_shell_v1_create(server.wl_display);
+  server.layer_shell=wlr_layer_shell_v1_create(server.wl_display);
+  server.request_new_surface.notify=layer_shell_request_new_surface;
+  wl_signal_add(&server.layer_shell->events.new_surface,
+                &server.request_new_surface);
 
   /* Run the Wayland event loop. This does not return until you exit the
    * compositor. Starting the backend rigged up all of the necessary event
@@ -864,15 +872,17 @@ static void inner_main(void *closure, int argc, char *argv[]) {
   wlr_log(WLR_INFO, "Running Wayland compositor on WAYLAND_DISPLAY=%s", socket);
   // scm_set_current_module (scm_c_resolve_module ("gwwm"));
 
-  if (startup_cmd) {
-    if (fork() == 0) {
-      execl("/bin/sh", "/bin/sh", "-c", startup_cmd, (void *)NULL);
-    }
-  }
-  wl_display_run(server.wl_display);
-  scm_run_hook(scm_c_public_ref("gwwm init", "shutdown-hook"),
-               /* scm_variable_ref(scm_c_lookup("shutdown-hook")), */
-               scm_list_1(scm_from_int(1)));
+  /* if (scm_to_utf8_string(scm_c_public_ref("gwwm init", "start-cmd")) */
+/* /\* startup_cmd *\/) { */
+/*     if (fork() == 0) { */
+/*       execl("/bin/sh", "/bin/sh", "-c", startup_cmd, (void *)NULL); */
+/*     } */
+/*   } */
+  scm_call_0(scm_c_public_ref("gwwm init", "gwwm-run!"));
+  /* wl_display_run(server.wl_display); */
+  /* scm_run_hook(scm_c_public_ref("gwwm init", "shutdown-hook"), */
+  /*              /\* scm_variable_ref(scm_c_lookup("shutdown-hook")), *\/ */
+  /*              scm_list_1(scm_from_int(1))); */
   /* Once wl_display_run returns, we shut down the server. */
   wl_display_destroy_clients(server.wl_display);
   wl_display_destroy(server.wl_display);
