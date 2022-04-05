@@ -46,16 +46,21 @@ gwwm [options]
 (wl-display-init-shm gwwm-wl-display)
 (define gwwm-server-backend (wlr-backend-autocreate gwwm-wl-display))
 (define (gwwm-init-socket)
-  (and=> (wl-display-add-socket-auto gwwm-wl-display)
-         (lambda (a)
-           (setenv "WAYLAND_DISPLAY" a)
-           a)))
+  (let ((socket (wl-display-add-socket-auto gwwm-wl-display)))
+    (if socket
+        (begin
+          (setenv "WAYLAND_DISPLAY" socket)
+          (when (= (wlr-backend-start gwwm-server-backend) 0)
+            (wlr-backend-destroy gwwm-server-backend)
+            (wl-display-destroy gwwm-wl-display)))
+        (wlr-backend-destroy gwwm-server-backend)))
+  )
 
 (define (gwwm-run!)
   (unless (string-null? startup-cmd)
     (fork+exec startup-cmd))
   (wl-display-run gwwm-wl-display)
-  (run-hook shutdown-hook 1))
+  (run-hook shutdown-hook))
 
 (define (handle-keybinding s key)
   ;;(run-hook )
@@ -72,7 +77,7 @@ gwwm [options]
     (else #f)))
 
 (define keyboard-pass-hook (make-hook 2))
-(define shutdown-hook (make-hook 1))
-(add-hook! shutdown-hook (lambda (a) (display "shutdown-now!") (newline)))
+(define shutdown-hook (make-hook))
+(add-hook! shutdown-hook (lambda _ (display "shutdown-now!") (newline)))
 
 (false-if-exception(spawn-server (make-tcp-server-socket)))

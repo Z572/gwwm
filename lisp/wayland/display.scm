@@ -116,10 +116,12 @@
             (string->pointer b)))))
 
 (define (wl-display-add-socket-auto display)
-  (pointer->string
-   ((wayland-server->procedure
-     '* "wl_display_add_socket_auto" '(*))
-    (unwrap-wl-display display))))
+  (let ((out ((wayland-server->procedure
+               '* "wl_display_add_socket_auto" '(*))
+              (unwrap-wl-display display))))
+    (if (null-pointer? out)
+        #f
+        (pointer->string out))))
 
 (define wl-display-add-socket-fd
   (let ((proc (wayland-server->procedure

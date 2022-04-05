@@ -7,7 +7,10 @@
   #:use-module (bytestructures guile)
   #:export (wlr-backend-autocreate
             unwrap-wlr-backend
-            wrap-wlr-backend))
+            wrap-wlr-backend
+            wlr-backend-start
+            wlr-backend-destroy))
+(define ffi:int (@ (system foreign) int))
 (define (wlr->pointer name)
   (dynamic-func name (dynamic-link %libwlroots)))
 (define (wlr->procedure return name params)
@@ -31,3 +34,13 @@
    ((wlr->procedure
      '* "wlr_backend_autocreate" (list '*))
     (unwrap-wl-display display))))
+
+(define (wlr-backend-start backend)
+  ((wlr->procedure
+    ffi:int "wlr_backend_start" (list '*))
+   (unwrap-wlr-backend backend)))
+
+(define (wlr-backend-destroy backend)
+  ((wlr->procedure
+    void "wlr_backend_destroy" (list '*))
+   (unwrap-wlr-backend backend)))
