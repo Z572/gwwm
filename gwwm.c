@@ -778,7 +778,7 @@ static void inner_main(void *closure, int argc, char *argv[]) {
    * to dig your fingers in and play with their behavior if you want. Note that
    * the clients cannot set the selection directly without compositor approval,
    * see the handling of the request_set_selection event below.*/
-  wlr_compositor_create(server_wl_display(), server_renderer());
+  //  wlr_compositor_create(server_wl_display(), server_renderer());
   wlr_data_device_manager_create(server_wl_display());
 
   /* Creates an output layout, which a wlroots utility for working with an
