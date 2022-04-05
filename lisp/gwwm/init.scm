@@ -10,6 +10,7 @@
   #:use-module (srfi srfi-1)
   #:use-module (wlroots backend)
   #:use-module (wlroots render renderer)
+  #:use-module (wlroots render allocator)
   #:export (handle-keybinding
             shutdown-hook
             gwwm-wl-display
@@ -47,6 +48,7 @@ gwwm [options]
 (wl-display-init-shm gwwm-wl-display)
 (define gwwm-server-backend (wlr-backend-autocreate gwwm-wl-display))
 (define-public gwwm-server-renderer (wlr-renderer-autocreate gwwm-server-backend))
+(define-public gwwm-server-allocator (wlr-allocator-autocreate gwwm-server-backend gwwm-server-renderer))
 
 (wlr-renderer-init-wl-display gwwm-server-renderer gwwm-wl-display)
 (define (gwwm-init-socket)

@@ -43,8 +43,8 @@ struct tinywl_server {
   /* struct wl_display *wl_display; */
   /* struct wlr_backend *backend; */
   struct wlr_compositor *compositor;
-  struct wlr_renderer *renderer;
-  struct wlr_allocator *allocator;
+  /* struct wlr_renderer *renderer; */
+  /* struct wlr_allocator *allocator; */
   struct wlr_scene *scene;
 
   struct wlr_xdg_shell *xdg_shell;
@@ -167,6 +167,13 @@ struct wlr_renderer *server_renderer(void) {
       scm_call_1(scm_c_public_ref("wlroots render renderer", "unwrap-wlr-renderer"),
                  scm_c_public_ref("gwwm init",
                                   "gwwm-server-renderer"))));
+}
+static
+struct wlr_allocator *server_allocator (void) {
+  return (struct wlr_allocator *)(scm_to_pointer(
+      scm_call_1(scm_c_public_ref("wlroots render allocator", "unwrap-wlr-allocator"),
+                 scm_c_public_ref("gwwm init",
+                                  "gwwm-server-allocator"))));
 }
 
 static void keyboard_handle_modifiers(struct wl_listener *listener,
@@ -545,7 +552,7 @@ static void server_new_output(struct wl_listener *listener, void *data) {
 
   /* Configures the output created by the backend to use our allocator
    * and our renderer. Must be done once, before commiting the output */
-  wlr_output_init_render(wlr_output, server->allocator, server_renderer());
+  wlr_output_init_render(wlr_output, server_allocator(), server_renderer());
   /* Some backends don't have modes. DRM+KMS does, and we need to set a mode
    * before we can use the output. The mode is a tuple of (width, height,
    * refresh rate), and each monitor supports only a specific set of modes. We
@@ -764,7 +771,7 @@ static void inner_main(void *closure, int argc, char *argv[]) {
    * The allocator is the bridge between the renderer and the backend. It
    * handles the buffer creation, allowing wlroots to render onto the
    * screen */
-    server.allocator = wlr_allocator_autocreate(server_backend(), server_renderer());
+  //server.allocator = wlr_allocator_autocreate(server_backend(), server_renderer());
   /* This creates some hands-off wlroots interfaces. The compositor is
    * necessary for clients to allocate surfaces and the data device manager
    * handles the clipboard. Each of these wlroots interfaces has room for you
