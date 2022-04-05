@@ -40,6 +40,7 @@
             wl-display-add-socket
             wl-display-add-socket-auto
             wl-display-destroy
+            wl-display-destroy-clients
             wl-display-run
             wl-display-get-event-loop
             wl-display-terminate
@@ -102,6 +103,11 @@
     void "wl_display_destroy" '(*))
    (unwrap-wl-display w-display)))
 
+(define (wl-display-destroy-clients w-display)
+  ((wayland-server->procedure
+    void "wl_display_destroy_clients" '(*))
+   (unwrap-wl-display w-display)))
+
 (define (wl-display-get-event-loop w-display)
   (wrap-wl-event-loop
    ((wayland-server->procedure
@@ -141,12 +147,6 @@
 (define wl-display-flush-clients
   (compose (wayland-server->procedure
             void "wl_display_flush_clients" '(*)) unwrap-wl-display))
-
-(define wl-display-destroy-clients
-  (compose (wayland-server->procedure
-            void "wl_display_destroy_clients" '(*)) unwrap-wl-display))
-
-
 
 (define %wl-display-add-destroy-listener
   (wayland-server->procedure void "wl_display_add_destroy_listener" '(* *)))

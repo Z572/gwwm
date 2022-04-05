@@ -60,7 +60,9 @@ gwwm [options]
   (unless (string-null? startup-cmd)
     (fork+exec startup-cmd))
   (wl-display-run gwwm-wl-display)
-  (run-hook shutdown-hook))
+  (run-hook shutdown-hook)
+  (wl-display-destroy-clients gwwm-wl-display)
+  (wl-display-destroy gwwm-wl-display))
 
 (define (handle-keybinding s key)
   ;;(run-hook )
@@ -70,9 +72,7 @@ gwwm [options]
     ((101)
      (fork+exec "alacritty"))
     ((#xff1b)
-     (pk "sdklfjslkdjfldskjflkdsjflkj")
      (wl-display-terminate gwwm-wl-display)
-     (pk "sdklfjslkdjfldskjflkdsjflkjsdklfjslkdjfldskjflkdsjflkjsdklfjslkdjfldskjflkdsjflkjsdklfjslkdjfldskjflkdsjflkj")
      #t)
     (else #f)))
 

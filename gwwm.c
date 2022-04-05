@@ -106,11 +106,7 @@ struct tinywl_keyboard {
   struct wl_listener modifiers;
   struct wl_listener key;
 };
-/* static SCM get_tinywl_server_wl_display(SCM *server) { */
-/*   struct tinywl_server *server2 = (scm_to_pointer(*server)); */
-/*   struct wl_display *display = server2->wl_display; */
-/*   return scm_from_pointer(display, NULL); */
-/* } */
+
 static void focus_view(struct tinywl_view *view, struct wlr_surface *surface) {
   /* Note: this function only deals with keyboard focus. */
   if (view == NULL) {
@@ -892,20 +888,7 @@ static void inner_main(void *closure, int argc, char *argv[]) {
   //  wlr_log(WLR_INFO, "Running Wayland compositor on WAYLAND_DISPLAY=%s", socket);
   // scm_set_current_module (scm_c_resolve_module ("gwwm"));
 
-  /* if (scm_to_utf8_string(scm_c_public_ref("gwwm init", "start-cmd")) */
-/* /\* startup_cmd *\/) { */
-/*     if (fork() == 0) { */
-/*       execl("/bin/sh", "/bin/sh", "-c", startup_cmd, (void *)NULL); */
-/*     } */
-/*   } */
   scm_call_0(scm_c_public_ref("gwwm init", "gwwm-run!"));
-  /* wl_display_run(server_wl_display()); */
-  /* scm_run_hook(scm_c_public_ref("gwwm init", "shutdown-hook"), */
-  /*              /\* scm_variable_ref(scm_c_lookup("shutdown-hook")), *\/ */
-  /*              scm_list_1(scm_from_int(1))); */
-  /* Once wl_display_run returns, we shut down the server. */
-  wl_display_destroy_clients(server_wl_display());
-  wl_display_destroy(server_wl_display());
 }
 
 int main(int argc, char **argv) {
