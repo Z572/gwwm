@@ -1,5 +1,6 @@
 (define-module (wlroots backend)
   #:use-module (wlroots config)
+  #:use-module (wlroots utils)
   #:use-module (wayland signal)
   #:use-module (wayland display)
   #:use-module (system foreign)
@@ -10,12 +11,12 @@
             wrap-wlr-backend
             wlr-backend-start
             wlr-backend-destroy))
-(define ffi:int (@ (system foreign) int))
-(define (wlr->pointer name)
-  (dynamic-func name (dynamic-link %libwlroots)))
-(define (wlr->procedure return name params)
-  (let ((ptr (wlr->pointer name)))
-    (pointer->procedure return ptr params)))
+;; (define ffi:int (@ (system foreign) int))
+;; (define (wlr->pointer name)
+;;   (dynamic-func name (dynamic-link %libwlroots)))
+;; (define (wlr->procedure return name params)
+;;   (let ((ptr (wlr->pointer name)))
+;;     (pointer->procedure return ptr params)))
 
 (define-class <wlr-backend> ()
   (pointer #:accessor .pointer #:init-keyword #:pointer))

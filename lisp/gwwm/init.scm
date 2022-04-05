@@ -9,6 +9,7 @@
   #:use-module (system foreign)
   #:use-module (srfi srfi-1)
   #:use-module (wlroots backend)
+  #:use-module (wlroots render renderer)
   #:export (handle-keybinding
             shutdown-hook
             gwwm-wl-display
@@ -45,6 +46,9 @@ gwwm [options]
 (define gwwm-wl-display (wl-display-create))
 (wl-display-init-shm gwwm-wl-display)
 (define gwwm-server-backend (wlr-backend-autocreate gwwm-wl-display))
+(define-public gwwm-server-renderer (wlr-renderer-autocreate gwwm-server-backend))
+
+(wlr-renderer-init-wl-display gwwm-server-renderer gwwm-wl-display)
 (define (gwwm-init-socket)
   (let ((socket (wl-display-add-socket-auto gwwm-wl-display)))
     (if socket
@@ -59,6 +63,7 @@ gwwm [options]
 (define (gwwm-run!)
   (unless (string-null? startup-cmd)
     (fork+exec startup-cmd))
+
   (wl-display-run gwwm-wl-display)
   (run-hook shutdown-hook)
   (wl-display-destroy-clients gwwm-wl-display)

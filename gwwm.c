@@ -161,6 +161,13 @@ struct wlr_backend *server_backend(void) {
                  scm_c_public_ref("gwwm init",
                                   "gwwm-server-backend"))));
 }
+static
+struct wlr_renderer *server_renderer(void) {
+  return (struct wlr_renderer *)(scm_to_pointer(
+      scm_call_1(scm_c_public_ref("wlroots render renderer", "unwrap-wlr-renderer"),
+                 scm_c_public_ref("gwwm init",
+                                  "gwwm-server-renderer"))));
+}
 
 static void keyboard_handle_modifiers(struct wl_listener *listener,
                                       void *data) {
@@ -538,8 +545,7 @@ static void server_new_output(struct wl_listener *listener, void *data) {
 
   /* Configures the output created by the backend to use our allocator
    * and our renderer. Must be done once, before commiting the output */
-  wlr_output_init_render(wlr_output, server->allocator, server->renderer);
-  // struct wlr_renderer *renderer= wlr_backend_get_r
+  wlr_output_init_render(wlr_output, server->allocator, server_renderer());
   /* Some backends don't have modes. DRM+KMS does, and we need to set a mode
    * before we can use the output. The mode is a tuple of (width, height,
    * refresh rate), and each monitor supports only a specific set of modes. We
@@ -751,22 +757,21 @@ static void inner_main(void *closure, int argc, char *argv[]) {
    * can also specify a renderer using the WLR_RENDERER env var.
    * The renderer is responsible for defining the various pixel formats it
    * supports for shared memory, this configures that for clients. */
-  server.renderer = wlr_renderer_autocreate(server_backend());
-  wlr_renderer_init_wl_display(server.renderer, server_wl_display());
+  // server.renderer = wlr_renderer_autocreate(server_backend());
+  /* wlr_renderer_init_wl_display(server_renderer(), server_wl_display()); */
 
   /* Autocreates an allocator for us.
    * The allocator is the bridge between the renderer and the backend. It
    * handles the buffer creation, allowing wlroots to render onto the
    * screen */
-  server.allocator = wlr_allocator_autocreate(server_backend(), server.renderer);
-
+    server.allocator = wlr_allocator_autocreate(server_backend(), server_renderer());
   /* This creates some hands-off wlroots interfaces. The compositor is
    * necessary for clients to allocate surfaces and the data device manager
    * handles the clipboard. Each of these wlroots interfaces has room for you
    * to dig your fingers in and play with their behavior if you want. Note that
    * the clients cannot set the selection directly without compositor approval,
    * see the handling of the request_set_selection event below.*/
-  wlr_compositor_create(server_wl_display(), server.renderer);
+  wlr_compositor_create(server_wl_display(), server_renderer());
   wlr_data_device_manager_create(server_wl_display());
 
   /* Creates an output layout, which a wlroots utility for working with an
@@ -866,7 +871,6 @@ static void inner_main(void *closure, int argc, char *argv[]) {
   /*   wlr_backend_destroy(server.backend); */
   /*   wl_display_destroy(server_wl_display()); */
   /* } */
-
   scm_call_0(scm_c_public_ref(
       "gwwm init",
       "gwwm-init-socket"));
