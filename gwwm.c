@@ -42,7 +42,7 @@ enum tinywl_cursor_mode {
 struct tinywl_server {
   /* struct wl_display *wl_display; */
   /* struct wlr_backend *backend; */
-  struct wlr_compositor *compositor;
+  /* struct wlr_compositor *compositor; */
   /* struct wlr_renderer *renderer; */
   /* struct wlr_allocator *allocator; */
   struct wlr_scene *scene;
@@ -224,9 +224,8 @@ static void keyboard_handle_key(struct wl_listener *listener, void *data) {
     for (int i = 0; i < nsyms; i++) {
       handled = scm_to_bool(scm_call_2(
           scm_c_public_ref("gwwm init", "handle-keybinding"),
-          /* scm_variable_ref(scm_c_lookup("handle-keybinding")), */
-          scm_from_pointer(server_wl_display(), NULL),
-          scm_from_int(syms[i]))); // handle_keybinding(server, syms[i]);
+          scm_from_pointer(&server, NULL),
+          scm_from_int(syms[i])));
     }
   }
 
@@ -893,9 +892,9 @@ static void inner_main(void *closure, int argc, char *argv[]) {
 
   // wl_display_init_shm(server_wl_display());
   wlr_gamma_control_manager_v1_create(server_wl_display());
-  wlr_idle_create(server_wl_display());
-  /* server.layer_shell=wlr_layer_shell_v1_create(server_wl_display()); */
-  /* server.request_new_surface.notify=layer_shell_request_new_surface; */
+  //wlr_idle_create(server_wl_display());
+  server.layer_shell=wlr_layer_shell_v1_create(server_wl_display());
+  server.request_new_surface.notify=layer_shell_request_new_surface;
   /* wl_signal_add(&server.layer_shell->events.new_surface, */
   /*               &server.request_new_surface); */
 

@@ -77,7 +77,8 @@ gwwm [options]
   (wl-display-destroy-clients gwwm-wl-display)
   (wl-display-destroy gwwm-wl-display))
 
-(define (handle-keybinding s key)
+(define (handle-keybinding server key)
+  (pk server)
   ;;(run-hook )
   (case key
     ((100)

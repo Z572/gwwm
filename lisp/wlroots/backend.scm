@@ -29,7 +29,9 @@
   (bs:struct
    `((wlr-backend-impl ,(bs:pointer '*))
      (events ,(bs:struct
-               `((destroy ,%wl-signal-struct)))))))
+               `((destroy ,%wl-signal-struct)
+                 (new-input ,%wl-signal-struct)
+                 (new-output ,%wl-signal-struct)))))))
 (define (wlr-backend-autocreate display)
   (wrap-wlr-backend
    ((wlr->procedure

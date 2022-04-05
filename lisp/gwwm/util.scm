@@ -1,6 +1,6 @@
 (define-module (gwwm util)
   #:export (fork+exec) )
-(define (fork+exec program)
+(define (fork+exec program . args)
   (if (= (primitive-fork) 0)
-      (execlp program)
+      (apply execlp program args)
       #t))
