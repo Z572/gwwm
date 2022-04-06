@@ -5,8 +5,8 @@
   #:use-module ((system foreign) #:select (make-pointer void (int . ffi:int)))
   #:export (;wl-list-init
             %wl-list
-            pointer->wl-list
-            wl-list->pointer
+            wrap-wl-list
+            unwrap-wl-list
             wl-list-init
             wl-list-insert
             wl-list-remove
@@ -23,23 +23,23 @@
 (define-class <wl-list> ()
   (pointer #:accessor .pointer #:init-keyword #:pointer))
 
-(define-public (wl-list-next wl-l)
-  (pointer->wl-list
-   (make-pointer
-    (bytestructure-ref
-     (pointer->bytestructure (.pointer wl-l) %wl-list) 'next))))
-
-(define-public (wl-list-prev wl-l)
-  (pointer->wl-list
-   (make-pointer
-    (bytestructure-ref
-     (pointer->bytestructure (.pointer wl-l) %wl-list) 'prev))))
-
-(define (pointer->wl-list p)
+(define (wrap-wl-list p)
   (make <wl-list> #:pointer p))
 
-(define (wl-list->pointer wl-l)
-  (.pointer wl-l))
+(define (unwrap-wl-list o)
+  (.pointer o))
+
+(define-public (wl-list-next wl-l)
+  (wrap-wl-list
+   (make-pointer
+    (bytestructure-ref
+     (pointer->bytestructure (unwrap-wl-list wl-l) %wl-list) 'next))))
+
+(define-public (wl-list-prev wl-l)
+  (wrap-wl-list
+   (make-pointer
+    (bytestructure-ref
+     (pointer->bytestructure (unwrap-wl-list wl-l) %wl-list) 'prev))))
 
 (define %wl-list-init
   (wayland-server->procedure

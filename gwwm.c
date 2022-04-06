@@ -59,15 +59,15 @@ struct tinywl_server {
   struct wl_listener cursor_axis;
   struct wl_listener cursor_frame;
 
-  struct wlr_layer_shell_v1 *layer_shell;
-  struct wl_listener request_new_surface;
+  /* struct wlr_layer_shell_v1 *layer_shell; */
+  /* struct wl_listener request_new_surface; */
 
   struct wlr_seat *seat;
   struct wl_listener new_input;
   struct wl_listener request_cursor;
   struct wl_listener request_set_selection;
   struct wl_list keyboards;
-  enum tinywl_cursor_mode cursor_mode;
+  //  enum tinywl_cursor_mode cursor_mode;
   struct tinywl_view *grabbed_view;
   double grab_x, grab_y;
   struct wlr_box grab_geobox;
@@ -76,6 +76,7 @@ struct tinywl_server {
   struct wlr_output_layout *output_layout;
   struct wl_list outputs;
   struct wl_listener new_output;
+  enum tinywl_cursor_mode cursor_mode;
 };
 
 struct tinywl_output {
@@ -207,15 +208,17 @@ static void keyboard_handle_key(struct wl_listener *listener, void *data) {
 
   bool handled = false;
   uint32_t modifiers = wlr_keyboard_get_modifiers(keyboard->device->keyboard);
-  if ((modifiers & WLR_MODIFIER_LOGO) &&
+  if (/* (modifiers & WLR_MODIFIER_LOGO) && */
       event->state == WL_KEYBOARD_KEY_STATE_PRESSED) {
     /* If alt is held down and this button was _pressed_, we attempt to
      * process it as a compositor keybinding. */
 
     for (int i = 0; i < nsyms; i++) {
       handled = scm_to_bool(
-          scm_call_2(scm_c_public_ref("gwwm init", "handle-keybinding"),
-                     scm_from_pointer(&server, NULL), scm_from_int(syms[i])));
+          scm_call_3(scm_c_public_ref("gwwm init", "handle-keybinding"),
+                     scm_from_pointer(server, NULL),
+                     scm_from_uint32(modifiers),
+                     scm_from_int(syms[i])));
     }
   }
 
@@ -662,28 +665,28 @@ static void xdg_toplevel_request_move(struct wl_listener *listener,
   begin_interactive(view, TINYWL_CURSOR_MOVE, 0);
 }
 
-static void layer_shell_request_new_surface(struct wl_listener *listener,
-                                            void *data) {
-  wlr_log(WLR_INFO, "layer_shell_request_new_surface");
-  struct tinywl_server *server =
-      wl_container_of(listener, server, request_new_surface);
-  struct wlr_layer_shell_v1 *layer_shell = data;
-  wlr_log(WLR_INFO, "layer_shell_request_new_surface-2");
-  struct wl_listener l;
-      wlr_log(WLR_INFO, "layer_shell_request_new_surface-5");
-  /* l.notify=xdg_toplevel_map; */
-  /*   wlr_log(WLR_INFO, "layer_shell_request_new_surface-4"); */
-  /* wl_signal_add(&layer_shell->events.new_surface, &l); */
-  /*   wlr_log(WLR_INFO, "layer_shell_request_new_surface-3"); */
-  // layer_shell->events.new_surface
-  /* /\* if (layer_shell->) *\/ */
-  /* struct tinywl_view *view = calloc(1, sizeof(struct tinywl_view)); */
-  /* view->server=server; */
-  /* view->xdg_surface= layer_shell; */
-  /* view->scene_node= wlr_scene_xdg_surface_create(&view->server->scene->node,
-   * view->xdg_surface); */
-  /* view->scene_node->data=view; */
-}
+/* static void layer_shell_request_new_surface(struct wl_listener *listener, */
+/*                                             void *data) { */
+/*   wlr_log(WLR_INFO, "layer_shell_request_new_surface"); */
+/*   struct tinywl_server *server = */
+/*       wl_container_of(listener, server, request_new_surface); */
+/*   struct wlr_layer_shell_v1 *layer_shell = data; */
+/*   wlr_log(WLR_INFO, "layer_shell_request_new_surface-2"); */
+/*   struct wl_listener l; */
+/*       wlr_log(WLR_INFO, "layer_shell_request_new_surface-5"); */
+/*   /\* l.notify=xdg_toplevel_map; *\/ */
+/*   /\*   wlr_log(WLR_INFO, "layer_shell_request_new_surface-4"); *\/ */
+/*   /\* wl_signal_add(&layer_shell->events.new_surface, &l); *\/ */
+/*   /\*   wlr_log(WLR_INFO, "layer_shell_request_new_surface-3"); *\/ */
+/*   // layer_shell->events.new_surface */
+/*   /\* /\\* if (layer_shell->) *\\/ *\/ */
+/*   /\* struct tinywl_view *view = calloc(1, sizeof(struct tinywl_view)); *\/ */
+/*   /\* view->server=server; *\/ */
+/*   /\* view->xdg_surface= layer_shell; *\/ */
+/*   /\* view->scene_node= wlr_scene_xdg_surface_create(&view->server->scene->node, */
+/*    * view->xdg_surface); *\/ */
+/*   /\* view->scene_node->data=view; *\/ */
+/* } */
 
 static void xdg_toplevel_request_resize(struct wl_listener *listener,
                                         void *data) {
@@ -703,6 +706,10 @@ static void server_new_xdg_surface(struct wl_listener *listener, void *data) {
   struct tinywl_server *server =
       wl_container_of(listener, server, new_xdg_surface);
   struct wlr_xdg_surface *xdg_surface = data;
+  /* scm_call_2(scm_c_public_ref("gwwm init","server-new-xdg-surface"), */
+  /*            scm_from_pointer(server, NULL), */
+  /*            scm_from_pointer(xdg_surface, NULL)); */
+
 
   /* We must add xdg popups to the scene graph so they get rendered. The
    * wlroots scene graph provides a helper for this, but to use it we must
@@ -717,7 +724,9 @@ static void server_new_xdg_surface(struct wl_listener *listener, void *data) {
     return;
   }
   assert(xdg_surface->role == WLR_XDG_SURFACE_ROLE_TOPLEVEL);
-
+      scm_call_2(scm_c_public_ref("gwwm init","server-new-xdg-surface"),
+             scm_from_pointer(server, NULL),
+             scm_from_pointer(xdg_surface, NULL));
   /* Allocate a tinywl_view for this surface */
   struct tinywl_view *view = calloc(1, sizeof(struct tinywl_view));
   view->server = server;
@@ -746,8 +755,8 @@ static void server_new_xdg_surface(struct wl_listener *listener, void *data) {
 static void inner_main(void *closure, int argc, char *argv[]) {
 
   wlr_log_init(WLR_DEBUG, NULL);
-  scm_c_primitive_load("lisp/gwwm/init.scm");
 
+  scm_c_primitive_load("lisp/gwwm/init.scm");
   struct tinywl_server server;
   /* The Wayland display is managed by libwayland. It handles accepting
    * clients from the Unix socket, manging Wayland globals, and so on. */
@@ -896,10 +905,10 @@ static void inner_main(void *closure, int argc, char *argv[]) {
   // wl_display_init_shm(server_wl_display());
   wlr_gamma_control_manager_v1_create(server_wl_display());
   // wlr_idle_create(server_wl_display());
-  server.layer_shell = wlr_layer_shell_v1_create(server_wl_display());
-  server.request_new_surface.notify = layer_shell_request_new_surface;
-  wl_signal_add(&server.layer_shell->events.new_surface,
-                &server.request_new_surface);
+  /* server.layer_shell = wlr_layer_shell_v1_create(server_wl_display()); */
+  /* server.request_new_surface.notify = layer_shell_request_new_surface; */
+  /* wl_signal_add(&server.layer_shell->events.new_surface, */
+  /*               &server.request_new_surface); */
 
   /* Run the Wayland event loop. This does not return until you exit the
    * compositor. Starting the backend rigged up all of the necessary event

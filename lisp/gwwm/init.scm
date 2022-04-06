@@ -5,15 +5,18 @@
   #:use-module (system repl server)
   ;;  #:use-module (oop goops)
   #:use-module (wayland)
+  #:use-module (wayland util)
   #:use-module (ice-9 getopt-long)
-  #:use-module (system foreign)
+  ;;  #:use-module (system foreign)
   #:use-module (srfi srfi-1)
   #:use-module (wlroots backend)
   #:use-module (wlroots render renderer)
   #:use-module (wlroots render allocator)
   #:use-module (wlroots types compositor)
+  #:use-module (wlroots types xdg-shell)
   #:use-module (wlroots types data-device)
   #:use-module (wlroots types output-layout)
+  #:use-module (bytestructures guile)
   #:export (handle-keybinding
             shutdown-hook
             gwwm-wl-display
@@ -21,12 +24,17 @@
             gwwm-init-socket
             gwwm-run!))
 ;;(define-values (program-name arguments) (car+cdr (program-arguments)))
-(define startup-cmd "")
-(let* ((option-spec
-        '((version (single-char #\v) (value #f))
-          (help (single-char #\h) (value #f))
-          (exec (single-char #\s) (value #t))))
-       (options (getopt-long (command-line) option-spec))
+
+(define option-spec
+  '((version (single-char #\v) (value #f))
+    (help (single-char #\h) (value #f))
+    (exec (single-char #\s) (value #t))))
+(define options (getopt-long (command-line) option-spec))
+(let* (;; (option-spec
+       ;;  '((version (single-char #\v) (value #f))
+       ;;    (help (single-char #\h) (value #f))
+       ;;    (exec (single-char #\s) (value #t))))
+       ;; (options (getopt-long (command-line) option-spec))
        (help-wanted (option-ref options 'help #f))
        (version-wanted (option-ref options 'version #f)))
   (if (or version-wanted help-wanted)
@@ -39,17 +47,56 @@ gwwm [options]
   -v --version  Display version
   -h --help     Display this help
 "))
-             (exit 0))
-      (and=> (option-ref options 'exec #f)
-             (cut set! startup-cmd <>))))
+             (exit 0))))
+(define startup-cmd (option-ref options 'exec #f))
 ;; (define-class <server> ()
 ;;   display)
 
 ;;(define server )
+(define %server-struct
+  (bs:struct
+   `((scene ,(bs:pointer '*))
+     (xdg-shell ,(bs:pointer '*))
+     (new-xdg-surface ,%wl-listener)
+     (views ,%wl-list)
+     (cursor ,(bs:pointer '*))
+     (xcursor-manager ,(bs:pointer '*))
+     (cursor-motion ,%wl-listener)
+     (cursor-motion-absolute ,%wl-listener)
+     (cursor-button ,%wl-listener)
+     (cursor-axis ,%wl-listener)
+     (cursor-frame ,%wl-listener)
 
+     (seat ,(bs:pointer '*))
+     (new-input ,%wl-listener)
+     (request-cursor ,%wl-listener)
+     (request-set-selection ,%wl-listener)
+     (keyboards ,%wl-listener)
+     (grabbed-view ,(bs:pointer '*))
+     (grab-x ,double)
+     (grab-y ,double)
+     (grab-geobox ,(bs:pointer '*))
+     (resize-edges ,uint32)
+     (output-layout ,(bs:pointer '*))
+     (outputs ,%wl-list)
+     (new-output ,%wl-listener)
+
+                                        ;(cursor-module ,)
+     )))
+
+(define pointer->server-bytestructure
+  (cut pointer->bytestructure <> %server-struct))
 (define gwwm-wl-display (wl-display-create))
 (wl-display-init-shm gwwm-wl-display)
 (pk 'a)
+(define-public (server-new-xdg-surface s data)
+  (pk 'server-new-xdg-surface s data
+      (pointer->server-bytestructure s)
+
+      (bytestructure-ref (pointer->bytestructure data %wlr-xdg-surface-struct) 'role)
+      ;;(bytestructure-ref (pointer->bytestructure data %wlr-xdg-surface-struct) 'added)
+      ;; (bytestructure-ref (pointer->bytestructure data %wlr-xdg-shell-struct) )
+      ))
 (define gwwm-server-backend (wlr-backend-autocreate gwwm-wl-display))
 (pk gwwm-server-backend)
 (define-public gwwm-server-renderer (wlr-renderer-autocreate gwwm-server-backend))
@@ -73,7 +120,7 @@ gwwm [options]
 
 (define (gwwm-run!)
   (pk 'run!)
-  (unless (string-null? startup-cmd)
+  (when startup-cmd
     (fork+exec startup-cmd))
 
   (wl-display-run gwwm-wl-display)
@@ -81,18 +128,20 @@ gwwm [options]
   (wl-display-destroy-clients gwwm-wl-display)
   (wl-display-destroy gwwm-wl-display))
 
-(define (handle-keybinding server key)
-  (pk server)
+(define (handle-keybinding server modifiers key)
+  (pk (bytestructure-ref (pointer->bytestructure server %server-struct) 'grab-x) 'key-is modifiers key)
+
   ;;(run-hook )
-  (case key
-    ((100)
-     (fork+exec "emacs"))
-    ((101)
-     (fork+exec "alacritty"))
-    ((#xff1b)
-     (wl-display-terminate gwwm-wl-display)
-     #t)
-    (else #f)))
+  (and (= modifiers 64)
+       (case key
+         ((100)
+          (fork+exec "emacs"))
+         ((101)
+          (fork+exec "alacritty"))
+         ((#xff1b)
+          (wl-display-terminate gwwm-wl-display)
+          #t)
+         (else #f))))
 
 (define keyboard-pass-hook (make-hook 2))
 (define shutdown-hook (make-hook))
