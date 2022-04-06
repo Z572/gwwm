@@ -1,5 +1,4 @@
-(define-module (wayland compositor)
-  #:use-module (system foregign-object))
+(define-module (wayland compositor))
                                         ;(define)
 
 ;; (define-foreign-object-type

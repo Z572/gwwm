@@ -1,0 +1,19 @@
+dnl -*- Autoconf -*- for gwwm c
+
+AC_PROG_CC
+AC_USE_SYSTEM_EXTENSIONS
+dnl m4_pattern_allow([AC_LIB_LINKFLAGS_FROM_LIBS])
+PKG_CHECK_MODULES([GUILE], [guile-3.0])
+PKG_CHECK_MODULES([WAYLAND_SERVER], [wayland-server])
+PKG_CHECK_MODULES([WLROOTS], [wlroots])
+dnl PKG_CHECK_MODULES([WAYLAND_SCANNER], [wayland-scanner])
+PKG_CHECK_MODULES([PIXMAN_1], [pixman-1])
+PKG_CHECK_MODULES([XKBCOMMON],[xkbcommon])
+#AC_CHECK_LIB()
+PKG_CHECK_VAR([WLROOTS_LIBDIR],[wlroots],[libdir])
+PKG_CHECK_VAR([WAYLAND_LIBDIR],[wayland-server],[libdir])
+PKG_CHECK_VAR([WAYLAND_SCANNER],[wayland-scanner],[wayland_scanner])
+PKG_CHECK_VAR([WAYLAND_PROTOCOLS],[wayland-protocols],[pkgdatadir])
+AC_SUBST([WLROOTS_LIBDIR])
+AC_SUBST([WAYLAND_LIBDIR])
+AC_OUTPUT

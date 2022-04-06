@@ -1,0 +1,3 @@
+(define-module (wlroots config)
+  #:export (%libwlroots))
+(define %libwlroots "@WLROOTS_LIBDIR@/libwlroots.so")

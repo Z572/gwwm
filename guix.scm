@@ -1,9 +1,11 @@
 (use-modules
- (guix packages)
+ (guix utils) (guix packages)
  ((guix licenses) #:prefix license:)
+ (gnu packages xorg)
  (guix download)
  (guix git-download)
  (guix gexp)
+ (gnu packages gl)
  (gnu packages xdisorg)
  (guix build-system gnu)
  (gnu packages)
@@ -74,11 +76,13 @@
        (file-name (git-file-name name version))
        (sha256
         (base32 "00s73nhi3sc48l426jdlqwpclg41kx1hv0yk4yxhbzw19gqpfm1h"))))
-    ;; (inputs (modify-inputs (package-inputs wlroots)
-    ;;                        ))
+    (arguments (substitute-keyword-arguments (package-arguments wlroots)
+                 ((#:configure-flags flags ''())
+                  `(cons "-Dbackends=['drm','libinput','x11']" ,flags))))
+
     (propagated-inputs
      (modify-inputs (package-propagated-inputs wlroots)
-                    (prepend libdrm-next)
+                    (prepend libdrm-next libglvnd xcb-util-renderutil)
                     (replace "wayland" wayland-next)
                     (replace "wayland-protocols" wayland-protocols-next)))))
 (package
