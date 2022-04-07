@@ -1,6 +1,7 @@
 (define-module (wlroots backend)
   #:use-module (wlroots config)
   #:use-module (wlroots utils)
+  #:use-module (wayland util)
   #:use-module (wayland signal)
   #:use-module (wayland display)
   #:use-module (system foreign)
@@ -10,7 +11,8 @@
             unwrap-wlr-backend
             wrap-wlr-backend
             wlr-backend-start
-            wlr-backend-destroy))
+            wlr-backend-destroy
+            get-event-signal))
 ;; (define ffi:int (@ (system foreign) int))
 ;; (define (wlr->pointer name)
 ;;   (dynamic-func name (dynamic-link %libwlroots)))
@@ -19,12 +21,9 @@
 ;;     (pointer->procedure return ptr params)))
 
 (define-class <wlr-backend> ()
-  (pointer #:accessor .pointer #:init-keyword #:pointer))
+  (bytestructure #:accessor .bytestructure #:init-keyword #:bytestructures))
 
-(define (wrap-wlr-backend p)
-  (make <wlr-backend> #:pointer p))
-(define (unwrap-wlr-backend o)
-  (.pointer o))
+
 (define %wlr-backend-struct
   (bs:struct
    `((wlr-backend-impl ,(bs:pointer '*))
@@ -32,6 +31,17 @@
                `((destroy ,%wl-signal-struct)
                  (new-input ,%wl-signal-struct)
                  (new-output ,%wl-signal-struct)))))))
+(define (wrap-wlr-backend p)
+  (make <wlr-backend> #:bytestructures (pointer->bytestructure p %wlr-backend-struct)))
+(define (unwrap-wlr-backend o)
+  (bytestructure->pointer (.bytestructure o)))
+
+(define-method (get-event-signal (b <wlr-backend>) (signal-name <symbol>))
+  (wrap-wl-signal (bytestructure-ref
+                   (pointer->bytestructure
+                    (unwrap-wlr-backend b)
+                    %wlr-backend-struct)
+                   'events signal-name)))
 (define (wlr-backend-autocreate display)
   (wrap-wlr-backend
    ((wlr->procedure

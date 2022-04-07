@@ -4,11 +4,13 @@
   #:use-module (wayland util)
   #:use-module ((system foreign) #:select (%null-pointer
                                            procedure->pointer
-                                           void))
+                                           void
+                                           pointer->bytevector))
   #:use-module (bytestructures guile)
+  #:duplicates (merge-generics)
   #:export (%wl-listener
             pointer->wl-listener
-            wl-listener->pointer
+            unwrap-wl-listener
             make-wl-listener
             .bytestructure
             .link
@@ -27,7 +29,7 @@
                  #:init-keyword #:bytestructure)
   (link #:allocation #:virtual
         #:accessor .link
-        #:slot-ref (lambda (a) (bytestructure-ref (.bytestructure a) 'link))
+        #:slot-ref (lambda (a) (wrap-wl-list (bytestructure-ref (.bytestructure a) 'link)))
         #:slot-set! (lambda (instance new-val)
                       (bytestructure-set!
                        (.bytestructure instance)
@@ -41,19 +43,21 @@
                          'notify new-val))))
 
 (define (make-wl-listener link notify)
+  (pk 'link-1 link notify)
   (make <wl-listener> #:bytestructure
-        (bytestructure
-         %wl-listener
-         `((link ,link)
-           (notify
-            ,(procedure->pointer
-              void
-              (lambda (listener data)
-                (notify (pointer->wl-listener listener) data))
-              '(* *)))))))
+        (pk 'ss (bytestructure
+                 %wl-listener
+                 `((link ,(pk 'link  (pointer->bytevector (unwrap-wl-list (pk 'a link))
+                                                          (bytestructure-descriptor-size %wl-list))))
+                   (notify
+                    ,(procedure->pointer
+                      void
+                      (lambda (listener data)
+                        (notify (pointer->wl-listener listener) data))
+                      '(* *))))))))
 
 (define (pointer->wl-listener p)
   (make <wl-listener> #:bytestructure (pointer->bytestructure p %wl-listener)))
 
-(define (wl-listener->pointer listener)
+(define (unwrap-wl-listener listener)
   (bytestructure->pointer (.bytestructure listener)))

@@ -2,7 +2,7 @@
   #:use-module (oop goops)
   #:use-module (wayland util)
   #:use-module (bytestructures guile)
-  #:use-module ((system foreign) #:select (make-pointer void (int . ffi:int)))
+  #:use-module ((system foreign) #:select (make-pointer %null-pointer void pointer?(int . ffi:int)))
   #:export (;wl-list-init
             %wl-list
             wrap-wl-list
@@ -11,7 +11,10 @@
             wl-list-insert
             wl-list-remove
             wl-list-length
-            wl-list-empty))
+            wl-list-empty
+            make-wl-list
+            .bytestructure
+            wl-list-bytestructure))
 
 ;; (define-class <wl-list> ()
 ;;   (pointer #:ass))
@@ -21,13 +24,18 @@
      (next ,(bs:pointer (delay %wl-list))))))
 
 (define-class <wl-list> ()
-  (pointer #:accessor .pointer #:init-keyword #:pointer))
+  (bytestructure #:accessor .bytestructure #:init-keyword #:bytestructure))
 
 (define (wrap-wl-list p)
-  (make <wl-list> #:pointer p))
+  (make <wl-list> #:bytestructure (if (pointer? p) (pointer->bytestructure p %wl-list) p)))
 
+(define (make-wl-list )
+  (wrap-wl-list (bytestructure %wl-list `((prev ,%null-pointer)
+                                          (next ,%null-pointer)))))
 (define (unwrap-wl-list o)
-  (.pointer o))
+  (bytestructure->pointer (.bytestructure o)))
+
+(define (wl-list-bytestructure o) (.bytestructure o))
 
 (define-public (wl-list-next wl-l)
   (wrap-wl-list
@@ -38,8 +46,8 @@
 (define-public (wl-list-prev wl-l)
   (wrap-wl-list
    (make-pointer
-    (bytestructure-ref
-     (pointer->bytestructure (unwrap-wl-list wl-l) %wl-list) 'prev))))
+    (pk 'prev (bytestructure-ref
+               (pointer->bytestructure (unwrap-wl-list wl-l) %wl-list) 'prev)))))
 
 (define %wl-list-init
   (wayland-server->procedure
@@ -47,13 +55,18 @@
    (list '*)))
 
 (define (wl-list-init wl-l)
-  (let ((p (wl-list->pointer wl-l)))
-    (%wl-list-init p)))
+  (let ((p (unwrap-wl-list wl-l)))
+    (%wl-list-init p)
+    (pk 'wl-list-init (wrap-wl-list p))))
 
-(define (wl-list-insert lst)
-  (wayland-server->procedure
-   void "wl_list_insert"
-   (list '* '*)))
+(define wl-list-insert
+  (let ((proc (wayland-server->procedure
+               void "wl_list_insert"
+               (list '* '*))))
+    (lambda (lst lst2)
+      "XXX: need fix it"
+      (proc (unwrap-wl-list lst)
+            (unwrap-wl-list lst2)))))
 
 (define (wl-list-remove lst)
   (wayland-server->procedure
@@ -64,8 +77,8 @@
   (wayland-server->procedure ffi:int "wl_list_length" '(*)))
 
 (define (wl-list-length w-list)
-  (%wl-list-length (wl-list->pointer w-list)))
+  (%wl-list-length (unwrap-wl-list w-list)))
 
 (define %wl-list-empty (wayland-server->procedure ffi:int "wl_list_empty" '(*)))
 
-(define (wl-list-empty l) (%wl-list-empty (wl-list->pointer l)) )
+(define (wl-list-empty l) (%wl-list-empty (unwrap-wl-list l)) )

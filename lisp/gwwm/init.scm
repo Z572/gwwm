@@ -17,6 +17,7 @@
   #:use-module (wlroots types data-device)
   #:use-module (wlroots types output-layout)
   #:use-module (bytestructures guile)
+  #:duplicates (merge-generics)
   #:export (handle-keybinding
             shutdown-hook
             gwwm-wl-display
@@ -97,8 +98,17 @@ gwwm [options]
       ;;(bytestructure-ref (pointer->bytestructure data %wlr-xdg-surface-struct) 'added)
       ;; (bytestructure-ref (pointer->bytestructure data %wlr-xdg-shell-struct) )
       ))
-(define gwwm-server-backend (wlr-backend-autocreate gwwm-wl-display))
-(pk gwwm-server-backend)
+(define gwwm-server-backend (pk 'a (wlr-backend-autocreate gwwm-wl-display)))
+;; (pk gwwm-server-backend (pk 'signal-added
+;;                             (wl-signal-add
+;;                              (pk 'b(get-event-signal gwwm-server-backend 'new-input))
+;;                              (pk 'c (make-wl-listener
+;;                                      (pk 'd(let ((a (wl-list-init (pk 's(make-wl-list)))))
+;;                                              (pk (wl-list-init (pk 'aa a)))
+;;                                              a))
+;;                                      (lambda a (pk 'nnn a)))))
+;;                             )
+;;     )
 (define-public gwwm-server-renderer (wlr-renderer-autocreate gwwm-server-backend))
 (pk 'c)
 (define-public gwwm-server-allocator (wlr-allocator-autocreate gwwm-server-backend gwwm-server-renderer))
