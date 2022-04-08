@@ -9,7 +9,7 @@
   #:use-module (bytestructures guile)
   #:duplicates (merge-generics)
   #:export (%wl-listener
-            pointer->wl-listener
+            wrap-wl-listener
             unwrap-wl-listener
             make-wl-listener
             .bytestructure
@@ -53,10 +53,10 @@
                     ,(procedure->pointer
                       void
                       (lambda (listener data)
-                        (notify (pointer->wl-listener listener) data))
+                        (notify (wrap-wl-listener listener) data))
                       '(* *))))))))
 
-(define (pointer->wl-listener p)
+(define (wrap-wl-listener p)
   (make <wl-listener> #:bytestructure (pointer->bytestructure p %wl-listener)))
 
 (define (unwrap-wl-listener listener)
