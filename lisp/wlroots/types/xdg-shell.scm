@@ -2,7 +2,18 @@
   #:use-module (wayland)
   #:use-module (wlroots util box)
   #:use-module (bytestructures guile)
-  #:export (%wlr-xdg-shell-struct %wlr-xdg-surface-struct))
+  #:use-module (oop goops)
+  #:use-module (wlroots utils)
+  #:export (%wlr-xdg-shell-struct %wlr-xdg-surface-struct
+                                  wlr-xdg-shell-create
+                                  wrap-wlr-xdg-shell
+                                  unwrap-wlr-xdg-shell))
+(define-class <wlr-xdg-shell> ()
+  (pointer #:accessor .pointer #:init-keyword #:pointer))
+(define (wrap-wlr-xdg-shell p)
+  (make <wlr-xdg-shell> #:pointer p))
+(define (unwrap-wlr-xdg-shell o)
+  (.pointer o))
 (define %wlr-xdg-shell-struct
   (bs:struct `((global ,(bs:pointer '*))
                (clients ,%wl-list)
@@ -44,3 +55,8 @@
                                      (configure ,%wl-signal-struct)
                                      (ack-configure ,%wl-signal-struct))))
                (data ,(bs:pointer 'void)))))
+(define wlr-xdg-shell-create
+  (let ((proc (wlr->procedure '* "wlr_xdg_shell_create" '(*))))
+    (lambda (display)
+      (wrap-wlr-xdg-shell
+       (proc (unwrap-wl-display display))))))

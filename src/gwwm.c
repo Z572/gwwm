@@ -828,7 +828,10 @@ static void inner_main(void *closure, int argc, char *argv[]) {
    * https://drewdevault.com/2018/07/29/Wayland-shells.html
    */
   wl_list_init(&server.views);
-  server.xdg_shell = wlr_xdg_shell_create(server_wl_display());
+  server.xdg_shell = scm_to_pointer(scm_call_1(scm_c_public_ref("wlroots types xdg-shell" ,"unwrap-wlr-xdg-shell"),
+                            scm_c_public_ref("gwwm init", "gwwm-server-xdg-shell")));
+
+/* wlr_xdg_shell_create(server_wl_display()); */
   server.new_xdg_surface.notify = server_new_xdg_surface;
   wl_signal_add(&server.xdg_shell->events.new_surface, &server.new_xdg_surface);
 

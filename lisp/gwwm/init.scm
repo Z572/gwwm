@@ -15,6 +15,7 @@
   #:use-module (wlroots types compositor)
   #:use-module (wlroots types xdg-shell)
   #:use-module (wlroots types data-device)
+  #:use-module (wlroots types xdg-shell)
   #:use-module (wlroots types scene)
   #:use-module (wlroots types output-layout)
   #:use-module (bytestructures guile)
@@ -121,6 +122,7 @@ gwwm [options]
 
 (define-public gwwm-server-output-layout (wlr-output-layout-create))
 (wlr-scene-attach-output-layout gwwm-server-scene gwwm-server-output-layout)
+(define-public gwwm-server-xdg-shell (wlr-xdg-shell-create gwwm-wl-display))
 (define (gwwm-init-socket)
   (let ((socket (wl-display-add-socket-auto gwwm-wl-display)))
     (if socket
