@@ -18,6 +18,7 @@
   #:use-module (wlroots types xdg-shell)
   #:use-module (wlroots types scene)
   #:use-module (wlroots types output-layout)
+  #:use-module (wlroots types seat)
   #:use-module (wlroots types cursor)
   #:use-module (wlroots types xcursor)
   #:use-module (bytestructures guile)
@@ -129,6 +130,7 @@ gwwm [options]
 (wlr-cursor-attach-output-layout gwwm-server-cursor gwwm-server-output-layout)
 (define-public gwwm-server-cursor-mgr (wlr-xcursor-manager-create #f 12))
 (wlr-xcursor-manager-load gwwm-server-cursor-mgr 1)
+(define-public gwwm-server-seat (wlr-seat-create gwwm-wl-display "seat0"))
 
 (define (gwwm-init-socket)
   (let ((socket (wl-display-add-socket-auto gwwm-wl-display)))

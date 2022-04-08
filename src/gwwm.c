@@ -884,7 +884,9 @@ static void inner_main(void *closure, int argc, char *argv[]) {
   wl_list_init(&server.keyboards);
   server.new_input.notify = server_new_input;
   wl_signal_add(&server_backend()->events.new_input, &server.new_input);
-  server.seat = wlr_seat_create(server_wl_display(), "seat0");
+  server.seat = scm_to_pointer(scm_call_1(scm_c_public_ref("wlroots types seat" ,"unwrap-wlr-seat"),
+                                                scm_c_public_ref("gwwm init", "gwwm-server-seat")));
+/* wlr_seat_create(server_wl_display(), "seat0"); */
   server.request_cursor.notify = seat_request_cursor;
   wl_signal_add(&server.seat->events.request_set_cursor,
                 &server.request_cursor);
