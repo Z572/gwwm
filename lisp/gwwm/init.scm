@@ -18,6 +18,8 @@
   #:use-module (wlroots types xdg-shell)
   #:use-module (wlroots types scene)
   #:use-module (wlroots types output-layout)
+  #:use-module (wlroots types cursor)
+  #:use-module (wlroots types xcursor)
   #:use-module (bytestructures guile)
   #:duplicates (merge-generics)
   #:export (handle-keybinding
@@ -123,6 +125,11 @@ gwwm [options]
 (define-public gwwm-server-output-layout (wlr-output-layout-create))
 (wlr-scene-attach-output-layout gwwm-server-scene gwwm-server-output-layout)
 (define-public gwwm-server-xdg-shell (wlr-xdg-shell-create gwwm-wl-display))
+(define-public gwwm-server-cursor (wlr-cursor-create))
+(wlr-cursor-attach-output-layout gwwm-server-cursor gwwm-server-output-layout)
+(define-public gwwm-server-cursor-mgr (wlr-xcursor-manager-create #f 12))
+(wlr-xcursor-manager-load gwwm-server-cursor-mgr 1)
+
 (define (gwwm-init-socket)
   (let ((socket (wl-display-add-socket-auto gwwm-wl-display)))
     (if socket

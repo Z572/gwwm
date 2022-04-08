@@ -839,15 +839,17 @@ static void inner_main(void *closure, int argc, char *argv[]) {
    * Creates a cursor, which is a wlroots utility for tracking the cursor
    * image shown on screen.
    */
-  server.cursor = wlr_cursor_create();
-  wlr_cursor_attach_output_layout(server.cursor, server_output_layout());
+  server.cursor = scm_to_pointer(scm_call_1(scm_c_public_ref("wlroots types cursor" ,"unwrap-wlr-cursor"),
+                            scm_c_public_ref("gwwm init", "gwwm-server-cursor")));
+  /* wlr_cursor_attach_output_layout(server.cursor, server_output_layout()); */
 
   /* Creates an xcursor manager, another wlroots utility which loads up
    * Xcursor themes to source cursor images from and makes sure that cursor
    * images are available at all scale factors on the screen (necessary for
    * HiDPI support). We add a cursor theme at scale factor 1 to begin with. */
-  server.cursor_mgr = wlr_xcursor_manager_create(NULL, 24);
-  wlr_xcursor_manager_load(server.cursor_mgr, 1);
+  server.cursor_mgr = scm_to_pointer(scm_call_1(scm_c_public_ref("wlroots types xcursor" ,"unwrap-wlr-xcursor-manager"),
+                                                scm_c_public_ref("gwwm init", "gwwm-server-cursor-mgr")));
+  /* wlr_xcursor_manager_load(server.cursor_mgr, 1); */
 
   /*
    * wlr_cursor *only* displays an image on screen. It does not move around
