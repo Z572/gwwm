@@ -36,12 +36,7 @@
     (help (single-char #\h) (value #f))
     (exec (single-char #\s) (value #t))))
 (define options (getopt-long (command-line) option-spec))
-(let* (;; (option-spec
-       ;;  '((version (single-char #\v) (value #f))
-       ;;    (help (single-char #\h) (value #f))
-       ;;    (exec (single-char #\s) (value #t))))
-       ;; (options (getopt-long (command-line) option-spec))
-       (help-wanted (option-ref options 'help #f))
+(let* ((help-wanted (option-ref options 'help #f))
        (version-wanted (option-ref options 'version #f)))
   (if (or version-wanted help-wanted)
       (begin (if version-wanted
@@ -54,7 +49,7 @@ gwwm [options]
   -h --help     Display this help
 "))
              (exit 0))))
-(define startup-cmd (option-ref options 'exec #f))
+
 ;; (define-class <server> ()
 ;;   display)
 
@@ -145,8 +140,7 @@ gwwm [options]
 
 (define (gwwm-run!)
   (pk 'run!)
-  (when startup-cmd
-    (fork+exec startup-cmd))
+  (and=> (option-ref options 'exec #f) fork+exec)
 
   (wl-display-run gwwm-wl-display)
   (run-hook shutdown-hook)
