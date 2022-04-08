@@ -805,7 +805,10 @@ static void inner_main(void *closure, int argc, char *argv[]) {
 
   /* Configure a listener to be notified when new outputs are available on the
    * backend. */
-  wl_list_init(&server.outputs);
+  /* wl_list_init(&server.outputs); */
+  scm_call_1(scm_c_public_ref("wayland list", "wl-list-init"),
+             scm_call_1(scm_c_public_ref("wayland list", "wrap-wl-list"),
+                        scm_from_pointer(&server.outputs, NULL)));
   server.new_output.notify = server_new_output;
   wl_signal_add(&server_backend()->events.new_output, &server.new_output);
 
@@ -815,8 +818,9 @@ static void inner_main(void *closure, int argc, char *argv[]) {
    * positions and then call wlr_scene_output_commit() to render a frame if
    * necessary.
    */
-  server.scene = wlr_scene_create();
-  wlr_scene_attach_output_layout(server.scene, server_output_layout());
+  server.scene = scm_to_pointer(scm_call_1(scm_c_public_ref("wlroots types scene" ,"unwrap-wlr-scene"),
+                            scm_c_public_ref("gwwm init", "gwwm-server-scene")));// wlr_scene_create();
+  /* wlr_scene_attach_output_layout(server.scene, server_output_layout()); */
 
   /* Set up the xdg-shell. The xdg-shell is a Wayland protocol which is used
    * for application windows. For more detail on shells, refer to my article:
