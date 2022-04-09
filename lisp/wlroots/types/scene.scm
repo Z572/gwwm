@@ -8,7 +8,8 @@
   #:export (wrap-wlr-scene
             unwrap-wlr-scene
             wlr-scene-create
-            wlr-scene-attach-output-layout))
+            wlr-scene-attach-output-layout
+            wlr-scene-node-set-position))
 
 (define-class <wlr-scene> ()
   (pointer #:accessor .pointer #:init-keyword #:pointer))
@@ -27,3 +28,8 @@
   (let ((proc (wlr->procedure int "wlr_scene_attach_output_layout" '(* *))))
     (lambda (scene output-layout)
       (proc (unwrap-wlr-scene scene) (unwrap-wlr-output-layout output-layout)))))
+
+(define wlr-scene-node-set-position
+  (let ((proc (wlr->procedure int "wlr_scene_node_set_position" (list '* int int))))
+    (lambda (scene x y)
+      (proc (unwrap-wlr-scene scene) x y))))

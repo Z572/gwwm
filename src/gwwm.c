@@ -362,7 +362,10 @@ static void process_cursor_move(struct tinywl_server *server, uint32_t time) {
   struct tinywl_view *view = server->grabbed_view;
   view->x = server->cursor->x - server->grab_x;
   view->y = server->cursor->y - server->grab_y;
-  wlr_scene_node_set_position(view->scene_node, view->x, view->y);
+  scm_call_3(scm_c_public_ref("wlroots types scene","wlr-scene-node-set-position"),
+             scm_call_1(scm_c_public_ref("wlroots types scene","wrap-wlr-scene"),
+                        scm_from_pointer(view->scene_node ,NULL)),
+             scm_from_int(view->x), scm_from_int(view->y));
 }
 
 static void process_cursor_resize(struct tinywl_server *server, uint32_t time) {
