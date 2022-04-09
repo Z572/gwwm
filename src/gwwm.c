@@ -539,7 +539,9 @@ static void server_cursor_frame(struct wl_listener *listener, void *data) {
   struct tinywl_server *server =
       wl_container_of(listener, server, cursor_frame);
   /* Notify the client with pointer focus of the frame event. */
-  wlr_seat_pointer_notify_frame(server->seat);
+  /* wlr_seat_pointer_notify_frame(server->seat); */
+  scm_call_1(scm_c_public_ref("wlroots types seat", "wlr-seat-pointer-notify-frame"),
+             scm_c_public_ref("gwwm init" ,"gwwm-server-seat"));
 }
 
 static void output_frame(struct wl_listener *listener, void *data) {

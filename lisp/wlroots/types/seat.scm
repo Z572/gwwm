@@ -11,12 +11,14 @@
   #:use-module ((system foreign) #:select ((uint32 . ffi:uint32)
                                            (float . ffi:float)
                                            (int . ffi:int)
+                                           (void . ffi:void)
                                            %null-pointer
                                            string->pointer))
   #:use-module (oop goops)
   #:export (wrap-wlr-seat
             unwrap-wlr-seat
-            wlr-seat-create))
+            wlr-seat-create
+            wlr-seat-pointer-notify-frame))
 
 (define %wlr-serial-range-struct
   (bs:struct `((min-incl ,uint32)
@@ -135,3 +137,7 @@
     (lambda (display name)
       (wrap-wlr-seat (proc (unwrap-wl-display display)
                            (string->pointer name ))))))
+(define wlr-seat-pointer-notify-frame
+  (let ((proc (wlr->procedure ffi:void "wlr_seat_pointer_notify_frame" '(*))))
+    (lambda (seat)
+      (proc (unwrap-wlr-seat seat)))))

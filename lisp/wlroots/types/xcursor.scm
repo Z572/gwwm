@@ -40,7 +40,6 @@
 (define wlr-xcursor-manager-set-cursor-image
   (let ((proc (wlr->procedure ffi:void "wlr_xcursor_manager_set_cursor_image" (list '* '* '*))))
     (lambda (manager name cursor)
-      (pk 'wlr-xcursor-manager-set-cursor-image)
       (proc (unwrap-wlr-xcursor-manager manager)
             (string->pointer name)
             (unwrap-wlr-cursor cursor)))))
