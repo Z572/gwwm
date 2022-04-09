@@ -128,14 +128,15 @@ static void focus_view(struct tinywl_view *view, struct wlr_surface *surface) {
      */
 
     /* struct wlr_xdg_surface *previous = */
-    /*   scm_to_pointer(scm_call_1(scm_c_public_ref("wlroots types xdg-shell", "unwrap-wlr-xdg-surface"), */
+    /*   scm_to_pointer(scm_call_1(scm_c_public_ref("wlroots types xdg-shell",
+     * "unwrap-wlr-xdg-surface"), */
     /*                             )) ; */
     /* wlr_xdg_toplevel_set_activated(previous, false); */
-    scm_call_1(scm_c_public_ref("gwwm init",
-                                             "disable-toplevel-activated"),
-                            scm_call_1(scm_c_public_ref("wlroots types xdg-shell",
-                                                        "wrap-wlr-xdg-surface"),
-                                       scm_from_pointer(seat->keyboard_state.focused_surface ,NULL)) );
+    scm_call_1(
+        scm_c_public_ref("gwwm init", "disable-toplevel-activated"),
+        scm_call_1(
+            scm_c_public_ref("wlroots types xdg-shell", "wrap-wlr-xdg-surface"),
+            scm_from_pointer(seat->keyboard_state.focused_surface, NULL)));
   }
   struct wlr_keyboard *keyboard = wlr_seat_get_keyboard(seat);
   /* Move the view to the front */
@@ -143,7 +144,11 @@ static void focus_view(struct tinywl_view *view, struct wlr_surface *surface) {
   wl_list_remove(&view->link);
   wl_list_insert(&server->views, &view->link);
   /* Activate the new surface */
-  wlr_xdg_toplevel_set_activated(view->xdg_surface, true);
+  /* wlr_xdg_toplevel_set_activated(view->xdg_surface, true); */
+  scm_call_2(scm_c_public_ref("wlroots types xdg-shell", "wlr-xdg-toplevel-set-activated"),
+             scm_call_1(scm_c_public_ref("wlroots types xdg-shell", "wrap-wlr-xdg-surface"),
+                        scm_from_pointer(view->xdg_surface, NULL)),
+             scm_from_bool(true));
   /*
    * Tell the seat to have the keyboard enter this surface. wlroots will keep
    * track of this and automatically send key events to the appropriate
@@ -223,8 +228,7 @@ static void keyboard_handle_key(struct wl_listener *listener, void *data) {
     for (int i = 0; i < nsyms; i++) {
       handled = scm_to_bool(
           scm_call_3(scm_c_public_ref("gwwm init", "handle-keybinding"),
-                     scm_from_pointer(server, NULL),
-                     scm_from_uint32(modifiers),
+                     scm_from_pointer(server, NULL), scm_from_uint32(modifiers),
                      scm_from_int(syms[i])));
     }
   }
@@ -717,7 +721,6 @@ static void server_new_xdg_surface(struct wl_listener *listener, void *data) {
   /*            scm_from_pointer(server, NULL), */
   /*            scm_from_pointer(xdg_surface, NULL)); */
 
-
   /* We must add xdg popups to the scene graph so they get rendered. The
    * wlroots scene graph provides a helper for this, but to use it we must
    * provide the proper parent scene node of the xdg popup. To enable this,
@@ -731,7 +734,7 @@ static void server_new_xdg_surface(struct wl_listener *listener, void *data) {
     return;
   }
   assert(xdg_surface->role == WLR_XDG_SURFACE_ROLE_TOPLEVEL);
-      scm_call_2(scm_c_public_ref("gwwm init","server-new-xdg-surface"),
+  scm_call_2(scm_c_public_ref("gwwm init", "server-new-xdg-surface"),
              scm_from_pointer(server, NULL),
              scm_from_pointer(xdg_surface, NULL));
   /* Allocate a tinywl_view for this surface */
@@ -825,8 +828,10 @@ static void inner_main(void *closure, int argc, char *argv[]) {
    * positions and then call wlr_scene_output_commit() to render a frame if
    * necessary.
    */
-  server.scene = scm_to_pointer(scm_call_1(scm_c_public_ref("wlroots types scene" ,"unwrap-wlr-scene"),
-                            scm_c_public_ref("gwwm init", "gwwm-server-scene")));// wlr_scene_create();
+  server.scene = scm_to_pointer(
+      scm_call_1(scm_c_public_ref("wlroots types scene", "unwrap-wlr-scene"),
+                 scm_c_public_ref("gwwm init",
+                                  "gwwm-server-scene"))); // wlr_scene_create();
   /* wlr_scene_attach_output_layout(server.scene, server_output_layout()); */
 
   /* Set up the xdg-shell. The xdg-shell is a Wayland protocol which is used
@@ -835,10 +840,11 @@ static void inner_main(void *closure, int argc, char *argv[]) {
    * https://drewdevault.com/2018/07/29/Wayland-shells.html
    */
   wl_list_init(&server.views);
-  server.xdg_shell = scm_to_pointer(scm_call_1(scm_c_public_ref("wlroots types xdg-shell" ,"unwrap-wlr-xdg-shell"),
-                            scm_c_public_ref("gwwm init", "gwwm-server-xdg-shell")));
+  server.xdg_shell = scm_to_pointer(scm_call_1(
+      scm_c_public_ref("wlroots types xdg-shell", "unwrap-wlr-xdg-shell"),
+      scm_c_public_ref("gwwm init", "gwwm-server-xdg-shell")));
 
-/* wlr_xdg_shell_create(server_wl_display()); */
+  /* wlr_xdg_shell_create(server_wl_display()); */
   server.new_xdg_surface.notify = server_new_xdg_surface;
   wl_signal_add(&server.xdg_shell->events.new_surface, &server.new_xdg_surface);
 
@@ -846,16 +852,18 @@ static void inner_main(void *closure, int argc, char *argv[]) {
    * Creates a cursor, which is a wlroots utility for tracking the cursor
    * image shown on screen.
    */
-  server.cursor = scm_to_pointer(scm_call_1(scm_c_public_ref("wlroots types cursor" ,"unwrap-wlr-cursor"),
-                            scm_c_public_ref("gwwm init", "gwwm-server-cursor")));
+  server.cursor = scm_to_pointer(
+      scm_call_1(scm_c_public_ref("wlroots types cursor", "unwrap-wlr-cursor"),
+                 scm_c_public_ref("gwwm init", "gwwm-server-cursor")));
   /* wlr_cursor_attach_output_layout(server.cursor, server_output_layout()); */
 
   /* Creates an xcursor manager, another wlroots utility which loads up
    * Xcursor themes to source cursor images from and makes sure that cursor
    * images are available at all scale factors on the screen (necessary for
    * HiDPI support). We add a cursor theme at scale factor 1 to begin with. */
-  server.cursor_mgr = scm_to_pointer(scm_call_1(scm_c_public_ref("wlroots types xcursor" ,"unwrap-wlr-xcursor-manager"),
-                                                scm_c_public_ref("gwwm init", "gwwm-server-cursor-mgr")));
+  server.cursor_mgr = scm_to_pointer(scm_call_1(
+      scm_c_public_ref("wlroots types xcursor", "unwrap-wlr-xcursor-manager"),
+      scm_c_public_ref("gwwm init", "gwwm-server-cursor-mgr")));
   /* wlr_xcursor_manager_load(server.cursor_mgr, 1); */
 
   /*
@@ -891,9 +899,10 @@ static void inner_main(void *closure, int argc, char *argv[]) {
   wl_list_init(&server.keyboards);
   server.new_input.notify = server_new_input;
   wl_signal_add(&server_backend()->events.new_input, &server.new_input);
-  server.seat = scm_to_pointer(scm_call_1(scm_c_public_ref("wlroots types seat" ,"unwrap-wlr-seat"),
-                                                scm_c_public_ref("gwwm init", "gwwm-server-seat")));
-/* wlr_seat_create(server_wl_display(), "seat0"); */
+  server.seat = scm_to_pointer(
+      scm_call_1(scm_c_public_ref("wlroots types seat", "unwrap-wlr-seat"),
+                 scm_c_public_ref("gwwm init", "gwwm-server-seat")));
+  /* wlr_seat_create(server_wl_display(), "seat0"); */
   server.request_cursor.notify = seat_request_cursor;
   wl_signal_add(&server.seat->events.request_set_cursor,
                 &server.request_cursor);
