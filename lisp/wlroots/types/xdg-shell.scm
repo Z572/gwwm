@@ -4,10 +4,14 @@
   #:use-module (bytestructures guile)
   #:use-module (oop goops)
   #:use-module (wlroots utils)
-  #:export (%wlr-xdg-shell-struct %wlr-xdg-surface-struct
-                                  wlr-xdg-shell-create
-                                  wrap-wlr-xdg-shell
-                                  unwrap-wlr-xdg-shell))
+  #:export (%wlr-xdg-shell-struct
+            %wlr-xdg-surface-struct
+            wlr-xdg-shell-create
+            wrap-wlr-xdg-shell
+            unwrap-wlr-xdg-shell
+            wrap-wlr-xdg-surface
+            unwrap-wlr-xdg-surface
+            wlr-xdg-surface-from-wlr-surface))
 (define-class <wlr-xdg-shell> ()
   (pointer #:accessor .pointer #:init-keyword #:pointer))
 (define (wrap-wlr-xdg-shell p)
@@ -60,3 +64,15 @@
     (lambda (display)
       (wrap-wlr-xdg-shell
        (proc (unwrap-wl-display display))))))
+(define-class <wlr-xdg-surface> ()
+  (pointer #:accessor .pointer #:init-keyword #:pointer))
+(define (wrap-wlr-xdg-surface p)
+  (make <wlr-xdg-surface> #:pointer p))
+(define (unwrap-wlr-xdg-surface o)
+  (.pointer o))
+
+(define wlr-xdg-surface-from-wlr-surface
+  (let ((proc (wlr->procedure '* "wlr_xdg_surface_from_wlr_surface" '(*))))
+    (lambda (surface)
+      (wrap-wlr-xdg-surface
+       (proc (unwrap-wlr-xdg-surface surface))))))
