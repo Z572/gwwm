@@ -138,6 +138,9 @@ gwwm [options]
         (wlr-backend-destroy gwwm-server-backend)))
   )
 
+(define-public (disable-toplevel-activated surface)
+  (wlr-xdg-toplevel-set-activated
+   (wlr-xdg-surface-from-wlr-surface surface) #f))
 (define (gwwm-run!)
   (pk 'run!)
   (and=> (option-ref options 'exec #f) fork+exec)

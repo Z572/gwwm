@@ -127,14 +127,15 @@ static void focus_view(struct tinywl_view *view, struct wlr_surface *surface) {
      * stop displaying a caret.
      */
 
-    struct wlr_xdg_surface *previous =
-      scm_to_pointer(scm_call_1(scm_c_public_ref("wlroots types xdg-shell", "unwrap-wlr-xdg-surface"),
-                 scm_call_1(scm_c_public_ref("wlroots types xdg-shell",
-                                             "wlr-xdg-surface-from-wlr-surface"),
+    /* struct wlr_xdg_surface *previous = */
+    /*   scm_to_pointer(scm_call_1(scm_c_public_ref("wlroots types xdg-shell", "unwrap-wlr-xdg-surface"), */
+    /*                             )) ; */
+    /* wlr_xdg_toplevel_set_activated(previous, false); */
+    scm_call_1(scm_c_public_ref("gwwm init",
+                                             "disable-toplevel-activated"),
                             scm_call_1(scm_c_public_ref("wlroots types xdg-shell",
                                                         "wrap-wlr-xdg-surface"),
-                                       scm_from_pointer(seat->keyboard_state.focused_surface ,NULL)) ))) ;
-    wlr_xdg_toplevel_set_activated(previous, false);
+                                       scm_from_pointer(seat->keyboard_state.focused_surface ,NULL)) );
   }
   struct wlr_keyboard *keyboard = wlr_seat_get_keyboard(seat);
   /* Move the view to the front */

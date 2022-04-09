@@ -3,6 +3,7 @@
   #:use-module (wlroots util box)
   #:use-module (bytestructures guile)
   #:use-module (oop goops)
+  #:use-module ((system foreign) #:select ((uint32 . ffi:uint32)))
   #:use-module (wlroots utils)
   #:export (%wlr-xdg-shell-struct
             %wlr-xdg-surface-struct
@@ -11,7 +12,8 @@
             unwrap-wlr-xdg-shell
             wrap-wlr-xdg-surface
             unwrap-wlr-xdg-surface
-            wlr-xdg-surface-from-wlr-surface))
+            wlr-xdg-surface-from-wlr-surface
+            wlr-xdg-toplevel-set-activated))
 (define-class <wlr-xdg-shell> ()
   (pointer #:accessor .pointer #:init-keyword #:pointer))
 (define (wrap-wlr-xdg-shell p)
@@ -76,3 +78,9 @@
     (lambda (surface)
       (wrap-wlr-xdg-surface
        (proc (unwrap-wlr-xdg-surface surface))))))
+
+(define wlr-xdg-toplevel-set-activated
+  (let ((proc (wlr->procedure ffi:uint32 "wlr_xdg_toplevel_set_activated" (list '* ffi:int))))
+    (lambda (surface activated)
+      "Returns the associated configure serial."
+      (proc (unwrap-wlr-xdg-surface surface) (if activated 1 0)))))
