@@ -7,12 +7,16 @@
   #:use-module ((system foreign) #:select ((uint32 . ffi:uint32)
                                            (float . ffi:float)
                                            (int . ffi:int)
-                                           %null-pointer))
+                                           (void . ffi:void)
+                                           %null-pointer
+                                           string->pointer))
+  #:use-module (wlroots types cursor)
   #:use-module (oop goops)
   #:export (wrap-wlr-xcursor-manager
             unwrap-wlr-xcursor-manager
             wlr-xcursor-manager-create
-            wlr-xcursor-manager-load))
+            wlr-xcursor-manager-load
+            wlr-xcursor-manager-set-cursor-image))
 (define %wlr-xcursor-manager-struct
   (bs:struct `((name ,(bs:pointer *) )
                (size ,uint32)
@@ -32,3 +36,11 @@
     (lambda (xmgr scale)
       (wrap-wlr-xcursor-manager (proc (unwrap-wlr-xcursor-manager xmgr) scale)))))
 ;; "wlr_xcursor_manager_load"
+
+(define wlr-xcursor-manager-set-cursor-image
+  (let ((proc (wlr->procedure ffi:void "wlr_xcursor_manager_set_cursor_image" (list '* '* '*))))
+    (lambda (manager name cursor)
+      (pk 'wlr-xcursor-manager-set-cursor-image)
+      (proc (unwrap-wlr-xcursor-manager manager)
+            (string->pointer name)
+            (unwrap-wlr-cursor cursor)))))

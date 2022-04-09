@@ -137,6 +137,8 @@ gwwm [options]
             (wl-display-destroy gwwm-wl-display)))
         (wlr-backend-destroy gwwm-server-backend)))
   )
+(define-public (wlr_xcursor_manager_set_cursor_image name)
+  (wlr-xcursor-manager-set-cursor-image gwwm-server-cursor-mgr name gwwm-server-cursor))
 
 (define-public (disable-toplevel-activated surface)
   (wlr-xdg-toplevel-set-activated

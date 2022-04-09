@@ -441,8 +441,10 @@ static void process_cursor_motion(struct tinywl_server *server, uint32_t time) {
     /* If there's no view under the cursor, set the cursor image to a
      * default. This is what makes the cursor image appear when you move it
      * around the screen, not over any views. */
-    wlr_xcursor_manager_set_cursor_image(server->cursor_mgr, "left_ptr",
-                                         server->cursor);
+    /* wlr_xcursor_manager_set_cursor_image(server->cursor_mgr, "left_ptr", */
+    /*                                      server->cursor); */
+    scm_call_1(scm_c_public_ref("gwwm init", "wlr_xcursor_manager_set_cursor_image"),
+               scm_from_utf8_string("left_ptr"));
   }
   if (surface) {
     /*
