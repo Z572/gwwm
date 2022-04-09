@@ -18,6 +18,7 @@
   #:use-module (wlroots types xdg-shell)
   #:use-module (wlroots types scene)
   #:use-module (wlroots types output-layout)
+  #:use-module (wlroots types output)
   #:use-module (wlroots types seat)
   #:use-module (wlroots types cursor)
   #:use-module (wlroots types xcursor)
@@ -172,3 +173,8 @@ gwwm [options]
 (add-hook! shutdown-hook (lambda _ (display "shutdown-now!") (newline)))
 
 (false-if-exception(spawn-server (make-tcp-server-socket)))
+
+(define-public (server-new-output _ data)
+  (wlr-output-init-render (wrap-wlr-output data)
+                          gwwm-server-allocator
+                          gwwm-server-renderer))
