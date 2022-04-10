@@ -913,7 +913,12 @@ static void inner_main(void *closure, int argc, char *argv[]) {
    */
   wl_list_init(&server.keyboards);
   server.new_input.notify = server_new_input;
-  wl_signal_add(&server_backend()->events.new_input, &server.new_input);
+  scm_call_2(scm_c_public_ref("wayland signal", "wl-signal-add"),
+             scm_call_1(scm_c_public_ref("wayland signal", "wrap-wl-signal"),
+                        scm_from_pointer(&server_backend()->events.new_input, NULL)),
+             scm_call_1(scm_c_public_ref("wayland listener", "wrap-wl-listener")
+                        ,scm_from_pointer(&server.new_input, NULL)));
+  /* wl_signal_add(&server_backend()->events.new_input, &server.new_input); */
   server.seat = scm_to_pointer(
       scm_call_1(scm_c_public_ref("wlroots types seat", "unwrap-wlr-seat"),
                  scm_c_public_ref("gwwm init", "gwwm-server-seat")));
