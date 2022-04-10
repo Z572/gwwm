@@ -108,6 +108,12 @@ struct tinywl_keyboard {
   struct wl_listener key;
 };
 
+static void gwwm_wl_list_remove(struct wl_list *l){
+  scm_call_1(scm_c_public_ref("wayland list", "wl-list-remove"),
+             scm_call_1(scm_c_public_ref("wayland list", "wrap-wl-list"),
+                        scm_from_pointer(l, NULL)));
+}
+
 static void focus_view(struct tinywl_view *view, struct wlr_surface *surface) {
   /* Note: this function only deals with keyboard focus. */
   if (view == NULL) {
@@ -141,7 +147,7 @@ static void focus_view(struct tinywl_view *view, struct wlr_surface *surface) {
   struct wlr_keyboard *keyboard = wlr_seat_get_keyboard(seat);
   /* Move the view to the front */
   wlr_scene_node_raise_to_top(view->scene_node);
-  wl_list_remove(&view->link);
+  gwwm_wl_list_remove(&view->link);
   wl_list_insert(&server->views, &view->link);
   /* Activate the new surface */
   /* wlr_xdg_toplevel_set_activated(view->xdg_surface, true); */
@@ -166,6 +172,8 @@ static void gwwm_signal_add(struct wl_signal *signal, struct wl_listener *listen
              scm_call_1(scm_c_public_ref("wayland listener", "wrap-wl-listener"),
                         scm_from_pointer(listener, NULL)));
 }
+
+
 
 static struct wl_display *server_wl_display(void) {
   return (struct wl_display *)(scm_to_pointer(
@@ -634,18 +642,18 @@ static void xdg_toplevel_unmap(struct wl_listener *listener, void *data) {
   /* Called when the surface is unmapped, and should no longer be shown. */
   struct tinywl_view *view = wl_container_of(listener, view, unmap);
 
-  wl_list_remove(&view->link);
+  gwwm_wl_list_remove(&view->link);
 }
 
 static void xdg_toplevel_destroy(struct wl_listener *listener, void *data) {
   /* Called when the surface is destroyed and should never be shown again. */
   struct tinywl_view *view = wl_container_of(listener, view, destroy);
 
-  wl_list_remove(&view->map.link);
-  wl_list_remove(&view->unmap.link);
-  wl_list_remove(&view->destroy.link);
-  wl_list_remove(&view->request_move.link);
-  wl_list_remove(&view->request_resize.link);
+  gwwm_wl_list_remove(&view->map.link);
+  gwwm_wl_list_remove(&view->unmap.link);
+  gwwm_wl_list_remove(&view->destroy.link);
+  gwwm_wl_list_remove(&view->request_move.link);
+  gwwm_wl_list_remove(&view->request_resize.link);
 
   free(view);
 }
@@ -710,7 +718,7 @@ static void xdg_toplevel_request_move(struct wl_listener *listener,
 /*       wlr_log(WLR_INFO, "layer_shell_request_new_surface-5"); */
 /*   /\* l.notify=xdg_toplevel_map; *\/ */
 /*   /\*   wlr_log(WLR_INFO, "layer_shell_request_new_surface-4"); *\/ */
-/*   /\* wl_signal_add(&layer_shell->events.new_surface, &l); *\/ */
+/*   /\* gwwm_signal_add(&layer_shell->events.new_surface, &l); *\/ */
 /*   /\*   wlr_log(WLR_INFO, "layer_shell_request_new_surface-3"); *\/ */
 /*   // layer_shell->events.new_surface */
 /*   /\* /\\* if (layer_shell->) *\\/ *\/ */
@@ -962,7 +970,7 @@ static void inner_main(void *closure, int argc, char *argv[]) {
   // wlr_idle_create(server_wl_display());
   /* server.layer_shell = wlr_layer_shell_v1_create(server_wl_display()); */
   /* server.request_new_surface.notify = layer_shell_request_new_surface; */
-  /* wl_signal_add(&server.layer_shell->events.new_surface, */
+  /* gwwm_signal_add(&server.layer_shell->events.new_surface, */
   /*               &server.request_new_surface); */
 
   /* Run the Wayland event loop. This does not return until you exit the

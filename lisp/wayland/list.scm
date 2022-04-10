@@ -45,8 +45,8 @@
 (define-public (wl-list-prev wl-l)
   (wrap-wl-list
    (make-pointer
-    (pk 'prev (bytestructure-ref
-               (pointer->bytestructure (unwrap-wl-list wl-l) %wl-list) 'prev)))))
+    (bytestructure-ref
+     (pointer->bytestructure (unwrap-wl-list wl-l) %wl-list) 'prev))))
 
 (define %wl-list-init
   (wayland-server->procedure
@@ -67,10 +67,12 @@
       (proc (unwrap-wl-list lst)
             (unwrap-wl-list lst2)))))
 
-(define (wl-list-remove lst)
-  (wayland-server->procedure
-   void "wl_list_remove"
-   (list '*)))
+(define wl-list-remove
+  (let ((proc (wayland-server->procedure
+               void "wl_list_remove"
+               (list '*))))
+    (lambda (l)
+      (proc (unwrap-wl-list l)))))
 
 (define %wl-list-length
   (wayland-server->procedure ffi:int "wl_list_length" '(*)))

@@ -27,7 +27,7 @@
                                 'listener-list new-val))))
 (define (wrap-wl-signal p)
   (make <wl-signal> #:bytestructures (if (pointer? p)
-                                         (pointer->bytestructure (pk 'p->b p) %wl-signal-struct)
+                                         (pointer->bytestructure p %wl-signal-struct)
                                          p)))
 (define (unwrap-wl-signal o)
   (bytestructure->pointer (.bytestructure o)))
