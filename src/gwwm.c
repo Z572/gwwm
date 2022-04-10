@@ -159,6 +159,14 @@ static void focus_view(struct tinywl_view *view, struct wlr_surface *surface) {
                                  &keyboard->modifiers);
 }
 
+static void gwwm_signal_add(struct wl_signal *signal, struct wl_listener *listener){
+  scm_call_2(scm_c_public_ref("wayland signal", "wl-signal-add"),
+             scm_call_1(scm_c_public_ref("wayland signal", "wrap-wl-signal"),
+                        scm_from_pointer(signal, NULL)),
+             scm_call_1(scm_c_public_ref("wayland listener", "wrap-wl-listener"),
+                        scm_from_pointer(listener, NULL)));
+}
+
 static struct wl_display *server_wl_display(void) {
   return (struct wl_display *)(scm_to_pointer(
       scm_call_1(scm_c_public_ref("wayland display", "unwrap-wl-display"),
@@ -260,9 +268,9 @@ static void server_new_keyboard(struct tinywl_server *server,
 
   /* Here we set up listeners for keyboard events. */
   keyboard->modifiers.notify = keyboard_handle_modifiers;
-  wl_signal_add(&device->keyboard->events.modifiers, &keyboard->modifiers);
+  gwwm_signal_add(&device->keyboard->events.modifiers, &keyboard->modifiers);
   keyboard->key.notify = keyboard_handle_key;
-  wl_signal_add(&device->keyboard->events.key, &keyboard->key);
+  gwwm_signal_add(&device->keyboard->events.key, &keyboard->key);
 
   wlr_seat_set_keyboard(server->seat, device);
 
@@ -596,7 +604,7 @@ static void server_new_output(struct wl_listener *listener, void *data) {
   output->server = server;
   /* Sets up a listener for the frame notify event. */
   output->frame.notify = output_frame;
-  wl_signal_add(&wlr_output->events.frame, &output->frame);
+  gwwm_signal_add(&wlr_output->events.frame, &output->frame);
   wl_list_insert(&server->outputs, &output->link);
 
   /* Adds this to the output layout. The add_auto function arranges outputs
@@ -763,18 +771,18 @@ static void server_new_xdg_surface(struct wl_listener *listener, void *data) {
 
   /* Listen to the various events it can emit */
   view->map.notify = xdg_toplevel_map;
-  wl_signal_add(&xdg_surface->events.map, &view->map);
+  gwwm_signal_add(&xdg_surface->events.map, &view->map);
   view->unmap.notify = xdg_toplevel_unmap;
-  wl_signal_add(&xdg_surface->events.unmap, &view->unmap);
+  gwwm_signal_add(&xdg_surface->events.unmap, &view->unmap);
   view->destroy.notify = xdg_toplevel_destroy;
-  wl_signal_add(&xdg_surface->events.destroy, &view->destroy);
+  gwwm_signal_add(&xdg_surface->events.destroy, &view->destroy);
 
   /* cotd */
   struct wlr_xdg_toplevel *toplevel = xdg_surface->toplevel;
   view->request_move.notify = xdg_toplevel_request_move;
-  wl_signal_add(&toplevel->events.request_move, &view->request_move);
+  gwwm_signal_add(&toplevel->events.request_move, &view->request_move);
   view->request_resize.notify = xdg_toplevel_request_resize;
-  wl_signal_add(&toplevel->events.request_resize, &view->request_resize);
+  gwwm_signal_add(&toplevel->events.request_resize, &view->request_resize);
 }
 
 static void inner_main(void *closure, int argc, char *argv[]) {
@@ -835,7 +843,7 @@ static void inner_main(void *closure, int argc, char *argv[]) {
              scm_call_1(scm_c_public_ref("wayland list", "wrap-wl-list"),
                         scm_from_pointer(&server.outputs, NULL)));
   server.new_output.notify = server_new_output;
-  wl_signal_add(&server_backend()->events.new_output, &server.new_output);
+  gwwm_signal_add(&server_backend()->events.new_output, &server.new_output);
 
   /* Create a scene graph. This is a wlroots abstraction that handles all
    * rendering and damage tracking. All the compositor author needs to do
@@ -861,7 +869,7 @@ static void inner_main(void *closure, int argc, char *argv[]) {
 
   /* wlr_xdg_shell_create(server_wl_display()); */
   server.new_xdg_surface.notify = server_new_xdg_surface;
-  wl_signal_add(&server.xdg_shell->events.new_surface, &server.new_xdg_surface);
+  gwwm_signal_add(&server.xdg_shell->events.new_surface, &server.new_xdg_surface);
 
   /*
    * Creates a cursor, which is a wlroots utility for tracking the cursor
@@ -894,16 +902,16 @@ static void inner_main(void *closure, int argc, char *argv[]) {
    * And more comments are sprinkled throughout the notify functions above.
    */
   server.cursor_motion.notify = server_cursor_motion;
-  wl_signal_add(&server.cursor->events.motion, &server.cursor_motion);
+  gwwm_signal_add(&server.cursor->events.motion, &server.cursor_motion);
   server.cursor_motion_absolute.notify = server_cursor_motion_absolute;
-  wl_signal_add(&server.cursor->events.motion_absolute,
+  gwwm_signal_add(&server.cursor->events.motion_absolute,
                 &server.cursor_motion_absolute);
   server.cursor_button.notify = server_cursor_button;
-  wl_signal_add(&server.cursor->events.button, &server.cursor_button);
+  gwwm_signal_add(&server.cursor->events.button, &server.cursor_button);
   server.cursor_axis.notify = server_cursor_axis;
-  wl_signal_add(&server.cursor->events.axis, &server.cursor_axis);
+  gwwm_signal_add(&server.cursor->events.axis, &server.cursor_axis);
   server.cursor_frame.notify = server_cursor_frame;
-  wl_signal_add(&server.cursor->events.frame, &server.cursor_frame);
+  gwwm_signal_add(&server.cursor->events.frame, &server.cursor_frame);
 
   /*
    * Configures a seat, which is a single "seat" at which a user sits and
@@ -913,21 +921,21 @@ static void inner_main(void *closure, int argc, char *argv[]) {
    */
   wl_list_init(&server.keyboards);
   server.new_input.notify = server_new_input;
-  scm_call_2(scm_c_public_ref("wayland signal", "wl-signal-add"),
-             scm_call_1(scm_c_public_ref("wayland signal", "wrap-wl-signal"),
-                        scm_from_pointer(&server_backend()->events.new_input, NULL)),
-             scm_call_1(scm_c_public_ref("wayland listener", "wrap-wl-listener")
-                        ,scm_from_pointer(&server.new_input, NULL)));
-  /* wl_signal_add(&server_backend()->events.new_input, &server.new_input); */
+  /* scm_call_2(scm_c_public_ref("wayland signal", "wl-signal-add"), */
+  /*            scm_call_1(scm_c_public_ref("wayland signal", "wrap-wl-signal"), */
+  /*                       scm_from_pointer(&server_backend()->events.new_input, NULL)), */
+  /*            scm_call_1(scm_c_public_ref("wayland listener", "wrap-wl-listener") */
+  /*                       ,scm_from_pointer(&server.new_input, NULL))); */
+  gwwm_signal_add(&server_backend()->events.new_input, &server.new_input);
   server.seat = scm_to_pointer(
       scm_call_1(scm_c_public_ref("wlroots types seat", "unwrap-wlr-seat"),
                  scm_c_public_ref("gwwm init", "gwwm-server-seat")));
   /* wlr_seat_create(server_wl_display(), "seat0"); */
   server.request_cursor.notify = seat_request_cursor;
-  wl_signal_add(&server.seat->events.request_set_cursor,
+  gwwm_signal_add(&server.seat->events.request_set_cursor,
                 &server.request_cursor);
   server.request_set_selection.notify = seat_request_set_selection;
-  wl_signal_add(&server.seat->events.request_set_selection,
+  gwwm_signal_add(&server.seat->events.request_set_selection,
                 &server.request_set_selection);
 
   /* Add a Unix socket to the Wayland display. */
