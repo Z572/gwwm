@@ -4,8 +4,10 @@
   #:use-module (srfi srfi-26)
   #:use-module (wlroots render renderer)
   #:use-module (wlroots types output-layout)
+  #:use-module (wlroots types surface)
   #:use-module (wlroots utils)
-  ;; #:use-module (system foreign)
+  #:use-module ((system foreign) #:select ((void . ffi:void)
+                                           (int32 . ffi:int32)))
   ;; #:use-module (system foreign)
   #:use-module (bytestructures guile)
   #:use-module (oop goops)
@@ -13,7 +15,8 @@
             unwrap-wlr-cursor
             wlr-cursor-create
             wlr-cursor-attach-output-layout
-            %wlr-cursor-struct))
+            %wlr-cursor-struct
+            wlr-cursor-set-surface))
 
 (define %wlr-cursor-struct
   (bs:struct `((state ,(bs:pointer '*))
@@ -63,3 +66,10 @@
   (let ((proc (wlr->procedure ffi:int "wlr_cursor_attach_output_layout" '(* *))))
     (lambda (cursor output-layout)
       (proc (unwrap-wlr-cursor cursor) (unwrap-wlr-output-layout output-layout)))))
+(define wlr-cursor-set-surface
+  (let ((proc (wlr->procedure ffi:void "wlr_cursor_set_surface" `(* * ,ffi:int32 ,ffi:int32))))
+    (lambda (cur surface hostpot-x hostpot-y)
+      (proc (unwrap-wlr-cursor cur)
+            (unwrap-wlr-surface surface)
+            hostpot-x
+            hostpot-y))))

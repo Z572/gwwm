@@ -7,12 +7,14 @@
   ;; #:use-module (wlroots render renderer)
   ;; #:use-module (wlroots types output-layout)
   #:use-module (wlroots types data-device)
+  #:use-module (wlroots types surface)
   #:use-module (wlroots utils)
   #:use-module (bytestructures guile)
   #:use-module ((system foreign) #:select ((uint32 . ffi:uint32)
                                            (float . ffi:float)
                                            (int . ffi:int)
                                            (void . ffi:void)
+                                           pointer-address
                                            %null-pointer
                                            string->pointer))
   #:use-module (oop goops)
@@ -25,8 +27,14 @@
             %wlr-seat-request-set-selection-event-struct
             wrap-wlr-seat-request-set-selection-event
             unwrap-wlr-seat-request-set-selection-event
+            %wlr-seat-request-set-cursor-event-struct
+            wrap-wlr-seat-pointer-request-set-cursor-event
+            unwrap-wlr-seat-pointer-request-set-cursor-event
             wlr-seat-set-selection
-            %wlr-seat-struct))
+            %wlr-seat-struct
+            %wlr-seat-client-struct
+            wrap-wlr-seat-client
+            unwrap-wlr-seat-client))
 
 (define WLR_POINTER_BUTTONS_CAP 16)
 (define %wlr-serial-range-struct
@@ -49,6 +57,13 @@
                (events ,(bs:struct `((destroy ,%wl-signal-struct))))
                (serials ,%wlr-serial-ringset)
                (needs-touch-frame ,int))))
+
+(define-class <wlr-seat-client> ()
+  (pointer #:accessor .pointer #:init-keyword #:pointer))
+(define (wrap-wlr-seat-client p)
+  (make <wlr-seat-client> #:pointer p))
+(define (unwrap-wlr-seat-client o)
+  (.pointer o))
 (define %wlr-seat-pointer-state-struct
   (bs:struct `((seat ,(bs:pointer (delay %wlr-seat-struct)))
                (focused-client ,(bs:pointer '*))
@@ -88,12 +103,32 @@
 (define %wlr-seat-request-set-selection-event-struct
   (bs:struct `((source ,(bs:pointer '*))
                (serial ,uint32))))
+
 (define-class <wlr-seat-request-set-selection-event> ()
   (pointer #:accessor .pointer #:init-keyword #:pointer))
 (define (wrap-wlr-seat-request-set-selection-event p)
   (make <wlr-seat> #:pointer p))
 (define (unwrap-wlr-seat-request-set-selection-event o)
   (.pointer o))
+
+(define %wlr-seat-request-set-cursor-event-struct
+  (bs:struct `((seat-client ,(bs:pointer %wlr-seat-client-struct))
+               (surface ,(bs:pointer %wlr-surface-struct))
+               (serial ,uint32)
+               (hostpot-x ,int32)
+               (hostpot-y ,int32))))
+
+(define-class <wlr-seat-pointer-request-set-cursor-event> ()
+  (pointer #:accessor .pointer #:init-keyword #:pointer))
+(define (wrap-wlr-seat-pointer-request-set-cursor-event p)
+  (make <wlr-seat> #:pointer p))
+(define (unwrap-wlr-seat-pointer-request-set-cursor-event o)
+  (.pointer o))
+
+(define-method (= (f <wlr-seat-client>) (l <wlr-seat-client>))
+  (= (pointer-address (.pointer f))
+     (pointer-address (.pointer l))))
+
 (define %wlr-seat-struct
   (bs:struct `((global ,(bs:pointer '*))
                (display ,(bs:pointer '*))

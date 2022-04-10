@@ -24,7 +24,8 @@
             wlr-output-preferred-mode
             wlr-output-set-mode
             wlr-output-enable
-            wlr-output-commit))
+            wlr-output-commit
+            %pixman-region32-t-struct))
 (define %pixman-box32-struct
   (bs:struct `((x1 ,int32)
                (y1 ,int32)

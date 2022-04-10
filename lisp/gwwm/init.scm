@@ -14,6 +14,7 @@
   #:use-module (wlroots render allocator)
   #:use-module (wlroots types compositor)
   #:use-module (wlroots types xdg-shell)
+  #:use-module (wlroots types surface)
   #:use-module (wlroots types data-device)
   #:use-module (wlroots types xdg-shell)
   #:use-module (wlroots types scene)
@@ -186,6 +187,29 @@ gwwm [options]
           (pk 'b          (wlr-output-enable output #t))))
     (pk 'c (wlr-output-commit output))))
 
+(define-public (gwwm-seat-request-cursor p1 p2 )
+  (let* ((server-bytestructure (pointer->bytestructure
+                                (make-pointer
+                                 (- (pointer-address p1)
+                                    (bytestructure-offset
+                                     (bytestructure-ref (bytestructure %server-struct)
+                                                        'request-cursor)))) %server-struct))
+         (event (pointer->bytestructure p2 %wlr-seat-request-set-cursor-event-struct))
+         (focused-client (wrap-wlr-seat-client
+                          (make-pointer
+                           (bytestructure-ref
+                            server-bytestructure 'seat 'pointer-state 'focused-client))))
+         (seat-client (wrap-wlr-seat-client (make-pointer (bytestructure-ref event 'seat-client))))
+         )
+    
+    (if (= focused-client seat-client)
+        (wlr-cursor-set-surface (wrap-wlr-cursor
+                                 (make-pointer (bytestructure-ref server-bytestructure 'cursor)))
+                                (wrap-wlr-surface
+                                 (make-pointer (bytestructure-ref event 'surface)))
+                                (bytestructure-ref event 'hostpot-x)
+                                (bytestructure-ref event 'hostpot-y))
+        )))
 (define-public (gwwm-seat-request-set-selection p1 p2)
   (let* ((event (pointer->bytestructure p2 %wlr-seat-request-set-selection-event-struct))
          (offset (bytestructure-offset
