@@ -615,8 +615,10 @@ static void xdg_toplevel_map(struct wl_listener *listener, void *data) {
   /* Called when the surface is mapped, or ready to display on-screen. */
   struct tinywl_view *view = wl_container_of(listener, view, map);
 
-  wl_list_insert(&view->server->views, &view->link);
-
+  /* wl_list_insert(&view->server->views, &view->link); */
+  scm_call_2(scm_c_public_ref("wayland list", "wl-list-insert"),
+             scm_call_1(scm_c_public_ref("wayland list", "wrap-wl-list"), scm_from_pointer(&view->server->views ,NULL)),
+             scm_call_1(scm_c_public_ref("wayland list", "wrap-wl-list"), scm_from_pointer(&view->link ,NULL)));
   focus_view(view, view->xdg_surface->surface);
 }
 
