@@ -570,22 +570,25 @@ static void server_new_output(struct wl_listener *listener, void *data) {
   /* Configures the output created by the backend to use our allocator
    * and our renderer. Must be done once, before commiting the output */
   /* wlr_output_init_render(wlr_output, server_allocator(), server_renderer()); */
-  scm_call_2(scm_c_public_ref("gwwm init", "server-new-output"),
-             scm_from_pointer(listener, NULL),
-             scm_from_pointer(data ,NULL)/* scm_from_pointer(wlr_output ,NULL) */);
+  /* scm_call_2(scm_c_public_ref("gwwm init", "server-new-output"), */
+  /*            scm_from_pointer(listener, NULL), */
+  /*            scm_from_pointer(data ,NULL)); */
   /* Some backends don't have modes. DRM+KMS does, and we need to set a mode
    * before we can use the output. The mode is a tuple of (width, height,
    * refresh rate), and each monitor supports only a specific set of modes. We
    * just pick the monitor's preferred mode, a more sophisticated compositor
    * would let the user configure it. */
-  if (!wl_list_empty(&wlr_output->modes)) {
-    struct wlr_output_mode *mode = wlr_output_preferred_mode(wlr_output);
-    wlr_output_set_mode(wlr_output, mode);
-    wlr_output_enable(wlr_output, true);
-    if (!wlr_output_commit(wlr_output)) {
+  /* if (!wl_list_empty(&wlr_output->modes)) { */
+  /*   struct wlr_output_mode *mode = wlr_output_preferred_mode(wlr_output); */
+  /*   wlr_output_set_mode(wlr_output, mode); */
+  /*   wlr_output_enable(wlr_output, true); */
+
+  /* } */
+  if (!scm_to_bool(scm_call_2(scm_c_public_ref("gwwm init", "server-new-output"),
+             scm_from_pointer(listener, NULL),
+             scm_from_pointer(data ,NULL)))) {
       return;
     }
-  }
 
   /* Allocates and configures our state for this output */
   struct tinywl_output *output = calloc(1, sizeof(struct tinywl_output));

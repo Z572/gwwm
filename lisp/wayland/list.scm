@@ -81,4 +81,7 @@
 
 (define %wl-list-empty (wayland-server->procedure ffi:int "wl_list_empty" '(*)))
 
-(define (wl-list-empty l) (%wl-list-empty (unwrap-wl-list l)) )
+(define (wl-list-empty l) (case (%wl-list-empty (unwrap-wl-list l))
+                            ((0) #f)
+                            ((1) #t)
+                            (else (error ))) )

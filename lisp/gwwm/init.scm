@@ -175,6 +175,13 @@ gwwm [options]
 (false-if-exception(spawn-server (make-tcp-server-socket)))
 
 (define-public (server-new-output _ data)
-  (wlr-output-init-render (wrap-wlr-output data)
-                          gwwm-server-allocator
-                          gwwm-server-renderer))
+  (let ((output (wrap-wlr-output data)))
+    (wlr-output-init-render output
+                            gwwm-server-allocator
+                            gwwm-server-renderer)
+    (if (not (wl-list-empty (.modes output)))
+        (let ((mode (wlr-output-preferred-mode output)))
+          (pk 'mode-set)
+          (pk 'a(wlr-output-set-mode output mode))
+          (pk 'b          (wlr-output-enable output #t))))
+    (pk 'c (wlr-output-commit output))))
