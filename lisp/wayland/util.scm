@@ -33,7 +33,7 @@
             make-pointer->string
             string->pointer-address
             %wl-array
-
+            wl-container-of
             wl-log-set-handler-server))
 
 ;; (define-syntax-rule (define-callback name)
@@ -76,3 +76,13 @@
 (define (wl-log-set-handler-server proc)
   (wayland-server->procedure void "wl_log_set_handler_server" '(*))
   (procedure->pointer 'void (lambda (a b) (proc (pointer->string a) b)) (list '* '*)))
+
+(define (wl-container-of ptr sample member)
+  (pointer->bytestructure
+   (make-pointer
+    (- (pointer-address ptr)
+       (bytestructure-offset
+        (bytestructure-ref
+         (bytestructure sample)
+         member))))
+   sample))

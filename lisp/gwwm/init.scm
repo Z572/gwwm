@@ -188,37 +188,22 @@ gwwm [options]
     (pk 'c (wlr-output-commit output))))
 
 (define-public (gwwm-seat-request-cursor p1 p2 )
-  (let* ((server-bytestructure (pointer->bytestructure
-                                (make-pointer
-                                 (- (pointer-address p1)
-                                    (bytestructure-offset
-                                     (bytestructure-ref (bytestructure %server-struct)
-                                                        'request-cursor)))) %server-struct))
+  (let* ((server-bytestructure (wl-container-of p1 %server-struct 'request-cursor))
          (event (pointer->bytestructure p2 %wlr-seat-request-set-cursor-event-struct))
          (focused-client (wrap-wlr-seat-client
                           (make-pointer
                            (bytestructure-ref
                             server-bytestructure 'seat 'pointer-state 'focused-client))))
-         (seat-client (wrap-wlr-seat-client (make-pointer (bytestructure-ref event 'seat-client))))
-         )
-    
+         (seat-client (wrap-wlr-seat-client (make-pointer (bytestructure-ref event 'seat-client)))))
     (if (= focused-client seat-client)
         (wlr-cursor-set-surface (wrap-wlr-cursor
                                  (make-pointer (bytestructure-ref server-bytestructure 'cursor)))
                                 (wrap-wlr-surface
                                  (make-pointer (bytestructure-ref event 'surface)))
                                 (bytestructure-ref event 'hostpot-x)
-                                (bytestructure-ref event 'hostpot-y))
-        )))
+                                (bytestructure-ref event 'hostpot-y)))))
 (define-public (gwwm-seat-request-set-selection p1 p2)
-  (let* ((event (pointer->bytestructure p2 %wlr-seat-request-set-selection-event-struct))
-         (offset (bytestructure-offset
-                  (bytestructure-ref (bytestructure %server-struct)
-                                     'request-set-selection)))
-         (server-bytestructure (pointer->bytestructure
-                                (make-pointer
-                                 (- (pointer-address p1)
-                                    offset)) %server-struct))
+  (let* ((server-bytestructure (wl-container-of p1 %server-struct 'request-set-selection))
          (seat (wrap-wlr-seat
                 (make-pointer
                  (bytestructure-ref
