@@ -18,8 +18,10 @@
   #:export (wrap-wlr-seat
             unwrap-wlr-seat
             wlr-seat-create
-            wlr-seat-pointer-notify-frame))
+            wlr-seat-pointer-notify-frame
+            WLR_POINTER_BUTTONS_CAP))
 
+(define WLR_POINTER_BUTTONS_CAP 16)
 (define %wlr-serial-range-struct
   (bs:struct `((min-incl ,uint32)
                (max-incl ,uint32))))
@@ -50,7 +52,7 @@
                (default-grab ,(bs:pointer '*))
                (sent-axis-source ,int)
                (cached-axis-source ,int)
-               (buttons ,uint32)
+               (buttons ,(bs:vector WLR_POINTER_BUTTONS_CAP uint32))
                (button-count ,size_t)
                (grab-button ,uint32)
                (grab-serial ,uint32)
