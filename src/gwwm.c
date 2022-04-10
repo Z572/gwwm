@@ -348,10 +348,14 @@ static void seat_request_set_selection(struct wl_listener *listener,
    * ignore such requests if they so choose, but in tinywl we always honor
    */
   wlr_log(WLR_INFO, "set_selection");
-  struct tinywl_server *server =
-      wl_container_of(listener, server, request_set_selection);
-  struct wlr_seat_request_set_selection_event *event = data;
-  wlr_seat_set_selection(server->seat, event->source, event->serial);
+  /* struct tinywl_server *server = */
+  /*     wl_container_of(listener, server, request_set_selection); */
+  /* struct wlr_seat_request_set_selection_event *event = data; */
+  /* wlr_seat_set_selection(server->seat, event->source, event->serial); */
+      scm_call_2(
+        scm_c_public_ref("gwwm init", "gwwm-seat-request-set-selection"),
+        scm_from_pointer(listener ,NULL),
+        scm_from_pointer(data ,NULL));
 }
 
 static struct tinywl_view *desktop_view_at(struct tinywl_server *server,

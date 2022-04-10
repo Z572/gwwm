@@ -7,7 +7,7 @@
   #:use-module (wayland)
   #:use-module (wayland util)
   #:use-module (ice-9 getopt-long)
-  ;;  #:use-module (system foreign)
+  #:use-module ((system foreign) #:select (make-pointer pointer-address))
   #:use-module (srfi srfi-1)
   #:use-module (wlroots backend)
   #:use-module (wlroots render renderer)
@@ -69,11 +69,11 @@ gwwm [options]
      (cursor-axis ,%wl-listener)
      (cursor-frame ,%wl-listener)
 
-     (seat ,(bs:pointer '*))
+     (seat ,(bs:pointer %wlr-seat-struct))
      (new-input ,%wl-listener)
      (request-cursor ,%wl-listener)
      (request-set-selection ,%wl-listener)
-     (keyboards ,%wl-listener)
+     (keyboards ,%wl-list)
      (grabbed-view ,(bs:pointer '*))
      (grab-x ,double)
      (grab-y ,double)
@@ -185,3 +185,19 @@ gwwm [options]
           (pk 'a(wlr-output-set-mode output mode))
           (pk 'b          (wlr-output-enable output #t))))
     (pk 'c (wlr-output-commit output))))
+
+(define-public (gwwm-seat-request-set-selection p1 p2)
+  (let ((event (pointer->bytestructure p2 %wlr-seat-request-set-selection-event-struct)))
+    (wlr-seat-set-selection
+     (wrap-wlr-seat
+      (make-pointer
+       (bytestructure-ref
+        (pointer->bytestructure
+         (make-pointer
+          (- (pointer-address p1)
+             (bytestructure-offset
+              (bytestructure-ref
+               (bytestructure %server-struct)
+               'request-set-selection)))) %server-struct) 'seat)))
+     (wrap-wlr-data-source (pk 'a (make-pointer (bytestructure-ref event 'source))))
+     (bytestructure-ref event 'serial))))

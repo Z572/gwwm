@@ -6,6 +6,7 @@
   #:use-module (srfi srfi-26)
   ;; #:use-module (wlroots render renderer)
   ;; #:use-module (wlroots types output-layout)
+  #:use-module (wlroots types data-device)
   #:use-module (wlroots utils)
   #:use-module (bytestructures guile)
   #:use-module ((system foreign) #:select ((uint32 . ffi:uint32)
@@ -15,11 +16,17 @@
                                            %null-pointer
                                            string->pointer))
   #:use-module (oop goops)
+  #:duplicates (merge-generics)
   #:export (wrap-wlr-seat
             unwrap-wlr-seat
             wlr-seat-create
             wlr-seat-pointer-notify-frame
-            WLR_POINTER_BUTTONS_CAP))
+            WLR_POINTER_BUTTONS_CAP
+            %wlr-seat-request-set-selection-event-struct
+            wrap-wlr-seat-request-set-selection-event
+            unwrap-wlr-seat-request-set-selection-event
+            wlr-seat-set-selection
+            %wlr-seat-struct))
 
 (define WLR_POINTER_BUTTONS_CAP 16)
 (define %wlr-serial-range-struct
@@ -78,6 +85,15 @@
                (grab-id ,uint32)
                (grab ,(bs:pointer '*))
                (default-grab ,(bs:pointer '*)))))
+(define %wlr-seat-request-set-selection-event-struct
+  (bs:struct `((source ,(bs:pointer '*))
+               (serial ,uint32))))
+(define-class <wlr-seat-request-set-selection-event> ()
+  (pointer #:accessor .pointer #:init-keyword #:pointer))
+(define (wrap-wlr-seat-request-set-selection-event p)
+  (make <wlr-seat> #:pointer p))
+(define (unwrap-wlr-seat-request-set-selection-event o)
+  (.pointer o))
 (define %wlr-seat-struct
   (bs:struct `((global ,(bs:pointer '*))
                (display ,(bs:pointer '*))
@@ -143,3 +159,8 @@
   (let ((proc (wlr->procedure ffi:void "wlr_seat_pointer_notify_frame" '(*))))
     (lambda (seat)
       (proc (unwrap-wlr-seat seat)))))
+
+(define wlr-seat-set-selection
+  (let ((proc (wlr->procedure ffi:void "wlr_seat_set_selection" `(* * ,ffi:uint32))))
+    (lambda (seat source serial)
+      (proc (unwrap-wlr-seat seat) (unwrap-wlr-data-source source) serial ))))
