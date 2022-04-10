@@ -187,17 +187,19 @@ gwwm [options]
     (pk 'c (wlr-output-commit output))))
 
 (define-public (gwwm-seat-request-set-selection p1 p2)
-  (let ((event (pointer->bytestructure p2 %wlr-seat-request-set-selection-event-struct)))
-    (wlr-seat-set-selection
-     (wrap-wlr-seat
-      (make-pointer
-       (bytestructure-ref
-        (pointer->bytestructure
-         (make-pointer
-          (- (pointer-address p1)
-             (bytestructure-offset
-              (bytestructure-ref
-               (bytestructure %server-struct)
-               'request-set-selection)))) %server-struct) 'seat)))
-     (wrap-wlr-data-source (pk 'a (make-pointer (bytestructure-ref event 'source))))
-     (bytestructure-ref event 'serial))))
+  (let* ((event (pointer->bytestructure p2 %wlr-seat-request-set-selection-event-struct))
+         (offset (bytestructure-offset
+                  (bytestructure-ref (bytestructure %server-struct)
+                                     'request-set-selection)))
+         (server-bytestructure (pointer->bytestructure
+                                (make-pointer
+                                 (- (pointer-address p1)
+                                    offset)) %server-struct))
+         (seat (wrap-wlr-seat
+                (make-pointer
+                 (bytestructure-ref
+                  server-bytestructure 'seat))))
+         (wlr-data-source (wrap-wlr-data-source
+                           (make-pointer (bytestructure-ref event 'source))))
+         (serial (bytestructure-ref event 'serial)))
+    (wlr-seat-set-selection seat wlr-data-source serial)))
