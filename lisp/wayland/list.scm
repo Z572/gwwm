@@ -30,8 +30,7 @@
   (make <wl-list> #:bytestructure (if (pointer? p) (pointer->bytestructure p %wl-list) p)))
 
 (define (make-wl-list )
-  (wrap-wl-list (bytestructure %wl-list `((prev ,%null-pointer)
-                                          (next ,%null-pointer)))))
+  (wrap-wl-list (bytestructure %wl-list)))
 (define (unwrap-wl-list o)
   (bytestructure->pointer (.bytestructure o)))
 
