@@ -108,7 +108,7 @@ struct tinywl_keyboard {
   struct wl_listener key;
 };
 
-static void gwwm_wl_list_remove(struct wl_list *l){
+static void gwwm_wl_list_remove(struct wl_list *l) {
   scm_call_1(scm_c_public_ref("wayland list", "wl-list-remove"),
              scm_call_1(scm_c_public_ref("wayland list", "wrap-wl-list"),
                         scm_from_pointer(l, NULL)));
@@ -151,8 +151,10 @@ static void focus_view(struct tinywl_view *view, struct wlr_surface *surface) {
   wl_list_insert(&server->views, &view->link);
   /* Activate the new surface */
   /* wlr_xdg_toplevel_set_activated(view->xdg_surface, true); */
-  scm_call_2(scm_c_public_ref("wlroots types xdg-shell", "wlr-xdg-toplevel-set-activated"),
-             scm_call_1(scm_c_public_ref("wlroots types xdg-shell", "wrap-wlr-xdg-surface"),
+  scm_call_2(scm_c_public_ref("wlroots types xdg-shell",
+                              "wlr-xdg-toplevel-set-activated"),
+             scm_call_1(scm_c_public_ref("wlroots types xdg-shell",
+                                         "wrap-wlr-xdg-surface"),
                         scm_from_pointer(view->xdg_surface, NULL)),
              scm_from_bool(true));
   /*
@@ -165,15 +167,15 @@ static void focus_view(struct tinywl_view *view, struct wlr_surface *surface) {
                                  &keyboard->modifiers);
 }
 
-static void gwwm_signal_add(struct wl_signal *signal, struct wl_listener *listener){
-  scm_call_2(scm_c_public_ref("wayland signal", "wl-signal-add"),
-             scm_call_1(scm_c_public_ref("wayland signal", "wrap-wl-signal"),
-                        scm_from_pointer(signal, NULL)),
-             scm_call_1(scm_c_public_ref("wayland listener", "wrap-wl-listener"),
-                        scm_from_pointer(listener, NULL)));
+static void gwwm_signal_add(struct wl_signal *signal,
+                            struct wl_listener *listener) {
+  scm_call_2(
+      scm_c_public_ref("wayland signal", "wl-signal-add"),
+      scm_call_1(scm_c_public_ref("wayland signal", "wrap-wl-signal"),
+                 scm_from_pointer(signal, NULL)),
+      scm_call_1(scm_c_public_ref("wayland listener", "wrap-wl-listener"),
+                 scm_from_pointer(listener, NULL)));
 }
-
-
 
 static struct wl_display *server_wl_display(void) {
   return (struct wl_display *)(scm_to_pointer(
@@ -378,10 +380,11 @@ static void process_cursor_move(struct tinywl_server *server, uint32_t time) {
   struct tinywl_view *view = server->grabbed_view;
   view->x = server->cursor->x - server->grab_x;
   view->y = server->cursor->y - server->grab_y;
-  scm_call_3(scm_c_public_ref("wlroots types scene","wlr-scene-node-set-position"),
-             scm_call_1(scm_c_public_ref("wlroots types scene","wrap-wlr-scene"),
-                        scm_from_pointer(view->scene_node ,NULL)),
-             scm_from_int(view->x), scm_from_int(view->y));
+  scm_call_3(
+      scm_c_public_ref("wlroots types scene", "wlr-scene-node-set-position"),
+      scm_call_1(scm_c_public_ref("wlroots types scene", "wrap-wlr-scene"),
+                 scm_from_pointer(view->scene_node, NULL)),
+      scm_from_int(view->x), scm_from_int(view->y));
 }
 
 static void process_cursor_resize(struct tinywl_server *server, uint32_t time) {
@@ -459,8 +462,9 @@ static void process_cursor_motion(struct tinywl_server *server, uint32_t time) {
      * around the screen, not over any views. */
     /* wlr_xcursor_manager_set_cursor_image(server->cursor_mgr, "left_ptr", */
     /*                                      server->cursor); */
-    scm_call_1(scm_c_public_ref("gwwm init", "wlr_xcursor_manager_set_cursor_image"),
-               scm_from_utf8_string("left_ptr"));
+    scm_call_1(
+        scm_c_public_ref("gwwm init", "wlr_xcursor_manager_set_cursor_image"),
+        scm_from_utf8_string("left_ptr"));
   }
   if (surface) {
     /*
@@ -556,8 +560,9 @@ static void server_cursor_frame(struct wl_listener *listener, void *data) {
       wl_container_of(listener, server, cursor_frame);
   /* Notify the client with pointer focus of the frame event. */
   /* wlr_seat_pointer_notify_frame(server->seat); */
-  scm_call_1(scm_c_public_ref("wlroots types seat", "wlr-seat-pointer-notify-frame"),
-             scm_c_public_ref("gwwm init" ,"gwwm-server-seat"));
+  scm_call_1(
+      scm_c_public_ref("wlroots types seat", "wlr-seat-pointer-notify-frame"),
+      scm_c_public_ref("gwwm init", "gwwm-server-seat"));
 }
 
 static void output_frame(struct wl_listener *listener, void *data) {
@@ -585,7 +590,8 @@ static void server_new_output(struct wl_listener *listener, void *data) {
 
   /* Configures the output created by the backend to use our allocator
    * and our renderer. Must be done once, before commiting the output */
-  /* wlr_output_init_render(wlr_output, server_allocator(), server_renderer()); */
+  /* wlr_output_init_render(wlr_output, server_allocator(), server_renderer());
+   */
   /* scm_call_2(scm_c_public_ref("gwwm init", "server-new-output"), */
   /*            scm_from_pointer(listener, NULL), */
   /*            scm_from_pointer(data ,NULL)); */
@@ -600,11 +606,11 @@ static void server_new_output(struct wl_listener *listener, void *data) {
   /*   wlr_output_enable(wlr_output, true); */
 
   /* } */
-  if (!scm_to_bool(scm_call_2(scm_c_public_ref("gwwm init", "server-new-output"),
-             scm_from_pointer(listener, NULL),
-             scm_from_pointer(data ,NULL)))) {
-      return;
-    }
+  if (!scm_to_bool(scm_call_2(
+          scm_c_public_ref("gwwm init", "server-new-output"),
+          scm_from_pointer(listener, NULL), scm_from_pointer(data, NULL)))) {
+    return;
+  }
 
   /* Allocates and configures our state for this output */
   struct tinywl_output *output = calloc(1, sizeof(struct tinywl_output));
@@ -633,8 +639,10 @@ static void xdg_toplevel_map(struct wl_listener *listener, void *data) {
 
   /* wl_list_insert(&view->server->views, &view->link); */
   scm_call_2(scm_c_public_ref("wayland list", "wl-list-insert"),
-             scm_call_1(scm_c_public_ref("wayland list", "wrap-wl-list"), scm_from_pointer(&view->server->views ,NULL)),
-             scm_call_1(scm_c_public_ref("wayland list", "wrap-wl-list"), scm_from_pointer(&view->link ,NULL)));
+             scm_call_1(scm_c_public_ref("wayland list", "wrap-wl-list"),
+                        scm_from_pointer(&view->server->views, NULL)),
+             scm_call_1(scm_c_public_ref("wayland list", "wrap-wl-list"),
+                        scm_from_pointer(&view->link, NULL)));
   focus_view(view, view->xdg_surface->surface);
 }
 
@@ -722,10 +730,12 @@ static void xdg_toplevel_request_move(struct wl_listener *listener,
 /*   /\*   wlr_log(WLR_INFO, "layer_shell_request_new_surface-3"); *\/ */
 /*   // layer_shell->events.new_surface */
 /*   /\* /\\* if (layer_shell->) *\\/ *\/ */
-/*   /\* struct tinywl_view *view = calloc(1, sizeof(struct tinywl_view)); *\/ */
+/*   /\* struct tinywl_view *view = calloc(1, sizeof(struct tinywl_view)); *\/
+ */
 /*   /\* view->server=server; *\/ */
 /*   /\* view->xdg_surface= layer_shell; *\/ */
-/*   /\* view->scene_node= wlr_scene_xdg_surface_create(&view->server->scene->node, */
+/*   /\* view->scene_node=
+ * wlr_scene_xdg_surface_create(&view->server->scene->node, */
 /*    * view->xdg_surface); *\/ */
 /*   /\* view->scene_node->data=view; *\/ */
 /* } */
@@ -877,7 +887,8 @@ static void inner_main(void *closure, int argc, char *argv[]) {
 
   /* wlr_xdg_shell_create(server_wl_display()); */
   server.new_xdg_surface.notify = server_new_xdg_surface;
-  gwwm_signal_add(&server.xdg_shell->events.new_surface, &server.new_xdg_surface);
+  gwwm_signal_add(&server.xdg_shell->events.new_surface,
+                  &server.new_xdg_surface);
 
   /*
    * Creates a cursor, which is a wlroots utility for tracking the cursor
@@ -913,7 +924,7 @@ static void inner_main(void *closure, int argc, char *argv[]) {
   gwwm_signal_add(&server.cursor->events.motion, &server.cursor_motion);
   server.cursor_motion_absolute.notify = server_cursor_motion_absolute;
   gwwm_signal_add(&server.cursor->events.motion_absolute,
-                &server.cursor_motion_absolute);
+                  &server.cursor_motion_absolute);
   server.cursor_button.notify = server_cursor_button;
   gwwm_signal_add(&server.cursor->events.button, &server.cursor_button);
   server.cursor_axis.notify = server_cursor_axis;
@@ -930,9 +941,12 @@ static void inner_main(void *closure, int argc, char *argv[]) {
   wl_list_init(&server.keyboards);
   server.new_input.notify = server_new_input;
   /* scm_call_2(scm_c_public_ref("wayland signal", "wl-signal-add"), */
-  /*            scm_call_1(scm_c_public_ref("wayland signal", "wrap-wl-signal"), */
-  /*                       scm_from_pointer(&server_backend()->events.new_input, NULL)), */
-  /*            scm_call_1(scm_c_public_ref("wayland listener", "wrap-wl-listener") */
+  /*            scm_call_1(scm_c_public_ref("wayland signal", "wrap-wl-signal"),
+   */
+  /*                       scm_from_pointer(&server_backend()->events.new_input,
+   * NULL)), */
+  /*            scm_call_1(scm_c_public_ref("wayland listener",
+   * "wrap-wl-listener") */
   /*                       ,scm_from_pointer(&server.new_input, NULL))); */
   gwwm_signal_add(&server_backend()->events.new_input, &server.new_input);
   server.seat = scm_to_pointer(
@@ -941,10 +955,10 @@ static void inner_main(void *closure, int argc, char *argv[]) {
   /* wlr_seat_create(server_wl_display(), "seat0"); */
   server.request_cursor.notify = seat_request_cursor;
   gwwm_signal_add(&server.seat->events.request_set_cursor,
-                &server.request_cursor);
+                  &server.request_cursor);
   server.request_set_selection.notify = seat_request_set_selection;
   gwwm_signal_add(&server.seat->events.request_set_selection,
-                &server.request_set_selection);
+                  &server.request_set_selection);
 
   /* Add a Unix socket to the Wayland display. */
   //  scm_c_primitive_load("lisp/gwwm/init.scm");
