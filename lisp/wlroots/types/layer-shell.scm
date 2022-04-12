@@ -2,6 +2,7 @@
   #:use-module (wayland listener)
   #:use-module (wayland signal)
   #:use-module (wayland display)
+  #:use-module (wlroots types)
   #:use-module (wlroots utils)
   #:use-module (bytestructures guile)
   #:use-module (oop goops)
@@ -18,16 +19,8 @@
                                      (destroy ,%wl-signal-struct))))
                (data ,(bs:pointer 'void)))))
 
-(define-class <wlr-layer-shell> ()
-  (pointer #:accessor .pointer #:init-keyword #:pointer))
-(define (wrap-wlr-layer-shell p)
-  (make <wlr-layer-shell> #:pointer p))
-(define (unwrap-wlr-layer-shell o)
-  (.pointer o))
-(define wlr-layer-shell-v1-create
-  (let ((proc (wlr->procedure '* "wlr_layer_shell_v1_create" '(*))))
-    (lambda (display)
-      (wrap-wlr-layer-shell (proc (unwrap-wl-display display))))))
+(define-wlr-types-class wlr-layer-shell)
+
 (define-wlr-procedure (wlr-layer-shell-v1-create display)
   ('* "wlr_layer_shell_v1_create" '(*))
   (wrap-wlr-layer-shell (% (unwrap-wl-display display))))

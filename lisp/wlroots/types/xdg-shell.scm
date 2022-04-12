@@ -1,4 +1,5 @@
 (define-module (wlroots types xdg-shell)
+  #:use-module (wlroots types)
   #:use-module (wayland)
   #:use-module (wlroots util box)
   #:use-module (bytestructures guile)
@@ -14,12 +15,7 @@
             unwrap-wlr-xdg-surface
             wlr-xdg-surface-from-wlr-surface
             wlr-xdg-toplevel-set-activated))
-(define-class <wlr-xdg-shell> ()
-  (pointer #:accessor .pointer #:init-keyword #:pointer))
-(define (wrap-wlr-xdg-shell p)
-  (make <wlr-xdg-shell> #:pointer p))
-(define (unwrap-wlr-xdg-shell o)
-  (.pointer o))
+(define-wlr-types-class wlr-xdg-shell)
 (define %wlr-xdg-shell-struct
   (bs:struct `((global ,(bs:pointer '*))
                (clients ,%wl-list)
@@ -61,26 +57,18 @@
                                      (configure ,%wl-signal-struct)
                                      (ack-configure ,%wl-signal-struct))))
                (data ,(bs:pointer 'void)))))
-(define wlr-xdg-shell-create
-  (let ((proc (wlr->procedure '* "wlr_xdg_shell_create" '(*))))
-    (lambda (display)
-      (wrap-wlr-xdg-shell
-       (proc (unwrap-wl-display display))))))
-(define-class <wlr-xdg-surface> ()
-  (pointer #:accessor .pointer #:init-keyword #:pointer))
-(define (wrap-wlr-xdg-surface p)
-  (make <wlr-xdg-surface> #:pointer p))
-(define (unwrap-wlr-xdg-surface o)
-  (.pointer o))
+(define-wlr-procedure (wlr-xdg-shell-create display)
+  ('* "wlr_xdg_shell_create" '(*))
+  (wrap-wlr-xdg-shell
+   (% (unwrap-wl-display display))))
+(define-wlr-types-class wlr-xdg-surface)
 
-(define wlr-xdg-surface-from-wlr-surface
-  (let ((proc (wlr->procedure '* "wlr_xdg_surface_from_wlr_surface" '(*))))
-    (lambda (surface)
-      (wrap-wlr-xdg-surface
-       (proc (unwrap-wlr-xdg-surface surface))))))
+(define-wlr-procedure (wlr-xdg-surface-from-wlr-surface surface)
+  ('* "wlr_xdg_surface_from_wlr_surface" '(*))
+  (wrap-wlr-xdg-surface
+   (% (unwrap-wlr-xdg-surface surface))))
 
-(define wlr-xdg-toplevel-set-activated
-  (let ((proc (wlr->procedure ffi:uint32 "wlr_xdg_toplevel_set_activated" (list '* ffi:int))))
-    (lambda (surface activated)
-      "Returns the associated configure serial."
-      (proc (unwrap-wlr-xdg-surface surface) (if activated 1 0)))))
+(define-wlr-procedure (wlr-xdg-toplevel-set-activated surface activated)
+  (ffi:uint32 "wlr_xdg_toplevel_set_activated" (list '* ffi:int))
+  "Returns the associated configure serial."
+  (% (unwrap-wlr-xdg-surface surface) (if activated 1 0)))

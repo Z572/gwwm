@@ -12,10 +12,10 @@
 (define-syntax define-wlr-procedure
   (lambda (x)
     (syntax-case x ()
-      ((_ (name args ...) (return-type cname arg-types) body)
+      ((_ (name args ...) (return-type cname arg-types) body ...)
        (with-syntax ((% (datum->syntax x '%)))
          #'(begin
              (define name
                (let ((% (wlr->procedure return-type cname arg-types)))
                  (lambda* (args ...)
-                   body)))))))))
+                   body ...)))))))))

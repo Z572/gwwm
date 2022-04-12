@@ -5,6 +5,7 @@
   #:use-module (wlroots render renderer)
   #:use-module (wlroots types output-layout)
   #:use-module (wlroots types surface)
+  #:use-module (wlroots types)
   #:use-module (wlroots utils)
   #:use-module ((system foreign) #:select ((void . ffi:void)
                                            (int32 . ffi:int32)))
@@ -49,27 +50,18 @@
                                          tablet_tool_button
                                          ))))
                (data ,(bs:pointer 'void)))))
-(define-class <wlr-cursor> ()
-  (pointer #:accessor .pointer #:init-keyword #:pointer))
+(define-wlr-types-class wlr-cursor)
+(define-wlr-procedure (wlr-cursor-create)
+  ('* "wlr_cursor_create" '())
+  (wrap-wlr-cursor (%)))
 
-(define (wrap-wlr-cursor p)
-  (make <wlr-cursor> #:pointer p))
-(define (unwrap-wlr-cursor o)
-  (.pointer o))
-
-(define wlr-cursor-create
-  (let ((proc (wlr->procedure '* "wlr_cursor_create" '())))
-    (lambda ()
-      (wrap-wlr-cursor (proc)))))
-
-(define wlr-cursor-attach-output-layout
-  (let ((proc (wlr->procedure ffi:int "wlr_cursor_attach_output_layout" '(* *))))
-    (lambda (cursor output-layout)
-      (proc (unwrap-wlr-cursor cursor) (unwrap-wlr-output-layout output-layout)))))
-(define wlr-cursor-set-surface
-  (let ((proc (wlr->procedure ffi:void "wlr_cursor_set_surface" `(* * ,ffi:int32 ,ffi:int32))))
-    (lambda (cur surface hostpot-x hostpot-y)
-      (proc (unwrap-wlr-cursor cur)
-            (unwrap-wlr-surface surface)
-            hostpot-x
-            hostpot-y))))
+(define-wlr-procedure (wlr-cursor-attach-output-layout cursor output-layout)
+  (ffi:int "wlr_cursor_attach_output_layout" '(* *))
+  (% (unwrap-wlr-cursor cursor)
+     (unwrap-wlr-output-layout output-layout)))
+(define-wlr-procedure (wlr-cursor-set-surface cur surface hostpot-x hostpot-y)
+  (ffi:void "wlr_cursor_set_surface" `(* * ,ffi:int32 ,ffi:int32))
+  (% (unwrap-wlr-cursor cur)
+     (unwrap-wlr-surface surface)
+     hostpot-x
+     hostpot-y))

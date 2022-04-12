@@ -6,6 +6,7 @@
   #:use-module (srfi srfi-26)
   ;; #:use-module (wlroots render renderer)
   ;; #:use-module (wlroots types output-layout)
+  #:use-module (wlroots types)
   #:use-module (wlroots types data-device)
   #:use-module (wlroots types surface)
   #:use-module (wlroots utils)
@@ -118,12 +119,7 @@
                (hostpot-x ,int32)
                (hostpot-y ,int32))))
 
-(define-class <wlr-seat-pointer-request-set-cursor-event> ()
-  (pointer #:accessor .pointer #:init-keyword #:pointer))
-(define (wrap-wlr-seat-pointer-request-set-cursor-event p)
-  (make <wlr-seat> #:pointer p))
-(define (unwrap-wlr-seat-pointer-request-set-cursor-event o)
-  (.pointer o))
+(define-wlr-types-class wlr-seat-pointer-request-set-cursor-event)
 
 (define-method (= (f <wlr-seat-client>) (l <wlr-seat-client>))
   (= (pointer-address (.pointer f))
