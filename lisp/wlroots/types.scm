@@ -1,7 +1,7 @@
 (define-module (wlroots types)
   #:use-module (oop goops)
   #:use-module (srfi srfi-26)
-  ;; #:export (<wlr-type> )
+  #:use-module ((system foreign) #:select(pointer-address))
   #:export-syntax ( define-wlr-types-class
                     define-wlr-types-class-public))
 

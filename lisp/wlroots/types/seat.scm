@@ -59,12 +59,7 @@
                (serials ,%wlr-serial-ringset)
                (needs-touch-frame ,int))))
 
-(define-class <wlr-seat-client> ()
-  (pointer #:accessor .pointer #:init-keyword #:pointer))
-(define (wrap-wlr-seat-client p)
-  (make <wlr-seat-client> #:pointer p))
-(define (unwrap-wlr-seat-client o)
-  (.pointer o))
+(define-wlr-types-class wlr-seat-client)
 (define %wlr-seat-pointer-state-struct
   (bs:struct `((seat ,(bs:pointer (delay %wlr-seat-struct)))
                (focused-client ,(bs:pointer '*))
@@ -120,10 +115,6 @@
                (hostpot-y ,int32))))
 
 (define-wlr-types-class wlr-seat-pointer-request-set-cursor-event)
-
-(define-method (= (f <wlr-seat-client>) (l <wlr-seat-client>))
-  (= (pointer-address (.pointer f))
-     (pointer-address (.pointer l))))
 
 (define %wlr-seat-struct
   (bs:struct `((global ,(bs:pointer '*))
