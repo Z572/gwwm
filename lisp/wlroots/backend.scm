@@ -42,18 +42,14 @@
                     (unwrap-wlr-backend b)
                     %wlr-backend-struct)
                    'events signal-name)))
-(define (wlr-backend-autocreate display)
-  (wrap-wlr-backend
-   ((wlr->procedure
-     '* "wlr_backend_autocreate" (list '*))
-    (unwrap-wl-display display))))
+(define-wlr-procedure (wlr-backend-autocreate display)
+  ('* "wlr_backend_autocreate" (list '*))
+  (wrap-wlr-backend (% (unwrap-wl-display display))))
 
-(define (wlr-backend-start backend)
-  ((wlr->procedure
-    ffi:int "wlr_backend_start" (list '*))
-   (unwrap-wlr-backend backend)))
+(define-wlr-procedure (wlr-backend-start backend)
+  (ffi:int "wlr_backend_start" (list '*))
+  (% (unwrap-wlr-backend backend)))
 
-(define (wlr-backend-destroy backend)
-  ((wlr->procedure
-    void "wlr_backend_destroy" (list '*))
-   (unwrap-wlr-backend backend)))
+(define-wlr-procedure (wlr-backend-destroy backend)
+  (void "wlr_backend_destroy" (list '*))
+  (% (unwrap-wlr-backend backend)))
