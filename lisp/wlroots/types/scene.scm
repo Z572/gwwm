@@ -19,17 +19,14 @@
 (define (unwrap-wlr-scene o)
   (.pointer o))
 
-(define wlr-scene-create
-  (let ((proc (wlr->procedure '* "wlr_scene_create" '())))
-    (lambda ()
-      (wrap-wlr-scene (proc)))))
+(define-wlr-procedure (wlr-scene-create)
+  ('* "wlr_scene_create" '())
+  (wrap-wlr-scene (%)))
 
-(define wlr-scene-attach-output-layout
-  (let ((proc (wlr->procedure int "wlr_scene_attach_output_layout" '(* *))))
-    (lambda (scene output-layout)
-      (proc (unwrap-wlr-scene scene) (unwrap-wlr-output-layout output-layout)))))
+(define-wlr-procedure (wlr-scene-attach-output-layout scene output-layout)
+  (int "wlr_scene_attach_output_layout" '(* *))
+  (% (unwrap-wlr-scene scene) (unwrap-wlr-output-layout output-layout)))
 
-(define wlr-scene-node-set-position
-  (let ((proc (wlr->procedure int "wlr_scene_node_set_position" (list '* int int))))
-    (lambda (scene x y)
-      (proc (unwrap-wlr-scene scene) x y))))
+(define-wlr-procedure (wlr-scene-node-set-position scene x y)
+  (int "wlr_scene_node_set_position" (list '* int int))
+  (% (unwrap-wlr-scene scene) x y))

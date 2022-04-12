@@ -27,19 +27,16 @@
   (make <wlr-xcursor-manager> #:pointer p))
 (define (unwrap-wlr-xcursor-manager o)
   (.pointer o))
-(define wlr-xcursor-manager-create
-  (let ((proc (wlr->procedure '* "wlr_xcursor_manager_create" (list '* ffi:uint32))))
-    (lambda (name size)
-      (wrap-wlr-xcursor-manager (proc (if name (string->pointer name ) %null-pointer) size)))))
-(define wlr-xcursor-manager-load
-  (let ((proc (wlr->procedure ffi:int "wlr_xcursor_manager_load" (list '* ffi:float))))
-    (lambda (xmgr scale)
-      (wrap-wlr-xcursor-manager (proc (unwrap-wlr-xcursor-manager xmgr) scale)))))
-;; "wlr_xcursor_manager_load"
+(define-wlr-procedure (wlr-xcursor-manager-create name size)
+  ('* "wlr_xcursor_manager_create" (list '* ffi:uint32))
+  (wrap-wlr-xcursor-manager (% (if name (string->pointer name ) %null-pointer) size)))
 
-(define wlr-xcursor-manager-set-cursor-image
-  (let ((proc (wlr->procedure ffi:void "wlr_xcursor_manager_set_cursor_image" (list '* '* '*))))
-    (lambda (manager name cursor)
-      (proc (unwrap-wlr-xcursor-manager manager)
-            (string->pointer name)
-            (unwrap-wlr-cursor cursor)))))
+(define-wlr-procedure (wlr-xcursor-manager-load xmgr scale)
+  (ffi:int "wlr_xcursor_manager_load" (list '* ffi:float))
+  (wrap-wlr-xcursor-manager (% (unwrap-wlr-xcursor-manager xmgr) scale)))
+
+(define-wlr-procedure (wlr-xcursor-manager-set-cursor-image manager name cursor)
+  (ffi:void "wlr_xcursor_manager_set_cursor_image" (list '* '* '*))
+  (% (unwrap-wlr-xcursor-manager manager)
+     (string->pointer name)
+     (unwrap-wlr-cursor cursor)))
