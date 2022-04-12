@@ -209,6 +209,7 @@ gwwm [options]
                 (make-pointer
                  (bytestructure-ref
                   server-bytestructure 'seat))))
+         (event (pointer->bytestructure p2 %wlr-seat-request-set-selection-event-struct))
          (wlr-data-source (wrap-wlr-data-source
                            (make-pointer (bytestructure-ref event 'source))))
          (serial (bytestructure-ref event 'serial)))
