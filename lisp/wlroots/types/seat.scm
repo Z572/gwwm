@@ -185,17 +185,14 @@
 (define (unwrap-wlr-seat o)
   (.pointer o))
 
-(define wlr-seat-create
-  (let ((proc (wlr->procedure '* "wlr_seat_create" '(* *))))
-    (lambda (display name)
-      (wrap-wlr-seat (proc (unwrap-wl-display display)
-                           (string->pointer name ))))))
-(define wlr-seat-pointer-notify-frame
-  (let ((proc (wlr->procedure ffi:void "wlr_seat_pointer_notify_frame" '(*))))
-    (lambda (seat)
-      (proc (unwrap-wlr-seat seat)))))
-
-(define wlr-seat-set-selection
-  (let ((proc (wlr->procedure ffi:void "wlr_seat_set_selection" `(* * ,ffi:uint32))))
-    (lambda (seat source serial)
-      (proc (unwrap-wlr-seat seat) (unwrap-wlr-data-source source) serial ))))
+(define-wlr-procedure (wlr-seat-create display name)
+  ('* "wlr_seat_create" '(* *))
+  (wrap-wlr-seat
+   (% (unwrap-wl-display display)
+      (string->pointer name ))))
+(define-wlr-procedure (wlr-seat-pointer-notify-frame seat)
+  (ffi:void "wlr_seat_pointer_notify_frame" '(*))
+  (% (unwrap-wlr-seat seat)))
+(define-wlr-procedure (wlr-seat-set-selection seat source serial)
+  (ffi:void "wlr_seat_set_selection" `(* * ,ffi:uint32))
+  (% (unwrap-wlr-seat seat) (unwrap-wlr-data-source source) serial ))

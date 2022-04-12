@@ -28,3 +28,6 @@
   (let ((proc (wlr->procedure '* "wlr_layer_shell_v1_create" '(*))))
     (lambda (display)
       (wrap-wlr-layer-shell (proc (unwrap-wl-display display))))))
+(define-wlr-procedure (wlr-layer-shell-v1-create display)
+  ('* "wlr_layer_shell_v1_create" '(*))
+  (wrap-wlr-layer-shell (% (unwrap-wl-display display))))

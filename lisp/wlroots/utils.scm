@@ -1,10 +1,21 @@
 (define-module (wlroots utils)
   #:use-module (system foreign)
   #:use-module (wlroots config)
-  #:export (ffi:int wlr->pointer wlr->procedure))
+  #:export (ffi:int wlr->pointer wlr->procedure)
+  #:export-syntax (define-wlr-procedure))
 (define ffi:int int)
 (define (wlr->pointer name)
   (dynamic-func name (dynamic-link %libwlroots)))
 (define (wlr->procedure return name params)
   (let ((ptr (wlr->pointer name)))
     (pointer->procedure return ptr params)))
+(define-syntax define-wlr-procedure
+  (lambda (x)
+    (syntax-case x ()
+      ((_ (name args ...) (return-type cname arg-types) body)
+       (with-syntax ((% (datum->syntax x '%)))
+         #'(begin
+             (define name
+               (let ((% (wlr->procedure return-type cname arg-types)))
+                 (lambda* (args ...)
+                   body)))))))))
