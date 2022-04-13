@@ -100,12 +100,7 @@
   (bs:struct `((source ,(bs:pointer '*))
                (serial ,uint32))))
 
-(define-class <wlr-seat-request-set-selection-event> ()
-  (pointer #:accessor .pointer #:init-keyword #:pointer))
-(define (wrap-wlr-seat-request-set-selection-event p)
-  (make <wlr-seat> #:pointer p))
-(define (unwrap-wlr-seat-request-set-selection-event o)
-  (.pointer o))
+(define-wlr-types-class wlr-seat-request-set-selection-event)
 
 (define %wlr-seat-request-set-cursor-event-struct
   (bs:struct `((seat-client ,(bs:pointer %wlr-seat-client-struct))
@@ -165,12 +160,8 @@
                                   ))
                (data ,(bs:pointer 'void)))))
 
-(define-class <wlr-seat> ()
-  (pointer #:accessor .pointer #:init-keyword #:pointer))
-(define (wrap-wlr-seat p)
-  (make <wlr-seat> #:pointer p))
-(define (unwrap-wlr-seat o)
-  (.pointer o))
+
+(define-wlr-types-class wlr-seat)
 
 (define-wlr-procedure (wlr-seat-create display name)
   ('* "wlr_seat_create" '(* *))
