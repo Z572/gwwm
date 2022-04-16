@@ -812,7 +812,7 @@ static void server_new_xdg_surface(struct wl_listener *listener, void *data) {
 
 static void inner_main(void *closure, int argc, char *argv[]) {
 
-  wlr_log_init(WLR_DEBUG, NULL);
+  /* wlr_log_init(WLR_DEBUG, NULL); */
 
   scm_c_primitive_load("lisp/gwwm/init.scm");
   struct tinywl_server server;

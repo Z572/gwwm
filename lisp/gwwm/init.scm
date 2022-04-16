@@ -9,6 +9,7 @@
   #:use-module (ice-9 getopt-long)
   #:use-module ((system foreign) #:select (make-pointer pointer-address))
   #:use-module (srfi srfi-1)
+  #:use-module (wlroots util log)
   #:use-module (wlroots backend)
   #:use-module (wlroots render renderer)
   #:use-module (wlroots render allocator)
@@ -90,9 +91,9 @@ gwwm [options]
 
 (define pointer->server-bytestructure
   (cut pointer->bytestructure <> %server-struct))
+(wlr-log-init 'debug)
 (define gwwm-wl-display (wl-display-create))
 (wl-display-init-shm gwwm-wl-display)
-(pk 'a)
 (define-public (server-new-xdg-surface s data)
   (pk 'server-new-xdg-surface s data
       (pointer->server-bytestructure s)
