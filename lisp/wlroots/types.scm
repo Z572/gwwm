@@ -19,14 +19,16 @@
              (identifier (cut datum->syntax #'name <>)))
          (with-syntax ((rtd (identifier (symbol-append '< symbol '>)))
                        (wrap (identifier (symbol-append 'wrap- symbol )))
-                       (unwrap (identifier (symbol-append 'unwrap- symbol))))
+                       (unwrap (identifier (symbol-append 'unwrap- symbol)))
+                       (is? (identifier (symbol-append symbol '?))))
            #`(begin
                (define-class rtd (<wlr-type>)
                  (pointer #:accessor .pointer #:init-keyword #:pointer))
                (define (wrap p)
                  (make rtd #:pointer p))
                (define (unwrap o)
-                 (.pointer o)))))))))
+                 (.pointer o))
+               (define (is? o) (is-a? o rtd)))))))))
 
 (define-syntax define-wlr-types-class-public
   (lambda (x)
@@ -36,8 +38,10 @@
              (identifier (cut datum->syntax #'name <>)))
          (with-syntax ((rtd (identifier (symbol-append '< symbol '>)))
                        (wrap (identifier (symbol-append 'wrap- symbol )))
-                       (unwrap (identifier (symbol-append 'unwrap- symbol))))
+                       (unwrap (identifier (symbol-append 'unwrap- symbol)))
+                       (is? (identifier (symbol-append symbol '?))))
            #`(begin
                (define-wlr-types-class name)
                (export wrap)
-               (export unwrap))))))))
+               (export unwrap)
+               (export is? ))))))))
