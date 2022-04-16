@@ -42,17 +42,18 @@
                          (.bytestructure instance)
                          'notify new-val))))
 
-(define (make-wl-listener link notify)
-  (pk 'link-1 link notify)
+(define (make-wl-listener ;; link
+         notify)
+  ;; (pk 'link-1 link notify)
   (make <wl-listener> #:bytestructure
         (pk 'ss (bytestructure
                  %wl-listener
-                 `((link ,(pk 'link  (pointer->bytevector (unwrap-wl-list (pk 'a link))
-                                                          (bytestructure-descriptor-size %wl-list))))
+                 `((link ,(bytestructure-bytevector (bytestructure %wl-list)))
                    (notify
                     ,(procedure->pointer
                       void
                       (lambda (listener data)
+                        (pk 'listener listener data)
                         (notify (wrap-wl-listener listener) data))
                       '(* *))))))))
 

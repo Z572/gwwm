@@ -91,6 +91,8 @@
        (wl-registry-listener->pointer listener)
        listener)
    data))
+(define-method (wl-registry-add-listener (registry <wl-registry>) listener )
+  (wl-registry-add-listener registry listener %null-pointer))
 
 (define-method (wl-registry-get-version (registry <wl-registry>))
   (wl-proxy-get-version registry))

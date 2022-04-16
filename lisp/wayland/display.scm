@@ -153,7 +153,7 @@
 
 (define (wl-display-add-destroy-listener w-display w-listener)
   (%wl-display-add-destroy-listener (unwrap-wl-display w-display)
-                                    (wl-listener->pointer w-listener)))
+                                    (unwrap-wl-listener w-listener)))
 (define %wl-display-add-client-created-listener
   (wayland-server->procedure void "wl_display_add_client_created_listener"
                              '(* *)))
@@ -169,7 +169,7 @@
    '(*)))
 
 (define (wl-display-get-client-list w-display)
-  (pointer->wl-list
+  (wrap-wl-list
    (%wl-display-get-client-list
     (unwrap-wl-display w-display))))
 
@@ -179,10 +179,10 @@
 
 ;; client
 
-(define (wl-display-connect name)
+(define* (wl-display-connect #:optional (name #f))
   "if success, return wl-display else #f."
   (let ((out ((wayland-client->procedure '* "wl_display_connect" '(*))
-              (string->pointer name))))
+              (if name (string->pointer name) %null-pointer))))
     (if (null-pointer? out)
         (error "not connect!")
         (wrap-wl-display out))))

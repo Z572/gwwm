@@ -10,12 +10,12 @@
             wl-signal-add
             wrap-wl-signal
             unwrap-wl-signal
+            wl-signal-init
             .listener-list))
 
 (define %wl-signal-struct
   (bs:struct `((listener-list ,%wl-list))))
 
-                                        ;(define wl-signal-init)
 (define-class <wl-signal> ()
   (bytestructure #:accessor .bytestructure #:init-keyword #:bytestructures)
   (listener-list #:allocation #:virtual
@@ -34,7 +34,8 @@
 (define (wl-signal-add signal listener)
   (wl-list-insert (wl-list-prev (.listener-list signal))
                   (.link listener)))
-(define (wl-signal-init signal)
-  (wl-list-init (.listener-list signal)))
+(define* (wl-signal-init #:optional (signal (wrap-wl-signal (bytestructure %wl-signal-struct))))
+  (wl-list-init (.listener-list signal))
+  signal)
 (define wl-signal-get)
 (define wl-signal-emit)

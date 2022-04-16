@@ -63,7 +63,6 @@
                void "wl_list_insert"
                (list '* '*))))
     (lambda (lst lst2)
-      "XXX: need fix it"
       (proc (unwrap-wl-list lst)
             (unwrap-wl-list lst2)))))
 

@@ -6,6 +6,7 @@
                                            make-pointer
                                            %null-pointer
                                            pointer-address
+                                           pointer->string
                                            procedure->pointer
                                            define-wrapped-pointer-type
                                            (uint32 . ffi:uint32)

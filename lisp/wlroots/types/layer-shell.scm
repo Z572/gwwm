@@ -3,6 +3,7 @@
   #:use-module (wayland signal)
   #:use-module (wayland display)
   #:use-module (wlroots types)
+  #:use-module (wayland util)
   #:use-module (wlroots utils)
   #:use-module (bytestructures guile)
   #:use-module (oop goops)
@@ -10,7 +11,8 @@
             wrap-wlr-layer-shell
             unwrap-wlr-layer-shell
             wlr-layer-shell-v1-create
-            wl-version))
+            wl-version
+            get-event-signal))
 
 (define %wlr-layer-shell-v1-struct
   (bs:struct `((global ,(bs:pointer '*))
@@ -24,3 +26,10 @@
 (define-wlr-procedure (wlr-layer-shell-v1-create display)
   ('* "wlr_layer_shell_v1_create" '(*))
   (wrap-wlr-layer-shell (% (unwrap-wl-display display))))
+
+(define-method (get-event-signal (b <wlr-layer-shell>) (signal-name <symbol>))
+  (wrap-wl-signal (bytestructure-ref
+                   (pointer->bytestructure
+                    (unwrap-wlr-layer-shell b)
+                    %wlr-layer-shell-v1-struct)
+                   'events  signal-name)))
