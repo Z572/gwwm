@@ -139,25 +139,21 @@
       (proc (unwrap-wlr-output output)
             (unwrap-wlr-allocator allocator)
             (unwrap-wlr-renderer renderer)))))
-(define wlr-output-preferred-mode
-  (let ((proc (wlr->procedure '* "wlr_output_preferred_mode" '(*))))
-    (lambda (output)
-      (wrap-wlr-output-mode (proc (unwrap-wlr-output output))))))
+(define-wlr-procedure (wlr-output-preferred-mode output)
+  ('* "wlr_output_preferred_mode" '(*))
+  (wrap-wlr-output-mode (% (unwrap-wlr-output output))))
 
-(define wlr-output-set-mode
-  (let ((proc (wlr->procedure ffi:void "wlr_output_set_mode" '(* *))))
-    (lambda (output mode)
-      (proc (unwrap-wlr-output output) (unwrap-wlr-output-mode mode)))))
+(define-wlr-procedure (wlr-output-set-mode output mode)
+  (ffi:void "wlr_output_set_mode" '(* *) )
+  (% (unwrap-wlr-output output) (unwrap-wlr-output-mode mode)))
 
-(define wlr-output-enable
-  (let ((proc (wlr->procedure ffi:void "wlr_output_enable" (list '* ffi:int))))
-    (lambda (output enable)
-      (proc (unwrap-wlr-output output) (if enable 1 0)))))
+(define-wlr-procedure (wlr-output-enable output enable)
+  (ffi:void "wlr_output_enable" (list '* ffi:int))
+  (% (unwrap-wlr-output output) (if enable 1 0)))
 
-(define wlr-output-commit
-  (let ((proc (wlr->procedure ffi:int "wlr_output_commit" '(*))))
-    (lambda (output)
-      (case (pk 'd(proc (unwrap-wlr-output output)))
-        ((1) #t)
-        ((0) #f)
-        (else #t)))))
+(define-wlr-procedure (wlr-output-commit output)
+  (ffi:int "wlr_output_commit" '(*))
+  (case (% (unwrap-wlr-output output))
+    ((1) #t)
+    ((0) #f)
+    (else #t)))

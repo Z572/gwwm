@@ -22,8 +22,7 @@
                        (unwrap (identifier (symbol-append 'unwrap- symbol)))
                        (is? (identifier (symbol-append symbol '?))))
            #`(begin
-               (define-class rtd (<wlr-type>)
-                 (pointer #:accessor .pointer #:init-keyword #:pointer))
+               (define-class rtd (<wlr-type>))
                (define (wrap p)
                  (make rtd #:pointer p))
                (define (unwrap o)
