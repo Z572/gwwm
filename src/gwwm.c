@@ -330,23 +330,6 @@ static void server_new_input(struct wl_listener *listener, void *data) {
   wlr_seat_set_capabilities(server->seat, caps);
 }
 
-static void seat_request_set_selection(struct wl_listener *listener,
-                                       void *data) {
-  /* This event is raised by the seat when a client wants to set the selection,
-   * usually when the user copies something. wlroots allows compositors to
-   * ignore such requests if they so choose, but in tinywl we always honor
-   */
-  wlr_log(WLR_INFO, "set_selection");
-  /* struct tinywl_server *server = */
-  /*     wl_container_of(listener, server, request_set_selection); */
-  /* struct wlr_seat_request_set_selection_event *event = data; */
-  /* wlr_seat_set_selection(server->seat, event->source, event->serial); */
-      scm_call_2(
-        scm_c_public_ref("gwwm init", "gwwm-seat-request-set-selection"),
-        scm_from_pointer(listener ,NULL),
-        scm_from_pointer(data ,NULL));
-}
-
 static struct tinywl_view *desktop_view_at(struct tinywl_server *server,
                                            double lx, double ly,
                                            struct wlr_surface **surface,
@@ -829,7 +812,7 @@ static void inner_main(void *closure, int argc, char *argv[]) {
   server.request_cursor.notify = scm_to_pointer(scm_c_public_ref("gwwm init", "gwwm-seat-request-cursor-pointer"));
   gwwm_signal_add(&server.seat->events.request_set_cursor,
                   &server.request_cursor);
-  server.request_set_selection.notify = seat_request_set_selection;
+  server.request_set_selection.notify = scm_to_pointer(scm_c_public_ref("gwwm init", "gwwm-seat-request-set-selection-pointer"));
   gwwm_signal_add(&server.seat->events.request_set_selection,
                   &server.request_set_selection);
   scm_call_0(scm_c_public_ref("gwwm init", "gwwm-init-socket"));

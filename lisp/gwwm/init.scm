@@ -245,6 +245,9 @@ gwwm [options]
                            (make-pointer (bytestructure-ref event 'source))))
          (serial (bytestructure-ref event 'serial)))
     (wlr-seat-set-selection seat wlr-data-source serial)))
+(define-public gwwm-seat-request-set-selection-pointer
+  (procedure->pointer void gwwm-seat-request-set-selection '(* *)))
+
 (define (server-cursor-motion listener data)
   (let ((server (wl-container-of listener %server-struct 'cursor-motion))
         (event (pointer->bytestructure data %wlr-event-pointer-motion-struct)))
@@ -271,7 +274,6 @@ gwwm [options]
 (define (server-cursor-axis l d)
   (let ((server (wl-container-of l %server-struct 'cursor-axis))
         (event (pointer->bytestructure d %wlr-event-pointer-axis-struct)))
-    (pk 'server-cursor-axis)
     (wlr-seat-pointer-notify-axis
      gwwm-server-seat
      (bytestructure-ref event 'time-msec)
