@@ -28,5 +28,5 @@
   (% (unwrap-wlr-scene scene) (unwrap-wlr-output-layout output-layout)))
 
 (define-wlr-procedure (wlr-scene-node-set-position scene x y)
-  (int "wlr_scene_node_set_position" (list '* int int))
+  (void "wlr_scene_node_set_position" (list '* int int))
   (% (unwrap-wlr-scene scene) x y))
