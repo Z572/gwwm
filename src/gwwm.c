@@ -114,6 +114,14 @@ static void gwwm_wl_list_remove(struct wl_list *l) {
                         scm_from_pointer(l, NULL)));
 }
 
+static void gwwm_wl_list_insert(struct wl_list *l, struct wl_list *l2) {
+  scm_call_2(scm_c_public_ref("wayland list", "wl-list-insert"),
+             scm_call_1(scm_c_public_ref("wayland list", "wrap-wl-list"),
+                        scm_from_pointer(l, NULL)),
+             scm_call_1(scm_c_public_ref("wayland list", "wrap-wl-list"),
+                        scm_from_pointer(l2, NULL)));
+}
+
 static void focus_view(struct tinywl_view *view, struct wlr_surface *surface) {
   /* Note: this function only deals with keyboard focus. */
   if (view == NULL) {
@@ -148,7 +156,7 @@ static void focus_view(struct tinywl_view *view, struct wlr_surface *surface) {
   /* Move the view to the front */
   wlr_scene_node_raise_to_top(view->scene_node);
   gwwm_wl_list_remove(&view->link);
-  wl_list_insert(&server->views, &view->link);
+  gwwm_wl_list_insert(&server->views, &view->link);
   /* Activate the new surface */
   /* wlr_xdg_toplevel_set_activated(view->xdg_surface, true); */
   scm_call_2(scm_c_public_ref("wlroots types xdg-shell",
@@ -285,7 +293,7 @@ static void server_new_keyboard(struct tinywl_server *server,
   wlr_seat_set_keyboard(server->seat, device);
 
   /* And add the keyboard to our list of keyboards */
-  wl_list_insert(&server->keyboards, &keyboard->link);
+  gwwm_wl_list_insert(&server->keyboards, &keyboard->link);
 }
 
 static void server_new_pointer(struct tinywl_server *server,
@@ -626,7 +634,7 @@ static void server_new_output(struct wl_listener *listener, void *data) {
   /* Sets up a listener for the frame notify event. */
   output->frame.notify = output_frame;
   gwwm_signal_add(&wlr_output->events.frame, &output->frame);
-  wl_list_insert(&server->outputs, &output->link);
+  gwwm_wl_list_insert(&server->outputs, &output->link);
 
   /* Adds this to the output layout. The add_auto function arranges outputs
    * from left-to-right in the order they appear. A more sophisticated
