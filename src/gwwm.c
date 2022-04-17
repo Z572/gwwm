@@ -799,7 +799,7 @@ static void server_new_xdg_surface(struct wl_listener *listener, void *data) {
   gwwm_signal_add(&xdg_surface->events.map, &view->map);
   view->unmap.notify = xdg_toplevel_unmap;
   gwwm_signal_add(&xdg_surface->events.unmap, &view->unmap);
-  view->destroy.notify = xdg_toplevel_destroy;
+  view->destroy.notify =  scm_to_pointer(scm_c_public_ref("gwwm init", "xdg-toplevel-destroy-pointer")); //xdg_toplevel_destroy;
   gwwm_signal_add(&xdg_surface->events.destroy, &view->destroy);
 
   /* cotd */

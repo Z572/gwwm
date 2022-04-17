@@ -7,7 +7,7 @@
   #:use-module (wayland)
   #:use-module (wayland util)
   #:use-module (ice-9 getopt-long)
-  #:use-module ((system foreign) #:select (make-pointer pointer-address))
+  #:use-module ((system foreign) #:select (make-pointer pointer-address void procedure->pointer))
   #:use-module (srfi srfi-1)
   #:use-module (wlroots util log)
   #:use-module (wlroots backend)
@@ -88,6 +88,18 @@ gwwm [options]
 
                                         ;(cursor-module ,)
      )))
+(define %tinywl-view-struct
+  (bs:struct `((link ,%wl-list)
+               (server ,(bs:pointer %server-struct))
+               (xdg-surface ,(bs:pointer %wlr-xdg-surface-struct))
+               (scene-node ,(bs:pointer '*))
+               (map ,%wl-listener)
+               (unmap ,%wl-listener)
+               (destroy ,%wl-listener)
+               (request-move ,%wl-listener)
+               (request-resize ,%wl-listener)
+               (x ,int)
+               (y ,int))))
 
 (define pointer->server-bytestructure
   (cut pointer->bytestructure <> %server-struct))
@@ -129,6 +141,7 @@ gwwm [options]
 (wlr-cursor-attach-output-layout gwwm-server-cursor gwwm-server-output-layout)
 (define-public gwwm-server-cursor-mgr (wlr-xcursor-manager-create #f 12))
 (wlr-xcursor-manager-load gwwm-server-cursor-mgr 1)
+
 (define-public gwwm-server-seat (wlr-seat-create gwwm-wl-display "seat0"))
 (define-public gwwm-server-layer-shell (wlr-layer-shell-v1-create gwwm-wl-display))
 (define (gwwm-init-socket)
@@ -141,12 +154,27 @@ gwwm [options]
             (wl-display-destroy gwwm-wl-display)))
         (wlr-backend-destroy gwwm-server-backend)))
   )
+
 (define-public (wlr_xcursor_manager_set_cursor_image name)
   (wlr-xcursor-manager-set-cursor-image gwwm-server-cursor-mgr name gwwm-server-cursor))
 
 (define-public (disable-toplevel-activated surface)
   (wlr-xdg-toplevel-set-activated
    (wlr-xdg-surface-from-wlr-surface surface) #f))
+(define-public (xdg-toplevel-destroy listener data)
+  (let* ((view (pk 'view (wl-container-of listener %tinywl-view-struct 'destroy))))
+    (pk 'destroy)
+    ;; FIXME: why need use @ ? just for-each will not found for-each variable
+    ((@ (guile) for-each)
+     (lambda (a) (let ((l (wl-list-init (wrap-wl-list (pk 'a (bytestructure-ref view a 'link))))))
+                   (pk 'c (wl-list-length l))
+                   (pk 'a (wl-list-remove l))
+                                        ;(pk 'b(wl-list-length l))
+                   ))
+     '(map unmap destroy request-move request-resize))))
+(define-public xdg-toplevel-destroy-pointer
+  (procedure->pointer void xdg-toplevel-destroy '(* *)))
+
 (define (gwwm-run!)
   (pk 'run!)
   (and=> (option-ref options 'exec #f) fork+exec)
@@ -170,6 +198,7 @@ gwwm [options]
           (wl-display-terminate gwwm-wl-display)
           #t)
          (else #f))))
+
 
 (define keyboard-pass-hook (make-hook 2))
 (define shutdown-hook (make-hook))
