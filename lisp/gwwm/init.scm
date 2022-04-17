@@ -165,7 +165,7 @@ gwwm [options]
     (pk 'destroy)
     ;; FIXME: why need use @ ? just a for-each will not found for-each variable
     ((@ (guile) for-each)
-     (lambda (a) (let ((l (.link (wrap-wl-listener (bytestructure-ref view a )))))
+     (lambda (a) (let ((l (wl-list-init (.link (wrap-wl-listener (bytestructure-ref view a ))))))
                    (pk 'c (wl-list-length l))
                    (pk 'a (wl-list-remove l))
                                         ;(pk 'b(wl-list-length l))
