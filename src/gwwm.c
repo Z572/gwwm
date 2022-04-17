@@ -506,17 +506,6 @@ static void server_cursor_button(struct wl_listener *listener, void *data) {
   }
 }
 
-static void server_cursor_axis(struct wl_listener *listener, void *data) {
-  /* This event is forwarded by the cursor when a pointer emits an axis event,
-   * for example when you move the scroll wheel. */
-  struct tinywl_server *server = wl_container_of(listener, server, cursor_axis);
-  struct wlr_event_pointer_axis *event = data;
-  /* Notify the client with pointer focus of the axis event. */
-  wlr_seat_pointer_notify_axis(server->seat, event->time_msec,
-                               event->orientation, event->delta,
-                               event->delta_discrete, event->source);
-}
-
 
 
 static void output_frame(struct wl_listener *listener, void *data) {
