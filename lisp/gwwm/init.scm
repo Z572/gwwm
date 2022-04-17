@@ -152,10 +152,17 @@ gwwm [options]
 (define-public (disable-toplevel-activated surface)
   (wlr-xdg-toplevel-set-activated
    (wlr-xdg-surface-from-wlr-surface surface) #f))
+(define (server-cursor-frame listener data)
+  (let ((server (wl-container-of listener %server-struct 'cursor-frame)))
+    (pk 'server-cursor-frame)
+    (wlr-seat-pointer-notify-frame gwwm-server-seat)))
+(define-public server-cursor-frame-pointer
+  (procedure->pointer void server-cursor-frame '(* *)))
+
 (define-public (xdg-toplevel-destroy listener data)
   (let* ((view (pk 'view (wl-container-of listener %tinywl-view-struct 'destroy))))
     (pk 'destroy)
-    ;; FIXME: why need use @ ? just for-each will not found for-each variable
+    ;; FIXME: why need use @ ? just a for-each will not found for-each variable
     ((@ (guile) for-each)
      (lambda (a) (let ((l (wl-list-init (wrap-wl-list (pk 'a (bytestructure-ref view a 'link))))))
                    (pk 'c (wl-list-length l))
