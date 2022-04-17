@@ -835,7 +835,7 @@ static void inner_main(void *closure, int argc, char *argv[]) {
                   &server.cursor_motion_absolute);
   server.cursor_button.notify = server_cursor_button;
   gwwm_signal_add(&server.cursor->events.button, &server.cursor_button);
-  server.cursor_axis.notify = server_cursor_axis;
+  server.cursor_axis.notify =scm_to_pointer(scm_c_public_ref("gwwm init", "server-cursor-axis-pointer")) /* server_cursor_axis */;
   gwwm_signal_add(&server.cursor->events.axis, &server.cursor_axis);
   server.cursor_frame.notify = scm_to_pointer(scm_c_public_ref("gwwm init", "server-cursor-frame-pointer"));
   gwwm_signal_add(&server.cursor->events.frame, &server.cursor_frame);

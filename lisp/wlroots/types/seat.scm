@@ -12,9 +12,11 @@
   #:use-module (wlroots utils)
   #:use-module (bytestructures guile)
   #:use-module ((system foreign) #:select ((uint32 . ffi:uint32)
+                                           (int32 . ffi:int32)
                                            (float . ffi:float)
-                                           (int . ffi:int)
+                                           ;(int . ffi:int)
                                            (void . ffi:void)
+                                           (double . ffi:double)
                                            pointer-address
                                            %null-pointer
                                            string->pointer))
@@ -35,7 +37,8 @@
             %wlr-seat-struct
             %wlr-seat-client-struct
             wrap-wlr-seat-client
-            unwrap-wlr-seat-client))
+            unwrap-wlr-seat-client
+            wlr-seat-pointer-notify-axis))
 
 (define WLR_POINTER_BUTTONS_CAP 16)
 (define %wlr-serial-range-struct
@@ -174,3 +177,6 @@
 (define-wlr-procedure (wlr-seat-set-selection seat source serial)
   (ffi:void "wlr_seat_set_selection" `(* * ,ffi:uint32))
   (% (unwrap-wlr-seat seat) (unwrap-wlr-data-source source) serial ))
+(define-wlr-procedure (wlr-seat-pointer-notify-axis wlr-seat time-msec orientation value value-discrete source)
+  (ffi:void "wlr_seat_pointer_notify_axis" (list '* ffi:uint32 ffi:int ffi:double ffi:int32 ffi:int))
+  (% (unwrap-wlr-seat wlr-seat) time-msec orientation value value-discrete source))

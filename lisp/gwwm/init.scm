@@ -255,3 +255,16 @@ gwwm [options]
     (process-cursor-motion (bytestructure->pointer server) (bytestructure-ref event 'time-msec))))
 (define-public server-cursor-motion-pointer
   (procedure->pointer void server-cursor-motion '(* *)))
+(define (server-cursor-axis l d)
+  (let ((server (wl-container-of l %server-struct 'cursor-axis))
+        (event (pointer->bytestructure d %wlr-event-pointer-axis-struct)))
+    (pk 'server-cursor-axis)
+    (wlr-seat-pointer-notify-axis
+     gwwm-server-seat
+     (bytestructure-ref event 'time-msec)
+     (bytestructure-ref event 'orientation)
+     (bytestructure-ref event 'delta)
+     (bytestructure-ref event 'delta-discrete)
+     (bytestructure-ref event 'source))))
+(define-public server-cursor-axis-pointer
+  (procedure->pointer void server-cursor-axis '(* *)))
