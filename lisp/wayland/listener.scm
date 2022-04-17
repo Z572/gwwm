@@ -16,10 +16,15 @@
             .link
             .notify))
 
+(define wl-notify-func
+  (bs:pointer
+   (delay (bs:struct `((listener ,%wl-listener)
+                       (data ,(bs:pointer 'void)))))))
 (define %wl-listener
   (bs:struct
    `((link ,%wl-list)
-     (notify ,(bs:pointer '*)))))
+     (notify ,wl-notify-func))))
+
 
 ;; (define-class <wl-listener> ()
 ;;   (pointer))
