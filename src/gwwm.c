@@ -330,28 +330,6 @@ static void server_new_input(struct wl_listener *listener, void *data) {
   wlr_seat_set_capabilities(server->seat, caps);
 }
 
-static void seat_request_cursor(struct wl_listener *listener, void *data) {
-  /* struct tinywl_server *server = */
-  /*     wl_container_of(listener, server, request_cursor); */
-  /* /\* This event is raised by the seat when a client provides a cursor image *\/ */
-  /* struct wlr_seat_pointer_request_set_cursor_event *event = data; */
-  /* struct wlr_seat_client *focused_client = */
-  /*     server->seat->pointer_state.focused_client; */
-  /* /\* This can be sent by any client, so we check to make sure this one is */
-  /*  * actually has pointer focus first. *\/ */
-  /* if (focused_client == event->seat_client) { */
-  /*   /\* Once we've vetted the client, we can tell the cursor to use the */
-  /*    * provided surface as the cursor image. It will set the hardware cursor */
-  /*    * on the output that it's currently on and continue to do so as the */
-  /*    * cursor moves between outputs. *\/ */
-  /*   wlr_cursor_set_surface(server->cursor, event->surface, event->hotspot_x, */
-  /*                          event->hotspot_y); */
-  /* } */
-  scm_call_2(scm_c_public_ref("gwwm init", "gwwm-seat-request-cursor"),
-             scm_from_pointer(listener, NULL),
-             scm_from_pointer(data, NULL));
-}
-
 static void seat_request_set_selection(struct wl_listener *listener,
                                        void *data) {
   /* This event is raised by the seat when a client wants to set the selection,
@@ -506,22 +484,6 @@ static SCM scm_process_cursor_motion(SCM p,SCM time){
   return SCM_UNSPECIFIED;
 }
 
-static void server_cursor_motion(struct wl_listener *listener, void *data) {
-  /* This event is forwarded by the cursor when a pointer emits a _relative_
-   * pointer motion event (i.e. a delta) */
-  struct tinywl_server *server =
-      wl_container_of(listener, server, cursor_motion);
-  struct wlr_event_pointer_motion *event = data;
-  /* The cursor doesn't move unless we tell it to. The cursor automatically
-   * handles constraining the motion to the output layout, as well as any
-   * special configuration applied for the specific input device which
-   * generated the event. You can pass NULL for the device if you want to move
-   * the cursor around without any input. */
-  wlr_cursor_move(server->cursor, event->device, event->delta_x,
-                  event->delta_y);
-  process_cursor_motion(server, event->time_msec);
-}
-
 static void server_cursor_motion_absolute(struct wl_listener *listener,
                                           void *data) {
   /* This event is forwarded by the cursor when a pointer emits an _absolute_
@@ -570,19 +532,7 @@ static void server_cursor_axis(struct wl_listener *listener, void *data) {
                                event->delta_discrete, event->source);
 }
 
-static void server_cursor_frame(struct wl_listener *listener, void *data) {
-  /* This event is forwarded by the cursor when a pointer emits an frame
-   * event. Frame events are sent after regular pointer events to group
-   * multiple events together. For instance, two axis events may happen at the
-   * same time, in which case a frame event won't be sent in between. */
-  struct tinywl_server *server =
-      wl_container_of(listener, server, cursor_frame);
-  /* Notify the client with pointer focus of the frame event. */
-  /* wlr_seat_pointer_notify_frame(server->seat); */
-  scm_call_1(
-      scm_c_public_ref("wlroots types seat", "wlr-seat-pointer-notify-frame"),
-      scm_c_public_ref("gwwm init", "gwwm-server-seat"));
-}
+
 
 static void output_frame(struct wl_listener *listener, void *data) {
   /* This function is called every time an output is ready to display a frame,
@@ -607,22 +557,6 @@ static void server_new_output(struct wl_listener *listener, void *data) {
   struct tinywl_server *server = wl_container_of(listener, server, new_output);
   struct wlr_output *wlr_output = data;
 
-  /* Configures the output created by the backend to use our allocator
-   * and our renderer. Must be done once, before commiting the output */
-  /* wlr_output_init_render(wlr_output, server_allocator(), server_renderer());
-   */
-  /* scm_call_2(scm_c_public_ref("gwwm init", "server-new-output"), */
-  /*            scm_from_pointer(listener, NULL), */
-  /*            scm_from_pointer(data ,NULL)); */
-  /* Some backends don't have modes. DRM+KMS does, and we need to set a mode
-   * before we can use the output. The mode is a tuple of (width, height,
-   * refresh rate), and each monitor supports only a specific set of modes. We
-   * just pick the monitor's preferred mode, a more sophisticated compositor
-   * would let the user configure it. */
-  /* if (!wl_list_empty(&wlr_output->modes)) { */
-  /*   struct wlr_output_mode *mode = wlr_output_preferred_mode(wlr_output); */
-  /*   wlr_output_set_mode(wlr_output, mode); */
-  /*   wlr_output_enable(wlr_output, true); */
 
   /* } */
   if (!scm_to_bool(scm_call_2(
@@ -734,31 +668,6 @@ static void xdg_toplevel_request_move(struct wl_listener *listener,
   begin_interactive(view, TINYWL_CURSOR_MOVE, 0);
 }
 
-/* static void layer_shell_request_new_surface(struct wl_listener *listener, */
-/*                                             void *data) { */
-/*   wlr_log(WLR_INFO, "layer_shell_request_new_surface"); */
-/*   struct tinywl_server *server = */
-/*       wl_container_of(listener, server, request_new_surface); */
-/*   struct wlr_layer_shell_v1 *layer_shell = data; */
-/*   wlr_log(WLR_INFO, "layer_shell_request_new_surface-2"); */
-/*   struct wl_listener l; */
-/*       wlr_log(WLR_INFO, "layer_shell_request_new_surface-5"); */
-/*   /\* l.notify=xdg_toplevel_map; *\/ */
-/*   /\*   wlr_log(WLR_INFO, "layer_shell_request_new_surface-4"); *\/ */
-/*   /\* gwwm_signal_add(&layer_shell->events.new_surface, &l); *\/ */
-/*   /\*   wlr_log(WLR_INFO, "layer_shell_request_new_surface-3"); *\/ */
-/*   // layer_shell->events.new_surface */
-/*   /\* /\\* if (layer_shell->) *\\/ *\/ */
-/*   /\* struct tinywl_view *view = calloc(1, sizeof(struct tinywl_view)); *\/
- */
-/*   /\* view->server=server; *\/ */
-/*   /\* view->xdg_surface= layer_shell; *\/ */
-/*   /\* view->scene_node=
- * wlr_scene_xdg_surface_create(&view->server->scene->node, */
-/*    * view->xdg_surface); *\/ */
-/*   /\* view->scene_node->data=view; *\/ */
-/* } */
-
 static void xdg_toplevel_request_resize(struct wl_listener *listener,
                                         void *data) {
   /* This event is raised when a client would like to begin an interactive
@@ -777,9 +686,6 @@ static void server_new_xdg_surface(struct wl_listener *listener, void *data) {
   struct tinywl_server *server =
       wl_container_of(listener, server, new_xdg_surface);
   struct wlr_xdg_surface *xdg_surface = data;
-  /* scm_call_2(scm_c_public_ref("gwwm init","server-new-xdg-surface"), */
-  /*            scm_from_pointer(server, NULL), */
-  /*            scm_from_pointer(xdg_surface, NULL)); */
 
   /* We must add xdg popups to the scene graph so they get rendered. The
    * wlroots scene graph provides a helper for this, but to use it we must
@@ -824,7 +730,6 @@ static void server_new_xdg_surface(struct wl_listener *listener, void *data) {
 
 static void inner_main(void *closure, int argc, char *argv[]) {
 
-  /* wlr_log_init(WLR_DEBUG, NULL); */
 
   scm_c_primitive_load("lisp/gwwm/init.scm");
   scm_c_module_define(scm_c_resolve_module("gwwm init"),
@@ -835,35 +740,20 @@ static void inner_main(void *closure, int argc, char *argv[]) {
   /* The Wayland display is managed by libwayland. It handles accepting
    * clients from the Unix socket, manging Wayland globals, and so on. */
 
-  /* server.wl_display = (struct wl_display *)(scm_to_pointer( */
-  /*     scm_call_1(scm_c_public_ref("wayland display", "unwrap-wl-display"), */
-  /*                scm_c_public_ref("gwwm init", */
-  /*                                 "gwwm-wl-display")))); //
-   * wl_display_create(); */
   /* The backend is a wlroots feature which abstracts the underlying input and
    * output hardware. The autocreate option will choose the most suitable
    * backend based on the current environment, such as opening an X11 window
    * if an X11 server is running. */
-  /* server.backend = (struct wlr_backend *)(scm_to_pointer( */
-  /*     scm_call_1(scm_c_public_ref("wlroots backend", "unwrap-wlr-backend"),
-   */
-  /*                scm_c_public_ref("gwwm init", */
-  /*                                 "gwwm-server-backend"))));
-   * //wlr_backend_autocreate(server.wl_display); */
 
   /* Autocreates a renderer, either Pixman, GLES2 or Vulkan for us. The user
    * can also specify a renderer using the WLR_RENDERER env var.
    * The renderer is responsible for defining the various pixel formats it
    * supports for shared memory, this configures that for clients. */
-  // server.renderer = wlr_renderer_autocreate(server_backend());
-  /* wlr_renderer_init_wl_display(server_renderer(), server_wl_display()); */
 
   /* Autocreates an allocator for us.
    * The allocator is the bridge between the renderer and the backend. It
    * handles the buffer creation, allowing wlroots to render onto the
    * screen */
-  // server.allocator = wlr_allocator_autocreate(server_backend(),
-  // server_renderer());
   /* This creates some hands-off wlroots interfaces. The compositor is
    * necessary for clients to allocate surfaces and the data device manager
    * handles the clipboard. Each of these wlroots interfaces has room for you
@@ -875,11 +765,9 @@ static void inner_main(void *closure, int argc, char *argv[]) {
 
   /* Creates an output layout, which a wlroots utility for working with an
    * arrangement of screens in a physical layout. */
-  /* server.output_layout = wlr_output_layout_create(); */
 
   /* Configure a listener to be notified when new outputs are available on the
    * backend. */
-  /* wl_list_init(&server.outputs); */
   scm_call_1(scm_c_public_ref("wayland list", "wl-list-init"),
              scm_call_1(scm_c_public_ref("wayland list", "wrap-wl-list"),
                         scm_from_pointer(&server.outputs, NULL)));
@@ -908,7 +796,6 @@ static void inner_main(void *closure, int argc, char *argv[]) {
       scm_c_public_ref("wlroots types xdg-shell", "unwrap-wlr-xdg-shell"),
       scm_c_public_ref("gwwm init", "gwwm-server-xdg-shell")));
 
-  /* wlr_xdg_shell_create(server_wl_display()); */
   server.new_xdg_surface.notify = server_new_xdg_surface;
   gwwm_signal_add(&server.xdg_shell->events.new_surface,
                   &server.new_xdg_surface);
@@ -920,7 +807,6 @@ static void inner_main(void *closure, int argc, char *argv[]) {
   server.cursor = scm_to_pointer(
       scm_call_1(scm_c_public_ref("wlroots types cursor", "unwrap-wlr-cursor"),
                  scm_c_public_ref("gwwm init", "gwwm-server-cursor")));
-  /* wlr_cursor_attach_output_layout(server.cursor, server_output_layout()); */
 
   /* Creates an xcursor manager, another wlroots utility which loads up
    * Xcursor themes to source cursor images from and makes sure that cursor
@@ -929,7 +815,6 @@ static void inner_main(void *closure, int argc, char *argv[]) {
   server.cursor_mgr = scm_to_pointer(scm_call_1(
       scm_c_public_ref("wlroots types xcursor", "unwrap-wlr-xcursor-manager"),
       scm_c_public_ref("gwwm init", "gwwm-server-cursor-mgr")));
-  /* wlr_xcursor_manager_load(server.cursor_mgr, 1); */
 
   /*
    * wlr_cursor *only* displays an image on screen. It does not move around
@@ -944,7 +829,6 @@ static void inner_main(void *closure, int argc, char *argv[]) {
    * And more comments are sprinkled throughout the notify functions above.
    */
   server.cursor_motion.notify = scm_to_pointer(scm_c_public_ref("gwwm init", "server-cursor-motion-pointer"));
-/* server_cursor_motion; */
   gwwm_signal_add(&server.cursor->events.motion, &server.cursor_motion);
   server.cursor_motion_absolute.notify = server_cursor_motion_absolute;
   gwwm_signal_add(&server.cursor->events.motion_absolute,
@@ -954,7 +838,6 @@ static void inner_main(void *closure, int argc, char *argv[]) {
   server.cursor_axis.notify = server_cursor_axis;
   gwwm_signal_add(&server.cursor->events.axis, &server.cursor_axis);
   server.cursor_frame.notify = scm_to_pointer(scm_c_public_ref("gwwm init", "server-cursor-frame-pointer"));
-  // server_cursor_frame;
   gwwm_signal_add(&server.cursor->events.frame, &server.cursor_frame);
 
   /*
@@ -965,61 +848,25 @@ static void inner_main(void *closure, int argc, char *argv[]) {
    */
   wl_list_init(&server.keyboards);
   server.new_input.notify = server_new_input;
-  /* scm_call_2(scm_c_public_ref("wayland signal", "wl-signal-add"), */
-  /*            scm_call_1(scm_c_public_ref("wayland signal", "wrap-wl-signal"),
-   */
-  /*                       scm_from_pointer(&server_backend()->events.new_input,
-   * NULL)), */
-  /*            scm_call_1(scm_c_public_ref("wayland listener",
-   * "wrap-wl-listener") */
-  /*                       ,scm_from_pointer(&server.new_input, NULL))); */
   gwwm_signal_add(&server_backend()->events.new_input, &server.new_input);
   server.seat = scm_to_pointer(
       scm_call_1(scm_c_public_ref("wlroots types seat", "unwrap-wlr-seat"),
                  scm_c_public_ref("gwwm init", "gwwm-server-seat")));
-  /* wlr_seat_create(server_wl_display(), "seat0"); */
-  server.request_cursor.notify = scm_to_pointer(scm_c_public_ref("gwwm init", "gwwm-seat-request-cursor-pointer"))/* seat_request_cursor */;
+  server.request_cursor.notify = scm_to_pointer(scm_c_public_ref("gwwm init", "gwwm-seat-request-cursor-pointer"));
   gwwm_signal_add(&server.seat->events.request_set_cursor,
                   &server.request_cursor);
   server.request_set_selection.notify = seat_request_set_selection;
   gwwm_signal_add(&server.seat->events.request_set_selection,
                   &server.request_set_selection);
-
-  /* Add a Unix socket to the Wayland display. */
-  //  scm_c_primitive_load("lisp/gwwm/init.scm");
-  /* const char *socket = scm_to_utf8_string(); //
-   * wl_display_add_socket_auto(server_wl_display()); */
-  /* if (!socket) { */
-  /*   wlr_backend_destroy(server.backend); */
-  /* } */
-
-  /* /\* Start the backend. This will enumerate outputs and inputs, become the
-   * DRM */
-  /*  * master, etc *\/ */
-  /* if (!wlr_backend_start(server.backend)) { */
-  /*   wlr_backend_destroy(server.backend); */
-  /*   wl_display_destroy(server_wl_display()); */
-  /* } */
   scm_call_0(scm_c_public_ref("gwwm init", "gwwm-init-socket"));
   /* Set the WAYLAND_DISPLAY environment variable to our socket and run the
    * startup command if requested. */
 
-  // wl_display_init_shm(server_wl_display());
   wlr_gamma_control_manager_v1_create(server_wl_display());
-  // wlr_idle_create(server_wl_display());
-  /* server.layer_shell = wlr_layer_shell_v1_create(server_wl_display()); */
-  /* server.request_new_surface.notify = layer_shell_request_new_surface; */
-  /* gwwm_signal_add(&server.layer_shell->events.new_surface, */
-  /*               &server.request_new_surface); */
-
   /* Run the Wayland event loop. This does not return until you exit the
    * compositor. Starting the backend rigged up all of the necessary event
    * loop configuration to listen to libinput events, DRM events, generate
    * frame events at the refresh rate, and so on. */
-  //  wlr_log(WLR_INFO, "Running Wayland compositor on WAYLAND_DISPLAY=%s",
-  //  socket);
-  // scm_set_current_module (scm_c_resolve_module ("gwwm"));
-
   scm_call_0(scm_c_public_ref("gwwm init", "gwwm-run!"));
 }
 
