@@ -30,31 +30,7 @@ moddir=$(prefix)/share/guile/site/$(GUILE_EFFECTIVE_VERSION)
 godir=$(libdir)/guile/$(GUILE_EFFECTIVE_VERSION)/site-ccache
 
 SOURCES= lisp/gwwm/util.scm \
- lisp/wayland.scm                     \
- lisp/wayland/argument.scm        \
- lisp/wayland/callback.scm        \
- lisp/wayland/client.scm          \
- lisp/wayland/client-core.scm     \
- lisp/wayland/compositor.scm      \
- lisp/wayland/config.scm          \
- lisp/wayland/cursor.scm          \
- lisp/wayland/display.scm         \
- lisp/wayland/egl.scm             \
- lisp/wayland/event-loop.scm      \
- lisp/wayland/global.scm          \
- lisp/wayland/interface.scm       \
- lisp/wayland/keyboard.scm        \
- lisp/wayland/list.scm            \
- lisp/wayland/listener.scm        \
- lisp/wayland/output.scm          \
- lisp/wayland/pointer.scm         \
- lisp/wayland/proxy.scm           \
- lisp/wayland/registry.scm        \
- lisp/wayland/resource.scm        \
- lisp/wayland/server-core.scm     \
- lisp/wayland/shm.scm             \
- lisp/wayland/signal.scm          \
- lisp/wayland/touch.scm           \
- lisp/wayland/util.scm
+         lisp/wayland.scm
+include lisp/wayland/Makefile.am
 include lisp/wlroots/Makefile.am
 include src/Makefile.am
