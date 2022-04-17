@@ -18,7 +18,9 @@
              (define name
                (let ((% (wlr->procedure return-type cname arg-types)))
                  (lambda* (args ...)
-                   body ...)))))))))
+                   body ...))))))
+      ((o-name (name args ...) (return-type cname arg-types))
+       #'(o-name (name args ...) (return-type cname arg-types) (% args ...))))))
 
 ;;; copy define from (system vm dwarf) module
 (define-syntax-rule (define-enumeration code->name name->code
