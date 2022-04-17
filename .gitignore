@@ -1,5 +1,6 @@
 *.eps
 *.go
+*.o
 *.log
 *.mo
 *.pdf
