@@ -294,3 +294,10 @@ gwwm [options]
     (begin-interactive (bytestructure->pointer view) 1 0)))
 (define-public xdg-toplevel-request-move-pointer
   (procedure->pointer void xdg-toplevel-request-move '(* *)))
+
+(define (xdg-toplevel-request-resize l d)
+  (let* ((event (wrap-wlr-xdg-toplevel-resize-event d))
+         (view (wl-container-of l %tinywl-view-struct 'request-resize)))
+    (begin-interactive (bytestructure->pointer view) 2 (.edges event))))
+(define-public xdg-toplevel-request-resize-pointer
+  (procedure->pointer void xdg-toplevel-request-resize '(* *)))

@@ -612,18 +612,6 @@ static SCM scm_begin_interactive(SCM view,SCM mode, SCM edges){
   return SCM_UNSPECIFIED;
 }
 
-static void xdg_toplevel_request_resize(struct wl_listener *listener,
-                                        void *data) {
-  /* This event is raised when a client would like to begin an interactive
-   * resize, typically because the user clicked on their client-side
-   * decorations. Note that a more sophisticated compositor should check the
-   * provided serial against a list of button press serials sent to this
-   * client, to prevent the client from requesting this whenever they want. */
-  struct wlr_xdg_toplevel_resize_event *event = data;
-  struct tinywl_view *view = wl_container_of(listener, view, request_resize);
-  begin_interactive(view, TINYWL_CURSOR_RESIZE, event->edges);
-}
-
 static void server_new_xdg_surface(struct wl_listener *listener, void *data) {
   /* This event is raised when wlr_xdg_shell receives a new xdg surface from a
    * client, either a toplevel (application window) or popup. */
@@ -668,7 +656,7 @@ static void server_new_xdg_surface(struct wl_listener *listener, void *data) {
   struct wlr_xdg_toplevel *toplevel = xdg_surface->toplevel;
   view->request_move.notify = scm_to_pointer(scm_c_public_ref("gwwm init", "xdg-toplevel-request-move-pointer"));
   gwwm_signal_add(&toplevel->events.request_move, &view->request_move);
-  view->request_resize.notify = xdg_toplevel_request_resize;
+  view->request_resize.notify = scm_to_pointer(scm_c_public_ref("gwwm init", "xdg-toplevel-request-resize-pointer"));
   gwwm_signal_add(&toplevel->events.request_resize, &view->request_resize);
 }
 
