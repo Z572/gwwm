@@ -66,12 +66,9 @@
       (proc (unwrap-wl-list lst)
             (unwrap-wl-list lst2)))))
 
-(define wl-list-remove
-  (let ((proc (wayland-server->procedure
-               void "wl_list_remove"
-               (list '*))))
-    (lambda (l)
-      (proc (unwrap-wl-list l)))))
+(define-wl-server-procedure (wl-list-remove l)
+  (void "wl_list_remove" (list '*))
+  (% (unwrap-wl-list l)))
 
 (define %wl-list-length
   (wayland-server->procedure ffi:int "wl_list_length" '(*)))

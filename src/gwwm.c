@@ -556,13 +556,6 @@ static void xdg_toplevel_map(struct wl_listener *listener, void *data) {
   focus_view(view, view->xdg_surface->surface);
 }
 
-static void xdg_toplevel_unmap(struct wl_listener *listener, void *data) {
-  /* Called when the surface is unmapped, and should no longer be shown. */
-  struct tinywl_view *view = wl_container_of(listener, view, unmap);
-
-  gwwm_wl_list_remove(&view->link);
-}
-
 static void xdg_toplevel_destroy(struct wl_listener *listener, void *data) {
   /* Called when the surface is destroyed and should never be shown again. */
   struct tinywl_view *view = wl_container_of(listener, view, destroy);
@@ -672,7 +665,7 @@ static void server_new_xdg_surface(struct wl_listener *listener, void *data) {
   /* Listen to the various events it can emit */
   view->map.notify = xdg_toplevel_map;
   gwwm_signal_add(&xdg_surface->events.map, &view->map);
-  view->unmap.notify = xdg_toplevel_unmap;
+  view->unmap.notify = scm_to_pointer(scm_c_public_ref("gwwm init", "xdg-toplevel-unmap-pointer"));
   gwwm_signal_add(&xdg_surface->events.unmap, &view->unmap);
   view->destroy.notify =  scm_to_pointer(scm_c_public_ref("gwwm init", "xdg-toplevel-destroy-pointer")); //xdg_toplevel_destroy;
   gwwm_signal_add(&xdg_surface->events.destroy, &view->destroy);

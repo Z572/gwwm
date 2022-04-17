@@ -165,7 +165,7 @@ gwwm [options]
     (pk 'destroy)
     ;; FIXME: why need use @ ? just a for-each will not found for-each variable
     ((@ (guile) for-each)
-     (lambda (a) (let ((l (wl-list-init (wrap-wl-list (pk 'a (bytestructure-ref view a 'link))))))
+     (lambda (a) (let ((l (.link (wrap-wl-listener (bytestructure-ref view a )))))
                    (pk 'c (wl-list-length l))
                    (pk 'a (wl-list-remove l))
                                         ;(pk 'b(wl-list-length l))
@@ -283,3 +283,9 @@ gwwm [options]
      (bytestructure-ref event 'source))))
 (define-public server-cursor-axis-pointer
   (procedure->pointer void server-cursor-axis '(* *)))
+
+(define (xdg-toplevel-unmap l d)
+  (let ((view (wl-container-of l %tinywl-view-struct 'unmap)))
+    (wl-list-remove (wrap-wl-list (bytestructure-ref view 'link)))))
+(define-public xdg-toplevel-unmap-pointer
+  (procedure->pointer void xdg-toplevel-unmap '(* *)))

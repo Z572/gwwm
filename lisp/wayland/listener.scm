@@ -5,6 +5,7 @@
   #:use-module ((system foreign) #:select (%null-pointer
                                            procedure->pointer
                                            void
+                                           pointer?
                                            pointer->bytevector))
   #:use-module (bytestructures guile)
   #:duplicates (merge-generics)
@@ -63,7 +64,8 @@
                       '(* *))))))))
 
 (define (wrap-wl-listener p)
-  (make <wl-listener> #:bytestructure (pointer->bytestructure p %wl-listener)))
+  (make <wl-listener> #:bytestructure (cond ((pointer? p ) (pointer->bytestructure p %wl-listener))
+                                            ((bytestructure? p) p))))
 
 (define (unwrap-wl-listener listener)
   (bytestructure->pointer (.bytestructure listener)))
