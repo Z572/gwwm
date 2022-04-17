@@ -607,15 +607,9 @@ static void begin_interactive(struct tinywl_view *view,
   }
 }
 
-static void xdg_toplevel_request_move(struct wl_listener *listener,
-                                      void *data) {
-  /* This event is raised when a client would like to begin an interactive
-   * move, typically because the user clicked on their client-side
-   * decorations. Note that a more sophisticated compositor should check the
-   * provided serial against a list of button press serials sent to this
-   * client, to prevent the client from requesting this whenever they want. */
-  struct tinywl_view *view = wl_container_of(listener, view, request_move);
-  begin_interactive(view, TINYWL_CURSOR_MOVE, 0);
+static SCM scm_begin_interactive(SCM view,SCM mode, SCM edges){
+  begin_interactive(scm_to_pointer(view), scm_to_int(mode), scm_to_uint32(edges));
+  return SCM_UNSPECIFIED;
 }
 
 static void xdg_toplevel_request_resize(struct wl_listener *listener,
@@ -672,7 +666,7 @@ static void server_new_xdg_surface(struct wl_listener *listener, void *data) {
 
   /* cotd */
   struct wlr_xdg_toplevel *toplevel = xdg_surface->toplevel;
-  view->request_move.notify = xdg_toplevel_request_move;
+  view->request_move.notify = scm_to_pointer(scm_c_public_ref("gwwm init", "xdg-toplevel-request-move-pointer"));
   gwwm_signal_add(&toplevel->events.request_move, &view->request_move);
   view->request_resize.notify = xdg_toplevel_request_resize;
   gwwm_signal_add(&toplevel->events.request_resize, &view->request_resize);
@@ -686,6 +680,10 @@ static void inner_main(void *closure, int argc, char *argv[]) {
                       "process-cursor-motion",
                       scm_c_make_gsubr("process-cursor-motion", 2, 0, 0,
                                        scm_process_cursor_motion));
+  scm_c_module_define(scm_c_resolve_module("gwwm init"),
+                      "begin-interactive",
+                      scm_c_make_gsubr("begin_interactive", 3, 0, 0,
+                                       scm_begin_interactive));
   struct tinywl_server server;
   /* The Wayland display is managed by libwayland. It handles accepting
    * clients from the Unix socket, manging Wayland globals, and so on. */

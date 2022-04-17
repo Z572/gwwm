@@ -289,3 +289,8 @@ gwwm [options]
     (wl-list-remove (wrap-wl-list (bytestructure-ref view 'link)))))
 (define-public xdg-toplevel-unmap-pointer
   (procedure->pointer void xdg-toplevel-unmap '(* *)))
+(define (xdg-toplevel-request-move l d)
+  (let ((view (wl-container-of l %tinywl-view-struct 'request-move)))
+    (begin-interactive (bytestructure->pointer view) 1 0)))
+(define-public xdg-toplevel-request-move-pointer
+  (procedure->pointer void xdg-toplevel-request-move '(* *)))
