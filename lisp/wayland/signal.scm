@@ -2,8 +2,9 @@
   #:use-module (wayland util)
   #:use-module (wayland list)
   #:use-module (wayland listener)
+  #:use-module (rnrs bytevectors)
   #:use-module (bytestructures guile)
-  #:use-module ((system foreign) #:select (pointer?))
+  #:use-module ((system foreign) #:select (pointer? pointer->bytevector bytevector->pointer make-pointer))
   #:use-module (oop goops)
   #:duplicates (merge-generics)
   #:export (%wl-signal-struct
@@ -14,27 +15,43 @@
             .listener-list))
 
 (define %wl-signal-struct
-  (bs:struct `((listener-list ,%wl-list))))
+  (bs:struct `((listener-list ,(bs:pointer %wl-list)))))
 
+(pk 'a-1)
+(define-bytestructure-accessors %wl-signal-struct
+  wl-signal-unwrap wl-signal-ref wl-signal-set!)
+(pk 'a)
 (define-class <wl-signal> ()
-  (bytestructure #:accessor .bytestructure #:init-keyword #:bytestructures)
+  (bytevectory #:accessor .bytevectory #:init-keyword #:bytevectory)
   (listener-list #:allocation #:virtual
                  #:accessor .listener-list
-                 #:slot-ref (lambda (a) (wrap-wl-list (bytestructure-ref (.bytestructure a) 'listener-list)))
+                 #:slot-ref (lambda (a)
+                              (wrap-wl-list
+                               (make-pointer (wl-signal-ref (.bytevectory a) listener-list))))
                  #:slot-set! (lambda (instance new-val)
-                               (bytestructure-set!
-                                (.bytestructure instance)
-                                'listener-list new-val))))
+                               (wl-signal-set!
+                                (.bytevectory instance)
+                                listener-list (unwrap-wl-list new-val))
+                               )))
 (define (wrap-wl-signal p)
-  (make <wl-signal> #:bytestructures (if (pointer? p)
-                                         (pointer->bytestructure p %wl-signal-struct)
-                                         p)))
+  (make <wl-signal> #:bytevectory
+        (cond ((pointer? p)
+               (pointer->bytevector p (bytestructure-descriptor-size %wl-signal-struct)))
+              ((bytestructure? p)
+               (bytestructure-bytevector p))
+              (else p))))
+(define (make-wl-signal)
+  (wrap-wl-signal
+   (make-bytevector
+    (bytestructure-descriptor-size %wl-signal-struct))))
 (define (unwrap-wl-signal o)
-  (bytestructure->pointer (.bytestructure o)))
+  (bytevector->pointer (.bytevectory o))
+  ;; (bytestructure->pointer (.bytestructure o))
+  )
 (define (wl-signal-add signal listener)
   (wl-list-insert (wl-list-prev (.listener-list signal))
                   (.link listener)))
-(define* (wl-signal-init #:optional (signal (wrap-wl-signal (bytestructure %wl-signal-struct))))
+(define* (wl-signal-init #:optional (signal (make-wl-signal)))
   (wl-list-init (.listener-list signal))
   signal)
 (define wl-signal-get)
