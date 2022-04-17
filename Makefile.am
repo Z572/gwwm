@@ -30,16 +30,6 @@ moddir=$(prefix)/share/guile/site/$(GUILE_EFFECTIVE_VERSION)
 godir=$(libdir)/guile/$(GUILE_EFFECTIVE_VERSION)/site-ccache
 
 SOURCES= lisp/gwwm/util.scm \
- lisp/wlroots/backend.scm             \
- lisp/wlroots/config.scm              \
- lisp/wlroots/render/allocator.scm    \
- lisp/wlroots/render/renderer.scm     \
- lisp/wlroots/types/data-device.scm   \
- lisp/wlroots/types/output-layout.scm \
- lisp/wlroots/types/scene.scm         \
- lisp/wlroots/types/xdg-shell.scm     \
- lisp/wlroots/util/box.scm            \
- lisp/wlroots/utils.scm               \
  lisp/wayland.scm                     \
  lisp/wayland/argument.scm        \
  lisp/wayland/callback.scm        \
@@ -66,4 +56,5 @@ SOURCES= lisp/gwwm/util.scm \
  lisp/wayland/signal.scm          \
  lisp/wayland/touch.scm           \
  lisp/wayland/util.scm
+include lisp/wlroots/Makefile.am
 include src/Makefile.am
