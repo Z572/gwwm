@@ -14,13 +14,13 @@
             wl-signal-init
             .listener-list))
 
-(define %wl-signal-struct
-  (bs:struct `((listener-list ,(bs:pointer %wl-list)))))
+(eval-when (expand load eval)
+  (define %wl-signal-struct
+    (bs:struct `((listener-list ,(bs:pointer %wl-list))))))
 
-(pk 'a-1)
 (define-bytestructure-accessors %wl-signal-struct
   wl-signal-unwrap wl-signal-ref wl-signal-set!)
-(pk 'a)
+
 (define-class <wl-signal> ()
   (bytevectory #:accessor .bytevectory #:init-keyword #:bytevectory)
   (listener-list #:allocation #:virtual
