@@ -255,6 +255,19 @@ gwwm [options]
     (process-cursor-motion (bytestructure->pointer server) (bytestructure-ref event 'time-msec))))
 (define-public server-cursor-motion-pointer
   (procedure->pointer void server-cursor-motion '(* *)))
+
+(define (server-cursor-motion-absolute listener data)
+  (let ((server (wl-container-of listener %server-struct 'cursor-motion-absolute))
+        (event (pointer->bytestructure data %wlr-event-pointer-motion-absolute-struct)))
+    (wlr-cursor-warp-absolute gwwm-server-cursor
+                              (wrap-wlr-input-device (make-pointer (bytestructure-ref event 'device)))
+                              (bytestructure-ref event 'x)
+                              (bytestructure-ref event 'y))
+    (process-cursor-motion (bytestructure->pointer server)
+                           (bytestructure-ref event 'time-msec))))
+(define-public server-cursor-motion-absolute-pointer
+  (procedure->pointer void server-cursor-motion-absolute '(* *)))
+
 (define (server-cursor-axis l d)
   (let ((server (wl-container-of l %server-struct 'cursor-axis))
         (event (pointer->bytestructure d %wlr-event-pointer-axis-struct)))

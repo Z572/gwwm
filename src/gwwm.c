@@ -484,21 +484,6 @@ static SCM scm_process_cursor_motion(SCM p,SCM time){
   return SCM_UNSPECIFIED;
 }
 
-static void server_cursor_motion_absolute(struct wl_listener *listener,
-                                          void *data) {
-  /* This event is forwarded by the cursor when a pointer emits an _absolute_
-   * motion event, from 0..1 on each axis. This happens, for example, when
-   * wlroots is running under a Wayland window rather than KMS+DRM, and you
-   * move the mouse over the window. You could enter the window from any edge,
-   * so we have to warp the mouse there. There is also some hardware which
-   * emits these events. */
-  struct tinywl_server *server =
-      wl_container_of(listener, server, cursor_motion_absolute);
-  struct wlr_event_pointer_motion_absolute *event = data;
-  wlr_cursor_warp_absolute(server->cursor, event->device, event->x, event->y);
-  process_cursor_motion(server, event->time_msec);
-}
-
 static void server_cursor_button(struct wl_listener *listener, void *data) {
   /* This event is forwarded by the cursor when a pointer emits a button
    * event. */
@@ -830,12 +815,12 @@ static void inner_main(void *closure, int argc, char *argv[]) {
    */
   server.cursor_motion.notify = scm_to_pointer(scm_c_public_ref("gwwm init", "server-cursor-motion-pointer"));
   gwwm_signal_add(&server.cursor->events.motion, &server.cursor_motion);
-  server.cursor_motion_absolute.notify = server_cursor_motion_absolute;
+  server.cursor_motion_absolute.notify = scm_to_pointer(scm_c_public_ref("gwwm init", "server-cursor-motion-absolute-pointer"));
   gwwm_signal_add(&server.cursor->events.motion_absolute,
                   &server.cursor_motion_absolute);
   server.cursor_button.notify = server_cursor_button;
   gwwm_signal_add(&server.cursor->events.button, &server.cursor_button);
-  server.cursor_axis.notify =scm_to_pointer(scm_c_public_ref("gwwm init", "server-cursor-axis-pointer")) /* server_cursor_axis */;
+  server.cursor_axis.notify =scm_to_pointer(scm_c_public_ref("gwwm init", "server-cursor-axis-pointer"));
   gwwm_signal_add(&server.cursor->events.axis, &server.cursor_axis);
   server.cursor_frame.notify = scm_to_pointer(scm_c_public_ref("gwwm init", "server-cursor-frame-pointer"));
   gwwm_signal_add(&server.cursor->events.frame, &server.cursor_frame);

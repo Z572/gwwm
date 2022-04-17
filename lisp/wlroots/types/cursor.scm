@@ -20,7 +20,8 @@
             wlr-cursor-attach-output-layout
             %wlr-cursor-struct
             wlr-cursor-set-surface
-            wlr-cursor-move))
+            wlr-cursor-move
+            wlr-cursor-warp-absolute))
 
 (define %wlr-cursor-struct
   (bs:struct `((state ,(bs:pointer '*))
@@ -75,3 +76,11 @@
      (unwrap-wlr-input-device dev)
      delta-x
      delta-y))
+
+
+(define-wlr-procedure (wlr-cursor-warp-absolute cur dev x y)
+  (ffi:void "wlr_cursor_warp_absolute" `(* * ,ffi:double ,ffi:double))
+  (% (unwrap-wlr-cursor cur)
+     (unwrap-wlr-input-device dev)
+     x
+     y))
