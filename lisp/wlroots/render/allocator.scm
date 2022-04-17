@@ -24,5 +24,5 @@
                          (unwrap-wlr-renderer renderer))))
 
 (define-wlr-procedure (wlr-allocator-destroy allocator)
-  (void "wlr_allocator_destroy" '(* *))
+  (void "wlr_allocator_destroy" '(*))
   (% (unwrap-wlr-allocator allocator)))
