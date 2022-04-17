@@ -969,7 +969,7 @@ static void inner_main(void *closure, int argc, char *argv[]) {
       scm_call_1(scm_c_public_ref("wlroots types seat", "unwrap-wlr-seat"),
                  scm_c_public_ref("gwwm init", "gwwm-server-seat")));
   /* wlr_seat_create(server_wl_display(), "seat0"); */
-  server.request_cursor.notify = seat_request_cursor;
+  server.request_cursor.notify = scm_to_pointer(scm_c_public_ref("gwwm init", "gwwm-seat-request-cursor-pointer"))/* seat_request_cursor */;
   gwwm_signal_add(&server.seat->events.request_set_cursor,
                   &server.request_cursor);
   server.request_set_selection.notify = seat_request_set_selection;

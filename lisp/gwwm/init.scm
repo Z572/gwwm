@@ -231,6 +231,8 @@ gwwm [options]
                                  (make-pointer (bytestructure-ref event 'surface)))
                                 (bytestructure-ref event 'hostpot-x)
                                 (bytestructure-ref event 'hostpot-y)))))
+(define-public gwwm-seat-request-cursor-pointer
+  (procedure->pointer void gwwm-seat-request-cursor '(* *)))
 (define-public (gwwm-seat-request-set-selection p1 p2)
   (let* ((server-bytestructure (wl-container-of p1 %server-struct 'request-set-selection))
          (seat (wrap-wlr-seat
