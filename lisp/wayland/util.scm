@@ -34,7 +34,8 @@
             string->pointer-address
             %wl-array
             wl-container-of
-            wl-log-set-handler-server))
+            wl-log-set-handler-server)
+  #:export-syntax (define-wl-server-procedure))
 
 ;; (define-syntax-rule (define-callback name)
 ;;   (define name ))
@@ -51,6 +52,19 @@
 (define (wayland-client->procedure return name params)
   (let ((ptr (wayland-client->pointer name)))
     (pointer->procedure return ptr params)))
+
+(define-syntax define-wl-server-procedure
+  (lambda (x)
+    (syntax-case x ()
+      ((_ (name args ...) (return-type cname arg-types) body ...)
+       (with-syntax ((% (datum->syntax x '%)))
+         #'(begin
+             (define name
+               (let ((% (wayland-server->procedure return-type cname arg-types)))
+                 (lambda* (args ...)
+                   body ...))))))
+      ((o-name (name args ...) (return-type cname arg-types))
+       #'(o-name (name args ...) (return-type cname arg-types) (% args ...))))))
 
 (define char* (bs:pointer int8))
 

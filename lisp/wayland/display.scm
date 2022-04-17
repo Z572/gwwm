@@ -92,90 +92,74 @@
 (define (unwrap-wl-display i)
   (.pointer i))
 
-(define (wl-display-create)
-  (let ((out ((wayland-server->procedure '* "wl_display_create" '()))))
+(define-wl-server-procedure (wl-display-create)
+  ('* "wl_display_create" '())
+  (let ((out (%)))
     (if (null-pointer? out)
         #f
         (wrap-wl-display out))))
 
-(define (wl-display-destroy w-display)
-  ((wayland-server->procedure
-    void "wl_display_destroy" '(*))
-   (unwrap-wl-display w-display)))
+(define-wl-server-procedure (wl-display-destroy w-display)
+  (void "wl_display_destroy" '(*))
+  (% (unwrap-wl-display w-display)))
 
-(define (wl-display-destroy-clients w-display)
-  ((wayland-server->procedure
-    void "wl_display_destroy_clients" '(*))
-   (unwrap-wl-display w-display)))
+(define-wl-server-procedure (wl-display-destroy-clients w-display)
+  (void "wl_display_destroy_clients" '(*))
+  (% (unwrap-wl-display w-display)))
 
-(define (wl-display-get-event-loop w-display)
+(define-wl-server-procedure (wl-display-get-event-loop w-display)
+  ('* "wl_display_get_event_loop" '(*))
   (wrap-wl-event-loop
-   ((wayland-server->procedure
-     '* "wl_display_get_event_loop" '(*))
-    (unwrap-wl-display w-display))))
+   (% (unwrap-wl-display w-display))))
 
-(define wl-display-add-socket
-  (let ((proc (wayland-server->procedure
-               ffi:int "wl_display_add_socket" '(* *))))
-    (lambda (a b)
-      (proc (unwrap-wl-display a)
-            (string->pointer b)))))
+(define-wl-server-procedure (wl-display-add-socket a b)
+  (ffi:int "wl_display_add_socket" '(* *))
+  (% (unwrap-wl-display a)
+     (string->pointer b)))
 
-(define (wl-display-add-socket-auto display)
-  (let ((out ((wayland-server->procedure
-               '* "wl_display_add_socket_auto" '(*))
-              (unwrap-wl-display display))))
+(define-wl-server-procedure (wl-display-add-socket-auto display)
+  ('* "wl_display_add_socket_auto" '(*))
+  (let ((out (% (unwrap-wl-display display))))
     (if (null-pointer? out)
         #f
         (pointer->string out))))
 
-(define wl-display-add-socket-fd
-  (let ((proc (wayland-server->procedure
-               ffi:int "wl_display_add_socket" (list '* ffi:int))))
-    (lambda (a b)
-      (proc (unwrap-wl-display a) b))))
+(define-wl-server-procedure (wl-display-add-socket-fd a b)
+  (ffi:int "wl_display_add_socket" (list '* ffi:int))
+  (% (unwrap-wl-display a) b))
 
-(define wl-display-terminate
-  (compose (wayland-server->procedure
-            void "wl_display_terminate" '(*)) unwrap-wl-display))
+(define-wl-server-procedure (wl-display-terminate a)
+  (void "wl_display_terminate" '(*))
+  (% (unwrap-wl-display a)))
 
-(define (wl-display-run w-display)
-  ((wayland-server->procedure
-    void "wl_display_run" '(*))
-   (unwrap-wl-display w-display)))
+(define-wl-server-procedure (wl-display-run w-display)
+  (void "wl_display_run" '(*))
+  (% (unwrap-wl-display w-display)))
 
-(define wl-display-flush-clients
-  (compose (wayland-server->procedure
-            void "wl_display_flush_clients" '(*)) unwrap-wl-display))
+(define-wl-server-procedure (wl-display-flush-clients d)
+  (void "wl_display_flush_clients" '(*))
+  (% (unwrap-wl-display d)))
 
-(define %wl-display-add-destroy-listener
-  (wayland-server->procedure void "wl_display_add_destroy_listener" '(* *)))
+(define-wl-server-procedure (wl-display-add-destroy-listener w-display w-listener)
+  (void "wl_display_add_destroy_listener" '(* *))
+  (% (unwrap-wl-display w-display)
+     (unwrap-wl-listener w-listener)))
 
-(define (wl-display-add-destroy-listener w-display w-listener)
-  (%wl-display-add-destroy-listener (unwrap-wl-display w-display)
-                                    (unwrap-wl-listener w-listener)))
-(define %wl-display-add-client-created-listener
-  (wayland-server->procedure void "wl_display_add_client_created_listener"
-                             '(* *)))
+(define-wl-server-procedure (wl-display-add-client-created-listener w-display w-listener)
+  (void "wl_display_add_client_created_listener"
+        '(* *))
+  (% (unwrap-wl-display w-display)
+     (unwrap-wl-listener w-listener)))
 
-(define (wl-display-add-client-created-listener w-display w-listener)
-  (%wl-display-add-client-created-listener
-   (unwrap-wl-display w-display)
-   (wl-listener->pointer w-listener)))
-
-(define %wl-display-get-client-list
-  (wayland-server->procedure
-   '* "wl_display_get_client_list"
-   '(*)))
-
-(define (wl-display-get-client-list w-display)
+(define-wl-server-procedure (wl-display-get-client-list w-display)
+  ('* "wl_display_get_client_list" '(*))
   (wrap-wl-list
-   (%wl-display-get-client-list
+   (%
     (unwrap-wl-display w-display))))
 
-(define %wl-display-init-shm (wayland-server->procedure ffi:int "wl_display_init_shm" '(*)))
-(define (wl-display-init-shm w-display)
-  (%wl-display-init-shm (unwrap-wl-display w-display)))
+(define-wl-server-procedure (wl-display-init-shm w-display)
+  (ffi:int "wl_display_init_shm" '(*))
+  (% (unwrap-wl-display w-display)))
 
 ;; client
 
