@@ -501,6 +501,10 @@ static void process_cursor_motion(struct tinywl_server *server, uint32_t time) {
     wlr_seat_pointer_clear_focus(seat);
   }
 }
+static SCM scm_process_cursor_motion(SCM p,SCM time){
+  process_cursor_motion(scm_to_pointer(p),scm_to_uint32(time));
+  return SCM_UNSPECIFIED;
+}
 
 static void server_cursor_motion(struct wl_listener *listener, void *data) {
   /* This event is forwarded by the cursor when a pointer emits a _relative_
@@ -823,6 +827,10 @@ static void inner_main(void *closure, int argc, char *argv[]) {
   /* wlr_log_init(WLR_DEBUG, NULL); */
 
   scm_c_primitive_load("lisp/gwwm/init.scm");
+  scm_c_module_define(scm_c_resolve_module("gwwm init"),
+                      "process-cursor-motion",
+                      scm_c_make_gsubr("process-cursor-motion", 2, 0, 0,
+                                       scm_process_cursor_motion));
   struct tinywl_server server;
   /* The Wayland display is managed by libwayland. It handles accepting
    * clients from the Unix socket, manging Wayland globals, and so on. */
@@ -935,7 +943,8 @@ static void inner_main(void *closure, int argc, char *argv[]) {
    *
    * And more comments are sprinkled throughout the notify functions above.
    */
-  server.cursor_motion.notify = server_cursor_motion;
+  server.cursor_motion.notify = scm_to_pointer(scm_c_public_ref("gwwm init", "server-cursor-motion-pointer"));
+/* server_cursor_motion; */
   gwwm_signal_add(&server.cursor->events.motion, &server.cursor_motion);
   server.cursor_motion_absolute.notify = server_cursor_motion_absolute;
   gwwm_signal_add(&server.cursor->events.motion_absolute,

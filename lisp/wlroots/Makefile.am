@@ -10,6 +10,7 @@ SOURCES += %D%/backend.scm  \
 %D%/types/data-device.scm   \
 %D%/types/compositor.scm    \
 %D%/types/xdg-shell.scm     \
+%D%/types/pointer.scm       \
 %D%/types/cursor.scm        \
 %D%/types/xcursor.scm       \
 %D%/types/scene.scm         \

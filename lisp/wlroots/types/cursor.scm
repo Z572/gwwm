@@ -1,6 +1,7 @@
 (define-module (wlroots types cursor)
   #:use-module (wayland display)
   #:use-module (wayland signal)
+  #:use-module (wlroots types input-device)
   #:use-module (srfi srfi-26)
   #:use-module (wlroots render renderer)
   #:use-module (wlroots types output-layout)
@@ -8,7 +9,8 @@
   #:use-module (wlroots types)
   #:use-module (wlroots utils)
   #:use-module ((system foreign) #:select ((void . ffi:void)
-                                           (int32 . ffi:int32)))
+                                           (int32 . ffi:int32)
+                                           (double . ffi:double)))
   ;; #:use-module (system foreign)
   #:use-module (bytestructures guile)
   #:use-module (oop goops)
@@ -17,7 +19,8 @@
             wlr-cursor-create
             wlr-cursor-attach-output-layout
             %wlr-cursor-struct
-            wlr-cursor-set-surface))
+            wlr-cursor-set-surface
+            wlr-cursor-move))
 
 (define %wlr-cursor-struct
   (bs:struct `((state ,(bs:pointer '*))
@@ -65,3 +68,10 @@
      (unwrap-wlr-surface surface)
      hostpot-x
      hostpot-y))
+
+(define-wlr-procedure (wlr-cursor-move cur dev delta-x delta-y)
+  (ffi:void "wlr_cursor_move" `(* * ,ffi:double ,ffi:double))
+  (% (unwrap-wlr-cursor cur)
+     (unwrap-wlr-input-device dev)
+     delta-x
+     delta-y))

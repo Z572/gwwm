@@ -3,9 +3,11 @@
   #:use-module (wlroots types)
   #:use-module (bytestructures guile)
   #:use-module (wlroots utils)
-  #:export (%wlr-input-device-struct))
+  #:export (%wlr-input-device-struct
+            wrap-wlr-input-device
+            unwrap-wlr-input-device))
 
-(define-wlr-types-class-public wlr-input-device)
+(define-wlr-types-class wlr-input-device)
 (define %wlr-input-device-struct
   (bs:struct `((impl ,(bs:pointer '*))
                (type ,int)

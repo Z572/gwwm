@@ -16,6 +16,7 @@
   #:use-module (wlroots types compositor)
   #:use-module (wlroots types xdg-shell)
   #:use-module (wlroots types surface)
+  #:use-module (wlroots types input-device)
   #:use-module (wlroots types data-device)
   #:use-module (wlroots types xdg-shell)
   #:use-module (wlroots types scene)
@@ -25,6 +26,7 @@
   #:use-module (wlroots types seat)
   #:use-module (wlroots types cursor)
   #:use-module (wlroots types xcursor)
+  #:use-module (wlroots types pointer)
   #:use-module (bytestructures guile)
   #:duplicates (merge-generics)
   #:export (handle-keybinding
@@ -154,7 +156,6 @@ gwwm [options]
    (wlr-xdg-surface-from-wlr-surface surface) #f))
 (define (server-cursor-frame listener data)
   (let ((server (wl-container-of listener %server-struct 'cursor-frame)))
-    (pk 'server-cursor-frame)
     (wlr-seat-pointer-notify-frame gwwm-server-seat)))
 (define-public server-cursor-frame-pointer
   (procedure->pointer void server-cursor-frame '(* *)))
@@ -244,3 +245,13 @@ gwwm [options]
                            (make-pointer (bytestructure-ref event 'source))))
          (serial (bytestructure-ref event 'serial)))
     (wlr-seat-set-selection seat wlr-data-source serial)))
+(define (server-cursor-motion listener data)
+  (let ((server (wl-container-of listener %server-struct 'cursor-motion))
+        (event (pointer->bytestructure data %wlr-event-pointer-motion-struct)))
+    (wlr-cursor-move gwwm-server-cursor
+                     (wrap-wlr-input-device (make-pointer (bytestructure-ref event 'device)))
+                     (bytestructure-ref event 'delta-x)
+                     (bytestructure-ref event 'delta-y))
+    (process-cursor-motion (bytestructure->pointer server) (bytestructure-ref event 'time-msec))))
+(define-public server-cursor-motion-pointer
+  (procedure->pointer void server-cursor-motion '(* *)))
