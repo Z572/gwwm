@@ -76,7 +76,7 @@ struct tinywl_server {
   struct wlr_output_layout *output_layout;
   struct wl_list outputs;
   struct wl_listener new_output;
-  enum tinywl_cursor_mode cursor_mode;
+  /* enum tinywl_cursor_mode cursor_mode; */
 };
 
 struct tinywl_output {
@@ -189,6 +189,15 @@ static struct wl_display *server_wl_display(void) {
   return (struct wl_display *)(scm_to_pointer(
       scm_call_1(scm_c_public_ref("wayland display", "unwrap-wl-display"),
                  scm_c_public_ref("gwwm init", "gwwm-wl-display"))));
+}
+
+static enum tinywl_cursor_mode server_cursor_mode(void) {
+  return (scm_to_int(scm_c_public_ref("gwwm init", "server-cursor-mode")));
+}
+
+static void set_server_cursor_mode(enum tinywl_cursor_mode n) {
+  (scm_call_1(scm_c_public_ref("gwwm init", "set-server-cursor-mode"),
+              scm_from_int(n)));
 }
 
 static struct wlr_backend *server_backend(void) {
@@ -418,10 +427,10 @@ static void process_cursor_resize(struct tinywl_server *server, uint32_t time) {
 
 static void process_cursor_motion(struct tinywl_server *server, uint32_t time) {
   /* If the mode is non-passthrough, delegate to those functions. */
-  if (server->cursor_mode == TINYWL_CURSOR_MOVE) {
+  if (server_cursor_mode()/* server->cursor_mode */ == TINYWL_CURSOR_MOVE) {
     process_cursor_move(server, time);
     return;
-  } else if (server->cursor_mode == TINYWL_CURSOR_RESIZE) {
+  } else if (server_cursor_mode()/* server->cursor_mode */ == TINYWL_CURSOR_RESIZE) {
     process_cursor_resize(server, time);
     return;
   }
@@ -482,7 +491,7 @@ static void server_cursor_button(struct wl_listener *listener, void *data) {
       server, server->cursor->x, server->cursor->y, &surface, &sx, &sy);
   if (event->state == WLR_BUTTON_RELEASED) {
     /* If you released any buttons, we exit interactive move/resize mode. */
-    server->cursor_mode = TINYWL_CURSOR_PASSTHROUGH;
+    set_server_cursor_mode(TINYWL_CURSOR_PASSTHROUGH);
   } else {
     /* Focus that client if the button was _pressed_ */
     focus_view(view, surface);
@@ -583,7 +592,7 @@ static void begin_interactive(struct tinywl_view *view,
     return;
   }
   server->grabbed_view = view;
-  server->cursor_mode = mode;
+  set_server_cursor_mode(mode);
 
   if (mode == TINYWL_CURSOR_MOVE) {
     server->grab_x = server->cursor->x - view->x;

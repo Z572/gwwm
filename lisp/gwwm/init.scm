@@ -137,6 +137,8 @@ gwwm [options]
 
 (define-public gwwm-server-seat (wlr-seat-create gwwm-wl-display "seat0"))
 (define-public gwwm-server-layer-shell (wlr-layer-shell-v1-create gwwm-wl-display))
+(define-public server-cursor-mode 0)
+(define-public (set-server-cursor-mode a) (pk 'set! 'server-cursor-mode server-cursor-mode 'to a)(set! server-cursor-mode a))
 (define (gwwm-init-socket)
   (let ((socket (wl-display-add-socket-auto gwwm-wl-display)))
     (if socket
