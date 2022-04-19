@@ -21,7 +21,8 @@
             %wlr-cursor-struct
             wlr-cursor-set-surface
             wlr-cursor-move
-            wlr-cursor-warp-absolute))
+            wlr-cursor-warp-absolute
+            wlr-cursor-attach-input-device))
 
 (define %wlr-cursor-struct
   (bs:struct `((state ,(bs:pointer '*))
@@ -84,3 +85,6 @@
      (unwrap-wlr-input-device dev)
      x
      y))
+(define-wlr-procedure (wlr-cursor-attach-input-device cur dev)
+  (ffi:void "wlr_cursor_attach_input_device" '(* *))
+  (% (unwrap-wlr-cursor cur) (unwrap-wlr-input-device dev)))

@@ -305,15 +305,6 @@ static void server_new_keyboard(struct tinywl_server *server,
   gwwm_wl_list_insert(&server->keyboards, &keyboard->link);
 }
 
-static void server_new_pointer(struct tinywl_server *server,
-                               struct wlr_input_device *device) {
-  /* We don't do anything special with pointers. All of our pointer handling
-   * is proxied through wlr_cursor. On another compositor, you might take this
-   * opportunity to do libinput configuration on the device to set
-   * acceleration, etc. */
-  wlr_cursor_attach_input_device(server->cursor, device);
-}
-
 static void server_new_input(struct wl_listener *listener, void *data) {
   /* This event is raised by the backend when a new input device becomes
    * available. */
@@ -324,7 +315,9 @@ static void server_new_input(struct wl_listener *listener, void *data) {
     server_new_keyboard(server, device);
     break;
   case WLR_INPUT_DEVICE_POINTER:
-    server_new_pointer(server, device);
+    scm_call_2(scm_c_public_ref("gwwm init", "server-new-pointer"),
+               scm_from_pointer(server, NULL),
+               scm_from_pointer(device, NULL));
     break;
   default:
     break;

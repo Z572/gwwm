@@ -303,3 +303,7 @@ gwwm [options]
     (begin-interactive (bytestructure->pointer view) 2 (.edges event))))
 (define-public xdg-toplevel-request-resize-pointer
   (procedure->pointer void xdg-toplevel-request-resize '(* *)))
+(define-public (server-new-pointer server device)
+  (wlr-cursor-attach-input-device
+   gwwm-server-cursor
+   (wrap-wlr-input-device device)))
