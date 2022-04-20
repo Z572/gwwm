@@ -96,6 +96,7 @@ struct tinywl_view {
   struct wl_listener destroy;
   struct wl_listener request_move;
   struct wl_listener request_resize;
+  struct wl_listener request_fullscreen;
   int x, y;
 };
 
@@ -557,6 +558,12 @@ static void xdg_toplevel_map(struct wl_listener *listener, void *data) {
                         scm_from_pointer(&view->link, NULL)));
   focus_view(view, view->xdg_surface->surface);
 }
+static void xdg_toplevel_fullscreen(struct wl_listener *listener ,void *data){
+  struct tinywl_view *view = wl_container_of(listener, view, request_fullscreen);
+  wlr_log(WLR_INFO, "->");
+  wlr_xdg_toplevel_set_fullscreen(view->xdg_surface, !(view->xdg_surface->toplevel->current.fullscreen));
+  /* wlr_xdg_toplevel_set_size(view->xdg_surface,200,100); */
+}
 
 static void xdg_toplevel_destroy(struct wl_listener *listener, void *data) {
   /* Called when the surface is destroyed and should never be shown again. */
@@ -656,6 +663,8 @@ static void server_new_xdg_surface(struct wl_listener *listener, void *data) {
 
   /* cotd */
   struct wlr_xdg_toplevel *toplevel = xdg_surface->toplevel;
+  view->request_fullscreen.notify = xdg_toplevel_fullscreen;
+  gwwm_signal_add(&toplevel->events.request_fullscreen, &view->request_fullscreen);
   view->request_move.notify = scm_to_pointer(scm_c_public_ref("gwwm init", "xdg-toplevel-request-move-pointer"));
   gwwm_signal_add(&toplevel->events.request_move, &view->request_move);
   view->request_resize.notify = scm_to_pointer(scm_c_public_ref("gwwm init", "xdg-toplevel-request-resize-pointer"));

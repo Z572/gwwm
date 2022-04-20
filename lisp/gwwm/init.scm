@@ -100,6 +100,7 @@ gwwm [options]
                (destroy ,%wl-listener)
                (request-move ,%wl-listener)
                (request-resize ,%wl-listener)
+               (request-fullscreen ,%wl-listener)
                (x ,int)
                (y ,int))))
 
