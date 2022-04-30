@@ -3,11 +3,11 @@
   #:use-module (gwwm util)
   #:use-module (srfi srfi-26)
   #:use-module (system repl server)
-  ;;  #:use-module (oop goops)
+  #:use-module (oop goops)
   #:use-module (wayland)
   #:use-module (wayland util)
   #:use-module (ice-9 getopt-long)
-  #:use-module ((system foreign) #:select (make-pointer pointer-address void procedure->pointer))
+  #:use-module ((system foreign) #:select (make-pointer dereference-pointer pointer-address void procedure->pointer))
   #:use-module (srfi srfi-1)
   #:use-module (wlroots util log)
   #:use-module (wlroots backend)
@@ -60,6 +60,8 @@ gwwm [options]
 ;;   display)
 
 ;;(define server )
+
+
 (define %server-struct
   (bs:struct
    `((scene ,(bs:pointer '*))
@@ -90,6 +92,13 @@ gwwm [options]
 
                                         ;(cursor-module ,)
      )))
+
+(define %tinywl-keyboard-struct
+  (bs:struct `((link ,%wl-list)
+               (server ,(bs:pointer %server-struct))
+               (device ,(bs:pointer '*))
+               (modifiers ,%wl-listener)
+               (key ,%wl-listener))))
 (define %tinywl-view-struct
   (bs:struct `((link ,%wl-list)
                (server ,(bs:pointer %server-struct))
@@ -123,15 +132,19 @@ gwwm [options]
 (pk 'c)
 (define-public gwwm-server-allocator (wlr-allocator-autocreate gwwm-server-backend gwwm-server-renderer))
 (define-public gwwm-server-compositor (wlr-compositor-create gwwm-wl-display gwwm-server-renderer))
+
 (define-public gwwm-server-data-device-manager (wlr-data-device-manager-create gwwm-wl-display))
 (define-public gwwm-server-scene (wlr-scene-create))
+(define-public lyrbg (.node (wlr-scene-tree-create (.node gwwm-server-scene))))
 
 (wlr-renderer-init-wl-display gwwm-server-renderer gwwm-wl-display)
 
 (define-public gwwm-server-output-layout (wlr-output-layout-create))
+
 (wlr-scene-attach-output-layout gwwm-server-scene gwwm-server-output-layout)
 (define-public gwwm-server-xdg-shell (wlr-xdg-shell-create gwwm-wl-display))
 (define-public gwwm-server-cursor (wlr-cursor-create))
+
 (wlr-cursor-attach-output-layout gwwm-server-cursor gwwm-server-output-layout)
 (define-public gwwm-server-cursor-mgr (wlr-xcursor-manager-create #f 12))
 (wlr-xcursor-manager-load gwwm-server-cursor-mgr 1)
@@ -192,7 +205,7 @@ gwwm [options]
   ;;(run-hook )
   (and (= modifiers 64)
        (case key
-         ((100)
+         ((116)
           (fork+exec "emacs"))
          ((101)
           (fork+exec "alacritty"))
