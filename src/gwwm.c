@@ -176,6 +176,12 @@ static void focus_view(struct tinywl_view *view, struct wlr_surface *surface) {
                                  &keyboard->modifiers);
 }
 
+static SCM scm_focus_view(SCM view,SCM surface) {
+  focus_view(scm_to_pointer(view), scm_to_pointer(scm_call_1(scm_c_public_ref
+                                                             ("wlroots types surface", "unwrap-wlr-surface"), surface)));
+  return SCM_UNSPECIFIED;
+}
+
 static void gwwm_signal_add(struct wl_signal *signal,
                             struct wl_listener *listener) {
   scm_call_2(
@@ -354,6 +360,18 @@ static struct tinywl_view *desktop_view_at(struct tinywl_server *server,
   return node->data;
 }
 
+SCM scm_desktop_view_at (SCM server ,SCM lx ,SCM ly ,SCM surface ,SCM sx,SCM sy ){
+
+  double sxx= scm_to_double(sx);
+  double syy = scm_to_double(sy);
+  return scm_from_pointer(desktop_view_at(scm_to_pointer(server),
+                                           scm_to_double(lx),
+                                           scm_to_double(ly),
+                                           scm_to_pointer(surface),
+                                           &sxx,
+                                           &syy) ,NULL);
+}
+
 static void process_cursor_move(struct tinywl_server *server, uint32_t time) {
   /* Move the grabbed view to the new position. */
   struct tinywl_view *view = server->grabbed_view;
@@ -499,9 +517,17 @@ static void output_frame(struct wl_listener *listener, void *data) {
    * generally at the output's refresh rate (e.g. 60Hz). */
   struct tinywl_output *output = wl_container_of(listener, output, frame);
   struct wlr_scene *scene = output->server->scene;
-
   struct wlr_scene_output *scene_output =
       wlr_scene_get_scene_output(scene, output->wlr_output);
+  struct wlr_output *wlr_output = scene_output->output;
+
+	/* wlr_output_attach_render(wlr_output, NULL); */
+	/* wlr_renderer_begin(server_renderer(), wlr_output->width, wlr_output->height); */
+	/* wlr_renderer_clear(server_renderer(), (float[]){0.25f, 0.25f, 0.25f, 1}); */
+	/* wlr_renderer_end(server_renderer()); */
+
+	/* wlr_output_commit(wlr_output); */
+
 
   /* Render the scene if needed and commit the output */
   wlr_scene_output_commit(scene_output);
@@ -558,11 +584,18 @@ static void xdg_toplevel_map(struct wl_listener *listener, void *data) {
                         scm_from_pointer(&view->link, NULL)));
   focus_view(view, view->xdg_surface->surface);
 }
-static void xdg_toplevel_fullscreen(struct wl_listener *listener ,void *data){
+static void xdg_toplevel_fullscreen(struct wl_listener *listener ,void *data) {
   struct tinywl_view *view = wl_container_of(listener, view, request_fullscreen);
-  wlr_log(WLR_INFO, "->");
+  struct wlr_box geo_box;
+  wlr_xdg_surface_get_geometry(view->xdg_surface, &geo_box);
+  wlr_scene_node_set_position(view->scene_node, 0, 0);
+  wlr_xdg_toplevel_set_size(view->xdg_surface,geo_box.width,geo_box.height);
   wlr_xdg_toplevel_set_fullscreen(view->xdg_surface, !(view->xdg_surface->toplevel->current.fullscreen));
-  /* wlr_xdg_toplevel_set_size(view->xdg_surface,200,100); */
+  view->server->grab_x=geo_box.x;
+  view->server->grab_y=geo_box.y;
+  view->server->grab_geobox.x=0;
+  view->server->grab_geobox.y=0;
+
 }
 
 static void xdg_toplevel_destroy(struct wl_listener *listener, void *data) {
@@ -574,7 +607,6 @@ static void xdg_toplevel_destroy(struct wl_listener *listener, void *data) {
   gwwm_wl_list_remove(&view->destroy.link);
   gwwm_wl_list_remove(&view->request_move.link);
   gwwm_wl_list_remove(&view->request_resize.link);
-
   free(view);
 }
 
@@ -656,6 +688,7 @@ static void server_new_xdg_surface(struct wl_listener *listener, void *data) {
   /* Listen to the various events it can emit */
   view->map.notify = xdg_toplevel_map;
   gwwm_signal_add(&xdg_surface->events.map, &view->map);
+
   view->unmap.notify = scm_to_pointer(scm_c_public_ref("gwwm init", "xdg-toplevel-unmap-pointer"));
   gwwm_signal_add(&xdg_surface->events.unmap, &view->unmap);
   view->destroy.notify =  scm_to_pointer(scm_c_public_ref("gwwm init", "xdg-toplevel-destroy-pointer")); //xdg_toplevel_destroy;
@@ -683,6 +716,16 @@ static void inner_main(void *closure, int argc, char *argv[]) {
                       "begin-interactive",
                       scm_c_make_gsubr("begin_interactive", 3, 0, 0,
                                        scm_begin_interactive));
+  scm_c_module_define(scm_c_resolve_module("gwwm init"),
+                      "desktop-view-at",
+                      scm_c_make_gsubr("desktop-view-at", 6, 0, 0,
+                                       scm_desktop_view_at)) ;
+  scm_c_module_define(scm_c_resolve_module("gwwm init"),
+                      "focus-view",
+                      scm_c_make_gsubr("focus-view", 2, 0, 0,
+                                       scm_focus_view));
+
+
   struct tinywl_server server;
   /* The Wayland display is managed by libwayland. It handles accepting
    * clients from the Unix socket, manging Wayland globals, and so on. */
