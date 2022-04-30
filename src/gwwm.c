@@ -176,7 +176,8 @@ static void focus_view(struct tinywl_view *view, struct wlr_surface *surface) {
                                  &keyboard->modifiers);
 }
 
-static SCM scm_focus_view(SCM view, SCM surface) {
+SCM_DEFINE (scm_focus_view,"focus-view",2,0,0,
+            (SCM view, SCM surface) ,"") {
   focus_view(scm_to_pointer(view),
              scm_to_pointer(scm_call_1(scm_c_public_ref("wlroots types surface",
                                                         "unwrap-wlr-surface"),
@@ -497,7 +498,7 @@ static void process_cursor_motion(struct tinywl_server *server, uint32_t time) {
     wlr_seat_pointer_clear_focus(seat);
   }
 }
-static SCM scm_process_cursor_motion(SCM p, SCM time) {
+SCM_DEFINE (scm_process_cursor_motion, "process-cursor-motion",2,0,0,(SCM p, SCM time) ,"") {
   process_cursor_motion(scm_to_pointer(p), scm_to_uint32(time));
   return SCM_UNSPECIFIED;
 }
@@ -661,7 +662,7 @@ static void begin_interactive(struct tinywl_view *view,
   }
 }
 
-static SCM scm_begin_interactive(SCM view, SCM mode, SCM edges) {
+SCM_DEFINE (scm_begin_interactive,"begin-interactive",3,0,0,(SCM view, SCM mode, SCM edges) ,"") {
   begin_interactive(scm_to_pointer(view), scm_to_int(mode),
                     scm_to_uint32(edges));
   return SCM_UNSPECIFIED;
@@ -722,7 +723,7 @@ static void server_new_xdg_surface(struct wl_listener *listener, void *data) {
       scm_c_public_ref("gwwm init", "xdg-toplevel-request-resize-pointer"));
   gwwm_signal_add(&toplevel->events.request_resize, &view->request_resize);
 }
-static void init_snarfer(void) {
+static void init_snarfer_define(void) {
 #ifndef SCM_MAGIC_SNARFER
 #include "gwwm.x"
 #endif
@@ -730,21 +731,7 @@ static void init_snarfer(void) {
 static void inner_main(void *closure, int argc, char *argv[]) {
 
   scm_c_primitive_load("lisp/gwwm/init.scm");
-  init_snarfer();
-  scm_c_module_define(scm_c_resolve_module("gwwm init"),
-                      "process-cursor-motion",
-                      scm_c_make_gsubr("process-cursor-motion", 2, 0, 0,
-                                       scm_process_cursor_motion));
-  scm_c_module_define(
-      scm_c_resolve_module("gwwm init"), "begin-interactive",
-      scm_c_make_gsubr("begin_interactive", 3, 0, 0, scm_begin_interactive));
-  /* scm_c_module_define(scm_c_resolve_module("gwwm init"), */
-  /*                     "desktop-view-at", */
-  /*                     scm_c_make_gsubr("desktop-view-at", 6, 0, 0, */
-  /*                                      scm_desktop_view_at)) ; */
-  scm_c_module_define(scm_c_resolve_module("gwwm init"), "focus-view",
-                      scm_c_make_gsubr("focus-view", 2, 0, 0, scm_focus_view));
-
+  init_snarfer_define();
   struct tinywl_server server;
   /* The Wayland display is managed by libwayland. It handles accepting
    * clients from the Unix socket, manging Wayland globals, and so on. */
