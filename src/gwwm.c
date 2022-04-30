@@ -360,17 +360,32 @@ static struct tinywl_view *desktop_view_at(struct tinywl_server *server,
   return node->data;
 }
 
-SCM scm_desktop_view_at (SCM server ,SCM lx ,SCM ly ,SCM surface ,SCM sx,SCM sy ){
+SCM_DEFINE (scm_desktop_view_at, "desktop-view-at",6,0,0,
+            (SCM server,SCM lx,SCM ly,SCM surface ,SCM sx, SCM sy),"hh")
+#define DEFINE_NAME "desktop-view-at"
+            {
+              double sxx= scm_to_double(sx);
+              double syy = scm_to_double(sy);
 
-  double sxx= scm_to_double(sx);
-  double syy = scm_to_double(sy);
   return scm_from_pointer(desktop_view_at(scm_to_pointer(server),
                                            scm_to_double(lx),
                                            scm_to_double(ly),
                                            scm_to_pointer(surface),
                                            &sxx,
                                            &syy) ,NULL);
-}
+            }
+#undef DEFINE_NAME
+/* SCM scm_desktop_view_at (SCM server ,SCM lx ,SCM ly ,SCM surface ,SCM sx,SCM sy ){ */
+
+/*   double sxx= scm_to_double(sx); */
+/*   double syy = scm_to_double(sy); */
+/*   return scm_from_pointer(desktop_view_at(scm_to_pointer(server), */
+/*                                            scm_to_double(lx), */
+/*                                            scm_to_double(ly), */
+/*                                            scm_to_pointer(surface), */
+/*                                            &sxx, */
+/*                                            &syy) ,NULL); */
+/* } */
 
 static void process_cursor_move(struct tinywl_server *server, uint32_t time) {
   /* Move the grabbed view to the new position. */
@@ -703,11 +718,16 @@ static void server_new_xdg_surface(struct wl_listener *listener, void *data) {
   view->request_resize.notify = scm_to_pointer(scm_c_public_ref("gwwm init", "xdg-toplevel-request-resize-pointer"));
   gwwm_signal_add(&toplevel->events.request_resize, &view->request_resize);
 }
-
+static void init_snarfer(void){
+#ifndef SCM_MAGIC_SNARFER
+#include "gwwm.x"
+#endif
+}
 static void inner_main(void *closure, int argc, char *argv[]) {
 
 
   scm_c_primitive_load("lisp/gwwm/init.scm");
+  init_snarfer();
   scm_c_module_define(scm_c_resolve_module("gwwm init"),
                       "process-cursor-motion",
                       scm_c_make_gsubr("process-cursor-motion", 2, 0, 0,
@@ -716,10 +736,10 @@ static void inner_main(void *closure, int argc, char *argv[]) {
                       "begin-interactive",
                       scm_c_make_gsubr("begin_interactive", 3, 0, 0,
                                        scm_begin_interactive));
-  scm_c_module_define(scm_c_resolve_module("gwwm init"),
-                      "desktop-view-at",
-                      scm_c_make_gsubr("desktop-view-at", 6, 0, 0,
-                                       scm_desktop_view_at)) ;
+  /* scm_c_module_define(scm_c_resolve_module("gwwm init"), */
+  /*                     "desktop-view-at", */
+  /*                     scm_c_make_gsubr("desktop-view-at", 6, 0, 0, */
+  /*                                      scm_desktop_view_at)) ; */
   scm_c_module_define(scm_c_resolve_module("gwwm init"),
                       "focus-view",
                       scm_c_make_gsubr("focus-view", 2, 0, 0,
