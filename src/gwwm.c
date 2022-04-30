@@ -176,9 +176,11 @@ static void focus_view(struct tinywl_view *view, struct wlr_surface *surface) {
                                  &keyboard->modifiers);
 }
 
-static SCM scm_focus_view(SCM view,SCM surface) {
-  focus_view(scm_to_pointer(view), scm_to_pointer(scm_call_1(scm_c_public_ref
-                                                             ("wlroots types surface", "unwrap-wlr-surface"), surface)));
+static SCM scm_focus_view(SCM view, SCM surface) {
+  focus_view(scm_to_pointer(view),
+             scm_to_pointer(scm_call_1(scm_c_public_ref("wlroots types surface",
+                                                        "unwrap-wlr-surface"),
+                                       surface)));
   return SCM_UNSPECIFIED;
 }
 
@@ -323,8 +325,7 @@ static void server_new_input(struct wl_listener *listener, void *data) {
     break;
   case WLR_INPUT_DEVICE_POINTER:
     scm_call_2(scm_c_public_ref("gwwm init", "server-new-pointer"),
-               scm_from_pointer(server, NULL),
-               scm_from_pointer(device, NULL));
+               scm_from_pointer(server, NULL), scm_from_pointer(device, NULL));
     break;
   default:
     break;
@@ -360,22 +361,19 @@ static struct tinywl_view *desktop_view_at(struct tinywl_server *server,
   return node->data;
 }
 
-SCM_DEFINE (scm_desktop_view_at, "desktop-view-at",6,0,0,
-            (SCM server,SCM lx,SCM ly,SCM surface ,SCM sx, SCM sy),"hh")
-#define DEFINE_NAME "desktop-view-at"
-            {
-              double sxx= scm_to_double(sx);
-              double syy = scm_to_double(sy);
+SCM_DEFINE(scm_desktop_view_at, "desktop-view-at", 6, 0, 0,
+           (SCM server, SCM lx, SCM ly, SCM surface, SCM sx, SCM sy), "hh") {
+  double sxx = scm_to_double(sx);
+  double syy = scm_to_double(sy);
 
   return scm_from_pointer(desktop_view_at(scm_to_pointer(server),
-                                           scm_to_double(lx),
-                                           scm_to_double(ly),
-                                           scm_to_pointer(surface),
-                                           &sxx,
-                                           &syy) ,NULL);
-            }
-#undef DEFINE_NAME
-/* SCM scm_desktop_view_at (SCM server ,SCM lx ,SCM ly ,SCM surface ,SCM sx,SCM sy ){ */
+                                          scm_to_double(lx), scm_to_double(ly),
+                                          scm_to_pointer(surface), &sxx, &syy),
+                          NULL);
+}
+
+/* SCM scm_desktop_view_at (SCM server ,SCM lx ,SCM ly ,SCM surface ,SCM sx,SCM
+ * sy ){ */
 
 /*   double sxx= scm_to_double(sx); */
 /*   double syy = scm_to_double(sy); */
@@ -454,10 +452,11 @@ static void process_cursor_resize(struct tinywl_server *server, uint32_t time) {
 
 static void process_cursor_motion(struct tinywl_server *server, uint32_t time) {
   /* If the mode is non-passthrough, delegate to those functions. */
-  if (server_cursor_mode()/* server->cursor_mode */ == TINYWL_CURSOR_MOVE) {
+  if (server_cursor_mode() /* server->cursor_mode */ == TINYWL_CURSOR_MOVE) {
     process_cursor_move(server, time);
     return;
-  } else if (server_cursor_mode()/* server->cursor_mode */ == TINYWL_CURSOR_RESIZE) {
+  } else if (server_cursor_mode() /* server->cursor_mode */ ==
+             TINYWL_CURSOR_RESIZE) {
     process_cursor_resize(server, time);
     return;
   }
@@ -498,8 +497,8 @@ static void process_cursor_motion(struct tinywl_server *server, uint32_t time) {
     wlr_seat_pointer_clear_focus(seat);
   }
 }
-static SCM scm_process_cursor_motion(SCM p,SCM time){
-  process_cursor_motion(scm_to_pointer(p),scm_to_uint32(time));
+static SCM scm_process_cursor_motion(SCM p, SCM time) {
+  process_cursor_motion(scm_to_pointer(p), scm_to_uint32(time));
   return SCM_UNSPECIFIED;
 }
 
@@ -525,8 +524,6 @@ static void server_cursor_button(struct wl_listener *listener, void *data) {
   }
 }
 
-
-
 static void output_frame(struct wl_listener *listener, void *data) {
   /* This function is called every time an output is ready to display a frame,
    * generally at the output's refresh rate (e.g. 60Hz). */
@@ -536,13 +533,14 @@ static void output_frame(struct wl_listener *listener, void *data) {
       wlr_scene_get_scene_output(scene, output->wlr_output);
   struct wlr_output *wlr_output = scene_output->output;
 
-	/* wlr_output_attach_render(wlr_output, NULL); */
-	/* wlr_renderer_begin(server_renderer(), wlr_output->width, wlr_output->height); */
-	/* wlr_renderer_clear(server_renderer(), (float[]){0.25f, 0.25f, 0.25f, 1}); */
-	/* wlr_renderer_end(server_renderer()); */
+  /* wlr_output_attach_render(wlr_output, NULL); */
+  /* wlr_renderer_begin(server_renderer(), wlr_output->width,
+   * wlr_output->height); */
+  /* wlr_renderer_clear(server_renderer(), (float[]){0.25f, 0.25f, 0.25f, 1});
+   */
+  /* wlr_renderer_end(server_renderer()); */
 
-	/* wlr_output_commit(wlr_output); */
-
+  /* wlr_output_commit(wlr_output); */
 
   /* Render the scene if needed and commit the output */
   wlr_scene_output_commit(scene_output);
@@ -557,7 +555,6 @@ static void server_new_output(struct wl_listener *listener, void *data) {
    * monitor) becomes available. */
   struct tinywl_server *server = wl_container_of(listener, server, new_output);
   struct wlr_output *wlr_output = data;
-
 
   /* } */
   if (!scm_to_bool(scm_call_2(
@@ -599,18 +596,19 @@ static void xdg_toplevel_map(struct wl_listener *listener, void *data) {
                         scm_from_pointer(&view->link, NULL)));
   focus_view(view, view->xdg_surface->surface);
 }
-static void xdg_toplevel_fullscreen(struct wl_listener *listener ,void *data) {
-  struct tinywl_view *view = wl_container_of(listener, view, request_fullscreen);
+static void xdg_toplevel_fullscreen(struct wl_listener *listener, void *data) {
+  struct tinywl_view *view =
+      wl_container_of(listener, view, request_fullscreen);
   struct wlr_box geo_box;
   wlr_xdg_surface_get_geometry(view->xdg_surface, &geo_box);
   wlr_scene_node_set_position(view->scene_node, 0, 0);
-  wlr_xdg_toplevel_set_size(view->xdg_surface,geo_box.width,geo_box.height);
-  wlr_xdg_toplevel_set_fullscreen(view->xdg_surface, !(view->xdg_surface->toplevel->current.fullscreen));
-  view->server->grab_x=geo_box.x;
-  view->server->grab_y=geo_box.y;
-  view->server->grab_geobox.x=0;
-  view->server->grab_geobox.y=0;
-
+  wlr_xdg_toplevel_set_size(view->xdg_surface, geo_box.width, geo_box.height);
+  wlr_xdg_toplevel_set_fullscreen(
+      view->xdg_surface, !(view->xdg_surface->toplevel->current.fullscreen));
+  view->server->grab_x = geo_box.x;
+  view->server->grab_y = geo_box.y;
+  view->server->grab_geobox.x = 0;
+  view->server->grab_geobox.y = 0;
 }
 
 static void xdg_toplevel_destroy(struct wl_listener *listener, void *data) {
@@ -663,8 +661,9 @@ static void begin_interactive(struct tinywl_view *view,
   }
 }
 
-static SCM scm_begin_interactive(SCM view,SCM mode, SCM edges){
-  begin_interactive(scm_to_pointer(view), scm_to_int(mode), scm_to_uint32(edges));
+static SCM scm_begin_interactive(SCM view, SCM mode, SCM edges) {
+  begin_interactive(scm_to_pointer(view), scm_to_int(mode),
+                    scm_to_uint32(edges));
   return SCM_UNSPECIFIED;
 }
 
@@ -704,27 +703,31 @@ static void server_new_xdg_surface(struct wl_listener *listener, void *data) {
   view->map.notify = xdg_toplevel_map;
   gwwm_signal_add(&xdg_surface->events.map, &view->map);
 
-  view->unmap.notify = scm_to_pointer(scm_c_public_ref("gwwm init", "xdg-toplevel-unmap-pointer"));
+  view->unmap.notify = scm_to_pointer(
+      scm_c_public_ref("gwwm init", "xdg-toplevel-unmap-pointer"));
   gwwm_signal_add(&xdg_surface->events.unmap, &view->unmap);
-  view->destroy.notify =  scm_to_pointer(scm_c_public_ref("gwwm init", "xdg-toplevel-destroy-pointer")); //xdg_toplevel_destroy;
+  view->destroy.notify = scm_to_pointer(scm_c_public_ref(
+      "gwwm init", "xdg-toplevel-destroy-pointer")); // xdg_toplevel_destroy;
   gwwm_signal_add(&xdg_surface->events.destroy, &view->destroy);
 
   /* cotd */
   struct wlr_xdg_toplevel *toplevel = xdg_surface->toplevel;
   view->request_fullscreen.notify = xdg_toplevel_fullscreen;
-  gwwm_signal_add(&toplevel->events.request_fullscreen, &view->request_fullscreen);
-  view->request_move.notify = scm_to_pointer(scm_c_public_ref("gwwm init", "xdg-toplevel-request-move-pointer"));
+  gwwm_signal_add(&toplevel->events.request_fullscreen,
+                  &view->request_fullscreen);
+  view->request_move.notify = scm_to_pointer(
+      scm_c_public_ref("gwwm init", "xdg-toplevel-request-move-pointer"));
   gwwm_signal_add(&toplevel->events.request_move, &view->request_move);
-  view->request_resize.notify = scm_to_pointer(scm_c_public_ref("gwwm init", "xdg-toplevel-request-resize-pointer"));
+  view->request_resize.notify = scm_to_pointer(
+      scm_c_public_ref("gwwm init", "xdg-toplevel-request-resize-pointer"));
   gwwm_signal_add(&toplevel->events.request_resize, &view->request_resize);
 }
-static void init_snarfer(void){
+static void init_snarfer(void) {
 #ifndef SCM_MAGIC_SNARFER
 #include "gwwm.x"
 #endif
 }
 static void inner_main(void *closure, int argc, char *argv[]) {
-
 
   scm_c_primitive_load("lisp/gwwm/init.scm");
   init_snarfer();
@@ -732,19 +735,15 @@ static void inner_main(void *closure, int argc, char *argv[]) {
                       "process-cursor-motion",
                       scm_c_make_gsubr("process-cursor-motion", 2, 0, 0,
                                        scm_process_cursor_motion));
-  scm_c_module_define(scm_c_resolve_module("gwwm init"),
-                      "begin-interactive",
-                      scm_c_make_gsubr("begin_interactive", 3, 0, 0,
-                                       scm_begin_interactive));
+  scm_c_module_define(
+      scm_c_resolve_module("gwwm init"), "begin-interactive",
+      scm_c_make_gsubr("begin_interactive", 3, 0, 0, scm_begin_interactive));
   /* scm_c_module_define(scm_c_resolve_module("gwwm init"), */
   /*                     "desktop-view-at", */
   /*                     scm_c_make_gsubr("desktop-view-at", 6, 0, 0, */
   /*                                      scm_desktop_view_at)) ; */
-  scm_c_module_define(scm_c_resolve_module("gwwm init"),
-                      "focus-view",
-                      scm_c_make_gsubr("focus-view", 2, 0, 0,
-                                       scm_focus_view));
-
+  scm_c_module_define(scm_c_resolve_module("gwwm init"), "focus-view",
+                      scm_c_make_gsubr("focus-view", 2, 0, 0, scm_focus_view));
 
   struct tinywl_server server;
   /* The Wayland display is managed by libwayland. It handles accepting
@@ -838,16 +837,20 @@ static void inner_main(void *closure, int argc, char *argv[]) {
    *
    * And more comments are sprinkled throughout the notify functions above.
    */
-  server.cursor_motion.notify = scm_to_pointer(scm_c_public_ref("gwwm init", "server-cursor-motion-pointer"));
+  server.cursor_motion.notify = scm_to_pointer(
+      scm_c_public_ref("gwwm init", "server-cursor-motion-pointer"));
   gwwm_signal_add(&server.cursor->events.motion, &server.cursor_motion);
-  server.cursor_motion_absolute.notify = scm_to_pointer(scm_c_public_ref("gwwm init", "server-cursor-motion-absolute-pointer"));
+  server.cursor_motion_absolute.notify = scm_to_pointer(
+      scm_c_public_ref("gwwm init", "server-cursor-motion-absolute-pointer"));
   gwwm_signal_add(&server.cursor->events.motion_absolute,
                   &server.cursor_motion_absolute);
   server.cursor_button.notify = server_cursor_button;
   gwwm_signal_add(&server.cursor->events.button, &server.cursor_button);
-  server.cursor_axis.notify =scm_to_pointer(scm_c_public_ref("gwwm init", "server-cursor-axis-pointer"));
+  server.cursor_axis.notify = scm_to_pointer(
+      scm_c_public_ref("gwwm init", "server-cursor-axis-pointer"));
   gwwm_signal_add(&server.cursor->events.axis, &server.cursor_axis);
-  server.cursor_frame.notify = scm_to_pointer(scm_c_public_ref("gwwm init", "server-cursor-frame-pointer"));
+  server.cursor_frame.notify = scm_to_pointer(
+      scm_c_public_ref("gwwm init", "server-cursor-frame-pointer"));
   gwwm_signal_add(&server.cursor->events.frame, &server.cursor_frame);
 
   /*
@@ -862,10 +865,12 @@ static void inner_main(void *closure, int argc, char *argv[]) {
   server.seat = scm_to_pointer(
       scm_call_1(scm_c_public_ref("wlroots types seat", "unwrap-wlr-seat"),
                  scm_c_public_ref("gwwm init", "gwwm-server-seat")));
-  server.request_cursor.notify = scm_to_pointer(scm_c_public_ref("gwwm init", "gwwm-seat-request-cursor-pointer"));
+  server.request_cursor.notify = scm_to_pointer(
+      scm_c_public_ref("gwwm init", "gwwm-seat-request-cursor-pointer"));
   gwwm_signal_add(&server.seat->events.request_set_cursor,
                   &server.request_cursor);
-  server.request_set_selection.notify = scm_to_pointer(scm_c_public_ref("gwwm init", "gwwm-seat-request-set-selection-pointer"));
+  server.request_set_selection.notify = scm_to_pointer(
+      scm_c_public_ref("gwwm init", "gwwm-seat-request-set-selection-pointer"));
   gwwm_signal_add(&server.seat->events.request_set_selection,
                   &server.request_set_selection);
   scm_call_0(scm_c_public_ref("gwwm init", "gwwm-init-socket"));
