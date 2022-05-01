@@ -724,17 +724,6 @@ static void server_new_xdg_surface(struct wl_listener *listener, void *data) {
   gwwm_signal_add(&toplevel->events.request_resize, &view->request_resize);
 }
 
-
-SCM_DEFINE (scm_wl_signal_get, "wl-signal-get" ,2,0,0
-            ,(SCM signal, SCM notify),""){
-
-  return (scm_call_1 (scm_c_public_ref("wayland signal", "wrap-wl-signal"),
-                      scm_from_pointer(wl_signal_get(scm_to_pointer
-                                                     (scm_call_1
-                                                      (scm_c_public_ref("wayland signal", "unwrap-signal"),signal))
-                                                     ,scm_to_pointer(scm_call_1(scm_c_public_ref("gwwm init", "pc->pointer"),signal)  ))
-                                       ,NULL)));
-}
 static void init_snarfer_define(void) {
 #ifndef SCM_MAGIC_SNARFER
 #include "gwwm.x"

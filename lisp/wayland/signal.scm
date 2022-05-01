@@ -4,7 +4,7 @@
   #:use-module (wayland listener)
   #:use-module (rnrs bytevectors)
   #:use-module (bytestructures guile)
-  #:use-module ((system foreign) #:select (pointer? pointer->bytevector bytevector->pointer make-pointer))
+  #:use-module ((system foreign) #:select (pointer? pointer->bytevector bytevector->pointer make-pointer void procedure->pointer))
   #:use-module (oop goops)
   #:duplicates (merge-generics)
   #:export (%wl-signal-struct
@@ -14,7 +14,7 @@
             unwrap-wl-signal
             wl-signal-init
             .listener-list))
-
+(load-extension "libguile-wayland-server.so" "init_w")
 (eval-when (expand load eval)
   (define %wl-signal-struct
     (bs:struct `((listener-list ,(bs:pointer %wl-list))))))
@@ -55,7 +55,10 @@
 (define* (wl-signal-init #:optional (signal (make-wl-signal)))
   (wl-list-init (.listener-list signal))
   signal)
-;; (define wl-signal-get)
+(define (wl-signal-get signal notify)
+  (%wl-signal-get (unwrap-wl-signal signal)
+                  (procedure->pointer
+                   void
+                   (lambda (a b)
+                     (notify (wrap-wl-listener a) b)) '(* *))))
 ;; (define wl-signal-emit)
-
-(load-extension "libguile-wayland-server.so" "init_w")

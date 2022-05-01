@@ -31,6 +31,6 @@ godir=$(libdir)/guile/$(GUILE_EFFECTIVE_VERSION)/site-ccache
 
 SOURCES= lisp/gwwm/util.scm \
          lisp/wayland.scm
+include src/Makefile.am
 include lisp/wayland/Makefile.am
 include lisp/wlroots/Makefile.am
-include src/Makefile.am
