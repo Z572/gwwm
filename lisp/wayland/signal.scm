@@ -9,6 +9,7 @@
   #:duplicates (merge-generics)
   #:export (%wl-signal-struct
             wl-signal-add
+            wl-signal-get
             wrap-wl-signal
             unwrap-wl-signal
             wl-signal-init
@@ -54,5 +55,7 @@
 (define* (wl-signal-init #:optional (signal (make-wl-signal)))
   (wl-list-init (.listener-list signal))
   signal)
-(define wl-signal-get)
-(define wl-signal-emit)
+;; (define wl-signal-get)
+;; (define wl-signal-emit)
+
+(load-extension "libguile-wayland-server.so" "init_w")

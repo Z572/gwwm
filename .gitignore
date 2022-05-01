@@ -7,6 +7,10 @@
 *.png
 *.tar.xz
 *.tmp
+*.x
+*.lo
+.libs
+*.la
 .ccls-cache/
 compile_commands.json
 *~
@@ -17,11 +21,14 @@ compile_commands.json
 /INSTALL
 /aclocal.m4
 /autom4te.cache
+/m4/
+/libltdl/
 /build-aux/ar-lib
 /build-aux/compile
 /build-aux/config.guess
 /build-aux/config.rpath
 /build-aux/config.sub
+/build-aux/ltmain.sh
 /build-aux/depcomp
 /build-aux/install-sh
 /build-aux/mdate-sh

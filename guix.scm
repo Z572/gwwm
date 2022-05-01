@@ -96,7 +96,8 @@
   (native-inputs
    (list autoconf automake
          pkg-config
-         texinfo))
+         texinfo
+         libtool))
   (inputs (list guile-3.0 wlroots-next))
   (synopsis "")
   (description "")
