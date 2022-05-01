@@ -2,6 +2,8 @@
   #:use-module (wlroots util box)
   #:use-module (wlroots util addon)
   #:use-module (bytestructures guile)
+  #:use-module ((system foreign) #:prefix ffi:)
+  #:use-module (wlroots utils)
   #:use-module (wlroots types output)
   #:use-module (wayland list)
   #:use-module (oop goops)
@@ -10,7 +12,8 @@
   #:export (%wlr-surface-state-struct
             %wlr-surface-struct
             wrap-wlr-surface
-            unwrap-wlr-surface))
+            unwrap-wlr-surface
+            wlr-surface-has-buffer))
 (define %wlr-surface-state-struct
   (bs:struct `((committed ,uint32)
                (seq ,uint32)
@@ -73,3 +76,7 @@
   (make <wlr-surface> #:pointer p))
 (define (unwrap-wlr-surface o)
   (.pointer o))
+
+(define-wlr-procedure (wlr-surface-has-buffer surface)
+  (ffi:int "wlr_surface_has_buffer" '(*))
+  (= (% (unwrap-wlr-surface surface)) 1))
