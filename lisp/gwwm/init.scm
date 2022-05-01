@@ -42,19 +42,21 @@
     (help (single-char #\h) (value #f))
     (exec (single-char #\s) (value #t))))
 (define options (getopt-long (command-line) option-spec))
-(let* ((help-wanted (option-ref options 'help #f))
-       (version-wanted (option-ref options 'version #f)))
-  (if (or version-wanted help-wanted)
-      (begin (if version-wanted
-                 (display "gwwm v0.0.1
+(define-public (parse-command-line)
+  (let* ((help-wanted (option-ref options 'help #f))
+         (version-wanted (option-ref options 'version #f)))
+    (if (or version-wanted help-wanted)
+        (begin (if version-wanted
+                   (display "gwwm v0.0.1
 "))
-             (if help-wanted
-                 (display "\
+               (if help-wanted
+                   (display "\
 gwwm [options]
   -v --version  Display version
   -h --help     Display this help
 "))
-             (exit 0))))
+               (exit 0)))))
+(parse-command-line)
 
 ;; (define-class <server> ()
 ;;   display)
@@ -161,8 +163,7 @@ gwwm [options]
           (when (= (wlr-backend-start gwwm-server-backend) 0)
             (wlr-backend-destroy gwwm-server-backend)
             (wl-display-destroy gwwm-wl-display)))
-        (wlr-backend-destroy gwwm-server-backend)))
-  )
+        (wlr-backend-destroy gwwm-server-backend))))
 
 (define-public (wlr_xcursor_manager_set_cursor_image name)
   (wlr-xcursor-manager-set-cursor-image gwwm-server-cursor-mgr name gwwm-server-cursor))
@@ -261,8 +262,10 @@ gwwm [options]
                            (make-pointer (bytestructure-ref event 'source))))
          (serial (bytestructure-ref event 'serial)))
     (wlr-seat-set-selection seat wlr-data-source serial)))
+(define-public (pc->pointer f)
+  (procedure->pointer void f '(* *)))
 (define-public gwwm-seat-request-set-selection-pointer
-  (procedure->pointer void gwwm-seat-request-set-selection '(* *)))
+  (pc->pointer gwwm-seat-request-set-selection))
 
 (define (server-cursor-motion listener data)
   (let ((server (wl-container-of listener %server-struct 'cursor-motion))
@@ -303,8 +306,7 @@ gwwm [options]
 (define (xdg-toplevel-unmap l d)
   (let ((view (wl-container-of l %tinywl-view-struct 'unmap)))
     (wl-list-remove (wrap-wl-list (bytestructure-ref view 'link)))))
-(define-public (pc->pointer f)
-  (procedure->pointer void f '(* *)))
+
 (define-public xdg-toplevel-unmap-pointer
   (procedure->pointer void xdg-toplevel-unmap '(* *)))
 (define (xdg-toplevel-request-move l d)
