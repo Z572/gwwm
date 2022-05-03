@@ -85,23 +85,28 @@
                     (prepend libdrm-next libglvnd xcb-util-renderutil)
                     (replace "wayland" wayland-next)
                     (replace "wayland-protocols" wayland-protocols-next)))))
-(package
-  (name "gwwm")
-  (version "0.1")
-  (source (local-file "." "gwwm-checkout"
-                      #:recursive? #t
-                      #:select? (git-predicate %srcdir)))
-  (build-system gnu-build-system)
-  (arguments `(#:make-flags '("GUILE_AUTO_COMPILE=0")))
-  (native-inputs
-   (list autoconf automake
-         pkg-config
-         texinfo
-         libtool))
-  (inputs (list guile-3.0 wlroots-next))
-  (propagated-inputs
-   (list guile-bytestructures))
-  (synopsis "")
-  (description "")
-  (home-page "")
-  (license license:gpl3+))
+
+;; public package, used for 'guix system vm' test
+(define-public gwwm
+ (package
+   (name "gwwm")
+   (version "0.1")
+   (source (local-file "." "gwwm-checkout"
+                       #:recursive? #t
+                       #:select? (git-predicate %srcdir)))
+   (build-system gnu-build-system)
+   (arguments `(#:make-flags '("GUILE_AUTO_COMPILE=0")))
+   (native-inputs
+    (list autoconf automake
+          pkg-config
+          texinfo
+          libtool))
+   (inputs (list guile-3.0 wlroots-next))
+   (propagated-inputs
+    (list guile-bytestructures))
+   (synopsis "")
+   (description "")
+   (home-page "")
+   (license license:gpl3+)))
+
+gwwm
