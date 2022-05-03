@@ -99,6 +99,8 @@
          texinfo
          libtool))
   (inputs (list guile-3.0 wlroots-next))
+  (propagated-inputs
+   (list guile-bytestructures))
   (synopsis "")
   (description "")
   (home-page "")
