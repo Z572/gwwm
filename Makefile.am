@@ -29,8 +29,7 @@ SUFFIXES = .scm .go
 moddir=$(prefix)/share/guile/site/$(GUILE_EFFECTIVE_VERSION)
 godir=$(libdir)/guile/$(GUILE_EFFECTIVE_VERSION)/site-ccache
 
-SOURCES= lisp/gwwm/util.scm \
-         lisp/wayland.scm
+SOURCES= lisp/gwwm/util.scm
 include src/Makefile.am
 include lisp/wayland/Makefile.am
 include lisp/wlroots/Makefile.am

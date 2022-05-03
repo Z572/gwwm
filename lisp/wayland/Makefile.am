@@ -1,4 +1,5 @@
-SOURCES += %D%/argument.scm        \
+SOURCES += %D%/../wayland.scm \
+ %D%/argument.scm        \
  %D%/callback.scm        \
  %D%/client.scm          \
  %D%/client-core.scm     \
