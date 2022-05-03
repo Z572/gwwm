@@ -15,7 +15,6 @@ SOURCES += %D%/backend.scm  \
 %D%/types/xcursor.scm       \
 %D%/types/scene.scm         \
 %D%/types/surface.scm       \
-%D%/types/compositor.go     \
 %D%/util/box.scm            \
 %D%/util/log.scm            \
 %D%/util/addon.scm          \
