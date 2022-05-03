@@ -88,25 +88,46 @@
 
 ;; public package, used for 'guix system vm' test
 (define-public gwwm
- (package
-   (name "gwwm")
-   (version "0.1")
-   (source (local-file "." "gwwm-checkout"
-                       #:recursive? #t
-                       #:select? (git-predicate %srcdir)))
-   (build-system gnu-build-system)
-   (arguments `(#:make-flags '("GUILE_AUTO_COMPILE=0")))
-   (native-inputs
-    (list autoconf automake
-          pkg-config
-          texinfo
-          libtool))
-   (inputs (list guile-3.0 wlroots-next))
-   (propagated-inputs
-    (list guile-bytestructures))
-   (synopsis "")
-   (description "")
-   (home-page "")
-   (license license:gpl3+)))
+  (package
+    (name "gwwm")
+    (version "0.1")
+    (source (local-file "." "gwwm-checkout"
+                        #:recursive? #t
+                        #:select? (git-predicate %srcdir)))
+    (build-system gnu-build-system)
+    (arguments (list #:make-flags #~(list "GUILE_AUTO_COMPILE=0")
+                     ;;; XXX: is a bug? why can't use gexp for #:modules
+                     #:modules '((guix build gnu-build-system)
+                                 (guix build utils)
+                                 (ice-9 rdelim)
+                                 (ice-9 popen))
+                     #:phases #~(modify-phases %standard-phases
+                                  (add-after 'install 'wrap-executable
+                                    (lambda* (#:key inputs outputs #:allow-other-keys)
+                                      (let* ((out (assoc-ref outputs "out"))
+                                             (effective (read-line
+                                                         (open-pipe* OPEN_READ
+                                                                     "guile" "-c"
+                                                                     "(display (effective-version))")))
+                                             (mods (string-append out "/share/guile/site/" effective))
+                                             (gos (string-append out "/lib/guile/" effective "/site-ccache")))
+                                        (wrap-program (search-input-file outputs "bin/gwwm")
+                                          #:sh (search-input-file inputs "bin/bash")
+                                          `("GUILE_AUTO_COMPILE" ":" = ("0"))
+                                          `("GUILE_LOAD_PATH" ":" prefix
+                                            ,(list mods))
+                                          `("GUILE_LOAD_COMPILED_PATH" ":" prefix
+                                            ,(list gos)))))))))
+    (native-inputs
+     (list autoconf automake
+           pkg-config
+           texinfo))
+    (inputs (list guile-3.0 wlroots-next))
+    (propagated-inputs
+     (list guile-bytestructures))
+    (synopsis "")
+    (description "")
+    (home-page "")
+    (license license:gpl3+)))
 
 gwwm

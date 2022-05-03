@@ -1,21 +1,47 @@
-SOURCES += %D%/backend.scm  \
-%D%/render/allocator.scm    \
-%D%/render/renderer.scm     \
-%D%/types.scm               \
-%D%/types/output.scm        \
-%D%/types/output-layout.scm \
-%D%/types/layer-shell.scm   \
-%D%/types/input-device.scm  \
-%D%/types/seat.scm          \
-%D%/types/data-device.scm   \
-%D%/types/compositor.scm    \
-%D%/types/xdg-shell.scm     \
-%D%/types/pointer.scm       \
-%D%/types/cursor.scm        \
-%D%/types/xcursor.scm       \
-%D%/types/scene.scm         \
-%D%/types/surface.scm       \
-%D%/util/box.scm            \
-%D%/util/log.scm            \
-%D%/util/addon.scm          \
-%D%/utils.scm
+GOBJECTS = $(SOURCES:%.scm=%.go) $(NODIST_SOURCES:%.scm=%.go)
+
+nobase_mod_DATA = $(SOURCES) $(NOCOMP_SOURCES) $(NODIST_SOURCES)
+nobase_go_DATA = $(GOBJECTS)
+
+guile_install_go_files = install-nobase_goDATA
+$(guile_install_go_files): install-nobase_modDATA
+
+CLEANFILES = $(GOBJECTS)
+EXTRA_DIST = $(SOURCES) $(NOCOMP_SOURCES)
+GUILE_WARNINGS =                                          \
+  -Wunbound-variable -Warity-mismatch -Wshadowed-toplevel \
+  -Wmacro-use-before-definition                           \
+  -Wunused-variable                                       \
+  -Wduplicate-case-datum -Wbad-case-datum                 \
+  -Wformat
+
+SUFFIXES = .scm .go
+.scm.go:
+	$(AM_V_GEN)$(top_builddir)/pre-inst-env $(GUILE_TOOLS) compile $(GUILE_TARGET) $(GUILE_WARNINGS) -o "$@" "$<"
+
+
+moddir=$(prefix)/share/guile/site/$(GUILE_EFFECTIVE_VERSION)/wlroots
+godir=$(libdir)/guile/$(GUILE_EFFECTIVE_VERSION)/site-ccache/wlroots
+
+SOURCES = config.scm \
+ backend.scm  \
+ render/allocator.scm    \
+ render/renderer.scm     \
+ types.scm               \
+ types/output.scm        \
+ types/output-layout.scm \
+ types/layer-shell.scm   \
+ types/input-device.scm  \
+ types/seat.scm          \
+ types/data-device.scm   \
+ types/compositor.scm    \
+ types/xdg-shell.scm     \
+ types/pointer.scm       \
+ types/cursor.scm        \
+ types/xcursor.scm       \
+ types/scene.scm         \
+ types/surface.scm       \
+ util/box.scm            \
+ util/log.scm            \
+ util/addon.scm          \
+ utils.scm

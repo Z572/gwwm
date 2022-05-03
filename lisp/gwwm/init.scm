@@ -1,4 +1,4 @@
-(add-to-load-path (dirname(dirname (current-filename))))
+;; (add-to-load-path (dirname(dirname (current-filename))))
 (define-module (gwwm init)
   #:use-module (gwwm util)
   #:use-module (srfi srfi-26)

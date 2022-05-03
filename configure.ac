@@ -12,7 +12,10 @@ AM_INIT_AUTOMAKE([1.14 gnu tar-ustar silent-rules subdir-objects \
 AM_SILENT_RULES([yes])
 
 AC_CONFIG_FILES([Makefile
+                lisp/gwwm/Makefile
+                lisp/wayland/Makefile
                 lisp/wayland/config.scm
+                lisp/wlroots/Makefile
                 lisp/wlroots/config.scm])
 
 AC_CONFIG_FILES([pre-inst-env], [chmod +x pre-inst-env])

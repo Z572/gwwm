@@ -9,12 +9,10 @@
   #:duplicates (merge-generics)
   #:export (%wl-signal-struct
             wl-signal-add
-            wl-signal-get
             wrap-wl-signal
             unwrap-wl-signal
             wl-signal-init
             .listener-list))
-(load-extension "libguile-wayland-server.so" "init_w")
 (eval-when (expand load eval)
   (define %wl-signal-struct
     (bs:struct `((listener-list ,(bs:pointer %wl-list))))))
@@ -55,10 +53,5 @@
 (define* (wl-signal-init #:optional (signal (make-wl-signal)))
   (wl-list-init (.listener-list signal))
   signal)
-(define (wl-signal-get signal notify)
-  (%wl-signal-get (unwrap-wl-signal signal)
-                  (procedure->pointer
-                   void
-                   (lambda (a b)
-                     (notify (wrap-wl-listener a) b)) '(* *))))
+
 ;; (define wl-signal-emit)
