@@ -98,7 +98,7 @@
          pkg-config
          texinfo
          libtool))
-  (inputs (list guile-3.0 wlroots-next))
+  (inputs (list guile-3.0 guile-bytestructures wlroots-next))
   (synopsis "")
   (description "")
   (home-page "")
