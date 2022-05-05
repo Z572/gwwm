@@ -5,7 +5,8 @@
   #:use-module (wlroots util box)
   #:use-module (bytestructures guile)
   #:use-module (oop goops)
-  #:use-module ((system foreign) #:select ((uint32 . ffi:uint32)))
+  #:use-module ((system foreign) #:select ((uint32 . ffi:uint32)
+                                           (int . ffi:int)))
   #:use-module (wlroots utils)
   #:export (%wlr-xdg-shell-struct
             %wlr-xdg-surface-struct

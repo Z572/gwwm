@@ -14,7 +14,7 @@
   #:use-module ((system foreign) #:select ((uint32 . ffi:uint32)
                                            (int32 . ffi:int32)
                                            (float . ffi:float)
-                                           ;(int . ffi:int)
+                                           (int . ffi:int)
                                            (void . ffi:void)
                                            (double . ffi:double)
                                            pointer-address

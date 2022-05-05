@@ -10,6 +10,7 @@
   #:use-module (wlroots utils)
   #:use-module ((system foreign) #:select ((void . ffi:void)
                                            (int32 . ffi:int32)
+                                           (int . ffi:int)
                                            (double . ffi:double)))
   ;; #:use-module (system foreign)
   #:use-module (bytestructures guile)

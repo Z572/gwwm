@@ -2,6 +2,7 @@
   #:use-module (wayland display)
   #:use-module (wlroots utils)
   #:use-module (wlroots backend)
+  #:use-module ((system foreign) #:prefix ffi:)
   #:use-module (oop goops)
   #:export (wrap-wlr-renderer unwrap-wlr-renderer wlr-renderer-autocreate
                               wlr-renderer-init-wl-display))

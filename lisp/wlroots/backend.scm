@@ -4,7 +4,7 @@
   #:use-module (wayland util)
   #:use-module (wayland signal)
   #:use-module (wayland display)
-  #:use-module (system foreign)
+  #:use-module ((system foreign) #:prefix ffi:)
   #:use-module (oop goops)
   #:use-module (bytestructures guile)
   #:export (wlr-backend-autocreate
@@ -51,5 +51,5 @@
   (% (unwrap-wlr-backend backend)))
 
 (define-wlr-procedure (wlr-backend-destroy backend)
-  (void "wlr_backend_destroy" (list '*))
+  (ffi:void "wlr_backend_destroy" (list '*))
   (% (unwrap-wlr-backend backend)))
