@@ -38,7 +38,8 @@
             %wlr-seat-client-struct
             wrap-wlr-seat-client
             unwrap-wlr-seat-client
-            wlr-seat-pointer-notify-axis))
+            wlr-seat-pointer-notify-axis
+            wlr-seat-set-capabilities))
 
 (define WLR_POINTER_BUTTONS_CAP 16)
 (define %wlr-serial-range-struct
@@ -180,3 +181,7 @@
 (define-wlr-procedure (wlr-seat-pointer-notify-axis wlr-seat time-msec orientation value value-discrete source)
   (ffi:void "wlr_seat_pointer_notify_axis" (list '* ffi:uint32 ffi:int ffi:double ffi:int32 ffi:int))
   (% (unwrap-wlr-seat wlr-seat) time-msec orientation value value-discrete source))
+
+(define-wlr-procedure (wlr-seat-set-capabilities seat capabilities)
+  (ffi:void "wlr_seat_set_capabilities" `(* ,ffi:uint32))
+  (% (unwrap-wlr-seat seat) capabilities))

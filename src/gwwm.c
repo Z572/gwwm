@@ -36,6 +36,7 @@
 #define FROM_P(P) (scm_from_pointer(P, NULL))
 #define GI_REF(p) (scm_c_public_ref("gwwm init", p))
 #define REF_CALL_1(M,N,ARG1) (scm_call_1(REF(M ,N) ,ARG1))
+#define REF_CALL_2(M,N,ARG1,ARG2) (scm_call_2(REF(M ,N) ,ARG1 ,ARG2))
 /* For brevity's sake, struct members are annotated where they are used. */
 enum tinywl_cursor_mode {
   TINYWL_CURSOR_PASSTHROUGH,
@@ -339,7 +340,11 @@ static void server_new_input(struct wl_listener *listener, void *data) {
   if (!wl_list_empty(&server->keyboards)) {
     caps |= WL_SEAT_CAPABILITY_KEYBOARD;
   }
-  wlr_seat_set_capabilities(server->seat, caps);
+  REF_CALL_2("wlroots types seat", "wlr-seat-set-capabilities",
+             (REF_CALL_1("wlroots types seat",
+                         "wrap-wlr-seat",
+                         FROM_P(server->seat))),
+             scm_from_uint32(caps) );
 }
 
 static struct tinywl_view *desktop_view_at(struct tinywl_server *server,
