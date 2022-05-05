@@ -24,6 +24,7 @@
             wlr-scene-node-set-position
             wlr-scene-node-at
             wlr-scene-tree-create
+            wlr-scene-node-raise-to-top
             .node))
 
 (define %wlr-scene-node-state-struct
@@ -93,3 +94,7 @@
   (values (% (get-pointer node) lx ly nx ny)
           (cons (bytevector-ieee-double-native-ref (ffi:pointer->bytevector nx (ffi:sizeof double)) 0)
                 (bytevector-ieee-double-native-ref (ffi:pointer->bytevector ny (ffi:sizeof double)) 0))))
+
+(define-wlr-procedure (wlr-scene-node-raise-to-top node)
+  (ffi:void "wlr_scene_node_raise_to_top" '(*))
+  (% (unwrap-wlr-scene-node node)))

@@ -35,6 +35,7 @@
 #define REF(A, B) (scm_c_public_ref(A, B))
 #define FROM_P(P) (scm_from_pointer(P, NULL))
 #define GI_REF(p) (scm_c_public_ref("gwwm init", p))
+#define REF_CALL_1(M,N,ARG1) (scm_call_1(REF(M ,N) ,ARG1))
 /* For brevity's sake, struct members are annotated where they are used. */
 enum tinywl_cursor_mode {
   TINYWL_CURSOR_PASSTHROUGH,
@@ -157,7 +158,10 @@ static void focus_view(struct tinywl_view *view, struct wlr_surface *surface) {
   }
   struct wlr_keyboard *keyboard = wlr_seat_get_keyboard(seat);
   /* Move the view to the front */
-  wlr_scene_node_raise_to_top(view->scene_node);
+  REF_CALL_1("wlroots types scene", "wlr-scene-node-raise-to-top",
+             (REF_CALL_1("wlroots types scene" ,
+                         "wrap-wlr-scene-node",
+                         FROM_P(view->scene_node))));
   gwwm_wl_list_remove(&view->link);
   gwwm_wl_list_insert(&server->views, &view->link);
   /* Activate the new surface */
