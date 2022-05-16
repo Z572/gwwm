@@ -53,12 +53,12 @@
 
 (define %wl-client-get-link (wayland-server->procedure '* "wl_client_get_link" '(*)))
 (define (wl-client-get-link client)
-  (pointer->wl-list (%wl-client-get-link (unwrap-wl-client client))))
+  (wrap-wl-list (%wl-client-get-link (unwrap-wl-client client))))
 
 (define %wl-client-from-link (wayland-server->procedure '* "wl_client_from_link" '(*)))
 
 (define (wl-client-from-link wl-l)
-  (wrap-wl-client (%wl-client-from-link (wl-list->pointer wl-l))))
+  (wrap-wl-client (%wl-client-from-link (unwrap-wl-list wl-l))))
 
 "wl_client_get_credentials"
 (define wl-event-queue-destroy (wayland-client->procedure void "wl_event_queue_destroy" '(*)))
