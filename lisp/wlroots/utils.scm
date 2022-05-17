@@ -1,9 +1,40 @@
 (define-module (wlroots utils)
   #:use-module (system foreign)
   #:use-module (wlroots config)
-  #:export (wlr->pointer wlr->procedure)
+  #:use-module (wayland util)
+  #:use-module ((bytestructures guile)
+                #:select
+                (bytestructure
+                 bs:pointer
+                 bytestructure-offset))
+  #:use-module (oop goops)
+  #:export (wlr->pointer wlr->procedure bytestructure+offset->pointer)
   #:export-syntax (define-wlr-procedure define-enumeration))
 
+(define <bytestructure> (class-of (bytestructure (bs:pointer '*))))
+
+(define-method (= (p <foreign>) (p2 <foreign>))
+  (= (pointer-address p)
+     (pointer-address p2)))
+
+(define-method (= (b <bytestructure>) (b* <bytestructure>))
+  (= (bytestructure->pointer b)
+     (bytestructure->pointer b*)))
+
+(define-method (- (p <foreign>) (n <number>))
+  (+ p (- n)))
+(define-method (+ (p <foreign>) (n <number>))
+  (make-pointer (+ (pointer-address p) n)))
+
+(define-method (- (p <bytestructure>) (n <number>))
+  (+ p (- n)))
+
+(define-method (+ (p <bytestructure>) (n <number>))
+  (+ (bytestructure->pointer p) n))
+
+(define (bytestructure+offset->pointer b)
+  (let ((offset (bytestructure-offset b)))
+    (+ (bytestructure->pointer b) offset)))
 (define (wlr->pointer name)
   (dynamic-func name (dynamic-link %libwlroots)))
 

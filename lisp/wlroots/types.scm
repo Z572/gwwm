@@ -10,9 +10,10 @@
 
 (define-class <wlr-type> ()
   (pointer #:accessor .pointer #:init-keyword #:pointer))
+
 (define-method (= (f <wlr-type>) (l <wlr-type>))
-  (= (pointer-address (.pointer f))
-     (pointer-address (.pointer l))))
+  (= (.pointer f)
+     (.pointer l)))
 
 (define-generic get-pointer)
 (define-syntax define-wlr-types-class
