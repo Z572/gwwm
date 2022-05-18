@@ -140,30 +140,22 @@
                (selection-source-destroy ,%wl-listener)
                (primary-selection-source-destroy ,%wl-listener)
                (drag-source-destroy ,%wl-listener)
-               (event ,(bs:struct (map (cut cons <> (list %wl-signal-struct))
-                                       '(pointer-grab-begin
-                                         pointer-grab-end
-                                         keyboard-grab-begin
-                                         keyboard-grab-end
-                                         touch-grab-begin
-                                         touch-grab-end
-                                         request-set-cursor
-
-                                         request-set-selection
-
-                                         set-selection
-
-                                         request-set-primary-selection
-
-                                         set-primary-selection
-
-                                         request-start-drag
-                                         start-drag
-
-                                         destroy))
-                                  ))
+               (events ,(bs:struct (map (cut cons <> (list %wl-signal-struct))
+                                        '(pointer-grab-begin
+                                          pointer-grab-end
+                                          keyboard-grab-begin
+                                          keyboard-grab-end
+                                          touch-grab-begin
+                                          touch-grab-end
+                                          request-set-cursor
+                                          request-set-selection
+                                          set-selection
+                                          request-set-primary-selection
+                                          set-primary-selection
+                                          request-start-drag
+                                          start-drag
+                                          destroy))))
                (data ,(bs:pointer 'void)))))
-
 
 (define-wlr-types-class wlr-seat)
 
