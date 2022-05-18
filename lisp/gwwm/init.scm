@@ -10,6 +10,7 @@
   #:use-module ((system foreign) #:select (make-pointer dereference-pointer pointer-address void procedure->pointer))
   #:use-module (srfi srfi-1)
   #:use-module (wlroots util log)
+  #:use-module (wlroots utils)
   #:use-module (wlroots backend)
   #:use-module (wlroots render renderer)
   #:use-module (wlroots render allocator)
@@ -155,15 +156,7 @@ gwwm [options]
 (define-public gwwm-server-layer-shell (wlr-layer-shell-v1-create gwwm-wl-display))
 (define-public server-cursor-mode 0)
 (define-public (set-server-cursor-mode a) (pk 'set! 'server-cursor-mode server-cursor-mode 'to a)(set! server-cursor-mode a))
-(define (gwwm-init-socket)
-  (let ((socket (wl-display-add-socket-auto gwwm-wl-display)))
-    (if socket
-        (begin
-          (setenv "WAYLAND_DISPLAY" socket)
-          (when (= (wlr-backend-start gwwm-server-backend) 0)
-            (wlr-backend-destroy gwwm-server-backend)
-            (wl-display-destroy gwwm-wl-display)))
-        (wlr-backend-destroy gwwm-server-backend))))
+
 
 (define-public (wlr_xcursor_manager_set_cursor_image name)
   (wlr-xcursor-manager-set-cursor-image gwwm-server-cursor-mgr name gwwm-server-cursor))
@@ -191,8 +184,33 @@ gwwm [options]
 (define-public xdg-toplevel-destroy-pointer
   (procedure->pointer void xdg-toplevel-destroy '(* *)))
 
-(define (gwwm-run!)
+(define (gwwm-init-socket)
+  (let ((socket (wl-display-add-socket-auto gwwm-wl-display)))
+    (if socket
+        (begin
+          (setenv "WAYLAND_DISPLAY" socket)
+          (when (= (wlr-backend-start gwwm-server-backend) 0)
+            (wlr-backend-destroy gwwm-server-backend)
+            (wl-display-destroy gwwm-wl-display)))
+        (wlr-backend-destroy gwwm-server-backend))))
+
+(define (gwwm-run! s)
+  (gwwm-init-socket)
+  (define server (pointer->bytestructure s %server-struct))
+
   (pk 'run!)
+  (wl-signal-add (wrap-wl-signal
+                  (bytestructure+offset->pointer
+                   (bytestructure-ref server 'seat 'events 'request-set-cursor)))
+                 (wrap-wl-listener
+                  (bytestructure+offset->pointer
+                   (bytestructure-ref server 'request-cursor))))
+  (wl-signal-add (wrap-wl-signal
+                  (bytestructure+offset->pointer
+                   (bytestructure-ref server 'seat 'events 'request-set-selection)))
+                 (wrap-wl-listener
+                  (bytestructure+offset->pointer
+                   (bytestructure-ref server 'request-set-selection))))
   (and=> (option-ref options 'exec #f) fork+exec)
 
   (wl-display-run gwwm-wl-display)
@@ -235,16 +253,18 @@ gwwm [options]
     (wlr-output-commit output)))
 
 (define-public (gwwm-seat-request-cursor p1 p2 )
-  (let* ((server-bytestructure (wl-container-of p1 %server-struct 'request-cursor))
-         (event (pointer->bytestructure p2 %wlr-seat-request-set-cursor-event-struct))
+  (pk 'gwwm-seat-request-cursor1)
+  (let* ((event (pointer->bytestructure p2 %wlr-seat-request-set-cursor-event-struct))
          (focused-client (wrap-wlr-seat-client
                           (make-pointer
                            (bytestructure-ref
-                            server-bytestructure 'seat 'pointer-state 'focused-client))))
+                            (pointer->bytestructure (unwrap-wlr-seat gwwm-server-seat) %wlr-seat-struct)
+                            'pointer-state 'focused-client))))
          (seat-client (wrap-wlr-seat-client (make-pointer (bytestructure-ref event 'seat-client)))))
     (if (= focused-client seat-client)
-        (wlr-cursor-set-surface (wrap-wlr-cursor
-                                 (make-pointer (bytestructure-ref server-bytestructure 'cursor)))
+        (wlr-cursor-set-surface gwwm-server-cursor
+                                ;; (wrap-wlr-cursor
+                                ;;  (make-pointer (bytestructure-ref server-bytestructure 'cursor)))
                                 (wrap-wlr-surface
                                  (make-pointer (bytestructure-ref event 'surface)))
                                 (bytestructure-ref event 'hostpot-x)

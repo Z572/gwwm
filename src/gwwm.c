@@ -859,13 +859,13 @@ static void inner_main(void *closure, int argc, char *argv[]) {
                  GI_REF("gwwm-server-seat")));
   server.request_cursor.notify =
       scm_to_pointer(GI_REF("gwwm-seat-request-cursor-pointer"));
-  gwwm_signal_add(&server.seat->events.request_set_cursor,
-                  &server.request_cursor);
+  /* gwwm_signal_add(&server.seat->events.request_set_cursor, */
+  /*                 &server.request_cursor); */
   server.request_set_selection.notify =
       scm_to_pointer(GI_REF("gwwm-seat-request-set-selection-pointer"));
-  gwwm_signal_add(&server.seat->events.request_set_selection,
-                  &server.request_set_selection);
-  scm_call_0(GI_REF("gwwm-init-socket"));
+  /* gwwm_signal_add(&server.seat->events.request_set_selection, */
+  /*                 &server.request_set_selection); */
+  /* scm_call_0(GI_REF("gwwm-init-socket")); */
   /* Set the WAYLAND_DISPLAY environment variable to our socket and run the
    * startup command if requested. */
   wlr_gamma_control_manager_v1_create(server_wl_display());
@@ -873,7 +873,7 @@ static void inner_main(void *closure, int argc, char *argv[]) {
    * compositor. Starting the backend rigged up all of the necessary event
    * loop configuration to listen to libinput events, DRM events, generate
    * frame events at the refresh rate, and so on. */
-  scm_call_0(GI_REF("gwwm-run!"));
+  scm_call_1(GI_REF("gwwm-run!") ,FROM_P(&server));
 }
 
 int main(int argc, char **argv) {
