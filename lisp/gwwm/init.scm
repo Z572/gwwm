@@ -173,13 +173,13 @@ gwwm [options]
 (define-public (xdg-toplevel-destroy listener data)
   (let* ((view (pk 'view (wl-container-of listener %tinywl-view-struct 'destroy))))
     (pk 'destroy)
-    ;; FIXME: why need use @ ? just a for-each will not found for-each variable
-    ((@ (guile) for-each)
-     (lambda (a) (let ((l (wl-list-init (.link (wrap-wl-listener (bytestructure-ref view a ))))))
-                   (pk 'c (wl-list-length l))
-                   (pk 'a (wl-list-remove l))
-                                        ;(pk 'b(wl-list-length l))
-                   ))
+    (for-each
+     (lambda (a)
+       (wl-list-remove
+        (.link
+         (wrap-wl-listener
+          (bytestructure+offset->pointer
+           (bytestructure-ref view a))))))
      '(map unmap destroy request-move request-resize))))
 (define-public xdg-toplevel-destroy-pointer
   (procedure->pointer void xdg-toplevel-destroy '(* *)))
