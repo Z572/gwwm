@@ -10,6 +10,7 @@
   #:use-module (wlroots types data-device)
   #:use-module (wlroots types surface)
   #:use-module (wlroots utils)
+  #:use-module (wayland util)
   #:use-module (bytestructures guile)
   #:use-module ((system foreign) #:select ((uint32 . ffi:uint32)
                                            (int32 . ffi:int32)
@@ -39,7 +40,8 @@
             wrap-wlr-seat-client
             unwrap-wlr-seat-client
             wlr-seat-pointer-notify-axis
-            wlr-seat-set-capabilities))
+            wlr-seat-set-capabilities
+            get-event-signal))
 
 (define WLR_POINTER_BUTTONS_CAP 16)
 (define %wlr-serial-range-struct
@@ -158,6 +160,14 @@
                (data ,(bs:pointer 'void)))))
 
 (define-wlr-types-class wlr-seat)
+
+(define-method (get-event-signal (b <wlr-seat>) (signal-name <symbol>))
+  (let* ((a (bytestructure-ref
+             (pointer->bytestructure
+              (unwrap-wlr-seat b)
+              %wlr-seat-struct)
+             'event signal-name)))
+    (wrap-wl-signal (bytestructure+offset->pointer a))))
 
 (define-wlr-procedure (wlr-seat-create display name)
   ('* "wlr_seat_create" '(* *))
