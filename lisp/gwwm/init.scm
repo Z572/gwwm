@@ -173,7 +173,8 @@ gwwm [options]
 (define-public (xdg-toplevel-destroy listener data)
   (let* ((view (pk 'view (wl-container-of listener %tinywl-view-struct 'destroy))))
     (pk 'destroy)
-    (for-each
+    ;; why!!!
+    ((@ (guile) for-each)
      (lambda (a)
        (wl-list-remove
         (.link
