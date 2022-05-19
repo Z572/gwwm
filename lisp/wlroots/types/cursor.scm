@@ -29,32 +29,29 @@
   (bs:struct `((state ,(bs:pointer '*))
                (x ,double)
                (y ,double)
-               (event ,(bs:struct (map (cut cons <> (list %wl-signal-struct))
-                                       '(motion
-                                         motion_absolute
-                                         button
-                                         axis
-                                         frame
-                                         swipe_begin
-                                         swipe_update
-                                         swipe_end
-                                         pinch_begin
-                                         pinch_update
-                                         pinch_end
-                                         hold_begin
-                                         hold_end
-
-                                         touch_up
-                                         touch_down
-                                         touch_motion
-                                         touch_cancel
-                                         touch_frame
-
-                                         tablet_tool_axis
-                                         tablet_tool_proximity
-                                         tablet_tool_tip
-                                         tablet_tool_button
-                                         ))))
+               (events ,(bs:struct (map (cut cons <> (list %wl-signal-struct))
+                                        '(motion
+                                          motion-absolute
+                                          button
+                                          axis
+                                          frame
+                                          swipe-begin
+                                          swipe-update
+                                          swipe-end
+                                          pinch-begin
+                                          pinch-update
+                                          pinch-end
+                                          hold-begin
+                                          hold-end
+                                          touch-up
+                                          touch-down
+                                          touch-motion
+                                          touch-cancel
+                                          touch-frame
+                                          tablet-tool-axis
+                                          tablet-tool-proximity
+                                          tablet-tool-tip
+                                          tablet-tool-button))))
                (data ,(bs:pointer 'void)))))
 (define-wlr-types-class wlr-cursor)
 (define-wlr-procedure (wlr-cursor-create)
