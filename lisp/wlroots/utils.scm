@@ -21,16 +21,16 @@
   (= (bytestructure->pointer b)
      (bytestructure->pointer b*)))
 
-(define-method (- (p <foreign>) (n <number>))
-  (+ p (- n)))
-(define-method (+ (p <foreign>) (n <number>))
-  (make-pointer (+ (pointer-address p) n)))
+(define-method (- (p <foreign>) . (n <number>))
+  (apply + p (- n)))
+(define-method (+ (p <foreign>) . a)
+  (make-pointer (apply + (pointer-address p) a)))
 
 (define-method (- (p <bytestructure>) (n <number>))
   (+ p (- n)))
 
-(define-method (+ (p <bytestructure>) (n <number>))
-  (+ (bytestructure->pointer p) n))
+(define-method (+ (p <bytestructure>) . n)
+  (apply + (bytestructure->pointer p) n))
 
 (define (bytestructure+offset->pointer b)
   (let ((offset (bytestructure-offset b)))
