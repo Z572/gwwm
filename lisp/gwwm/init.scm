@@ -29,7 +29,6 @@
   #:use-module (wlroots types xcursor)
   #:use-module (wlroots types pointer)
   #:use-module (bytestructures guile)
-  #:duplicates (merge-generics)
   #:export (handle-keybinding
             shutdown-hook
             gwwm-wl-display
@@ -173,8 +172,7 @@ gwwm [options]
 (define-public (xdg-toplevel-destroy listener data)
   (let* ((view (pk 'view (wl-container-of listener %tinywl-view-struct 'destroy))))
     (pk 'destroy)
-    ;; why!!!
-    ((@ (guile) for-each)
+    (for-each
      (lambda (a)
        (wl-list-remove
         (.link
