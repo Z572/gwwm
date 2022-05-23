@@ -207,8 +207,9 @@ gwwm [options]
                   (bytestructure+offset->pointer
                    (bytestructure-ref server 'request-cursor))))
   (wl-signal-add (wrap-wl-signal
-                  (bytestructure+offset->pointer
-                   (bytestructure-ref server 'seat 'events 'request-set-selection)))
+                  (+ (bytestructure+offset->pointer
+                      (bytestructure-ref server 'seat 'events 'request-set-selection))
+                     40))
                  (wrap-wl-listener
                   (bytestructure+offset->pointer
                    (bytestructure-ref server 'request-set-selection))))
