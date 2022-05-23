@@ -20,6 +20,7 @@
             unwrap-wlr-xdg-toplevel-resize-event
             wlr-xdg-surface-from-wlr-surface
             wlr-xdg-toplevel-set-activated
+            wlr-xdg-toplevel-set-tiled
             .edges))
 (define-wlr-types-class wlr-xdg-shell)
 (define %wlr-xdg-shell-struct
@@ -90,3 +91,7 @@
   (ffi:uint32 "wlr_xdg_toplevel_set_activated" (list '* ffi:int))
   "Returns the associated configure serial."
   (% (unwrap-wlr-xdg-surface surface) (if activated 1 0)))
+
+(define-wlr-procedure (wlr-xdg-toplevel-set-tiled surface tiled-edges)
+  (ffi:uint32 "wlr_xdg_toplevel_set_tiled" (list '* ffi:uint32))
+  (% (unwrap-wlr-xdg-surface surface) tiled-edges))
