@@ -8,7 +8,7 @@
                  bs:pointer
                  bytestructure-offset))
   #:use-module (oop goops)
-  #:export (wlr->pointer wlr->procedure bytestructure+offset->pointer)
+  #:export (wlr->pointer wlr->procedure)
   #:export-syntax (define-wlr-procedure define-enumeration))
 
 (define <bytestructure> (class-of (bytestructure (bs:pointer '*))))
@@ -32,9 +32,6 @@
 (define-method (+ (p <bytestructure>) . n)
   (apply + (bytestructure->pointer p) n))
 
-(define (bytestructure+offset->pointer b)
-  (let ((offset (bytestructure-offset b)))
-    (+ (bytestructure->pointer b) offset)))
 (define (wlr->pointer name)
   (dynamic-func name (dynamic-link %libwlroots)))
 
