@@ -25,6 +25,7 @@
             wlr-scene-node-at
             wlr-scene-tree-create
             wlr-scene-node-raise-to-top
+            %wlr-scene-struct
             .node))
 
 (define %wlr-scene-node-state-struct
