@@ -15,11 +15,9 @@
 (define (unwrap-wlr-renderer o)
   (.pointer o))
 
-(define wlr-renderer-autocreate
-  (let ((proc (wlr->procedure '* "wlr_renderer_autocreate" (list '*))))
-    (lambda (backend)
-      (wrap-wlr-renderer (proc (unwrap-wlr-backend backend))))))
-(define wlr-renderer-init-wl-display
-  (let ((proc (wlr->procedure ffi:int "wlr_renderer_init_wl_display" '(* *))))
-    (lambda (renderer display)
-      (proc (unwrap-wlr-renderer renderer) (unwrap-wl-display display)))))
+(define-wlr-procedure (wlr-renderer-autocreate backend)
+  ('* "wlr_renderer_autocreate" (list '*))
+  (wrap-wlr-renderer (% (unwrap-wlr-backend backend))))
+(define-wlr-procedure (wlr-renderer-init-wl-display renderer display)
+  (ffi:int "wlr_renderer_init_wl_display" '(* *))
+  (% (unwrap-wlr-renderer renderer) (unwrap-wl-display display)))
