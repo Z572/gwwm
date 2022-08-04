@@ -11,17 +11,17 @@ WAYLAND_PROTOCOLS = `pkg-config --variable=pkgdatadir wayland-protocols`
 WAYLAND_SCANNER   = `pkg-config --variable=wayland_scanner wayland-scanner`
 
 # CFLAGS / LDFLAGS
-PKGS      = wlroots wayland-server xkbcommon libinput $(XLIBS)
+PKGS      = wlroots wayland-server xkbcommon libinput guile-3.0 $(XLIBS)
 DWLCFLAGS = `pkg-config --cflags $(PKGS)` $(DWLCPPFLAGS) $(CFLAGS) $(XWAYLAND)
 LDLIBS    = `pkg-config --libs $(PKGS)` $(LIBS)
-
+CC := gcc
 # build rules
 
 # wayland-scanner is a tool which generates C headers and rigging for Wayland
 # protocols, which are specified in XML. wlroots requires you to rig these up
 # to your build system yourself and provide them in the include path.
-all: dwl
-dwl: dwl.o util.o
+all: gwwm
+gwwm: dwl.o util.o
 	$(CC) dwl.o util.o $(LDLIBS) $(LDFLAGS) $(DWLCFLAGS) -o $@
 dwl.o: dwl.c config.mk config.h client.h xdg-shell-protocol.h wlr-layer-shell-unstable-v1-protocol.h idle-protocol.h
 util.o: util.c util.h
@@ -40,7 +40,7 @@ idle-protocol.h:
 config.h:
 	cp config.def.h $@
 clean:
-	rm -f dwl *.o *-protocol.h
+	rm -f gwwm *.o *-protocol.h
 
 # distribution archive
 dist: clean

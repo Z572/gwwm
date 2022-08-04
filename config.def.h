@@ -1,6 +1,6 @@
 /* appearance */
-static const int sloppyfocus        = 1;  /* focus follows mouse */
-static const unsigned int borderpx  = 1;  /* border pixel of windows */
+
+  /* border pixel of windows */
 static const int lockfullscreen     = 1;  /* 1 will force focus on the fullscreen window */
 static const float rootcolor[]      = {0.3, 0.3, 0.3, 1.0};
 static const float bordercolor[]    = {0.5, 0.5, 0.5, 1.0};
@@ -38,13 +38,13 @@ static const MonitorRule monrules[] = {
 };
 
 /* keyboard */
-static const struct xkb_rule_names xkb_rules = {
-	/* can specify fields: rules, model, layout, variant, options */
-	/* example:
-	.options = "ctrl:nocaps",
-	*/
-	.options = NULL,
-};
+/* static const struct xkb_rule_names xkb_rules = { */
+/* 	/\* can specify fields: rules, model, layout, variant, options *\/ */
+/* 	/\* example: */
+/* 	.options = "ctrl:nocaps", */
+/* 	*\/ */
+/* 	.options = NULL, */
+/* }; */
 
 static const int repeat_rate = 25;
 static const int repeat_delay = 600;

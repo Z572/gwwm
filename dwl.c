@@ -5,6 +5,7 @@
 #include <getopt.h>
 #include <libinput.h>
 #include <limits.h>
+#include <libguile.h>
 #include <linux/input-event-codes.h>
 #include <signal.h>
 #include <stdio.h>
@@ -65,6 +66,14 @@
 #define END(A)                  ((A) + LENGTH(A))
 #define TAGMASK                 ((1 << LENGTH(tags)) - 1)
 #define LISTEN(E, L, H)         wl_signal_add((E), ((L)->notify = (H), (L)))
+
+#define REF(A, B) (scm_c_public_ref(A, B))
+#define FROM_P(P) (scm_from_pointer(P, NULL))
+#define TO_P(P) (scm_to_pointer(P))
+#define REF_CALL_1(M, N, ARG1) (scm_call_1(REF(M, N), ARG1))
+#define REF_CALL_2(M, N, ARG1, ARG2) (scm_call_2(REF(M, N), ARG1, ARG2))
+#define REF_CALL_3(M, N, ARG1, ARG2 ,ARG3) (scm_call_3(REF(M, N), ARG1, ARG2,ARG3))
+#define SCM_LOOKUP_REF(name)    (scm_variable_ref(scm_c_lookup(name)))
 
 /* enums */
 enum { CurNormal, CurMove, CurResize }; /* cursor */
@@ -370,7 +379,15 @@ static struct wl_listener xwayland_ready = {.notify = xwaylandready};
 static struct wlr_xwayland *xwayland;
 static Atom netatom[NetLast];
 #endif
-
+static unsigned int borderpx;//  = 1;
+static int sloppyfocus;  /* focus follows mouse */
+static const struct xkb_rule_names xkb_rules = {
+	/* can specify fields: rules, model, layout, variant, options */
+	/* example:
+	.options = "ctrl:nocaps",
+	*/
+	.options = NULL,
+};
 /* configuration, allows nested code to access above variables */
 #include "config.h"
 
@@ -2579,10 +2596,18 @@ xwaylandready(struct wl_listener *listener, void *data)
 }
 #endif
 
-int
-main(int argc, char *argv[])
+void config_setup(){
+  SCM config = (scm_call_0 (SCM_LOOKUP_REF("load-init-file")));
+  borderpx= scm_to_unsigned_integer(REF_CALL_1("gwwm config", "config-borderpx", config) , 0 ,1000);
+  sloppyfocus= scm_to_bool(REF_CALL_1("gwwm config", "config-sloppyfocus?", config));
+  /* scm_c_primitive_load(("")); */
+}
+void
+inner_main(void *closure,int argc, char *argv[])
 {
-	char *startup_cmd = NULL;
+  scm_c_primitive_load("lisp/gwwm/startup.scm");
+  scm_call_0(SCM_LOOKUP_REF("parse-command-line"));
+  char *startup_cmd = NULL;
 	int c;
 
 	while ((c = getopt(argc, argv, "s:hv")) != -1) {
@@ -2600,10 +2625,15 @@ main(int argc, char *argv[])
 	if (!getenv("XDG_RUNTIME_DIR"))
 		die("XDG_RUNTIME_DIR must be set");
 	setup();
+    config_setup();
 	run(startup_cmd);
 	cleanup();
-	return EXIT_SUCCESS;
+	/* return EXIT_SUCCESS; */
 
 usage:
 	die("Usage: %s [-v] [-s startup command]", argv[0]);
+}
+int main(int argc, char *argv[]) {
+  scm_boot_guile(argc, argv, inner_main, 0);
+  return EXIT_SUCCESS;
 }
