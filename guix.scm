@@ -122,7 +122,7 @@
      (list autoconf automake
            pkg-config
            texinfo))
-    (inputs (list guile-3.0 wlroots-next))
+    (inputs (list guile-3.0 wlroots-next xorg-server-xwayland))
     (propagated-inputs
      (list guile-bytestructures))
     (synopsis "")

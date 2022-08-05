@@ -56,6 +56,7 @@
 #endif
 
 #include "util.h"
+#include "guile.c"
 
 /* macros */
 #define MAX(A, B)               ((A) > (B) ? (A) : (B))
@@ -66,14 +67,6 @@
 #define END(A)                  ((A) + LENGTH(A))
 #define TAGMASK                 ((1 << LENGTH(tags)) - 1)
 #define LISTEN(E, L, H)         wl_signal_add((E), ((L)->notify = (H), (L)))
-
-#define REF(A, B) (scm_c_public_ref(A, B))
-#define FROM_P(P) (scm_from_pointer(P, NULL))
-#define TO_P(P) (scm_to_pointer(P))
-#define REF_CALL_1(M, N, ARG1) (scm_call_1(REF(M, N), ARG1))
-#define REF_CALL_2(M, N, ARG1, ARG2) (scm_call_2(REF(M, N), ARG1, ARG2))
-#define REF_CALL_3(M, N, ARG1, ARG2 ,ARG3) (scm_call_3(REF(M, N), ARG1, ARG2,ARG3))
-#define SCM_LOOKUP_REF(name)    (scm_variable_ref(scm_c_lookup(name)))
 
 /* enums */
 enum { CurNormal, CurMove, CurResize }; /* cursor */
@@ -2605,8 +2598,7 @@ void config_setup(){
 void
 inner_main(void *closure,int argc, char *argv[])
 {
-  scm_c_primitive_load("lisp/gwwm/startup.scm");
-  scm_call_0(SCM_LOOKUP_REF("parse-command-line"));
+  init_scm();
   char *startup_cmd = NULL;
 	int c;
 

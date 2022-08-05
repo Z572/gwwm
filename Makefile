@@ -23,7 +23,7 @@ CC := gcc
 all: gwwm
 gwwm: dwl.o util.o
 	$(CC) dwl.o util.o $(LDLIBS) $(LDFLAGS) $(DWLCFLAGS) -o $@
-dwl.o: dwl.c config.mk config.h client.h xdg-shell-protocol.h wlr-layer-shell-unstable-v1-protocol.h idle-protocol.h
+dwl.o: dwl.c config.mk guile.c guile.x config.h client.h xdg-shell-protocol.h wlr-layer-shell-unstable-v1-protocol.h idle-protocol.h
 util.o: util.c util.h
 
 # wayland scanner rules to generate .h / .c files
@@ -40,7 +40,7 @@ idle-protocol.h:
 config.h:
 	cp config.def.h $@
 clean:
-	rm -f gwwm *.o *-protocol.h
+	rm -f gwwm *.x *.o *-protocol.h
 
 # distribution archive
 dist: clean
@@ -67,3 +67,6 @@ uninstall:
 .SUFFIXES: .c .o
 .c.o:
 	$(CC) $(CPPFLAGS) $(DWLCFLAGS) -c $<
+snarfcppopts =  $(CPPFLAGS) $(DWLCFLAGS) $(DEFS) $(INCLUDES)  $(CFLAGS)
+guile.x: guile.c
+	guile-snarf -o $@ $< $(snarfcppopts)
