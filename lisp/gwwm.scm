@@ -1,2 +1,1 @@
-(define-module (gwwm)
-  #:use-module (gwwm config))
+(define-module (gwwm))

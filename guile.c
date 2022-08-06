@@ -1,7 +1,4 @@
-#ifndef SCM_LIBGUILE_H
 #include <libguile.h>
-#endif
-
 #define REF(A, B) (scm_c_public_ref(A, B))
 #define FROM_P(P) (scm_from_pointer(P, NULL))
 #define TO_P(P) (scm_to_pointer(P))
@@ -10,11 +7,7 @@
 #define REF_CALL_3(M, N, ARG1, ARG2 ,ARG3) (scm_call_3(REF(M, N), ARG1, ARG2,ARG3))
 #define SCM_LOOKUP_REF(name)    (scm_variable_ref(scm_c_lookup(name)))
 
-void init_scm_snarf(){
-#ifdef SCM_MAGIC_SNARFER
-#include "guile.x"
-#endif
-}
+
 
 
 static SCM client_type;
@@ -34,7 +27,8 @@ init_client_type (void)
 
 void init_scm() {
   init_client_type();
-  init_scm_snarf();
+  /* init_scm_snarf(); */
+  scm_c_primitive_load("lisp/gwwm.scm");
   scm_c_primitive_load("lisp/gwwm/startup.scm");
   scm_call_0(SCM_LOOKUP_REF("parse-command-line"));
 }

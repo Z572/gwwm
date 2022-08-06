@@ -56,8 +56,6 @@
 #endif
 
 #include "util.h"
-#include "guile.c"
-
 /* macros */
 #define MAX(A, B)               ((A) > (B) ? (A) : (B))
 #define MIN(A, B)               ((A) < (B) ? (A) : (B))
@@ -386,11 +384,12 @@ static const struct xkb_rule_names xkb_rules = {
 
 /* attempt to encapsulate suck into one file */
 #include "client.h"
-
+#include "guile.c"
 /* compile-time check if all tags fit into an unsigned int bit array. */
 struct NumTags { char limitexceeded[LENGTH(tags) > 31 ? -1 : 1]; };
 
 /* function implementations */
+
 void
 applybounds(Client *c, struct wlr_box *bbox)
 {
@@ -700,6 +699,27 @@ chvt(const Arg *arg)
 {
 	wlr_session_change_vt(wlr_backend_get_session(backend), arg->ui);
 }
+
+static SCM gwwm_chvt (SCM n);
+SCM_DEFINE (gwwm_chvt, "chvt", 1,0,0,
+            (SCM n) ,
+            "c")
+#define FUNC_NAME s_gwwm_chvt
+{
+  Arg a;
+  a.ui = (scm_to_unsigned_integer(n,1,12));
+
+  chvt (&a);
+  /* free(a); */
+  return SCM_UNSPECIFIED;
+}
+#undef FUNC_NAME
+/* void init_scm_snarf(){ */
+/* #ifndef SCM_MAGIC_SNARFER */
+/* #include "guile.x" */
+/* #endif */
+/* } */
+
 
 void
 cleanup(void)
@@ -2599,6 +2619,9 @@ void
 inner_main(void *closure,int argc, char *argv[])
 {
   init_scm();
+#ifndef SCM_MAGIC_SNARFER
+#include "gwwm.x"
+#endif
   char *startup_cmd = NULL;
 	int c;
 
