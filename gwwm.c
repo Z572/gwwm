@@ -2313,6 +2313,17 @@ SCM_DEFINE (gwwm_togglefullscreen, "togglefullscreen",0, 0,0,
   return SCM_UNSPECIFIED;
 }
 #undef FUNC_NAME
+SCM_DEFINE (gwwm_killclient, "killclient",0, 0,0,
+            () ,
+            "c")
+#define FUNC_NAME s_gwwm_killclient
+{
+  Arg _ignore;
+  killclient(&_ignore);
+  return SCM_UNSPECIFIED;
+}
+#undef FUNC_NAME
+
 
 void
 toggletag(const Arg *arg)
