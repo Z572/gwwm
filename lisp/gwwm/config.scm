@@ -48,3 +48,11 @@
         (let* ((init value) ...)
 
           (apply make <gwwm-config> (append (list (symbol->keyword 'init) value) ...))))))
+
+(define (g-config) ((@@ (gwwm) gwwm-config)) )
+(define-public (gwwm-borderpx)
+  (pk 'abc (g-config))
+  (config-borderpx (g-config)))
+(define-public (gwwm-sloppyfocus?)
+  (pk 'abc (g-config))
+  (config-sloppyfocus? (g-config)))

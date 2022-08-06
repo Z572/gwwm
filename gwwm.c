@@ -376,7 +376,7 @@ static struct wl_listener xwayland_ready = {.notify = xwaylandready};
 static struct wlr_xwayland *xwayland;
 static Atom netatom[NetLast];
 #endif
-static unsigned int borderpx;//  = 1;
+/* static unsigned int borderpx;//  = 1; */
 /* static int sloppyfocus;  /\* focus follows mouse *\/ */
 static const struct xkb_rule_names xkb_rules = {
 	/* can specify fields: rules, model, layout, variant, options */
@@ -392,15 +392,14 @@ static const struct xkb_rule_names xkb_rules = {
 #include "client.h"
 #include "guile.c"
 
-SCM_DEFINE (gwwm_sloppyfocus_p, "gwwm-sloppyfocus?", 0,0,0,
+SCM_DEFINE (gwwm_c_config, "gwwm-config",0, 0,0,
             () ,
             "c")
-#define FUNC_NAME s_gwwm_sloppyfocus_p
+#define FUNC_NAME s_gwwm_c_config
 {
-  return scm_from_bool(GWWM_SLOPPYFOCUS_P());
+  return gwwm_config;
 }
 #undef FUNC_NAME
-
 
 /* compile-time check if all tags fit into an unsigned int bit array. */
 struct NumTags { char limitexceeded[LENGTH(tags) > 31 ? -1 : 1]; };
@@ -1033,7 +1032,7 @@ createnotify(struct wl_listener *listener, void *data)
 	/* Allocate a Client for this surface */
 	c = xdg_surface->data = ecalloc(1, sizeof(*c));
 	c->surface.xdg = xdg_surface;
-	c->bw = borderpx;
+	c->bw = GWWM_BORDERPX();
 
 	LISTEN(&xdg_surface->events.map, &c->map, mapnotify);
 	LISTEN(&xdg_surface->events.unmap, &c->unmap, unmapnotify);
@@ -1457,8 +1456,8 @@ mapnotify(struct wl_listener *listener, void *data)
 		client_get_geometry(c, &c->geom);
 		/* Floating */
 		wlr_scene_node_reparent(c->scene, layers[LyrFloat]);
-		wlr_scene_node_set_position(c->scene, c->geom.x + borderpx,
-			c->geom.y + borderpx);
+		wlr_scene_node_set_position(c->scene, c->geom.x + GWWM_BORDERPX(),
+			c->geom.y + GWWM_BORDERPX());
 		return;
 	}
 
@@ -1911,7 +1910,7 @@ void
 setfullscreen(Client *c, int fullscreen)
 {
 	c->isfullscreen = fullscreen;
-	c->bw = fullscreen ? 0 : borderpx;
+	c->bw = fullscreen ? 0 : GWWM_BORDERPX();
 	client_set_fullscreen(c, fullscreen);
 
 	if (fullscreen) {
@@ -2556,7 +2555,7 @@ createnotifyx11(struct wl_listener *listener, void *data)
 	c = xwayland_surface->data = ecalloc(1, sizeof(*c));
 	c->surface.xwayland = xwayland_surface;
 	c->type = xwayland_surface->override_redirect ? X11Unmanaged : X11Managed;
-	c->bw = borderpx;
+	c->bw = GWWM_BORDERPX();
 
 	/* Listen to the various events it can emit */
 	LISTEN(&xwayland_surface->events.map, &c->map, mapnotify);
@@ -2628,7 +2627,7 @@ xwaylandready(struct wl_listener *listener, void *data)
 
 void config_setup(){
   gwwm_config = (scm_call_0 (SCM_LOOKUP_REF("load-init-file")));
-  borderpx= GWWM_BORDERPX();
+  /* borderpx= GWWM_BORDERPX(); */
   /* sloppyfocus= GWWM_SLOPPYFOCUS_P(); */
   /* scm_c_primitive_load(("")); */
 }
