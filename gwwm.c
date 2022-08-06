@@ -391,6 +391,17 @@ static const struct xkb_rule_names xkb_rules = {
 /* attempt to encapsulate suck into one file */
 #include "client.h"
 #include "guile.c"
+
+SCM_DEFINE (gwwm_sloppyfocus_p, "gwwm-sloppyfocus?", 0,0,0,
+            () ,
+            "c")
+#define FUNC_NAME s_gwwm_sloppyfocus_p
+{
+  return scm_from_bool(GWWM_SLOPPYFOCUS_P());
+}
+#undef FUNC_NAME
+
+
 /* compile-time check if all tags fit into an unsigned int bit array. */
 struct NumTags { char limitexceeded[LENGTH(tags) > 31 ? -1 : 1]; };
 
