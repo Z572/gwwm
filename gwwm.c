@@ -2302,6 +2302,18 @@ togglefullscreen(const Arg *arg)
 		setfullscreen(sel, !sel->isfullscreen);
 }
 
+
+SCM_DEFINE (gwwm_togglefullscreen, "togglefullscreen",0, 0,0,
+            () ,
+            "c")
+#define FUNC_NAME s_gwwm_togglefullscreen
+{
+  Arg _ignore;
+  togglefullscreen(&_ignore);
+  return SCM_UNSPECIFIED;
+}
+#undef FUNC_NAME
+
 void
 toggletag(const Arg *arg)
 {
