@@ -9,6 +9,7 @@ AM_INIT_AUTOMAKE([1.14 gnu tar-ustar silent-rules subdir-objects \
 AM_SILENT_RULES([yes])
 
 AC_CONFIG_FILES([Makefile])
+AC_CONFIG_FILES([pre-inst-env], [chmod +x pre-inst-env])
 AC_PROG_CC
 GUILE_PKG([3.0 2.2])
 GUILE_PROGS
@@ -37,6 +38,9 @@ PKG_CHECK_VAR([XCB_LIBDIR],[xcb] ,[libdir])
 AC_SUBST([WLROOTS_LIBDIR])
 AC_SUBST([WAYLAND_LIBDIR])
 AC_SUBST([XCB_LIBDIR])
+GUILE_MODULE_REQUIRED([bytestructures guile])
+GUILE_MODULE_REQUIRED([wayland])
+GUILE_MODULE_REQUIRED([wlroots])
 
 AC_SUBST([guilemoduledir])
 AC_SUBST([guileobjectdir])

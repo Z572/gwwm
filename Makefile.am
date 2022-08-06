@@ -36,3 +36,30 @@ do_subst = $(SED)					\
   -e 's,[@]localedir[@],$(localedir),g'
 
 EXTRA_DIST = $(SOURCES) $(NOCOMP_SOURCES)
+
+
+#
+GOBJECTS = $(SOURCES:%.scm=%.go) $(NODIST_SOURCES:%.scm=%.go)
+
+nobase_mod_DATA = $(SOURCES) $(NOCOMP_SOURCES) $(NODIST_SOURCES)
+nobase_go_DATA = $(GOBJECTS)
+
+guile_install_go_files = install-nobase_goDATA
+$(guile_install_go_files): install-nobase_modDATA
+
+CLEANFILES += $(GOBJECTS)
+GUILE_WARNINGS =                                          \
+  -Wunbound-variable -Warity-mismatch -Wshadowed-toplevel \
+  -Wmacro-use-before-definition                           \
+  -Wunused-variable                                       \
+  -Wduplicate-case-datum -Wbad-case-datum                 \
+  -Wformat
+
+.scm.go:
+	$(AM_V_GEN)$(top_builddir)/pre-inst-env $(GUILE_TOOLS) compile $(GUILE_TARGET) $(GUILE_WARNINGS) -o "$@" "$<"
+
+
+moddir=$(prefix)/share/guile/site/$(GUILE_EFFECTIVE_VERSION)
+godir=$(libdir)/guile/$(GUILE_EFFECTIVE_VERSION)/site-ccache
+
+include lisp/gwwm/Makefile

@@ -124,7 +124,13 @@
            texinfo))
     (inputs (list guile-3.0 wlroots-next xorg-server-xwayland))
     (propagated-inputs
-     (list guile-bytestructures))
+     (list guile-bytestructures
+           (primitive-load
+            (string-append (dirname (dirname (current-filename)))
+                           "/guile-wayland/guix.scm"))
+           (primitive-load
+            (string-append (dirname (dirname (current-filename)))
+                           "/guile-wlroots/guix.scm"))))
     (synopsis "")
     (description "")
     (home-page "")
