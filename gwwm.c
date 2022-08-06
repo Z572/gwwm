@@ -358,6 +358,12 @@ static struct wl_listener request_start_drag = {.notify = requeststartdrag};
 static struct wl_listener start_drag = {.notify = startdrag};
 static struct wl_listener drag_icon_destroy = {.notify = dragicondestroy};
 
+static SCM gwwm_config;
+#define GWWM_BORDERPX()  \
+  (scm_to_unsigned_integer(REF_CALL_1("gwwm config", "config-borderpx", gwwm_config), 0 ,1000))
+#define GWWM_SLOPPYFOCUS_P() \
+  (scm_to_bool(REF_CALL_1("gwwm config", "config-sloppyfocus?", gwwm_config)))
+
 #ifdef XWAYLAND
 static void activatex11(struct wl_listener *listener, void *data);
 static void configurex11(struct wl_listener *listener, void *data);
@@ -371,7 +377,7 @@ static struct wlr_xwayland *xwayland;
 static Atom netatom[NetLast];
 #endif
 static unsigned int borderpx;//  = 1;
-static int sloppyfocus;  /* focus follows mouse */
+/* static int sloppyfocus;  /\* focus follows mouse *\/ */
 static const struct xkb_rule_names xkb_rules = {
 	/* can specify fields: rules, model, layout, variant, options */
 	/* example:
@@ -1519,7 +1525,7 @@ motionnotify(uint32_t time)
 		wlr_idle_notify_activity(idle, seat);
 
 		/* Update selmon (even while dragging a window) */
-		if (sloppyfocus)
+		if (GWWM_SLOPPYFOCUS_P())
 			selmon = xytomon(cursor->x, cursor->y);
 	}
 
@@ -1662,7 +1668,7 @@ pointerfocus(Client *c, struct wlr_surface *surface, double sx, double sy,
 	struct timespec now;
 	int internal_call = !time;
 
-	if (sloppyfocus && !internal_call && c && !client_is_unmanaged(c))
+	if (GWWM_SLOPPYFOCUS_P() && !internal_call && c && !client_is_unmanaged(c))
 		focusclient(c, 0);
 
 	/* If surface is NULL, clear pointer focus */
@@ -2610,9 +2616,9 @@ xwaylandready(struct wl_listener *listener, void *data)
 #endif
 
 void config_setup(){
-  SCM config = (scm_call_0 (SCM_LOOKUP_REF("load-init-file")));
-  borderpx= scm_to_unsigned_integer(REF_CALL_1("gwwm config", "config-borderpx", config) , 0 ,1000);
-  sloppyfocus= scm_to_bool(REF_CALL_1("gwwm config", "config-sloppyfocus?", config));
+  gwwm_config = (scm_call_0 (SCM_LOOKUP_REF("load-init-file")));
+  borderpx= GWWM_BORDERPX();
+  /* sloppyfocus= GWWM_SLOPPYFOCUS_P(); */
   /* scm_c_primitive_load(("")); */
 }
 void

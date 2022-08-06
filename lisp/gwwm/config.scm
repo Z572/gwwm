@@ -2,7 +2,32 @@
   #:use-module (oop goops)
   #:export (gwwm
             config-borderpx
-            config-sloppyfocus?))
+            config-sloppyfocus?
+            load-init-file
+            get-xdg-config-home
+            init-file))
+
+(define* (getenv* nam #:optional fallback)
+  (or (getenv nam) fallback))
+
+(define (get-xdg-config-home)
+  (getenv* "XDG_CONFIG_HOME"
+           (string-append (getenv "HOME") "/.config")))
+
+(define (init-file)
+  (string-append
+   (get-xdg-config-home)
+   "/gwwm/init.scm"))
+
+(define (load-init-file)
+  (let ((init-file (init-file)))
+
+    (if (file-exists? init-file)
+        (save-module-excursion
+         (lambda ()
+           (primitive-load
+            init-file)))
+        (warn (string-append  "initfile not found:" init-file )))))
 
 (define-class <gwwm-config> ()
   (borderpx #:init-value 1 #:init-keyword #:borderpx #:accessor config-borderpx)

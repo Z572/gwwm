@@ -1,5 +1,6 @@
 (use-modules (ice-9 getopt-long)
-             (system repl server))
+             (system repl server)
+             (gwwm config))
 (define option-spec
   '((version (single-char #\v) (value #f))
     (help (single-char #\h) (value #f))
@@ -20,27 +21,5 @@ gwwm [options]
   -s --exec     run program
 "))
                (exit 0)))))
-
-
-(define* (getenv* nam #:optional fallback)
-  (or (getenv nam) fallback))
-
-(define (get-xdg-config-home)
-  (getenv* "XDG_CONFIG_HOME"
-           (string-append (getenv "HOME") "/.config")))
-
-(define (init-file)
-  (string-append
-   (get-xdg-config-home)
-   "/gwwm/init.scm"))
-(define (load-init-file)
-  (let ((init-file (init-file)))
-
-    (if (file-exists? init-file)
-        (save-module-excursion
-         (lambda ()
-           (primitive-load
-            init-file)))
-        (warn (string-append  "initfile not found:" init-file )))))
 
 (false-if-exception (spawn-server (make-tcp-server-socket)))
