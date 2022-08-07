@@ -124,6 +124,15 @@ typedef struct {
 	int isfullscreen;
 } Client;
 
+SCM_DEFINE (gwwm_client_is_fullscreen_p, "client-is-fullscreen?" ,1,0,0,
+            (SCM c), "")
+#define FUNC_NAME s_gwwm_client_is_fullscreen_p
+{
+  Client *cl = scm_foreign_object_ref(c, 0);
+  return scm_from_bool(cl->isfullscreen);
+}
+#undef FUNC_NAME
+
 typedef struct {
 	uint32_t singular_anchor;
 	uint32_t anchor_triplet;
