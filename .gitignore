@@ -1,6 +1,5 @@
 /.ccls-cache/
 /.deps/
-/config.h
 /gwwm
 *.o
 *.x

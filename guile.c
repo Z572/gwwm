@@ -28,7 +28,7 @@ init_client_type (void)
 void init_scm() {
   init_client_type();
   /* init_scm_snarf(); */
-  scm_c_primitive_load("lisp/gwwm.scm");
-  scm_c_primitive_load("lisp/gwwm/startup.scm");
+  scm_primitive_load(scm_sys_search_load_path(scm_from_utf8_string("gwwm.scm")));
+  scm_primitive_load(scm_sys_search_load_path(scm_from_utf8_string("gwwm/startup.scm")));
   scm_call_0(SCM_LOOKUP_REF("parse-command-line"));
 }
