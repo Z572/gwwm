@@ -17,7 +17,7 @@ init_client_type (void)
   SCM name, slots;
   scm_t_struct_finalize finalizer;
 
-  name = scm_from_utf8_symbol ("client");
+  name = scm_from_utf8_symbol ("gwwm-client");
   slots = scm_list_1 (scm_from_utf8_symbol ("data"));
   finalizer = NULL;
 
