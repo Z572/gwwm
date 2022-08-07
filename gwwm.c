@@ -443,6 +443,13 @@ SCM_DEFINE (gwwm_client_get_parent, "client-get-parent" ,1,0,0,
 }
 #undef FUNC_NAME
 
+SCM_DEFINE (gwwm_client_wants_fullscreen_p , "client-wants-fullscreen?",1,0,0,
+            (SCM client), "")
+#define FUNC_NAME s_gwwm_client_wants_fullscreen
+{
+  return scm_from_bool(client_wants_fullscreen(scm_foreign_object_ref(client, 0)));
+}
+#undef FUNC_NAME
 
 /* compile-time check if all tags fit into an unsigned int bit array. */
 struct NumTags { char limitexceeded[LENGTH(tags) > 31 ? -1 : 1]; };
