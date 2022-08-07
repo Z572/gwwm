@@ -899,9 +899,8 @@ createkeyboard(struct wlr_input_device *device)
 	Keyboard *kb = device->data = ecalloc(1, sizeof(*kb));
 	kb->device = device;
     SCM s_xkb = REF_CALL_1("gwwm config","config-xkb-rules", gwwm_config);
-  const struct xkb_rule_names xr =
-    #define rf(name) (scm_to_utf8_string(scm_slot_ref(s_xkb, scm_from_utf8_symbol(name))))
-    {
+   #define rf(name) (scm_to_utf8_string(scm_slot_ref(s_xkb, scm_from_utf8_symbol(name))))
+    const struct xkb_rule_names xr = {
     .rules = rf("rules"),
       .model = rf("model"),
       .layout = rf("layout"),
@@ -1784,8 +1783,7 @@ SCM_DEFINE (gwwm_quit,"gwwm-quit",0,0,0,
             (), "")
 #define FUNC_NAME s_gwwm_quit
 {
-  Arg _ignore;
-  quit(&_ignore);
+  quit(NULL);
   return SCM_UNSPECIFIED;
 }
 #undef FUNC_NAME
@@ -2390,8 +2388,7 @@ SCM_DEFINE (gwwm_togglefullscreen, "togglefullscreen",0, 0,0,
             "c")
 #define FUNC_NAME s_gwwm_togglefullscreen
 {
-  Arg _ignore;
-  togglefullscreen(&_ignore);
+  togglefullscreen(NULL);
   return SCM_UNSPECIFIED;
 }
 #undef FUNC_NAME
@@ -2400,8 +2397,7 @@ SCM_DEFINE (gwwm_killclient, "killclient",0, 0,0,
             "c")
 #define FUNC_NAME s_gwwm_killclient
 {
-  Arg _ignore;
-  killclient(&_ignore);
+  killclient(NULL);
   return SCM_UNSPECIFIED;
 }
 #undef FUNC_NAME
