@@ -1741,6 +1741,16 @@ quit(const Arg *arg)
 	wl_display_terminate(dpy);
 }
 
+SCM_DEFINE (gwwm_quit,"gwwm-quit",0,0,0,
+            (), "")
+#define FUNC_NAME s_gwwm_quit
+{
+  Arg _ignore;
+  quit(&_ignore);
+  return SCM_UNSPECIFIED;
+}
+#undef FUNC_NAME
+
 void
 quitsignal(int signo)
 {
