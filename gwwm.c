@@ -2555,6 +2555,16 @@ zoom(const Arg *arg)
 	arrange(selmon);
 }
 
+SCM_DEFINE (gwwm_zoom, "zoom",0, 0,0,
+            () ,
+            "c")
+#define FUNC_NAME s_gwwm_zoom
+{
+  zoom(NULL);
+  return SCM_UNSPECIFIED;
+}
+#undef FUNC_NAME
+
 #ifdef XWAYLAND
 void
 activatex11(struct wl_listener *listener, void *data)
