@@ -1316,6 +1316,19 @@ focusstack(const Arg *arg)
 	focusclient(c, 1);
 }
 
+SCM_DEFINE (gwwm_focusstack, "focusstack" ,1,0,0,
+            (SCM a), "")
+#define FUNC_NAME s_gwwm_focusstack
+{
+  Arg arg = {
+    .i= scm_to_int(a)
+  };
+  focusstack(&arg);
+  return SCM_UNSPECIFIED;
+}
+#undef FUNC_NAME
+
+
 Client *
 focustop(Monitor *m)
 {
