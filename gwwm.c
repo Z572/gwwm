@@ -142,6 +142,15 @@ SCM_DEFINE (gwwm_client_is_floating_p, "client-is-floating?" ,1,0,0,
 }
 #undef FUNC_NAME
 
+SCM_DEFINE (gwwm_client_border_width, "client-border-width" , 1,0,0,
+            (SCM c), "")
+#define FUNC_NAME s_gwwm_client_border_width
+{
+    Client *cl = scm_foreign_object_ref(c, 0);
+  return scm_from_int(cl->bw);
+}
+#undef FUNC_NAME
+
 typedef struct {
 	uint32_t singular_anchor;
 	uint32_t anchor_triplet;
