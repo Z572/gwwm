@@ -1888,6 +1888,16 @@ selclient(void)
 	return c;
 }
 
+SCM_DEFINE (gwwm_selclient, "selclient",0, 0,0,
+            () ,
+            "c")
+#define FUNC_NAME s_gwwm_selclient
+{
+
+  return scm_make_foreign_object_1(client_type, selclient()) ;
+}
+#undef FUNC_NAME
+
 void
 setcursor(struct wl_listener *listener, void *data)
 {
