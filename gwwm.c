@@ -452,6 +452,17 @@ SCM_DEFINE (gwwm_client_get_parent, "client-get-parent" ,1,0,0,
 }
 #undef FUNC_NAME
 
+SCM_DEFINE (gwwm_set_client_border_width, "client-set-border-width" , 2,0,0,
+            (SCM c ,SCM w), "")
+#define FUNC_NAME s_gwwm_client_border_width_set
+{
+    Client *cl = scm_foreign_object_ref(c, 0);
+    cl->bw=scm_to_int(w);
+  return scm_make_foreign_object_1(client_type, cl);
+}
+#undef FUNC_NAME
+
+
 SCM_DEFINE (gwwm_client_wants_fullscreen_p , "client-wants-fullscreen?",1,0,0,
             (SCM client), "")
 #define FUNC_NAME s_gwwm_client_wants_fullscreen
