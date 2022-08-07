@@ -1,11 +1,14 @@
 (define-module (gwwm config)
   #:use-module (oop goops)
+  #:use-module (oop goops describe)
   #:export (gwwm
             config-borderpx
             config-sloppyfocus?
+            config-xkb-rules
             load-init-file
             get-xdg-config-home
-            init-file))
+            init-file
+            make-xkb-rules))
 
 (define* (getenv* nam #:optional fallback)
   (or (getenv nam) fallback))
@@ -29,13 +32,32 @@
             init-file)))
         (warn (string-append  "initfile not found:" init-file )))))
 
+(define-class <xkb-rules> ()
+  (rules #:init-keyword #:rules #:getter xkb-rults-names-rules #:init-value "")
+  (model #:init-keyword #:model #:getter xkb-rults-names-model)
+  (layout #:init-keyword #:layout #:getter xkb-rults-names-layout)
+  (variant #:init-keyword #:variant #:getter xkb-rults-names-variant)
+  (options #:init-keyword #:options #:getter xkb-rults-names-options))
+
+(define* (make-xkb-rules
+          #:optional
+          (layout "")
+          (variant "")
+          #:key (model "")
+          (options '()))
+  (make <xkb-rules>
+    #:layout layout
+    #:variant variant
+    #:model model
+    #:options (string-join options ",")))
+
 (define-class <gwwm-config> ()
   (borderpx #:init-value 1 #:init-keyword #:borderpx #:accessor config-borderpx)
   (sloppyfocus? #:init-value #t #:init-keyword #:sloppyfocus? #:accessor config-sloppyfocus?)
   (rootcolor)
   (tags)
   (rules)
-  (xkb-rules))
+  (xkb-rules #:init-value (make <xkb-rules>) #:init-keyword #:xkb-rules #:accessor config-xkb-rules ))
 
 (define-syntax-rule (gwwm (init value) ...)
   (let ((init-keywords

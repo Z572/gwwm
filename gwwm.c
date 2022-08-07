@@ -394,15 +394,7 @@ static struct wl_listener xwayland_ready = {.notify = xwaylandready};
 static struct wlr_xwayland *xwayland;
 static Atom netatom[NetLast];
 #endif
-/* static unsigned int borderpx;//  = 1; */
-/* static int sloppyfocus;  /\* focus follows mouse *\/ */
-static const struct xkb_rule_names xkb_rules = {
-	/* can specify fields: rules, model, layout, variant, options */
-	/* example:
-	.options = "ctrl:nocaps",
-	*/
-	.options = NULL,
-};
+
 /* configuration, allows nested code to access above variables */
 #include "config.h"
 
@@ -887,10 +879,20 @@ createkeyboard(struct wlr_input_device *device)
 	struct xkb_keymap *keymap;
 	Keyboard *kb = device->data = ecalloc(1, sizeof(*kb));
 	kb->device = device;
-
+    SCM s_xkb = REF_CALL_1("gwwm config","config-xkb-rules", gwwm_config);
+  const struct xkb_rule_names xr =
+    #define rf(name) (scm_to_utf8_string(scm_slot_ref(s_xkb, scm_from_utf8_symbol(name))))
+    {
+    .rules = rf("rules"),
+      .model = rf("model"),
+      .layout = rf("layout"),
+      .variant = rf("variant"),
+      .options = rf("options")
+      };
+#undef rf
 	/* Prepare an XKB keymap and assign it to the keyboard. */
 	context = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
-	keymap = xkb_keymap_new_from_names(context, &xkb_rules,
+	keymap = xkb_keymap_new_from_names(context, &xr,
 		XKB_KEYMAP_COMPILE_NO_FLAGS);
 
 	wlr_keyboard_set_keymap(device->keyboard, keymap);
@@ -2721,6 +2723,7 @@ xwaylandready(struct wl_listener *listener, void *data)
 
 void config_setup(){
   gwwm_config = (scm_call_0 (SCM_LOOKUP_REF("load-init-file")));
+
   /* borderpx= GWWM_BORDERPX(); */
   /* sloppyfocus= GWWM_SLOPPYFOCUS_P(); */
   /* scm_c_primitive_load(("")); */
