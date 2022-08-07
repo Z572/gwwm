@@ -283,7 +283,7 @@ static void rendermon(struct wl_listener *listener, void *data);
 static void requeststartdrag(struct wl_listener *listener, void *data);
 static void resize(Client *c, struct wlr_box geo, int interact);
 static void run(char *startup_cmd);
-static Client *selclient(void);
+static Client *current_client(void);
 static void setcursor(struct wl_listener *listener, void *data);
 static void setfloating(Client *c, int floating);
 static void setfullscreen(Client *c, int fullscreen);
@@ -1183,7 +1183,7 @@ dragicondestroy(struct wl_listener *listener, void *data)
 	struct wlr_drag_icon *icon = data;
 	wlr_scene_node_destroy(icon->data);
 	// Focus enter isn't sent during drag, so refocus the focused node.
-	focusclient(selclient(), 1);
+	focusclient(current_client(), 1);
 	motionnotify(0);
 }
 
@@ -1276,7 +1276,7 @@ void
 focusstack(const Arg *arg)
 {
 	/* Focus the next or previous client (in tiling order) on selmon */
-	Client *c, *sel = selclient();
+	Client *c, *sel = current_client();
 	if (!sel || (sel->isfullscreen && lockfullscreen))
 		return;
 	if (arg->i > 0) {
@@ -1435,7 +1435,7 @@ keypressmod(struct wl_listener *listener, void *data)
 void
 killclient(const Arg *arg)
 {
-	Client *sel = selclient();
+	Client *sel = current_client();
 	if (sel)
 		client_send_close(sel);
 }
@@ -1900,7 +1900,7 @@ run(char *startup_cmd)
 }
 
 Client *
-selclient(void)
+current_client(void)
 {
 	Client *c = wl_container_of(fstack.next, c, flink);
 	if (wl_list_empty(&fstack) || !VISIBLEON(c, selmon))
@@ -1908,13 +1908,13 @@ selclient(void)
 	return c;
 }
 
-SCM_DEFINE (gwwm_selclient, "selclient",0, 0,0,
+SCM_DEFINE (gwwm_current_client, "current-client",0, 0,0,
             () ,
             "c")
-#define FUNC_NAME s_gwwm_selclient
+#define FUNC_NAME s_gwwm_current_client
 {
 
-  return scm_make_foreign_object_1(client_type, selclient()) ;
+  return scm_make_foreign_object_1(client_type, current_client()) ;
 }
 #undef FUNC_NAME
 
@@ -2285,7 +2285,7 @@ startdrag(struct wl_listener *listener, void *data)
 void
 tag(const Arg *arg)
 {
-	Client *sel = selclient();
+	Client *sel = current_client();
 	if (sel && arg->ui & TAGMASK) {
 		sel->tags = arg->ui & TAGMASK;
 		focusclient(focustop(selmon), 1);
@@ -2297,7 +2297,7 @@ tag(const Arg *arg)
 void
 tagmon(const Arg *arg)
 {
-	Client *sel = selclient();
+	Client *sel = current_client();
 	if (!sel)
 		return;
 	setmon(sel, dirtomon(arg->i), 0);
@@ -2339,7 +2339,7 @@ tile(Monitor *m)
 void
 togglefloating(const Arg *arg)
 {
-	Client *sel = selclient();
+	Client *sel = current_client();
 	/* return if fullscreen */
 	if (sel && !sel->isfullscreen)
 		setfloating(sel, !sel->isfloating);
@@ -2360,7 +2360,7 @@ SCM_DEFINE (gwwm_togglefloating, "togglefloating",0, 0,0,
 void
 togglefullscreen(const Arg *arg)
 {
-	Client *sel = selclient();
+	Client *sel = current_client();
 	if (sel)
 		setfullscreen(sel, !sel->isfullscreen);
 }
@@ -2392,7 +2392,7 @@ void
 toggletag(const Arg *arg)
 {
 	unsigned int newtags;
-	Client *sel = selclient();
+	Client *sel = current_client();
 	if (!sel)
 		return;
 	newtags = sel->tags ^ (arg->ui & TAGMASK);
@@ -2428,7 +2428,7 @@ unmaplayersurfacenotify(struct wl_listener *listener, void *data)
 		exclusive_focus = NULL;
 	if (layersurface->layer_surface->surface ==
 			seat->keyboard_state.focused_surface)
-		focusclient(selclient(), 1);
+		focusclient(current_client(), 1);
 	motionnotify(0);
 }
 
@@ -2509,7 +2509,7 @@ urgent(struct wl_listener *listener, void *data)
 {
 	struct wlr_xdg_activation_v1_request_activate_event *event = data;
 	Client *c = client_from_wlr_surface(event->surface);
-	if (c && c != selclient()) {
+	if (c && c != current_client()) {
 		c->isurgent = 1;
 		printstatus();
 	}
@@ -2579,7 +2579,7 @@ xytonode(double x, double y, struct wlr_surface **psurface,
 void
 zoom(const Arg *arg)
 {
-	Client *c, *sel = selclient();
+	Client *c, *sel = current_client();
 
 	if (!sel || !selmon->lt[selmon->sellt]->arrange || sel->isfloating)
 		return;
@@ -2683,7 +2683,7 @@ void
 sethints(struct wl_listener *listener, void *data)
 {
 	Client *c = wl_container_of(listener, c, set_hints);
-	if (c != selclient()) {
+	if (c != current_client()) {
 		c->isurgent = c->surface.xwayland->hints_urgency;
 		printstatus();
 	}
