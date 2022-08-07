@@ -411,6 +411,16 @@ SCM_DEFINE (gwwm_c_config, "gwwm-config",0, 0,0,
 }
 #undef FUNC_NAME
 
+
+SCM_DEFINE (gwwm_client_get_appid, "client-get-appid" ,1,0,0,
+            (SCM c), "")
+#define FUNC_NAME s_gwwm_client_get_appid
+{
+  Client *cl = scm_foreign_object_ref(c, 0);
+  return scm_from_utf8_string(client_get_appid(cl));
+}
+#undef FUNC_NAME
+
 /* compile-time check if all tags fit into an unsigned int bit array. */
 struct NumTags { char limitexceeded[LENGTH(tags) > 31 ? -1 : 1]; };
 
