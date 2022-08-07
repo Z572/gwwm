@@ -1944,6 +1944,17 @@ setfloating(Client *c, int floating)
 	printstatus();
 }
 
+SCM_DEFINE (gwwm_client_set_floating, "client-set-floating" ,2,0,0,
+            (SCM c ,SCM floating), "")
+#define FUNC_NAME s_gwwm_client_set_floating
+{
+  Client *cl = scm_foreign_object_ref(c, 0);
+  setfloating(cl , scm_to_bool(floating));
+  return SCM_UNSPECIFIED;
+}
+#undef FUNC_NAME
+
+
 void
 setfullscreen(Client *c, int fullscreen)
 {
