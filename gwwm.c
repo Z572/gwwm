@@ -2314,6 +2314,18 @@ togglefloating(const Arg *arg)
 		setfloating(sel, !sel->isfloating);
 }
 
+SCM_DEFINE (gwwm_togglefloating, "togglefloating",0, 0,0,
+            () ,
+            "c")
+#define FUNC_NAME s_gwwm_togglefloating
+{
+  togglefloating(NULL);
+  return SCM_UNSPECIFIED;
+}
+#undef FUNC_NAME
+
+
+
 void
 togglefullscreen(const Arg *arg)
 {
