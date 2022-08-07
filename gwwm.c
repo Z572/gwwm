@@ -411,6 +411,15 @@ SCM_DEFINE (gwwm_c_config, "gwwm-config",0, 0,0,
 }
 #undef FUNC_NAME
 
+SCM_DEFINE (gwwm_client_get_title, "client-get-title" ,1,0,0,
+            (SCM c), "")
+#define FUNC_NAME s_gwwm_client_get_title
+{
+  Client *cl = scm_foreign_object_ref(c, 0);
+  return scm_from_utf8_string(client_get_title(cl));
+}
+#undef FUNC_NAME
+
 
 SCM_DEFINE (gwwm_client_get_appid, "client-get-appid" ,1,0,0,
             (SCM c), "")
