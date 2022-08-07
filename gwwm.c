@@ -462,6 +462,28 @@ SCM_DEFINE (gwwm_set_client_border_width, "client-set-border-width" , 2,0,0,
 }
 #undef FUNC_NAME
 
+SCM_DEFINE (gwwm_client_type, "client-type" , 1,0,0,
+            (SCM c), "")
+{
+  Client *cl = scm_foreign_object_ref(c, 0);
+  char* t;
+  switch (cl->type)
+    {
+    case XDGShell:
+      t="XDGShell";
+      break;
+    case LayerShell:
+      t="LayerShell";
+      break;
+    case X11Managed:
+      t="X11Managed";
+      break;
+    case X11Unmanaged:
+      t="X11Unmanaged";
+      break;
+    }
+  return scm_from_utf8_string(t);
+}
 
 SCM_DEFINE (gwwm_client_wants_fullscreen_p , "client-wants-fullscreen?",1,0,0,
             (SCM client), "")
