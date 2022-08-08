@@ -414,6 +414,10 @@ static Atom netatom[NetLast];
 #include "client.h"
 #include "guile.c"
 
+SCM_DEFINE (gwwm_backend, "gwwm-backend",0,0,0,(),"") {
+  return WRAP_WLR_BACKEND(backend);
+}
+
 SCM_DEFINE (gwwm_c_config, "gwwm-config",0, 0,0,
             () ,
             "c")
