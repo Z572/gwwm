@@ -1357,6 +1357,12 @@ focusclient(Client *c, int lift)
 	client_activate_surface(client_surface(c), 1);
 }
 
+SCM_DEFINE (gwwm_focusclient, "focusclient" ,2,0,0,(SCM client,SCM lift),"") {
+  Client *c= UNWRAP_CLIENT(client);
+  focusclient(c, scm_to_bool(lift));
+  return SCM_UNSPECIFIED;
+}
+
 void
 focusmon(const Arg *arg)
 {
