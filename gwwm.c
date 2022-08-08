@@ -414,6 +414,8 @@ static Atom netatom[NetLast];
 #include "client.h"
 #include "guile.c"
 
+#define GWWM_BORDERCOLOR() (TO_P(REF_CALL_1("gwwm color","color->pointer",REF_CALL_1("gwwm config", "config-bordercolor", gwwm_config))))
+
 SCM_DEFINE (gwwm_backend, "gwwm-backend",0,0,0,(),"") {
   return WRAP_WLR_BACKEND(backend);
 }
@@ -1322,7 +1324,7 @@ focusclient(Client *c, int lift)
 			Client *w;
 			if ((w = client_from_wlr_surface(old)))
 				for (i = 0; i < 4; i++)
-					wlr_scene_rect_set_color(w->border[i], bordercolor);
+					wlr_scene_rect_set_color(w->border[i], GWWM_BORDERCOLOR());
 
 			client_activate_surface(old, 0);
 		}
@@ -1601,9 +1603,9 @@ mapnotify(struct wl_listener *listener, void *data)
 	}
 
 	for (i = 0; i < 4; i++) {
-		c->border[i] = wlr_scene_rect_create(c->scene, 0, 0, bordercolor);
+		c->border[i] = wlr_scene_rect_create(c->scene, 0, 0, GWWM_BORDERCOLOR());
 		c->border[i]->node.data = c;
-		wlr_scene_rect_set_color(c->border[i], bordercolor);
+		wlr_scene_rect_set_color(c->border[i], GWWM_BORDERCOLOR());
 	}
 
 	/* Initialize client geometry with room for border */

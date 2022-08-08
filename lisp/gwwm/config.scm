@@ -1,15 +1,18 @@
 (define-module (gwwm config)
   #:use-module (oop goops)
   #:use-module (oop goops describe)
+  #:use-module (gwwm color)
   #:export (gwwm
             config-borderpx
             config-sloppyfocus?
             config-xkb-rules
             config-lockfullscreen?
+            config-bordercolor
             load-init-file
             get-xdg-config-home
             init-file
-            make-xkb-rules))
+            make-xkb-rules
+            gwwm-default-bordercolor))
 
 (define* (getenv* nam #:optional fallback)
   (or (getenv nam) fallback))
@@ -52,6 +55,8 @@
     #:model model
     #:options (string-join options ",")))
 
+(define gwwm-default-bordercolor (make-color 0.5 0.5 0.5 1.0))
+
 (define-class <gwwm-config> ()
   (borderpx #:init-value 1 #:init-keyword #:borderpx #:accessor config-borderpx)
   (sloppyfocus? #:init-value #t #:init-keyword #:sloppyfocus? #:accessor config-sloppyfocus?)
@@ -59,7 +64,9 @@
   (tags)
   (rules)
   (xkb-rules #:init-value (make <xkb-rules>) #:init-keyword #:xkb-rules #:accessor config-xkb-rules )
-  (lockfullscreen? #:init-value #t #:init-keyword #:lockfullscreen? #:accessor config-lockfullscreen? ))
+  (lockfullscreen? #:init-value #t #:init-keyword #:lockfullscreen? #:accessor config-lockfullscreen? )
+  (bordercolor #:init-value gwwm-default-bordercolor #:init-keyword
+               #:bordercolor #:accessor config-bordercolor ))
 
 (define-syntax-rule (gwwm (init value) ...)
   (let ((init-keywords
