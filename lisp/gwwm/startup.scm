@@ -1,5 +1,6 @@
 (use-modules (ice-9 getopt-long)
              (system repl server)
+             (srfi srfi-1)
              (gwwm config))
 (define option-spec
   '((version (single-char #\v) (value #f))
@@ -23,3 +24,10 @@ gwwm [options]
                (exit 0)))))
 
 (false-if-exception (spawn-server (make-tcp-server-socket)))
+
+(define (client-live? client)
+  "return #t if client is live, or #f not live."
+  (->bool
+   (find
+    (lambda (c) (client=? client c))
+    (client-list))))
