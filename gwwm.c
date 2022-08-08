@@ -2517,6 +2517,17 @@ toggletag(const Arg *arg)
 	printstatus();
 }
 
+SCM_DEFINE (gwwm_toggletag, "toggletag",1, 0,0,
+            (SCM ui) ,
+            "c")
+#define FUNC_NAME s_gwwm_toggletag
+{
+  Arg arg={.ui=(scm_to_int(ui))};
+  toggletag(&arg);
+  return SCM_UNSPECIFIED;
+}
+#undef FUNC_NAME
+
 void
 toggleview(const Arg *arg)
 {
