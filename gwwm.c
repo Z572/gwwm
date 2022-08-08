@@ -2403,6 +2403,12 @@ tag(const Arg *arg)
 	printstatus();
 }
 
+SCM_DEFINE (gwwm_tag, "tag",1,0,0,(SCM ui),""){
+  Arg arg={.ui=(scm_to_int(ui))};
+  tag(&arg);
+  return SCM_UNSPECIFIED;
+}
+
 void
 tagmon(const Arg *arg)
 {
