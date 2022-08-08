@@ -457,7 +457,7 @@ SCM_DEFINE (gwwm_set_client_border_width, "client-set-border-width" , 2,0,0,
 #define FUNC_NAME s_gwwm_client_border_width_set
 {
     Client *cl = scm_foreign_object_ref(c, 0);
-    cl->bw=scm_to_int(w);
+    cl->bw=scm_to_signed_integer(w ,0, 1240);
   return scm_make_foreign_object_1(client_type, cl);
 }
 #undef FUNC_NAME
