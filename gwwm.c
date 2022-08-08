@@ -2006,8 +2006,11 @@ SCM_DEFINE (gwwm_current_client, "current-client",0, 0,0,
             "c")
 #define FUNC_NAME s_gwwm_current_client
 {
-
-  return scm_make_foreign_object_1(client_type, current_client()) ;
+  Client *c=current_client();
+  if (c) {
+    return scm_make_foreign_object_1(client_type, current_client()) ;
+  }
+  return SCM_BOOL_F ;
 }
 #undef FUNC_NAME
 
