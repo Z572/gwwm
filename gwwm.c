@@ -1256,6 +1256,13 @@ dirtomon(enum wlr_direction dir)
 	return selmon;
 }
 
+SCM_DEFINE (gwwm_dirtomon ,"dirtomon" ,1,0,0,(SCM dir),"")
+  #define FUNC_NAME s_gwwm_dirtomon
+{
+  return WRAP_MONITOR(dirtomon(scm_to_int(dir)));
+}
+#undef  FUNC_NAME
+
 void
 dragicondestroy(struct wl_listener *listener, void *data)
 {
