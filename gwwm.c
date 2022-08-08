@@ -2647,6 +2647,12 @@ view(const Arg *arg)
 	printstatus();
 }
 
+SCM_DEFINE (gwwm_view, "view",1,0,0,(SCM ui),""){
+  Arg arg={.ui=(scm_to_int(ui))};
+  view(&arg);
+  return SCM_UNSPECIFIED;
+}
+
 void
 virtualkeyboard(struct wl_listener *listener, void *data)
 {
