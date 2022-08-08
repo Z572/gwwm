@@ -2530,6 +2530,12 @@ toggleview(const Arg *arg)
 	printstatus();
 }
 
+SCM_DEFINE (gwwm_toggleview, "toggleview",1,0,0,(SCM ui),""){
+  Arg arg={.ui=(scm_to_int(ui))};
+  toggleview(&arg);
+  return SCM_UNSPECIFIED;
+}
+
 void
 unmaplayersurfacenotify(struct wl_listener *listener, void *data)
 {
