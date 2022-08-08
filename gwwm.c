@@ -824,29 +824,8 @@ buttonpress(struct wl_listener *listener, void *data)
 void
 chvt(const Arg *arg)
 {
-	wlr_session_change_vt(wlr_backend_get_session(backend), arg->ui);
+  REF_CALL_1("gwwm commands", "chvt", scm_from_unsigned_integer(arg->ui));
 }
-
-static SCM gwwm_chvt (SCM n);
-SCM_DEFINE (gwwm_chvt, "chvt", 1,0,0,
-            (SCM n) ,
-            "c")
-#define FUNC_NAME s_gwwm_chvt
-{
-  Arg a;
-  a.ui = (scm_to_unsigned_integer(n,1,12));
-
-  chvt (&a);
-  /* free(a); */
-  return SCM_UNSPECIFIED;
-}
-#undef FUNC_NAME
-/* void init_scm_snarf(){ */
-/* #ifndef SCM_MAGIC_SNARFER */
-/* #include "guile.x" */
-/* #endif */
-/* } */
-
 
 void
 cleanup(void)
