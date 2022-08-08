@@ -1418,6 +1418,15 @@ focustop(Monitor *m)
 	return NULL;
 }
 
+SCM_DEFINE (gwwm_focustop ,"focustop",1,0,0,(SCM monitor),"")
+{
+  Client *c= focustop(UNWRAP_MONITOR(monitor));
+  if (c) {
+    return WRAP_CLIENT(c);
+  }
+  return SCM_BOOL_F;
+}
+
 void
 fullscreennotify(struct wl_listener *listener, void *data)
 {
