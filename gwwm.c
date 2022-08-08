@@ -618,6 +618,18 @@ arrange(Monitor *m)
 		m->lt[m->sellt]->arrange(m);
 	motionnotify(0);
 }
+SCM_DEFINE (gwwm_client_list , "client-list",0,0,0,(),"")
+#define FUNC_NAME s_gwwm_client_list
+{
+  SCM a=scm_make_list(scm_from_int(0), SCM_UNSPECIFIED);
+  	Client *c;
+	wl_list_for_each(c, &clients, link) {
+      a=scm_cons(WRAP_CLIENT(c), a);
+    }
+    return a;
+}
+#undef FUNC_NAME
+
 
 void
 arrangelayer(Monitor *m, struct wl_list *list, struct wlr_box *usable_area, int exclusive)
