@@ -5,6 +5,7 @@
             config-borderpx
             config-sloppyfocus?
             config-xkb-rules
+            config-lockfullscreen?
             load-init-file
             get-xdg-config-home
             init-file
@@ -57,7 +58,8 @@
   (rootcolor)
   (tags)
   (rules)
-  (xkb-rules #:init-value (make <xkb-rules>) #:init-keyword #:xkb-rules #:accessor config-xkb-rules ))
+  (xkb-rules #:init-value (make <xkb-rules>) #:init-keyword #:xkb-rules #:accessor config-xkb-rules )
+  (lockfullscreen? #:init-value #t #:init-keyword #:lockfullscreen? #:accessor config-lockfullscreen? ))
 
 (define-syntax-rule (gwwm (init value) ...)
   (let ((init-keywords

@@ -392,6 +392,8 @@ static SCM gwwm_config;
 #define GWWM_SLOPPYFOCUS_P() \
   (scm_to_bool(REF_CALL_1("gwwm config", "config-sloppyfocus?", gwwm_config)))
 
+#define GWWM_LOCKFULLSCREEN_P() \
+  (scm_to_bool(REF_CALL_1("gwwm config", "config-lockfullscreen?", gwwm_config)))
 #ifdef XWAYLAND
 static void activatex11(struct wl_listener *listener, void *data);
 static void configurex11(struct wl_listener *listener, void *data);
@@ -1382,7 +1384,7 @@ focusstack(const Arg *arg)
 {
 	/* Focus the next or previous client (in tiling order) on selmon */
 	Client *c, *sel = current_client();
-	if (!sel || (sel->isfullscreen && lockfullscreen))
+	if (!sel || (sel->isfullscreen && GWWM_LOCKFULLSCREEN_P()))
 		return;
 	if (arg->i > 0) {
 		wl_list_for_each(c, &sel->link, link) {
