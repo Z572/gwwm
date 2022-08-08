@@ -123,12 +123,13 @@ typedef struct {
 	uint32_t resize; /* configure serial of a pending resize */
 	int isfullscreen;
 } Client;
-
+#define WRAP_CLIENT(o) (scm_make_foreign_object_1(client_type,o))
+#define UNWRAP_CLIENT(o) (scm_foreign_object_ref(o, 0))
 SCM_DEFINE (gwwm_client_is_fullscreen_p, "client-is-fullscreen?" ,1,0,0,
             (SCM c), "")
 #define FUNC_NAME s_gwwm_client_is_fullscreen_p
 {
-  Client *cl = scm_foreign_object_ref(c, 0);
+  Client *cl = UNWRAP_CLIENT(c);
   return scm_from_bool(cl->isfullscreen);
 }
 #undef FUNC_NAME
@@ -137,7 +138,7 @@ SCM_DEFINE (gwwm_client_is_floating_p, "client-is-floating?" ,1,0,0,
             (SCM c), "")
 #define FUNC_NAME s_gwwm_client_is_floating_p
 {
-  Client *cl = scm_foreign_object_ref(c, 0);
+  Client *cl = UNWRAP_CLIENT(c);
   return scm_from_bool(cl->isfloating);
 }
 #undef FUNC_NAME
@@ -146,7 +147,7 @@ SCM_DEFINE (gwwm_client_border_width, "client-border-width" , 1,0,0,
             (SCM c), "")
 #define FUNC_NAME s_gwwm_client_border_width
 {
-    Client *cl = scm_foreign_object_ref(c, 0);
+    Client *cl = UNWRAP_CLIENT(c);
   return scm_from_int(cl->bw);
 }
 #undef FUNC_NAME
@@ -424,7 +425,7 @@ SCM_DEFINE (gwwm_client_get_title, "client-get-title" ,1,0,0,
             (SCM c), "")
 #define FUNC_NAME s_gwwm_client_get_title
 {
-  Client *cl = scm_foreign_object_ref(c, 0);
+  Client *cl = UNWRAP_CLIENT(c);
   return scm_from_utf8_string(client_get_title(cl));
 }
 #undef FUNC_NAME
@@ -434,7 +435,7 @@ SCM_DEFINE (gwwm_client_get_appid, "client-get-appid" ,1,0,0,
             (SCM c), "")
 #define FUNC_NAME s_gwwm_client_get_appid
 {
-  Client *cl = scm_foreign_object_ref(c, 0);
+  Client *cl = UNWRAP_CLIENT(c);
   return scm_from_utf8_string(client_get_appid(cl));
 }
 #undef FUNC_NAME
@@ -443,10 +444,10 @@ SCM_DEFINE (gwwm_client_get_parent, "client-get-parent" ,1,0,0,
             (SCM c), "")
 #define FUNC_NAME s_gwwm_client_get_parent
 {
-  Client *cl = scm_foreign_object_ref(c, 0);
+  Client *cl = UNWRAP_CLIENT(c);
   Client *p = client_get_parent(cl);
   if (p) {
-  return scm_make_foreign_object_1(client_type,p);
+    return WRAP_CLIENT(p);
   };
   return SCM_BOOL_F;
 }
@@ -456,16 +457,16 @@ SCM_DEFINE (gwwm_set_client_border_width, "client-set-border-width" , 2,0,0,
             (SCM c ,SCM w), "")
 #define FUNC_NAME s_gwwm_client_border_width_set
 {
-    Client *cl = scm_foreign_object_ref(c, 0);
+    Client *cl = UNWRAP_CLIENT(c);
     cl->bw=scm_to_signed_integer(w ,0, 1240);
-  return scm_make_foreign_object_1(client_type, cl);
+  return WRAP_CLIENT(cl);
 }
 #undef FUNC_NAME
 
 SCM_DEFINE (gwwm_client_type, "client-type" , 1,0,0,
             (SCM c), "")
 {
-  Client *cl = scm_foreign_object_ref(c, 0);
+  Client *cl = UNWRAP_CLIENT(c);
   char* t;
   switch (cl->type)
     {
@@ -489,7 +490,7 @@ SCM_DEFINE (gwwm_client_wants_fullscreen_p , "client-wants-fullscreen?",1,0,0,
             (SCM client), "")
 #define FUNC_NAME s_gwwm_client_wants_fullscreen
 {
-  return scm_from_bool(client_wants_fullscreen(scm_foreign_object_ref(client, 0)));
+  return scm_from_bool(client_wants_fullscreen(UNWRAP_CLIENT(client)));
 }
 #undef FUNC_NAME
 
@@ -2008,7 +2009,7 @@ SCM_DEFINE (gwwm_current_client, "current-client",0, 0,0,
 {
   Client *c=current_client();
   if (c) {
-    return scm_make_foreign_object_1(client_type, current_client()) ;
+    return WRAP_CLIENT(current_client()) ;
   }
   return SCM_BOOL_F ;
 }
@@ -2046,7 +2047,7 @@ SCM_DEFINE (gwwm_client_set_floating, "client-set-floating" ,2,0,0,
             (SCM c ,SCM floating), "")
 #define FUNC_NAME s_gwwm_client_set_floating
 {
-  Client *cl = scm_foreign_object_ref(c, 0);
+  Client *cl = UNWRAP_CLIENT(c);
   setfloating(cl , scm_to_bool(floating));
   return SCM_UNSPECIFIED;
 }
