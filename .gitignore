@@ -1,5 +1,8 @@
 /.ccls-cache/
 /.deps/
+idle-protocol.h
+wlr-layer-shell-unstable-v1-protocol.h
+xdg-shell-protocol.h
 /gwwm
 *.o
 *.x
