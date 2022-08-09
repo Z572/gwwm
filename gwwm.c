@@ -414,6 +414,13 @@ static Atom netatom[NetLast];
 #include "client.h"
 #include "guile.c"
 
+SCM_DEFINE_PUBLIC(gwwm_visibleon, "visibleon", 2, 0, 0, (SCM c, SCM m), "")
+{
+  Client *s =(UNWRAP_CLIENT(c));
+  int a = (VISIBLEON(s,(struct Monitor*)(UNWRAP_MONITOR(m))));
+  return scm_from_bool(a);
+}
+
 #define GWWM_BORDERCOLOR() (TO_P(REF_CALL_1("gwwm color","color->pointer",REF_CALL_1("gwwm config", "config-bordercolor", gwwm_config))))
 
 #define GWWM_FOCUSCOLOR() (TO_P(REF_CALL_1("gwwm color","color->pointer",REF_CALL_1("gwwm config", "config-focuscolor", gwwm_config))))
