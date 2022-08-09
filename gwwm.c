@@ -1408,10 +1408,9 @@ SCM_DEFINE (gwwm_focusstack, "focusstack" ,1,0,0,
             (SCM a), "")
 #define FUNC_NAME s_gwwm_focusstack
 {
-  Arg arg = {
+  focusstack(&((Arg){
     .i= scm_to_int(a)
-  };
-  focusstack(&arg);
+  }));
   return SCM_UNSPECIFIED;
 }
 #undef FUNC_NAME
@@ -2424,8 +2423,7 @@ tag(const Arg *arg)
 }
 
 SCM_DEFINE (gwwm_tag, "tag",1,0,0,(SCM ui),""){
-  Arg arg={.ui=(scm_to_int(ui))};
-  tag(&arg);
+  tag(&((Arg){.ui=(scm_to_int(ui))}));
   return SCM_UNSPECIFIED;
 }
 
@@ -2542,8 +2540,7 @@ SCM_DEFINE (gwwm_toggletag, "toggletag",1, 0,0,
             "c")
 #define FUNC_NAME s_gwwm_toggletag
 {
-  Arg arg={.ui=(scm_to_int(ui))};
-  toggletag(&arg);
+  toggletag(&((Arg){.ui=(scm_to_int(ui))}));
   return SCM_UNSPECIFIED;
 }
 #undef FUNC_NAME
@@ -2562,8 +2559,7 @@ toggleview(const Arg *arg)
 }
 
 SCM_DEFINE (gwwm_toggleview, "toggleview",1,0,0,(SCM ui),""){
-  Arg arg={.ui=(scm_to_int(ui))};
-  toggleview(&arg);
+  toggleview(&((Arg){.ui=(scm_to_int(ui))}));
   return SCM_UNSPECIFIED;
 }
 
@@ -2680,7 +2676,7 @@ view(const Arg *arg)
 
 SCM_DEFINE (gwwm_view, "view",1,0,0,(SCM ui),""){
   Arg arg={.ui=(scm_to_int(ui))};
-  view(&arg);
+  view(&((Arg){.ui=(scm_to_int(ui))}));
   return SCM_UNSPECIFIED;
 }
 
