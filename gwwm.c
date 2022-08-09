@@ -418,6 +418,10 @@ static Atom netatom[NetLast];
 
 #define GWWM_FOCUSCOLOR() (TO_P(REF_CALL_1("gwwm color","color->pointer",REF_CALL_1("gwwm config", "config-focuscolor", gwwm_config))))
 
+SCM_DEFINE(gwwm_selmon ,"selmon" ,0,0,0,(),""){
+  return WRAP_MONITOR(selmon);
+}
+
 SCM_DEFINE (gwwm_backend, "gwwm-backend",0,0,0,(),"") {
   return WRAP_WLR_BACKEND(backend);
 }
