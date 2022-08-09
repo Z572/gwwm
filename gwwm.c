@@ -414,12 +414,8 @@ static Atom netatom[NetLast];
 #include "client.h"
 #include "guile.c"
 
-SCM_DEFINE_PUBLIC(gwwm_monitor_width, "monitor-width", 1, 0, 0, (SCM m), ""){
-  return scm_from_int((UNWRAP_MONITOR(m))->wlr_output->width);
-}
-
-SCM_DEFINE_PUBLIC(gwwm_monitor_height, "monitor-height", 1, 0, 0, (SCM m), ""){
-  return scm_from_int((UNWRAP_MONITOR(m))->wlr_output->height);
+SCM_DEFINE_PUBLIC(gwwm_monitor_wlr_output, "monitor-wlr-output", 1, 0, 0, (SCM m), ""){
+  return (REF_CALL_1("wlroots types output","wrap-wlr-output",(FROM_P((UNWRAP_MONITOR(m))->wlr_output))));
 }
 
 SCM_DEFINE_PUBLIC(gwwm_monitor_name, "monitor-name", 1, 0, 0, (SCM m), ""){
