@@ -418,6 +418,10 @@ SCM_DEFINE_PUBLIC(gwwm_monitor_width, "monitor-width", 1, 0, 0, (SCM m), ""){
   return scm_from_int((UNWRAP_MONITOR(m))->wlr_output->width);
 }
 
+SCM_DEFINE_PUBLIC(gwwm_monitor_height, "monitor-height", 1, 0, 0, (SCM m), ""){
+  return scm_from_int((UNWRAP_MONITOR(m))->wlr_output->height);
+}
+
 SCM_DEFINE_PUBLIC(gwwm_visibleon, "visibleon", 2, 0, 0, (SCM c, SCM m), "")
 {
   Client *s =(UNWRAP_CLIENT(c));
