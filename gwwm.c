@@ -360,7 +360,7 @@ static int grabcx, grabcy; /* client-relative */
 static struct wlr_output_layout *output_layout;
 static struct wlr_box sgeom;
 static struct wl_list mons;
-static Monitor *selmon;
+static Monitor *current_monitor;
 
 /* global event handlers */
 static struct wl_listener cursor_axis = {.notify = axisnotify};
@@ -433,8 +433,8 @@ SCM_DEFINE_PUBLIC(gwwm_visibleon, "visibleon", 2, 0, 0, (SCM c, SCM m), "")
 
 #define GWWM_FOCUSCOLOR() (TO_P(REF_CALL_1("gwwm color","color->pointer",REF_CALL_1("gwwm config", "config-focuscolor", gwwm_config))))
 
-SCM_DEFINE(gwwm_selmon ,"selmon" ,0,0,0,(),""){
-  return WRAP_MONITOR(selmon);
+SCM_DEFINE(gwwm_selmon ,"current-monitor" ,0,0,0,(),""){
+  return WRAP_MONITOR(current_monitor);
 }
 
 SCM_DEFINE (gwwm_backend, "gwwm-backend",0,0,0,(),"") {
@@ -613,7 +613,7 @@ applyrules(Client *c)
 	const char *appid, *title;
 	unsigned int i, newtags = 0;
 	const Rule *r;
-	Monitor *mon = selmon, *m;
+	Monitor *mon = current_monitor, *m;
 
 	c->isfloating = client_is_float_type(c);
 	if (!(appid = client_get_appid(c)))
@@ -844,8 +844,8 @@ buttonpress(struct wl_listener *listener, void *data)
 			wlr_xcursor_manager_set_cursor_image(cursor_mgr, "left_ptr", cursor);
 			cursor_mode = CurNormal;
 			/* Drop the window off on its new monitor */
-			selmon = xytomon(cursor->x, cursor->y);
-			setmon(grabc, selmon, 0);
+		    current_monitor = xytomon(cursor->x, cursor->y);
+			setmon(grabc, current_monitor, 0);
 			return;
 		}
 		break;
@@ -909,10 +909,10 @@ cleanupmon(struct wl_listener *listener, void *data)
 
 	if ((nmons = wl_list_length(&mons)))
 		do /* don't switch to disabled mons */
-			selmon = wl_container_of(mons.prev, selmon, link);
-		while (!selmon->wlr_output->enabled && i++ < nmons);
+		    current_monitor = wl_container_of(mons.prev, current_monitor, link);
+		while (!current_monitor->wlr_output->enabled && i++ < nmons);
 
-	focusclient(focustop(selmon), 1);
+	focusclient(focustop(current_monitor), 1);
 	closemon(m);
 	free(m);
 }
@@ -928,7 +928,7 @@ closemon(Monitor *m)
 			resize(c, (struct wlr_box){.x = c->geom.x - m->w.width, .y = c->geom.y,
 				.width = c->geom.width, .height = c->geom.height}, 0);
 		if (c->mon == m)
-			setmon(c, selmon, c->tags);
+			setmon(c, current_monitor, c->tags);
 	}
 	printstatus();
 }
@@ -1033,7 +1033,7 @@ createlayersurface(struct wl_listener *listener, void *data)
 	struct wlr_layer_surface_v1_state old_state;
 
 	if (!wlr_layer_surface->output) {
-		wlr_layer_surface->output = selmon->wlr_output;
+		wlr_layer_surface->output = current_monitor->wlr_output;
 	}
 
 	layersurface = ecalloc(1, sizeof(LayerSurface));
@@ -1123,11 +1123,11 @@ createmon(struct wl_listener *listener, void *data)
 	m->scene_output = wlr_scene_output_create(scene, wlr_output);
 	wlr_output_layout_add_auto(output_layout, wlr_output);
 
-	/* If length == 1 we need update selmon.
+	/* If length == 1 we need update current_monitor.
 	 * Maybe it will change in run(). */
 	if (wl_list_length(&mons) == 1) {
 		Client *c;
-		selmon = m;
+	    current_monitor = m;
 		/* If there is any client, set c->mon to this monitor */
 		wl_list_for_each(c, &clients, link)
 			setmon(c, m, c->tags);
@@ -1282,13 +1282,13 @@ dirtomon(enum wlr_direction dir)
 {
 	struct wlr_output *next;
 	if ((next = wlr_output_layout_adjacent_output(output_layout,
-			dir, selmon->wlr_output, selmon->m.x, selmon->m.y)))
+			dir, current_monitor->wlr_output, current_monitor->m.x, current_monitor->m.y)))
 		return next->data;
 	if ((next = wlr_output_layout_farthest_output(output_layout,
 			dir ^ (WLR_DIRECTION_LEFT|WLR_DIRECTION_RIGHT),
-			selmon->wlr_output, selmon->m.x, selmon->m.y)))
+		    current_monitor->wlr_output, current_monitor->m.x, current_monitor->m.y)))
 		return next->data;
-	return selmon;
+	return current_monitor;
 }
 
 SCM_DEFINE (gwwm_dirtomon ,"dirtomon" ,1,0,0,(SCM dir),"")
@@ -1329,7 +1329,7 @@ focusclient(Client *c, int lift)
 	if (c) {
 		wl_list_remove(&c->flink);
 		wl_list_insert(&fstack, &c->flink);
-		selmon = c->mon;
+	    current_monitor = c->mon;
 		c->isurgent = 0;
 		client_restack_surface(c);
 
@@ -1394,9 +1394,9 @@ void
 focusmon(const Arg *arg)
 {
 	do
-		selmon = dirtomon(arg->i);
-	while (!selmon->wlr_output->enabled);
-	focusclient(focustop(selmon), 1);
+	    current_monitor = dirtomon(arg->i);
+	while (!current_monitor->wlr_output->enabled);
+	focusclient(focustop(current_monitor), 1);
 }
 
 SCM_DEFINE (gwwm_focusmon ,"focusmon",1,0,0,(SCM a),"" ){
@@ -1417,7 +1417,7 @@ SCM_DEFINE (gwwm_monitor_eq, "monitor=?",2,0,0,(SCM m1,SCM m2),"")
 void
 focusstack(const Arg *arg)
 {
-	/* Focus the next or previous client (in tiling order) on selmon */
+	/* Focus the next or previous client (in tiling order) on current_monitor */
 	Client *c, *sel = current_client();
 	if (!sel || (sel->isfullscreen && GWWM_LOCKFULLSCREEN_P()))
 		return;
@@ -1425,18 +1425,18 @@ focusstack(const Arg *arg)
 		wl_list_for_each(c, &sel->link, link) {
 			if (&c->link == &clients)
 				continue;  /* wrap past the sentinel node */
-			if (VISIBLEON(c, selmon))
+			if (VISIBLEON(c, current_monitor))
 				break;  /* found it */
 		}
 	} else {
 		wl_list_for_each_reverse(c, &sel->link, link) {
 			if (&c->link == &clients)
 				continue;  /* wrap past the sentinel node */
-			if (VISIBLEON(c, selmon))
+			if (VISIBLEON(c, current_monitor))
 				break;  /* found it */
 		}
 	}
-	/* If only one client is visible on selmon, then c == sel */
+	/* If only one client is visible on current_monitor, then c == sel */
 	focusclient(c, 1);
 }
 
@@ -1488,8 +1488,8 @@ fullscreennotify(struct wl_listener *listener, void *data)
 void
 incnmaster(const Arg *arg)
 {
-	selmon->nmaster = MAX(selmon->nmaster + arg->i, 0);
-	arrange(selmon);
+    current_monitor->nmaster = MAX(current_monitor->nmaster + arg->i, 0);
+	arrange(current_monitor);
 }
 
 void
@@ -1666,7 +1666,7 @@ mapnotify(struct wl_listener *listener, void *data)
 		c->isfloating = 1;
 		wlr_scene_node_reparent(c->scene, layers[LyrFloat]);
 		/* TODO recheck if !p->mon is possible with wlroots 0.16.0 */
-		setmon(c, p->mon ? p->mon : selmon, p->tags);
+		setmon(c, p->mon ? p->mon : current_monitor, p->tags);
 	} else {
 		applyrules(c);
 	}
@@ -1717,9 +1717,9 @@ motionnotify(uint32_t time)
 	if (time) {
 		wlr_idle_notify_activity(idle, seat);
 
-		/* Update selmon (even while dragging a window) */
+		/* Update current_monitor (even while dragging a window) */
 		if (GWWM_SLOPPYFOCUS_P())
-			selmon = xytomon(cursor->x, cursor->y);
+			current_monitor = xytomon(cursor->x, cursor->y);
 	}
 
 	if (seat->drag && (icon = seat->drag->icon))
@@ -1911,7 +1911,7 @@ printstatus(void)
 			sel = 0;
 		}
 
-		printf("%s selmon %u\n", m->wlr_output->name, m == selmon);
+		printf("%s current_monitor %u\n", m->wlr_output->name, m == current_monitor);
 		printf("%s tags %u %u %u %u\n", m->wlr_output->name, occ, m->tagset[m->seltags],
 				sel, urg);
 		printf("%s layout %s\n", m->wlr_output->name, m->lt[m->sellt]->symbol);
@@ -2043,9 +2043,9 @@ run(char *startup_cmd)
 	if (!wlr_backend_start(backend))
 		die("startup: backend_start");
 
-	/* Now that outputs are initialized, choose initial selmon based on
+	/* Now that outputs are initialized, choose initial current_monitor based on
 	 * cursor position, and set default cursor image */
-	selmon = xytomon(cursor->x, cursor->y);
+	current_monitor = xytomon(cursor->x, cursor->y);
 
 	/* TODO hack to get cursor to display in its initial location (100, 100)
 	 * instead of (0, 0) and then jumping.  still may not be fully
@@ -2065,7 +2065,7 @@ Client *
 current_client(void)
 {
 	Client *c = wl_container_of(fstack.next, c, flink);
-	if (wl_list_empty(&fstack) || !VISIBLEON(c, selmon))
+	if (wl_list_empty(&fstack) || !VISIBLEON(c, current_monitor))
 		return NULL;
 	return c;
 }
@@ -2162,12 +2162,12 @@ setfullscreen(Client *c, int fullscreen)
 void
 setlayout(const Arg *arg)
 {
-	if (!arg || !arg->v || arg->v != selmon->lt[selmon->sellt])
-		selmon->sellt ^= 1;
+	if (!arg || !arg->v || arg->v != current_monitor->lt[current_monitor->sellt])
+		current_monitor->sellt ^= 1;
 	if (arg && arg->v)
-		selmon->lt[selmon->sellt] = (Layout *)arg->v;
+		current_monitor->lt[current_monitor->sellt] = (Layout *)arg->v;
 	/* TODO change layout symbol? */
-	arrange(selmon);
+	arrange(current_monitor);
 	printstatus();
 }
 
@@ -2177,13 +2177,13 @@ setmfact(const Arg *arg)
 {
 	float f;
 
-	if (!arg || !selmon->lt[selmon->sellt]->arrange)
+	if (!arg || !current_monitor->lt[current_monitor->sellt]->arrange)
 		return;
-	f = arg->f < 1.0 ? arg->f + selmon->mfact : arg->f - 1.0;
+	f = arg->f < 1.0 ? arg->f + current_monitor->mfact : arg->f - 1.0;
 	if (f < 0.1 || f > 0.9)
 		return;
-	selmon->mfact = f;
-	arrange(selmon);
+	current_monitor->mfact = f;
+	arrange(current_monitor);
 }
 
 void
@@ -2207,7 +2207,7 @@ setmon(Client *c, Monitor *m, unsigned int newtags)
 		c->tags = newtags ? newtags : m->tagset[m->seltags]; /* assign tags of target monitor */
 		arrange(m);
 	}
-	focusclient(focustop(selmon), 1);
+	focusclient(focustop(current_monitor), 1);
 }
 
 void
@@ -2452,8 +2452,8 @@ tag(const Arg *arg)
 	Client *sel = current_client();
 	if (sel && arg->ui & TAGMASK) {
 		sel->tags = arg->ui & TAGMASK;
-		focusclient(focustop(selmon), 1);
-		arrange(selmon);
+		focusclient(focustop(current_monitor), 1);
+		arrange(current_monitor);
 	}
 	printstatus();
 }
@@ -2565,8 +2565,8 @@ toggletag(const Arg *arg)
 	newtags = sel->tags ^ (arg->ui & TAGMASK);
 	if (newtags) {
 		sel->tags = newtags;
-		focusclient(focustop(selmon), 1);
-		arrange(selmon);
+		focusclient(focustop(current_monitor), 1);
+		arrange(current_monitor);
 	}
 	printstatus();
 }
@@ -2584,12 +2584,12 @@ SCM_DEFINE (gwwm_toggletag, "toggletag",1, 0,0,
 void
 toggleview(const Arg *arg)
 {
-	unsigned int newtagset = selmon->tagset[selmon->seltags] ^ (arg->ui & TAGMASK);
+	unsigned int newtagset = current_monitor->tagset[current_monitor->seltags] ^ (arg->ui & TAGMASK);
 
 	if (newtagset) {
-		selmon->tagset[selmon->seltags] = newtagset;
-		focusclient(focustop(selmon), 1);
-		arrange(selmon);
+		current_monitor->tagset[current_monitor->seltags] = newtagset;
+		focusclient(focustop(current_monitor), 1);
+		arrange(current_monitor);
 	}
 	printstatus();
 }
@@ -2659,7 +2659,7 @@ updatemons(struct wl_listener *listener, void *data)
 			wlr_output_configuration_head_v1_create(config, m->wlr_output);
 
 		/* TODO: move clients off disabled monitors */
-		/* TODO: move focus if selmon is disabled */
+		/* TODO: move focus if current_monitor is disabled */
 
 		/* Get the effective monitor geometry to use for surfaces */
 		m->m = m->w = *wlr_output_layout_get_box(output_layout, m->wlr_output);
@@ -2700,13 +2700,13 @@ urgent(struct wl_listener *listener, void *data)
 void
 view(const Arg *arg)
 {
-	if ((arg->ui & TAGMASK) == selmon->tagset[selmon->seltags])
+	if ((arg->ui & TAGMASK) == current_monitor->tagset[current_monitor->seltags])
 		return;
-	selmon->seltags ^= 1; /* toggle sel tagset */
+	current_monitor->seltags ^= 1; /* toggle sel tagset */
 	if (arg->ui & TAGMASK)
-		selmon->tagset[selmon->seltags] = arg->ui & TAGMASK;
-	focusclient(focustop(selmon), 1);
-	arrange(selmon);
+		current_monitor->tagset[current_monitor->seltags] = arg->ui & TAGMASK;
+	focusclient(focustop(current_monitor), 1);
+	arrange(current_monitor);
 	printstatus();
 }
 
@@ -2769,13 +2769,13 @@ zoom(const Arg *arg)
 {
 	Client *c, *sel = current_client();
 
-	if (!sel || !selmon->lt[selmon->sellt]->arrange || sel->isfloating)
+	if (!sel || !current_monitor->lt[current_monitor->sellt]->arrange || sel->isfloating)
 		return;
 
 	/* Search for the first tiled window that is not sel, marking sel as
 	 * NULL if we pass it along the way */
 	wl_list_for_each(c, &clients, link)
-		if (VISIBLEON(c, selmon) && !c->isfloating) {
+		if (VISIBLEON(c, current_monitor) && !c->isfloating) {
 			if (c != sel)
 				break;
 			sel = NULL;
@@ -2793,7 +2793,7 @@ zoom(const Arg *arg)
 	wl_list_insert(&clients, &sel->link);
 
 	focusclient(sel, 1);
-	arrange(selmon);
+	arrange(current_monitor);
 }
 
 SCM_DEFINE (gwwm_zoom, "zoom",0, 0,0,
