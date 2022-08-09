@@ -416,6 +416,8 @@ static Atom netatom[NetLast];
 
 #define GWWM_BORDERCOLOR() (TO_P(REF_CALL_1("gwwm color","color->pointer",REF_CALL_1("gwwm config", "config-bordercolor", gwwm_config))))
 
+#define GWWM_FOCUSCOLOR() (TO_P(REF_CALL_1("gwwm color","color->pointer",REF_CALL_1("gwwm config", "config-focuscolor", gwwm_config))))
+
 SCM_DEFINE (gwwm_backend, "gwwm-backend",0,0,0,(),"") {
   return WRAP_WLR_BACKEND(backend);
 }
@@ -1301,7 +1303,7 @@ focusclient(Client *c, int lift)
 		client_restack_surface(c);
 
 		for (i = 0; i < 4; i++)
-			wlr_scene_rect_set_color(c->border[i], focuscolor);
+          wlr_scene_rect_set_color(c->border[i], GWWM_FOCUSCOLOR());
 	}
 
 	/* Deactivate old client if focus is changing */
