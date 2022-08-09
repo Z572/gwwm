@@ -40,7 +40,7 @@ init_monitor_type (void)
     scm_make_foreign_object_type (name, slots, finalizer);
 }
 #define WRAP_MONITOR(o) (scm_make_foreign_object_1(monitor_type,o))
-#define UNWRAP_MONITOR(o) (scm_foreign_object_ref(o, 0))
+#define UNWRAP_MONITOR(o) (struct Monitor*)(scm_foreign_object_ref(o, 0))
 void init_scm() {
   init_client_type();
   init_monitor_type();
