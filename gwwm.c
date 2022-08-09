@@ -1368,6 +1368,11 @@ focusmon(const Arg *arg)
 	focusclient(focustop(selmon), 1);
 }
 
+SCM_DEFINE (gwwm_focusmon ,"focusmon",1,0,0,(SCM a),"" ){
+  focusmon(&((Arg){.i=scm_to_int(a)}));
+  return SCM_UNSPECIFIED;
+}
+
 SCM_DEFINE (gwwm_client_eq, "client=?",2,0,0,(SCM c1,SCM c2),"")
 {
   return (UNWRAP_CLIENT(c1)== UNWRAP_CLIENT(c2)) ? SCM_BOOL_T : SCM_BOOL_F;
