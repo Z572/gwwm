@@ -2929,10 +2929,10 @@ inner_main(void *closure,int argc, char *argv[])
 		else if (c == 'v')
 			die("dwl " VERSION);
 		else
-			goto usage;
+			die("Usage: %s [-v] [-s startup command]", argv[0]);
 	}
 	if (optind < argc)
-		goto usage;
+	    die("Usage: %s [-v] [-s startup command]", argv[0]);;
 
 	/* Wayland requires XDG_RUNTIME_DIR for creating its communications socket */
 	if (!getenv("XDG_RUNTIME_DIR"))
@@ -2943,8 +2943,6 @@ inner_main(void *closure,int argc, char *argv[])
 	cleanup();
 	/* return EXIT_SUCCESS; */
 
-usage:
-	die("Usage: %s [-v] [-s startup command]", argv[0]);
 }
 int main(int argc, char *argv[]) {
   scm_boot_guile(argc, argv, inner_main, 0);
