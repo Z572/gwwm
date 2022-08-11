@@ -2526,9 +2526,7 @@ SCM_DEFINE (gwwm_togglefloating, "togglefloating",0, 0,0,
 void
 togglefullscreen(const Arg *arg)
 {
-	Client *sel = current_client();
-	if (sel)
-		setfullscreen(sel, !sel->isfullscreen);
+  REF_CALL_0("gwwm commands", "togglefullscreen");
 }
 
 
@@ -2539,15 +2537,7 @@ SCM_DEFINE (gwwm_setfullscreen, "client-set-fullscreen!",2,0,0,(SCM c,SCM yes),"
   return SCM_UNSPECIFIED;
 }
 #undef FUNC_NAME
-SCM_DEFINE (gwwm_togglefullscreen, "togglefullscreen",0, 0,0,
-            () ,
-            "c")
-#define FUNC_NAME s_gwwm_togglefullscreen
-{
-  togglefullscreen(NULL);
-  return SCM_UNSPECIFIED;
-}
-#undef FUNC_NAME
+
 SCM_DEFINE (gwwm_killclient, "killclient",0, 0,0,
             () ,
             "c")

@@ -5,7 +5,8 @@
             client-is-floating?
             client-fullscreen?
             client-is-fullscreen?
-            client-set-fullscreen!))
+            client-set-fullscreen!
+            client-toggle-fullscreen))
 
 (define (current-client)
   ((@@ (gwwm) current-client)))
@@ -21,6 +22,10 @@
 
 (define (client-set-fullscreen! client fullscreen?)
   ((@@ (gwwm) client-set-fullscreen!) client fullscreen? ))
+
+(define (client-toggle-fullscreen client)
+  (set! (client-fullscreen? client)
+        (not (client-fullscreen? client))))
 
 (define client-floating?
   (make-procedure-with-setter
