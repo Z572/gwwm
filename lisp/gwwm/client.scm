@@ -1,7 +1,7 @@
 (define-module (gwwm client)
   #:export (current-client
             client-floating?
-            client-set-floating
+            client-set-floating!
             client-is-floating?
             client-fullscreen?
             client-is-fullscreen?
@@ -13,8 +13,8 @@
 (define (client-is-floating? client)
   ((@@ (gwwm) client-is-floating?) client))
 
-(define (client-set-floating client floating?)
-  ((@@ (gwwm) client-set-floating) client floating? ))
+(define (client-set-floating! client floating?)
+  ((@@ (gwwm) client-set-floating!) client floating? ))
 
 (define (client-is-fullscreen? client)
   ((@@ (gwwm) client-is-fullscreen?) client))
@@ -25,7 +25,7 @@
 (define client-floating?
   (make-procedure-with-setter
    client-is-floating?
-   client-set-floating))
+   client-set-floating!))
 
 (define client-fullscreen?
   (make-procedure-with-setter

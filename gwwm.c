@@ -2108,7 +2108,7 @@ setfloating(Client *c, int floating)
 	printstatus();
 }
 
-SCM_DEFINE (gwwm_client_set_floating, "client-set-floating" ,2,0,0,
+SCM_DEFINE (gwwm_client_set_floating, "client-set-floating!" ,2,0,0,
             (SCM c ,SCM floating), "")
 #define FUNC_NAME s_gwwm_client_set_floating
 {
