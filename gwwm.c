@@ -2532,6 +2532,13 @@ togglefullscreen(const Arg *arg)
 }
 
 
+SCM_DEFINE (gwwm_setfullscreen, "client-set-fullscreen!",2,0,0,(SCM c,SCM yes),"")
+#define FUNC_NAME s_gwwm_setfullscreen
+{
+  setfullscreen(UNWRAP_CLIENT(c),scm_to_bool(yes));
+  return SCM_UNSPECIFIED;
+}
+#undef FUNC_NAME
 SCM_DEFINE (gwwm_togglefullscreen, "togglefullscreen",0, 0,0,
             () ,
             "c")
