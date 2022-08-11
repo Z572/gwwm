@@ -11,6 +11,8 @@ gwwm_LDADD= $(WLROOTS_LIBS) $(WAYLAND_SERVER_LIBS) $(XKBCOMMON_LIBS) \
 			$(GUILE_LIBS) $(LIBINPUT_LIBS) $(XCB_LIBS)
 snarfcppopts =  $(INCLUDES) $(CPPFLAGS) $(gwwm_CFLAGS)
 SUFFIXES= .c .scm .go .x
+
+$(gwwm_SOURCES): $(procedures_h)
 .c.x:
 	guile-snarf -o $@ $< $(snarfcppopts)
 CLEANFILES = %D%/*.x $(procedures_h)
