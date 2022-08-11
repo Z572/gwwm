@@ -66,4 +66,7 @@ GUILE_WARNINGS =                                          \
 moddir=$(prefix)/share/guile/site/$(GUILE_EFFECTIVE_VERSION)
 godir=$(libdir)/guile/$(GUILE_EFFECTIVE_VERSION)/site-ccache
 
+run:
+	exec $(top_builddir)/pre-inst-env $(top_builddir)/gwwm
+
 include lisp/gwwm/Makefile
