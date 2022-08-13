@@ -4,7 +4,8 @@
   #:export (spawn chvt togglefullscreen))
 
 (define* (togglefullscreen #:optional (client (current-client)))
-  (client-toggle-fullscreen client))
+  (when client
+    (client-toggle-fullscreen client)) )
 
 (define (spawn program . args)
   (when (= (primitive-fork) 0)
