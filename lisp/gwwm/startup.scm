@@ -1,5 +1,7 @@
 (use-modules (ice-9 getopt-long)
              (system repl server)
+             (gwwm keymap)
+             (gwwm commands)
              (srfi srfi-1)
              (gwwm config))
 (define option-spec
@@ -31,3 +33,32 @@ gwwm [options]
    (find
     (lambda (c) (client=? client c))
     (client-list))))
+
+(define (init-global-keybind)
+  (keymap-global-set (kbd (s S space))
+
+                     togglefloating)
+  (keymap-global-set (kbd (s S C))
+                     killclient)
+
+  (keymap-global-set
+   (kbd (s f))
+   togglefullscreen)
+  (keymap-global-set
+   (kbd (s e))
+   (lambda ()
+     (spawn "emacs")))
+  (keymap-global-set
+   (kbd (s Tab))
+   zoom)
+  (keymap-global-set
+   (kbd (s S Q))
+   gwwm-quit)
+  (for-each (lambda (a)
+              (keymap-global-set
+               (kbd* `(C M ,(string->symbol
+                             (string-append
+                              "XF86Switch_VT_"
+                              (number->string a)))))
+               (lambda () (chvt a))))
+            (iota 12)))

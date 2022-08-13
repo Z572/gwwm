@@ -1527,16 +1527,9 @@ keybinding(uint32_t mods, xkb_keysym_t sym)
 	 * processing keys, rather than passing them on to the client for its own
 	 * processing.
 	 */
-	int handled = 0;
-	const Key *k;
-	for (k = keys; k < END(keys); k++) {
-		if (CLEANMASK(mods) == CLEANMASK(k->mod) &&
-				sym == k->keysym && k->func) {
-			k->func(&k->arg);
-			handled = 1;
-		}
-	}
-	return handled;
+  return scm_to_bool(scm_call_2(scm_c_private_ref("gwwm keybind", "keybinding"),
+                                scm_from_uint32(mods),
+                                scm_from_uint32(sym)));
 }
 
 void
@@ -2917,6 +2910,7 @@ inner_main(void *closure,int argc, char *argv[])
 #ifndef SCM_MAGIC_SNARFER
 #include "gwwm.x"
 #endif
+    scm_call_0(SCM_LOOKUP_REF("init-global-keybind"));
   char *startup_cmd = NULL;
 	int c;
 
