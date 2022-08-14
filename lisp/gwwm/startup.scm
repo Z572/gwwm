@@ -61,4 +61,4 @@ gwwm [options]
                               "XF86Switch_VT_"
                               (number->string a)))))
                (lambda () (chvt a))))
-            (iota 12)))
+            (iota 12 1)))
