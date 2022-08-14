@@ -656,6 +656,17 @@ SCM_DEFINE (gwwm_client_list , "client-list",0,0,0,(),"")
 }
 #undef FUNC_NAME
 
+SCM_DEFINE (gwwm_client_monitor, "client-monitor" , 1,0,0,
+            (SCM c), "")
+#define FUNC_NAME s_gwwm_client_monitor
+{
+    Client *cl = UNWRAP_CLIENT(c);
+
+  return (WRAP_MONITOR(cl->mon));
+}
+#undef FUNC_NAME
+
+
 SCM_DEFINE (gwwm_monitor_list , "monitor-list",0,0,0,(),"")
 #define FUNC_NAME s_gwwm_monitor_list
 {

@@ -12,6 +12,8 @@
             client-live?
             client=?))
 
+(define (client-monitor client)
+  ((@@ (gwwm) client-monitor) client))
 (define (client=? c1 c2)
   ((@@ (gwwm) client=?) c1 c2))
 (define (client-list)
