@@ -1326,9 +1326,11 @@ SCM_DEFINE(gwwm_idle,"gwwm-idle",0,0,0,(),""){
 void
 focusmon(const Arg *arg)
 {
-	do
-	    current_monitor = dirtomon(arg->i);
-	while (!current_monitor->wlr_output->enabled);
+	int i = 0, nmons = wl_list_length(&mons);
+	if (nmons)
+		do /* don't switch to disabled mons */
+		    current_monitor = dirtomon(arg->i);
+		while (!current_monitor->wlr_output->enabled && i++ < nmons);
 	focusclient(focustop(current_monitor), 1);
 }
 
