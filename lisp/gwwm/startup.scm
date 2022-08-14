@@ -27,13 +27,6 @@ gwwm [options]
 
 (false-if-exception (spawn-server (make-tcp-server-socket)))
 
-(define (client-live? client)
-  "return #t if client is live, or #f not live."
-  (->bool
-   (find
-    (lambda (c) (client=? client c))
-    (client-list))))
-
 (define (init-global-keybind)
   (keymap-global-set (kbd (s S space))
 
