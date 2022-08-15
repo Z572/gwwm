@@ -123,34 +123,6 @@ typedef struct {
 	uint32_t resize; /* configure serial of a pending resize */
 	int isfullscreen;
 } Client;
-#define WRAP_CLIENT(o) (scm_make_foreign_object_1(client_type,o))
-#define UNWRAP_CLIENT(o) (scm_foreign_object_ref(o, 0))
-SCM_DEFINE (gwwm_client_is_fullscreen_p, "client-is-fullscreen?" ,1,0,0,
-            (SCM c), "")
-#define FUNC_NAME s_gwwm_client_is_fullscreen_p
-{
-  Client *cl = UNWRAP_CLIENT(c);
-  return scm_from_bool(cl->isfullscreen);
-}
-#undef FUNC_NAME
-
-SCM_DEFINE (gwwm_client_is_floating_p, "client-is-floating?" ,1,0,0,
-            (SCM c), "")
-#define FUNC_NAME s_gwwm_client_is_floating_p
-{
-  Client *cl = UNWRAP_CLIENT(c);
-  return scm_from_bool(cl->isfloating);
-}
-#undef FUNC_NAME
-
-SCM_DEFINE (gwwm_client_border_width, "client-border-width" , 1,0,0,
-            (SCM c), "")
-#define FUNC_NAME s_gwwm_client_border_width
-{
-    Client *cl = UNWRAP_CLIENT(c);
-  return scm_from_int(cl->bw);
-}
-#undef FUNC_NAME
 
 typedef struct {
 	uint32_t singular_anchor;
@@ -447,79 +419,6 @@ SCM_DEFINE (gwwm_c_config, "gwwm-config",0, 0,0,
 }
 #undef FUNC_NAME
 
-SCM_DEFINE (gwwm_client_get_title, "client-get-title" ,1,0,0,
-            (SCM c), "")
-#define FUNC_NAME s_gwwm_client_get_title
-{
-  Client *cl = UNWRAP_CLIENT(c);
-  return scm_from_utf8_string(client_get_title(cl));
-}
-#undef FUNC_NAME
-
-
-SCM_DEFINE (gwwm_client_get_appid, "client-get-appid" ,1,0,0,
-            (SCM c), "")
-#define FUNC_NAME s_gwwm_client_get_appid
-{
-  Client *cl = UNWRAP_CLIENT(c);
-  return scm_from_utf8_string(client_get_appid(cl));
-}
-#undef FUNC_NAME
-
-SCM_DEFINE (gwwm_client_get_parent, "client-get-parent" ,1,0,0,
-            (SCM c), "")
-#define FUNC_NAME s_gwwm_client_get_parent
-{
-  Client *cl = UNWRAP_CLIENT(c);
-  Client *p = client_get_parent(cl);
-  if (p) {
-    return WRAP_CLIENT(p);
-  };
-  return SCM_BOOL_F;
-}
-#undef FUNC_NAME
-
-SCM_DEFINE (gwwm_set_client_border_width, "client-set-border-width" , 2,0,0,
-            (SCM c ,SCM w), "")
-#define FUNC_NAME s_gwwm_client_border_width_set
-{
-    Client *cl = UNWRAP_CLIENT(c);
-    cl->bw=scm_to_signed_integer(w ,0, 1240);
-  return WRAP_CLIENT(cl);
-}
-#undef FUNC_NAME
-
-SCM_DEFINE (gwwm_client_type, "client-type" , 1,0,0,
-            (SCM c), "")
-{
-  Client *cl = UNWRAP_CLIENT(c);
-  char* t;
-  switch (cl->type)
-    {
-    case XDGShell:
-      t="XDGShell";
-      break;
-    case LayerShell:
-      t="LayerShell";
-      break;
-    case X11Managed:
-      t="X11Managed";
-      break;
-    case X11Unmanaged:
-      t="X11Unmanaged";
-      break;
-    }
-  return scm_from_utf8_string(t);
-}
-
-SCM_DEFINE (gwwm_client_wants_fullscreen_p , "client-wants-fullscreen?",1,0,0,
-            (SCM client), "")
-#define FUNC_NAME s_gwwm_client_wants_fullscreen
-{
-  return scm_from_bool(client_wants_fullscreen(UNWRAP_CLIENT(client)));
-}
-#undef FUNC_NAME
-
 /* compile-time check if all tags fit into an unsigned int bit array. */
 struct NumTags { char limitexceeded[LENGTH(tags) > 31 ? -1 : 1]; };
 
@@ -644,17 +543,7 @@ arrange(Monitor *m)
 		m->lt[m->sellt]->arrange(m);
 	motionnotify(0);
 }
-SCM_DEFINE (gwwm_client_list , "client-list",0,0,0,(),"")
-#define FUNC_NAME s_gwwm_client_list
-{
-  SCM a=scm_make_list(scm_from_int(0), SCM_UNSPECIFIED);
-  	Client *c;
-	wl_list_for_each(c, &clients, link) {
-      a=scm_cons(WRAP_CLIENT(c), a);
-    }
-    return a;
-}
-#undef FUNC_NAME
+
 
 SCM_DEFINE (gwwm_client_monitor, "client-monitor" , 1,0,0,
             (SCM c), "")
@@ -2112,17 +2001,6 @@ setfloating(Client *c, int floating)
 	printstatus();
 }
 
-SCM_DEFINE (gwwm_client_set_floating, "client-set-floating!" ,2,0,0,
-            (SCM c ,SCM floating), "")
-#define FUNC_NAME s_gwwm_client_set_floating
-{
-  Client *cl = UNWRAP_CLIENT(c);
-  setfloating(cl , scm_to_bool(floating));
-  return SCM_UNSPECIFIED;
-}
-#undef FUNC_NAME
-
-
 void
 setfullscreen(Client *c, int fullscreen)
 {
@@ -2534,23 +2412,7 @@ togglefullscreen(const Arg *arg)
 }
 
 
-SCM_DEFINE (gwwm_setfullscreen, "client-set-fullscreen!",2,0,0,(SCM c,SCM yes),"")
-#define FUNC_NAME s_gwwm_setfullscreen
-{
-  setfullscreen(UNWRAP_CLIENT(c),scm_to_bool(yes));
-  return SCM_UNSPECIFIED;
-}
-#undef FUNC_NAME
 
-SCM_DEFINE (gwwm_killclient, "killclient",0, 0,0,
-            () ,
-            "c")
-#define FUNC_NAME s_gwwm_killclient
-{
-  killclient(NULL);
-  return SCM_UNSPECIFIED;
-}
-#undef FUNC_NAME
 
 
 void

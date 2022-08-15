@@ -11,20 +11,7 @@
 #define UNWRAP_WLR_BACKEND(p) (TO_P(REF_CALL_1("wlroots backend", "unwrap-wlr-backend",p)))
 
 
-static SCM client_type;
-void
-init_client_type (void)
-{
-  SCM name, slots;
-  scm_t_struct_finalize finalizer;
 
-  name = scm_from_utf8_symbol ("gwwm-client");
-  slots = scm_list_1 (scm_from_utf8_symbol ("data"));
-  finalizer = NULL;
-
-  client_type =
-    scm_make_foreign_object_type (name, slots, finalizer);
-}
 
 static SCM monitor_type;
 void
@@ -40,6 +27,7 @@ init_monitor_type (void)
   monitor_type =
     scm_make_foreign_object_type (name, slots, finalizer);
 }
+extern void init_client_type(void);
 #define WRAP_MONITOR(o) (scm_make_foreign_object_1(monitor_type,o))
 #define UNWRAP_MONITOR(o) (struct Monitor*)(scm_foreign_object_ref(o, 0))
 void init_scm() {
