@@ -5,6 +5,8 @@ abs_top_builddir="`cd "@abs_top_builddir@" > /dev/null; pwd`"
 
 GUILE_LOAD_COMPILED_PATH="$abs_top_builddir/lisp${GUILE_LOAD_COMPILED_PATH:+:}$GUILE_LOAD_COMPILED_PATH"
 GUILE_LOAD_PATH="$abs_top_builddir/lisp:$GUILE_LOAD_PATH"
+GUILE_AUTO_COMPILE=0
+export GUILE_AUTO_COMPILE
 export GUILE_LOAD_COMPILED_PATH GUILE_LOAD_PATH
 LTDL_LIBRARY_PATH="$abs_top_builddir/.libs/"
 export LTDL_LIBRARY_PATH
