@@ -10,6 +10,7 @@
             monitor-refresh
             monitor-physical-width
             monitor-physical-height
+            monitor=?
             <gwwm-monitor>))
 
 (define-class <gwwm-monitor> ()
@@ -24,6 +25,10 @@
 
 (define-method (equal? (o1 <gwwm-monitor>)
                        (o2 <gwwm-monitor>))
+  (monitor=? o1 o2))
+
+(define-method (monitor=? (o1 <gwwm-monitor>)
+                          (o2 <gwwm-monitor>))
   (equal? (.data o1) (.data o2)))
 
 (define (monitor-wlr-output m)

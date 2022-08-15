@@ -1302,11 +1302,6 @@ SCM_DEFINE (gwwm_focusmon ,"focusmon",1,0,0,(SCM a),"" ){
   return SCM_UNSPECIFIED;
 }
 
-SCM_DEFINE (gwwm_monitor_eq, "monitor=?",2,0,0,(SCM m1,SCM m2),"")
-{
-  return (UNWRAP_MONITOR(m1)== UNWRAP_MONITOR(m2)) ? SCM_BOOL_T : SCM_BOOL_F;
-}
-
 void
 focusstack(const Arg *arg)
 {
