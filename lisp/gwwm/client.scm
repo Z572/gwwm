@@ -10,6 +10,7 @@
             client-set-fullscreen!
             client-toggle-fullscreen
             client-list
+            client-get-appid
             client-live?
             client=?
             <gwwm-client>))
@@ -21,6 +22,8 @@
   ((@@ (gwwm) client-monitor) client))
 (define (client=? c1 c2)
   ((@@ (gwwm) client=?) c1 c2))
+(define (client-get-appid client)
+  ((@@ (gwwm) client-get-appid) client))
 (define (client-list)
   ((@@ (gwwm) client-list)))
 
