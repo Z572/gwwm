@@ -7,23 +7,12 @@
  */
 
 /* Leave these functions first; they're used in the others */
-static SCM client_type;
-void
-init_client_type (void)
-{
-  SCM name, slots;
-  scm_t_struct_finalize finalizer;
 
-  name = scm_from_utf8_symbol ("gwwm-client");
-  slots = scm_list_1 (scm_from_utf8_symbol ("data"));
-  finalizer = NULL;
-
-  client_type =
-    scm_make_foreign_object_type (name, slots, finalizer);
-}
-
-#define WRAP_CLIENT(o) (scm_make_foreign_object_1(client_type,o))
-#define UNWRAP_CLIENT(o) (scm_foreign_object_ref(o, 0))
+#define WRAP_CLIENT(o) (scm_call_3(REF("oop goops","make"), \
+                                  REF("gwwm client","<gwwm-client>"), \
+                                  scm_from_utf8_keyword("data"), \
+                                  FROM_P(o)))
+#define UNWRAP_CLIENT(o) TO_P(scm_call_1(REFP("gwwm client",".data"),o))
 
 static inline int
 client_is_x11(Client *c)

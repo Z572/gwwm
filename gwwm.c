@@ -383,8 +383,9 @@ static Atom netatom[NetLast];
 #include "config.h"
 
 /* attempt to encapsulate suck into one file */
-#include "client.h"
 #include "guile.c"
+#include "client.h"
+
 
 SCM_DEFINE_PUBLIC(gwwm_monitor_wlr_output, "monitor-wlr-output", 1, 0, 0, (SCM m), ""){
   return (REF_CALL_1("wlroots types output","wrap-wlr-output",(FROM_P((UNWRAP_MONITOR(m))->wlr_output))));

@@ -1,5 +1,6 @@
 (define-module (gwwm client)
   #:use-module (srfi srfi-1)
+  #:use-module (oop goops)
   #:export (current-client
             client-floating?
             client-set-floating!
@@ -10,7 +11,11 @@
             client-toggle-fullscreen
             client-list
             client-live?
-            client=?))
+            client=?
+            <gwwm-client>))
+
+(define-class <gwwm-client> ()
+  (data #:init-keyword #:data #:accessor .data))
 
 (define (client-monitor client)
   ((@@ (gwwm) client-monitor) client))

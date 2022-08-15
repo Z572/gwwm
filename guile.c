@@ -1,5 +1,6 @@
 #include <libguile.h>
 #define REF(A, B) (scm_c_public_ref(A, B))
+#define REFP(A,B) (scm_c_private_ref(A, B))
 #define FROM_P(P) (scm_from_pointer(P, NULL))
 #define TO_P(P) (scm_to_pointer(P))
 #define REF_CALL_0(M, N) (scm_call_0(REF(M, N)))
@@ -31,7 +32,6 @@ extern void init_client_type(void);
 #define WRAP_MONITOR(o) (scm_make_foreign_object_1(monitor_type,o))
 #define UNWRAP_MONITOR(o) (struct Monitor*)(scm_foreign_object_ref(o, 0))
 void init_scm() {
-  init_client_type();
   init_monitor_type();
   /* init_scm_snarf(); */
   scm_primitive_load(scm_sys_search_load_path(scm_from_utf8_string("gwwm.scm")));
