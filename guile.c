@@ -14,25 +14,13 @@
 
 
 
-static SCM monitor_type;
-void
-init_monitor_type (void)
-{
-  SCM name, slots;
-  scm_t_struct_finalize finalizer;
-
-  name = scm_from_utf8_symbol ("gwwm-monitor");
-  slots = scm_list_1 (scm_from_utf8_symbol ("data"));
-  finalizer = NULL;
-
-  monitor_type =
-    scm_make_foreign_object_type (name, slots, finalizer);
-}
 extern void init_client_type(void);
-#define WRAP_MONITOR(o) (scm_make_foreign_object_1(monitor_type,o))
-#define UNWRAP_MONITOR(o) (struct Monitor*)(scm_foreign_object_ref(o, 0))
+#define WRAP_MONITOR(o) (scm_call_3(REF("oop goops","make"), \
+                                  REF("gwwm monitor","<gwwm-monitor>"), \
+                                  scm_from_utf8_keyword("data"), \
+                                  FROM_P(o)))
+#define UNWRAP_MONITOR(o) (struct Monitor*)(TO_P(scm_call_1(REFP("gwwm monitor",".data"),o)))
 void init_scm() {
-  init_monitor_type();
   /* init_scm_snarf(); */
   scm_primitive_load(scm_sys_search_load_path(scm_from_utf8_string("gwwm.scm")));
   scm_primitive_load(scm_sys_search_load_path(scm_from_utf8_string("gwwm/startup.scm")));

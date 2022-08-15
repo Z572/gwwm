@@ -1,4 +1,5 @@
 (define-module (gwwm monitor)
+  #:use-module (oop goops)
   #:use-module (wlroots types output)
   #:export (monitor-name
             monitor-description
@@ -8,7 +9,22 @@
             monitor-width
             monitor-refresh
             monitor-physical-width
-            monitor-physical-height))
+            monitor-physical-height
+            <gwwm-monitor>))
+
+(define-class <gwwm-monitor> ()
+  (data #:init-keyword #:data #:accessor .data))
+
+(define-method (write (o <gwwm-monitor>) port)
+  (format port "#<<gwwm-monitor ~a (~a . ~a) scale: ~a>"
+          (monitor-name o)
+          (monitor-width o)
+          (monitor-height o)
+          (monitor-scale o)))
+
+(define-method (equal? (o1 <gwwm-monitor>)
+                       (o2 <gwwm-monitor>))
+  (equal? (.data o1) (.data o2)))
 
 (define (monitor-wlr-output m)
   ((@@ (gwwm) monitor-wlr-output) m))
