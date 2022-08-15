@@ -18,8 +18,15 @@
 (define-class <gwwm-client> ()
   (data #:init-keyword #:data #:accessor .data))
 
+(define-method (write (client <gwwm-client>) port)
+  (format port "#<<gwwm-client ~a>" (client-get-appid client)))
 (define (client-monitor client)
   ((@@ (gwwm) client-monitor) client))
+
+(define-method (equal? (o1 <gwwm-client>)
+                       (o2 <gwwm-client>))
+  (client=? o1 o2))
+
 (define (client=? c1 c2)
   ((@@ (gwwm) client=?) c1 c2))
 (define (client-get-appid client)
