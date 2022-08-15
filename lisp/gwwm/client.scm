@@ -27,8 +27,8 @@
                        (o2 <gwwm-client>))
   (client=? o1 o2))
 
-(define (client=? c1 c2)
-  ((@@ (gwwm) client=?) c1 c2))
+(define-method (client=? (c1 <gwwm-client>) (c2 <gwwm-client>))
+  (equal? (.data c1) (.data c2)))
 (define (client-get-appid client)
   ((@@ (gwwm) client-get-appid) client))
 (define (client-list)
