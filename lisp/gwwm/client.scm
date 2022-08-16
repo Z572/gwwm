@@ -13,6 +13,8 @@
             client-get-appid
             client-live?
             client=?
+            client-is-x11?
+            client-type
             <gwwm-client>))
 
 (define-class <gwwm-client> ()
@@ -29,8 +31,16 @@
 
 (define-method (client=? (c1 <gwwm-client>) (c2 <gwwm-client>))
   (equal? (.data c1) (.data c2)))
+
+
+(define (client-type client)
+  ((@@ (gwwm) client-type) client))
+(define (client-is-x11? client)
+  (->bool (member (client-type client) '("X11Managed" "X11Unmanaged"))))
+
 (define (client-get-appid client)
   ((@@ (gwwm) client-get-appid) client))
+
 (define (client-list)
   ((@@ (gwwm) client-list)))
 
