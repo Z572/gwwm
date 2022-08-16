@@ -8,6 +8,7 @@
  (gnu packages gl)
  (gnu packages xdisorg)
  (guix build-system gnu)
+ (gnu packages bash)
  (gnu packages)
  (gnu packages autotools)
  (gnu packages guile)
@@ -105,33 +106,51 @@
                                   (add-after 'install 'wrap-executable
                                     (lambda* (#:key inputs outputs #:allow-other-keys)
                                       (let* ((out (assoc-ref outputs "out"))
+                                             (deps (map (lambda (a)
+                                                          (assoc-ref inputs a ))
+                                                        '("guile-wayland"
+                                                          "guile-wlroots"
+                                                          "guile-bytestructures")))
                                              (effective (read-line
-                                                         (open-pipe* OPEN_READ
-                                                                     "guile" "-c"
-                                                                     "(display (effective-version))")))
-                                             (mods (string-append out "/share/guile/site/" effective))
-                                             (gos (string-append out "/lib/guile/" effective "/site-ccache")))
+                                                         (open-pipe*
+                                                          OPEN_READ
+                                                          "guile" "-c"
+                                                          "(display (effective-version))")))
+                                             (mods (map (lambda (o)
+                                                          (string-append
+                                                           o "/share/guile/site/"
+                                                           effective))
+                                                        (cons out deps)))
+                                             (gos
+                                              (map (lambda (o)
+                                                     (string-append
+                                                      o
+                                                      "/lib/guile/"
+                                                      effective
+                                                      "/site-ccache"))
+                                                   (cons out deps))))
                                         (wrap-program (search-input-file outputs "bin/gwwm")
                                           #:sh (search-input-file inputs "bin/bash")
                                           `("GUILE_AUTO_COMPILE" ":" = ("0"))
                                           `("GUILE_LOAD_PATH" ":" prefix
-                                            ,(list mods))
+                                            ,mods)
                                           `("GUILE_LOAD_COMPILED_PATH" ":" prefix
-                                            ,(list gos)))))))))
+                                            ,gos))))))))
     (native-inputs
      (list autoconf automake
            pkg-config
            guile-3.0-latest
+           bash-minimal
            texinfo))
-    (inputs (list guile-3.0-latest wlroots-next xorg-server-xwayland))
-    (propagated-inputs
-     (list guile-bytestructures
-           (primitive-load
-            (string-append (dirname (dirname (current-filename)))
-                           "/guile-wayland/guix.scm"))
-           (primitive-load
-            (string-append (dirname (dirname (current-filename)))
-                           "/guile-wlroots/guix.scm"))))
+    (inputs (list guile-3.0-latest wlroots-next xorg-server-xwayland
+
+                  guile-bytestructures
+                  (primitive-load
+                   (string-append (dirname (dirname (current-filename)))
+                                  "/guile-wayland/guix.scm"))
+                  (primitive-load
+                   (string-append (dirname (dirname (current-filename)))
+                                  "/guile-wlroots/guix.scm"))))
     (synopsis "")
     (description "")
     (home-page "")
