@@ -31,7 +31,9 @@
 
 (define (ref-key k)
   (module-ref (resolve-interface '(gwwm keys))
-              (symbol-append 'XKB_KEY_ k)))
+              (symbol-append 'key- k)))
+;; (define-method (ref-key (k <integer>))
+;;   (ref-key (string->symbol (number->string k))))
 
 (define (clean-caps mks)
   (& mks (~ WLR_MODIFIER_CAPS)))

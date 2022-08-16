@@ -1,0 +1,10 @@
+(define-module (gwwm utils)
+  #:use-module (oop goops)
+  #:export (->symbol))
+
+(define-method (->symbol (o <symbol>))
+  o)
+(define-method (->symbol (o <number>))
+  (string->symbol (number->string o)))
+(define-method (->symbol (o <string>))
+  (string->symbol o))

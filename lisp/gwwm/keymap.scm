@@ -4,6 +4,7 @@
   #:use-module (srfi srfi-71)
   #:use-module (ice-9 match)
   #:use-module (oop goops)
+  #:use-module (gwwm utils)
   #:export (global-keymap .modify-keys .key .keys
                           keymap-set
                           kbd* global-keymap
@@ -64,8 +65,7 @@
   (case-lambda
     ((kl)
      (let ((k mk (car+cdr (reverse kl))))
-       (list (make <key> #:m mk;; (apply logior mk)
-                   #:k k ))))
+       (list (make <key> #:m mk #:k (->symbol k)))))
     ((kl . rest)
      (append (kbd* kl) (apply kbd* rest)))))
 

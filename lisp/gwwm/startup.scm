@@ -31,7 +31,7 @@ gwwm [options]
   (keymap-global-set (kbd (s S space))
 
                      togglefloating)
-  (keymap-global-set (kbd (s S C))
+  (keymap-global-set (kbd (s S c))
                      killclient)
 
   (keymap-global-set
@@ -45,13 +45,11 @@ gwwm [options]
    (kbd (s Tab))
    zoom)
   (keymap-global-set
-   (kbd (s S Q))
+   (kbd (s S q))
    gwwm-quit)
   (for-each (lambda (a)
               (keymap-global-set
-               (kbd* `(C M ,(string->symbol
-                             (string-append
-                              "XF86Switch_VT_"
-                              (number->string a)))))
+               (kbd* `(C M ,(string->symbol (string-append
+                                             "F" (number->string a)))))
                (lambda () (chvt a))))
             (iota 12 1)))
