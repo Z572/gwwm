@@ -21,7 +21,7 @@
 (define MOD5  WLR_MODIFIER_MOD5 )
 
 (define-class <key> ()
-  (modify-keys #:init-value 0
+  (modify-keys #:init-value '()
                #:init-keyword #:m
                #:accessor .modify-keys)
   (key #:init-value 0
