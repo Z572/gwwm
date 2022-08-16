@@ -2310,7 +2310,7 @@ tag(const Arg *arg)
 }
 
 SCM_DEFINE (gwwm_tag, "tag",1,0,0,(SCM ui),""){
-  tag(&((Arg){.ui=(scm_to_int(ui))}));
+  tag(&((Arg){.ui= 1 << (scm_to_int(ui))}));
   return SCM_UNSPECIFIED;
 }
 
@@ -2375,17 +2375,11 @@ SCM_DEFINE (gwwm_togglefloating, "togglefloating",0, 0,0,
 }
 #undef FUNC_NAME
 
-
-
 void
 togglefullscreen(const Arg *arg)
 {
   REF_CALL_0("gwwm commands", "togglefullscreen");
 }
-
-
-
-
 
 void
 toggletag(const Arg *arg)
@@ -2408,7 +2402,7 @@ SCM_DEFINE (gwwm_toggletag, "toggletag",1, 0,0,
             "c")
 #define FUNC_NAME s_gwwm_toggletag
 {
-  toggletag(&((Arg){.ui=(scm_to_int(ui))}));
+  toggletag(&((Arg){.ui=1 << (scm_to_int(ui))}));
   return SCM_UNSPECIFIED;
 }
 #undef FUNC_NAME
@@ -2427,7 +2421,7 @@ toggleview(const Arg *arg)
 }
 
 SCM_DEFINE (gwwm_toggleview, "toggleview",1,0,0,(SCM ui),""){
-  toggleview(&((Arg){.ui=(scm_to_int(ui))}));
+  toggleview(&((Arg){.ui=1 << (scm_to_int(ui))}));
   return SCM_UNSPECIFIED;
 }
 
@@ -2543,8 +2537,7 @@ view(const Arg *arg)
 }
 
 SCM_DEFINE (gwwm_view, "view",1,0,0,(SCM ui),""){
-  Arg arg={.ui=(scm_to_int(ui))};
-  view(&((Arg){.ui=(scm_to_int(ui))}));
+  view(&((Arg){.ui=1 << (scm_to_int(ui))}));
   return SCM_UNSPECIFIED;
 }
 

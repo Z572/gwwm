@@ -52,4 +52,10 @@ gwwm [options]
                (kbd* `(C M ,(string->symbol (string-append
                                              "F" (number->string a)))))
                (lambda () (chvt a))))
-            (iota 12 1)))
+            (iota 12 1))
+  (define (tagkeys k)
+    (keymap-global-set (kbd* `(s ,k)) (lambda () (view k)))
+    (keymap-global-set (kbd* `(C s ,k)) (lambda () (toggleview k)))
+    (keymap-global-set (kbd* `(s S ,k)) (lambda () (tag k)))
+    (keymap-global-set (kbd* `(C s S ,k)) (lambda () (toggletag k))))
+  (for-each tagkeys (iota 10 0)))
