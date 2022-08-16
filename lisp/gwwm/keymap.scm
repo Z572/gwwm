@@ -88,7 +88,9 @@
                            (f <boolean>) )
   (and=> (and (not f)
               (find-key-l key keymap))
-         (lambda (a) (delete! a (.key keymap)))))
+         (lambda (a)
+           (->bool (set! (.keys keymap)
+                         (delete a (.keys keymap)))))))
 
 (define-method (find-key-l (key <key>) (keymap <keymap>))
   (find (match-lambda
