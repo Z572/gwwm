@@ -22,6 +22,10 @@
               scm_from_utf8_keyword("data"), FROM_P(o)))
 #define UNWRAP_MONITOR(o)                                                      \
   (struct Monitor *)(TO_P(scm_call_1(REFP("gwwm monitor", ".data"), o)))
+#define WRAP_WLR_XDG_SURFACE(p)                                                    \
+  (REF_CALL_1("wlroots types xdg-shell", "wrap-wlr-xdg-surface", FROM_P(p)))
+#define UNWRAP_WLR_XDG_SURFACE(p)                                                  \
+  (TO_P(REF_CALL_1("wlroots types xdg-shell", "wrap-wlr-xdg-surface", p)))
 void init_scm() {
   scm_primitive_load(
       scm_sys_search_load_path(scm_from_utf8_string("gwwm.scm")));

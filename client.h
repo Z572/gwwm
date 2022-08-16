@@ -12,7 +12,8 @@
                                   REF("gwwm client","<gwwm-client>"), \
                                   scm_from_utf8_keyword("data"), \
                                   FROM_P(o)))
-#define UNWRAP_CLIENT(o) TO_P(scm_call_1(REFP("gwwm client",".data"),o))
+#define UNWRAP_CLIENT(o) (Client *)(TO_P(scm_call_1(REFP("gwwm client",".data"),o)))
+
 
 static inline int
 client_is_x11(Client *c)
@@ -230,6 +231,14 @@ client_set_fullscreen(Client *c, int fullscreen)
 #endif
 	wlr_xdg_toplevel_set_fullscreen(c->surface.xdg, fullscreen);
 }
+
+SCM_DEFINE (gwwm_client_xdg_surface ,"client-xdg-surface",1,0,0,(SCM c),"")
+#define FUNC_NAME s_gwwm_client_xdg_surface
+{
+  return WRAP_WLR_XDG_SURFACE(&(UNWRAP_CLIENT(c))->surface.xdg);
+}
+#undef FUNC_NAME
+
 
 static inline uint32_t
 client_set_size(Client *c, uint32_t width, uint32_t height)

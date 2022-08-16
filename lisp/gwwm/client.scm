@@ -32,6 +32,8 @@
 (define-method (client=? (c1 <gwwm-client>) (c2 <gwwm-client>))
   (equal? (.data c1) (.data c2)))
 
+(define (client-xdg-surface client)
+  ((@@ (gwwm) client-xdg-surface) client))
 
 (define (client-type client)
   ((@@ (gwwm) client-type) client))
