@@ -363,6 +363,7 @@ SCM_DEFINE (gwwm_set_client_border_width, "client-set-border-width" , 2,0,0,
 {
     Client *cl = UNWRAP_CLIENT(c);
     cl->bw=scm_to_signed_integer(w ,0, 1240);
+    arrange(current_monitor);
   return WRAP_CLIENT(cl);
 }
 #undef FUNC_NAME
