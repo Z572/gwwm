@@ -404,6 +404,10 @@ SCM_DEFINE (gwwm_backend, "gwwm-backend",0,0,0,(),"") {
   return WRAP_WLR_BACKEND(backend);
 }
 
+SCM_DEFINE (gwwm_display, "gwwm-display",0,0,0,(),"") {
+  return WRAP_WL_DISPLAY(dpy);
+}
+
 SCM_DEFINE (gwwm_c_config, "gwwm-config",0, 0,0,
             () ,
             "c")
@@ -1788,17 +1792,8 @@ printstatus(void)
 void
 quit(const Arg *arg)
 {
-	wl_display_terminate(dpy);
+  REF_CALL_0("gwwm commands","gwwm-quit");
 }
-
-SCM_DEFINE (gwwm_quit,"gwwm-quit",0,0,0,
-            (), "")
-#define FUNC_NAME s_gwwm_quit
-{
-  quit(NULL);
-  return SCM_UNSPECIFIED;
-}
-#undef FUNC_NAME
 
 void
 quitsignal(int signo)

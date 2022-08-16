@@ -10,7 +10,8 @@
 #define SCM_LOOKUP_REF(name)    (scm_variable_ref(scm_c_lookup(name)))
 #define WRAP_WLR_BACKEND(p) (REF_CALL_1("wlroots backend", "wrap-wlr-backend",FROM_P(p)))
 #define UNWRAP_WLR_BACKEND(p) (TO_P(REF_CALL_1("wlroots backend", "unwrap-wlr-backend",p)))
-
+#define WRAP_WL_DISPLAY(p) (REF_CALL_1("wayland display", "wrap-wl-display",FROM_P(p)))
+#define UNWRAP_WL_DISPLAY(p) (TO_P(REF_CALL_1("wayland display", "unwrap-wl-display",p)))
 
 
 

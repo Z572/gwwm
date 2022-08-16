@@ -1,7 +1,11 @@
 (define-module (gwwm commands)
   #:use-module (wlroots backend session)
+  #:use-module (wayland display)
   #:use-module (gwwm client)
-  #:export (spawn chvt togglefullscreen))
+  #:export (spawn
+            chvt
+            togglefullscreen
+            gwwm-quit))
 
 (define* (togglefullscreen #:optional (client (current-client)))
   (when client
@@ -18,3 +22,6 @@
   (wlr-session-change-vt
    (wlr-backend-get-session ((@@ (gwwm) gwwm-backend)))
    num))
+
+(define (gwwm-quit)
+  (wl-display-terminate ((@@ (gwwm) gwwm-display))))
