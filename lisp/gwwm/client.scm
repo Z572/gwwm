@@ -21,7 +21,11 @@
   (data #:init-keyword #:data #:accessor .data))
 
 (define-method (write (client <gwwm-client>) port)
-  (format port "#<<gwwm-client ~a>" (client-get-appid client)))
+  (format port "#<<gwwm-client ~a>"
+          (if (client-live? client)
+              (client-get-appid client)
+              "*deaded*"))
+  )
 (define (client-monitor client)
   ((@@ (gwwm) client-monitor) client))
 
