@@ -11,7 +11,7 @@
             client-toggle-fullscreen
             client-list
             client-get-appid
-            client-live?
+            client-alive?
             client=?
             client-is-x11?
             client-type
@@ -22,7 +22,7 @@
 
 (define-method (write (client <gwwm-client>) port)
   (format port "#<<gwwm-client ~a>"
-          (if (client-live? client)
+          (if (client-alive? client)
               (client-get-appid client)
               "*deaded*"))
   )
@@ -56,8 +56,8 @@
 (define (client-is-floating? client)
   ((@@ (gwwm) client-is-floating?) client))
 
-(define (client-live? client)
-  "return #t if client is live, or #f not live."
+(define (client-alive? client)
+  "return #t if client is alive, or #f deaded."
   (->bool
    (find
     (lambda (c) (client=? client c))
