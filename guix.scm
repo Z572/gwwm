@@ -121,8 +121,9 @@
     (native-inputs
      (list autoconf automake
            pkg-config
+           guile-3.0-latest
            texinfo))
-    (inputs (list guile-3.0 wlroots-next xorg-server-xwayland))
+    (inputs (list guile-3.0-latest wlroots-next xorg-server-xwayland))
     (propagated-inputs
      (list guile-bytestructures
            (primitive-load
