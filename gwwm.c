@@ -1942,7 +1942,7 @@ SCM_DEFINE (gwwm_current_client, "current-client",0, 0,0,
 {
   Client *c=current_client();
   if (c) {
-    return WRAP_CLIENT(current_client()) ;
+    return WRAP_CLIENT(c) ;
   }
   return SCM_BOOL_F ;
 }
