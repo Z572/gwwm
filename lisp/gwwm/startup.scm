@@ -28,6 +28,12 @@ gwwm [options]
 
 (false-if-exception (spawn-server (make-tcp-server-socket)))
 
+(define-once global-keymap
+  (make-parameter (make-keymap)))
+
+(define (keymap-global-set key command)
+  (keymap-set (global-keymap) key command))
+
 (define (init-global-keybind)
   (keymap-global-set (kbd (s S space))
 

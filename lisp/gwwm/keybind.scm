@@ -5,22 +5,21 @@
   #:use-module (gwwm commands)
   #:use-module (oop goops )
   #:use-module (gwwm keymap)
-  #:use-module (ice-9 match)
-  ;; #:export (;;ref-key
-  ;;           ;; SHIFT
-  ;;           ;; CAPS
-  ;;           ;; CTRL
-  ;;           ;; ALT
-  ;;           ;; MOD2
-  ;;           ;; MOD3
-  ;;           ;; LOGO
-  ;;           ;; MOD5
-  ;;           )
-  )
+  #:use-module (ice-9 match))
 
-(define* (parse-modify-key m #:optional (error-when-no-found? #t))
-  ((@@ (gwwm keymap) parse-modify-key)
-   m error-when-no-found?))
+(define SHIFT WLR_MODIFIER_SHIFT )
+(define CAPS  WLR_MODIFIER_CAPS )
+(define CTRL  WLR_MODIFIER_CTRL )
+(define ALT   WLR_MODIFIER_ALT  )
+(define MOD2  WLR_MODIFIER_MOD2 )
+(define MOD3  WLR_MODIFIER_MOD3 )
+(define LOGO  WLR_MODIFIER_LOGO )
+(define MOD5  WLR_MODIFIER_MOD5 )
+
+(define-modify-key 'C CTRL)
+(define-modify-key 's LOGO)
+(define-modify-key 'S SHIFT)
+(define-modify-key 'M ALT)
 
 (define & logand)
 (define ^ logxor)
@@ -46,4 +45,4 @@
                              (= sym (ref-key (.key k))))
                         (begin (command) #t)
                         #f))))
-  (any handle (.keys (global-keymap))))
+  (any handle (.keys ((@@ (gwwm) global-keymap)))))

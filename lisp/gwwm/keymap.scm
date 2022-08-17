@@ -1,24 +1,21 @@
 (define-module (gwwm keymap)
   #:use-module (srfi srfi-1)
-  #:use-module (wlroots types keyboard)
   #:use-module (srfi srfi-71)
   #:use-module (ice-9 match)
   #:use-module (oop goops)
   #:use-module (gwwm utils)
-  #:export (global-keymap .modify-keys .key .keys
-                          keymap-set
-                          kbd* global-keymap
-                          keymap-global-set)
+  #:export (make-keymap
+            keymap-set
+            .modify-keys
+            .key
+            .keys
+            kbd*
+            define-modify-key
+            parse-modify-key
+            <keymap>
+            <key>)
   #:export-syntax (kbd))
 
-(define SHIFT WLR_MODIFIER_SHIFT )
-(define CAPS  WLR_MODIFIER_CAPS )
-(define CTRL  WLR_MODIFIER_CTRL )
-(define ALT   WLR_MODIFIER_ALT  )
-(define MOD2  WLR_MODIFIER_MOD2 )
-(define MOD3  WLR_MODIFIER_MOD3 )
-(define LOGO  WLR_MODIFIER_LOGO )
-(define MOD5  WLR_MODIFIER_MOD5 )
 
 (define-class <key> ()
   (modify-keys #:init-value '()
@@ -31,6 +28,8 @@
 (define-class <keymap> ()
   (keys #:init-value '() #:accessor .keys))
 
+(define (make-keymap)
+  (make <keymap>))
 (define-method (equal? (key1 <key>) (key2 <key>))
   (and (equal? (.modify-keys key1) (.modify-keys key2))
        (equal? (.key key1) (.key key2))))
@@ -41,12 +40,10 @@
           (.key key)))
 
 (define %modify-keys
-  (let ((t (make-hash-table)))
-    (hash-set! t 'C CTRL)
-    (hash-set! t 's LOGO)
-    (hash-set! t 'S SHIFT)
-    (hash-set! t 'M ALT)
-    t))
+  (make-hash-table))
+
+(define (define-modify-key symbol value)
+  (hash-set! %modify-keys symbol value))
 
 (define* (parse-modify-key m #:optional (error-when-no-found? #t))
   (let ((o (hash-ref %modify-keys m)))
@@ -101,9 +98,3 @@
 (define (find-key-command key keymap)
   (and=> (find-key-l key keymap)
          second))
-
-(define global-keymap
-  (make-parameter (make <keymap>)))
-
-(define (keymap-global-set key command)
-  (keymap-set (global-keymap) key command))
