@@ -39,7 +39,7 @@
           (.modify-keys key )
           (.key key)))
 
-(define %modify-keys
+(define-once %modify-keys
   (make-hash-table))
 
 (define (define-modify-key symbol value)
