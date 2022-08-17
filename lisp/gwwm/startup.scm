@@ -45,6 +45,14 @@ gwwm [options]
    (kbd (s f))
    togglefullscreen)
   (keymap-global-set
+   (kbd (s j))
+   (lambda ()
+     (focusstack 1)))
+  (keymap-global-set
+   (kbd (s k))
+   (lambda ()
+     (focusstack -1)))
+  (keymap-global-set
    (kbd (s e))
    (lambda ()
      (spawn "emacs")))
