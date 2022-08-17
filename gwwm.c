@@ -376,7 +376,7 @@ static Atom netatom[NetLast];
 #include "config.h"
 
 /* attempt to encapsulate suck into one file */
-#include "guile.c"
+#include "guile.h"
 #include "client.h"
 
 

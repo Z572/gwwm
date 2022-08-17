@@ -5,7 +5,7 @@ protocols=  $(top_builddir)/protocols/wlr-layer-shell-unstable-v1.xml \
 			$(top_builddir)/protocols/idle.xml
 
 bin_PROGRAMS= gwwm
-gwwm_SOURCES=%D%/gwwm.c %D%/client.h %D%/config.h %D%/util.h %D%/util.c %D%/config.h
+gwwm_SOURCES=%D%/gwwm.c %D%/client.h %D%/config.h %D%/util.h %D%/util.c %D%/config.h %D%/guile.h
 nodist_gwwm_SOURCES = $(protocols_h)
 gwwm_CFLAGS= $(WAYLAND_SERVER_CFLAGS) $(WLROOTS_CFLAGS) $(GUILE_CFLAGS) \
 			 $(XCB_CFLAGS) $(XKBCOMMON_CFLAGS) $(LIBINPUT_CFLAGS)       \
