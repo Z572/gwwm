@@ -556,6 +556,22 @@ SCM_DEFINE (gwwm_client_monitor, "client-monitor" , 1,0,0,
 }
 #undef FUNC_NAME
 
+SCM_DEFINE (gwwm_keyboard_list , "keyboard-list",0,0,0,(),"")
+#define FUNC_NAME s_gwwm_keyboard_list
+{
+  SCM a=scm_make_list(scm_from_int(0), SCM_UNSPECIFIED);
+  	Keyboard *kb;
+	wl_list_for_each(kb, &keyboards, link) {
+      a=scm_cons(WRAP_KEYBOARD(kb), a);
+    }
+    return a;
+}
+#undef FUNC_NAME
+
+SCM_DEFINE(gwwm_keyboard_input_device,"keyboard-input-device",1,0,0,(SCM k),""){
+  Keyboard *kb=(UNWRAP_KEYBOARD(k));
+  return WRAP_WLR_INPUT_DEVICE(kb->device);
+}
 
 SCM_DEFINE (gwwm_monitor_list , "monitor-list",0,0,0,(),"")
 #define FUNC_NAME s_gwwm_monitor_list
