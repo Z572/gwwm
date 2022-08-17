@@ -13,6 +13,7 @@
             client-get-appid
             client-alive?
             client=?
+            client-get-parent
             client-is-x11?
             client-type
             <gwwm-client>))
@@ -28,6 +29,9 @@
   )
 (define (client-monitor client)
   ((@@ (gwwm) client-monitor) client))
+
+(define (client-get-parent client)
+  ((@@ (gwwm) client-get-parent) client))
 
 (define-method (equal? (o1 <gwwm-client>)
                        (o2 <gwwm-client>))
