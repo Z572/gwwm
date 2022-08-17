@@ -63,6 +63,17 @@
     (inputs
      (modify-inputs (package-inputs wayland-protocols)
                     (replace "wayland" wayland-next)))))
+(define libinput-next
+  (package
+    (inherit libinput)
+    (version "1.19.4")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "https://freedesktop.org/software/libinput/"
+                                  "libinput-" version ".tar.xz"))
+              (sha256
+               (base32
+                "0h5lz54rrl48bhi3vki6s08m6rn2h62rlf08dhgchdm9nmqaaczz"))))))
 (define wlroots-next
   (package
     (inherit wlroots)
@@ -85,6 +96,7 @@
      (modify-inputs (package-propagated-inputs wlroots)
                     (prepend libdrm-next libglvnd xcb-util-renderutil)
                     (replace "wayland" wayland-next)
+                    (replace "libinput-minimal" libinput-next)
                     (replace "wayland-protocols" wayland-protocols-next)))))
 
 ;; public package, used for 'guix system vm' test
