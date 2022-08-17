@@ -4,6 +4,7 @@
              (gwwm commands)
              (srfi srfi-1)
              (gwwm config))
+(setlocale LC_ALL "")
 (define option-spec
   '((version (single-char #\v) (value #f))
     (help (single-char #\h) (value #f))

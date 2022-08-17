@@ -339,7 +339,7 @@ SCM_DEFINE (gwwm_client_get_title, "client-get-title" ,1,0,0,
 #define FUNC_NAME s_gwwm_client_get_title
 {
   Client *cl = UNWRAP_CLIENT(c);
-  return scm_from_utf8_string(client_get_title(cl));
+  return scm_from_locale_string(client_get_title(cl));
 }
 #undef FUNC_NAME
 
@@ -349,7 +349,7 @@ SCM_DEFINE (gwwm_client_get_appid, "client-get-appid" ,1,0,0,
 #define FUNC_NAME s_gwwm_client_get_appid
 {
   Client *cl = UNWRAP_CLIENT(c);
-  return scm_from_utf8_string(client_get_appid(cl));
+  return scm_from_locale_string(client_get_appid(cl));
 }
 #undef FUNC_NAME
 
