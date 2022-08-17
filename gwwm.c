@@ -541,7 +541,10 @@ arrange(Monitor *m)
 		m->lt[m->sellt]->arrange(m);
 	motionnotify(0);
 }
-
+SCM_DEFINE(gwwm_arrange,"arrange",1,0,0,(SCM m),"") {
+  arrange(UNWRAP_MONITOR(m));
+  return SCM_UNSPECIFIED;
+}
 
 SCM_DEFINE (gwwm_client_monitor, "client-monitor" , 1,0,0,
             (SCM c), "")
