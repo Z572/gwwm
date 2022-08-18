@@ -333,7 +333,7 @@ SCM_DEFINE (gwwm_client_border_width, "client-border-width" , 1,0,0,
 #define FUNC_NAME s_gwwm_client_border_width
 {
     Client *cl = UNWRAP_CLIENT(c);
-  return scm_from_int(cl->bw);
+  return scm_from_unsigned_integer(cl->bw);
 }
 #undef FUNC_NAME
 
