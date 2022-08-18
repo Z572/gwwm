@@ -238,7 +238,8 @@ client_set_fullscreen(Client *c, int fullscreen)
 SCM_DEFINE (gwwm_client_xdg_surface ,"client-xdg-surface",1,0,0,(SCM c),"")
 #define FUNC_NAME s_gwwm_client_xdg_surface
 {
-  return WRAP_WLR_XDG_SURFACE(&(UNWRAP_CLIENT(c))->surface.xdg);
+  Client *cl= (UNWRAP_CLIENT(c));
+  return WRAP_WLR_XDG_SURFACE(cl->surface.xdg);
 }
 #undef FUNC_NAME
 
