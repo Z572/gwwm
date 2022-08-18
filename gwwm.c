@@ -994,6 +994,7 @@ createmon(struct wl_listener *listener, void *data)
 	 * monitor) becomes available. */
 	struct wlr_output *wlr_output = data;
 	const MonitorRule *r;
+	Client *c;
 	Monitor *m = wlr_output->data = ecalloc(1, sizeof(*m));
 	m->wlr_output = wlr_output;
 
@@ -1042,15 +1043,10 @@ createmon(struct wl_listener *listener, void *data)
 	m->scene_output = wlr_scene_output_create(scene, wlr_output);
 	wlr_output_layout_add_auto(output_layout, wlr_output);
 
-	/* If length == 1 we need update current_monitor.
-	 * Maybe it will change in run(). */
-	if (wl_list_length(&mons) == 1) {
-		Client *c;
-	    current_monitor = m;
-		/* If there is any client, set c->mon to this monitor */
-		wl_list_for_each(c, &clients, link)
+	/* If there are clients without monitor set this as their monitor */
+	wl_list_for_each(c, &clients, link)
+		if (!c->mon)
 			setmon(c, m, c->tags);
-	}
 }
 
 void
