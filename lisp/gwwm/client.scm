@@ -1,6 +1,7 @@
 (define-module (gwwm client)
   #:use-module (srfi srfi-1)
   #:use-module (wlroots xwayland)
+  #:use-module (wlroots types xdg-shell)
   #:use-module (oop goops)
   #:export (current-client
             client-floating?
@@ -17,7 +18,9 @@
             client-get-parent
             client-is-x11?
             client-type
+            client-send-close
             client-xwayland-surface
+            client-xdg-surface
             <gwwm-client>))
 
 (define-class <gwwm-client> ()
@@ -32,6 +35,10 @@
 (define (client-xwayland-surface client)
   ((@@ (gwwm) client-xwayland-surface) client))
 
+(define (client-send-close client)
+  (if (client-is-x11? client)
+      (wlr-xwayland-surface-close (client-xwayland-surface client))
+      (wlr-xdg-toplevel-send-close (client-xdg-surface client))))
 (define (client-monitor client)
   ((@@ (gwwm) client-monitor) client))
 

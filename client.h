@@ -214,13 +214,7 @@ client_is_unmanaged(Client *c)
 static inline void
 client_send_close(Client *c)
 {
-#ifdef XWAYLAND
-	if (client_is_x11(c)) {
-		wlr_xwayland_surface_close(c->surface.xwayland);
-		return;
-	}
-#endif
-	wlr_xdg_toplevel_send_close(c->surface.xdg);
+  REF_CALL_1("gwwm client","client-send-close" ,WRAP_CLIENT(c));
 }
 
 static inline void
