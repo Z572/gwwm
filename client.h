@@ -242,6 +242,14 @@ SCM_DEFINE (gwwm_client_xdg_surface ,"client-xdg-surface",1,0,0,(SCM c),"")
 }
 #undef FUNC_NAME
 
+SCM_DEFINE (gwwm_client_xwayland_surface ,"client-xwayland-surface",1,0,0,(SCM c),"")
+#define FUNC_NAME s_gwwm_client_xwayland_surface
+{ Client *cl=(UNWRAP_CLIENT(c));
+  return WRAP_WLR_XWAYLAND_SURFACE(cl->surface.xwayland);
+}
+#undef FUNC_NAME
+
+
 
 static inline uint32_t
 client_set_size(Client *c, uint32_t width, uint32_t height)

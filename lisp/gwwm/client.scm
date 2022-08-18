@@ -1,5 +1,6 @@
 (define-module (gwwm client)
   #:use-module (srfi srfi-1)
+  #:use-module (wlroots xwayland)
   #:use-module (oop goops)
   #:export (current-client
             client-floating?
@@ -16,6 +17,7 @@
             client-get-parent
             client-is-x11?
             client-type
+            client-xwayland-surface
             <gwwm-client>))
 
 (define-class <gwwm-client> ()
@@ -27,6 +29,9 @@
               (client-get-appid client)
               "*deaded*"))
   )
+(define (client-xwayland-surface client)
+  ((@@ (gwwm) client-xwayland-surface) client))
+
 (define (client-monitor client)
   ((@@ (gwwm) client-monitor) client))
 
