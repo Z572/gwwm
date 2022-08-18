@@ -237,7 +237,6 @@ static void inputdevice(struct wl_listener *listener, void *data);
 static int keybinding(uint32_t mods, xkb_keycode_t keycode);
 static void keypress(struct wl_listener *listener, void *data);
 static void keypressmod(struct wl_listener *listener, void *data);
-static void killclient(const Arg *arg);
 static void maplayersurfacenotify(struct wl_listener *listener, void *data);
 static void mapnotify(struct wl_listener *listener, void *data);
 static void monocle(Monitor *m);
@@ -1482,14 +1481,6 @@ keypressmod(struct wl_listener *listener, void *data)
 	/* Send modifiers to the client. */
 	wlr_seat_keyboard_notify_modifiers(seat,
 		&kb->device->keyboard->modifiers);
-}
-
-void
-killclient(const Arg *arg)
-{
-	Client *sel = current_client();
-	if (sel)
-		client_send_close(sel);
 }
 
 void

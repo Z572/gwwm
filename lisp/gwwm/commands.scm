@@ -4,6 +4,7 @@
   #:use-module (gwwm client)
   #:export (spawn
             chvt
+            killclient
             togglefullscreen
             gwwm-quit))
 
@@ -18,6 +19,8 @@
     (setsid)
     (apply execlp program program args)))
 
+(define* (killclient #:optional (client (current-client)))
+  (and=> client client-send-close))
 (define (chvt num)
   (wlr-session-change-vt
    (wlr-backend-get-session ((@@ (gwwm) gwwm-backend)))

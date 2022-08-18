@@ -444,13 +444,3 @@ SCM_DEFINE (gwwm_setfullscreen, "client-set-fullscreen!",2,0,0,(SCM c,SCM yes),"
   return SCM_UNSPECIFIED;
 }
 #undef FUNC_NAME
-
-SCM_DEFINE (gwwm_killclient, "killclient",0, 0,0,
-            () ,
-            "c")
-#define FUNC_NAME s_gwwm_killclient
-{
-  killclient(NULL);
-  return SCM_UNSPECIFIED;
-}
-#undef FUNC_NAME
