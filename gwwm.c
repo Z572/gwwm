@@ -402,6 +402,11 @@ SCM_DEFINE (gwwm_backend, "gwwm-backend",0,0,0,(),"") {
   return WRAP_WLR_BACKEND(backend);
 }
 
+SCM_DEFINE (gwwm_seat, "gwwm-seat",0,0,0,(),"") {
+  return WRAP_WLR_SEAT(seat);
+}
+
+
 SCM_DEFINE (gwwm_display, "gwwm-display",0,0,0,(),"") {
   return WRAP_WL_DISPLAY(dpy);
 }

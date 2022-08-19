@@ -30,6 +30,11 @@
   (REF_CALL_1("wlroots types xdg-shell", "wrap-wlr-xdg-surface", FROM_P(p)))
 #define UNWRAP_WLR_XDG_SURFACE(p)                                                  \
   (TO_P(REF_CALL_1("wlroots types xdg-shell", "unwrap-wlr-xdg-surface", p)))
+#define WRAP_WLR_SEAT(p)                                                    \
+  (REF_CALL_1("wlroots types seat", "wrap-wlr-seat", FROM_P(p)))
+#define UNWRAP_WLR_SEAT(p)                                                  \
+  (TO_P(REF_CALL_1("wlroots types seat", "unwrap-wlr-seat", p)))
+
 #define WRAP_WLR_XWAYLAND_SURFACE(p)                                                    \
   (REF_CALL_1("wlroots xwayland", "wrap-wlr-xwayland-surface", FROM_P(p)))
 #define UNWRAP_WLR_XWAYLAND_SURFACE(p)                                                  \
