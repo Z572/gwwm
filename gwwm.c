@@ -2598,6 +2598,11 @@ xytomon(double x, double y)
 	return o ? o->data : NULL;
 }
 
+SCM_DEFINE (gwwm_xytomon, "xytomon",2,0,0,(SCM x,SCM y),""){
+  Monitor *m =xytomon(scm_to_double(x), scm_to_double(y));
+  return (m) ? (WRAP_MONITOR(m)) :SCM_BOOL_F;
+}
+
 struct wlr_scene_node *
 xytonode(double x, double y, struct wlr_surface **psurface,
 		Client **pc, LayerSurface **pl, double *nx, double *ny)
