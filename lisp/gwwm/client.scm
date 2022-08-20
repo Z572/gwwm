@@ -32,6 +32,14 @@
               (client-get-appid client)
               "*deaded*"))
   )
+(define (client-get-appid c)
+  (if (client-is-x11? c)
+      (wlr-xwayland-surface-class
+       (client-xwayland-surface c))
+      (wlr-xdg-toplevel-appid
+       (wlr-xdg-surface-toplevel
+        (client-xdg-surface c)))))
+
 (define (client-xwayland-surface client)
   ((@@ (gwwm) client-xwayland-surface) client))
 
@@ -59,9 +67,6 @@
   ((@@ (gwwm) client-type) client))
 (define (client-is-x11? client)
   (->bool (member (client-type client) '("X11Managed" "X11Unmanaged"))))
-
-(define (client-get-appid client)
-  ((@@ (gwwm) client-get-appid) client))
 
 (define (client-list)
   ((@@ (gwwm) client-list)))

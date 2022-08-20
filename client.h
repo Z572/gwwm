@@ -90,11 +90,7 @@ client_for_each_surface(Client *c, wlr_surface_iterator_func_t fn, void *data)
 static inline const char *
 client_get_appid(Client *c)
 {
-#ifdef XWAYLAND
-	if (client_is_x11(c))
-		return c->surface.xwayland->class;
-#endif
-	return c->surface.xdg->toplevel->app_id;
+  return scm_to_utf8_string(REF_CALL_1("gwwm client", "client-get-appid",(WRAP_CLIENT(c))));
 }
 
 static inline void
