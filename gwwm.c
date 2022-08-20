@@ -1015,12 +1015,11 @@ createmon(struct wl_listener *listener, void *data)
 			break;
 		}
 	}
-
 	/* The mode is a tuple of (width, height, refresh rate), and each
 	 * monitor supports only a specific set of modes. We just pick the
 	 * monitor's preferred mode; a more sophisticated compositor would let
 	 * the user configure it. */
-	wlr_output_set_mode(wlr_output, wlr_output_preferred_mode(wlr_output));
+    scm_c_run_hook(REF("gwwm hooks", "create-monitor-hook"), scm_list_1(WRAP_MONITOR(m)));
 	wlr_output_enable_adaptive_sync(wlr_output, 1);
 
 	/* Set up event listeners */

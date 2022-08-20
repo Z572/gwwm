@@ -1,6 +1,9 @@
 (use-modules (ice-9 getopt-long)
              (system repl server)
              (gwwm keymap)
+             (gwwm monitor)
+             (wlroots types output)
+             (gwwm hooks)
              (gwwm commands)
              (srfi srfi-1)
              (gwwm config))
@@ -74,3 +77,8 @@ gwwm [options]
     (keymap-global-set (kbd* `(s S ,k)) (lambda () (tag k)))
     (keymap-global-set (kbd* `(C s S ,k)) (lambda () (toggletag k))))
   (for-each tagkeys (iota 10 0)))
+
+(define (set-mode m)
+  (let ((output (monitor-wlr-output m)))
+    (wlr-output-set-mode output (wlr-output-preferred-mode output))))
+(add-hook! create-monitor-hook set-mode)
