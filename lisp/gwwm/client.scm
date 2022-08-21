@@ -19,6 +19,7 @@
             client-is-x11?
             client-type
             client-send-close
+            client-set-tiled
             client-xwayland-surface
             client-xdg-surface
             <gwwm-client>))
@@ -84,6 +85,14 @@
     (lambda (c) (client=? client c))
     (client-list))))
 
+(define-method (client-set-tiled c (edges <list>))
+  (client-set-tiled c (apply logior edges)))
+
+(define-method (client-set-tiled c (edges <integer>))
+  (unless (client-is-x11? c)
+    (wlr-xdg-toplevel-set-tiled
+     (client-xdg-surface c)
+     edges)))
 (define (client-set-floating! client floating?)
   ((@@ (gwwm) client-set-floating!) client floating? ))
 

@@ -258,11 +258,7 @@ client_set_size(Client *c, uint32_t width, uint32_t height)
 static inline void
 client_set_tiled(Client *c, uint32_t edges)
 {
-#ifdef XWAYLAND
-	if (client_is_x11(c))
-		return;
-#endif
-	wlr_xdg_toplevel_set_tiled(c->surface.xdg, edges);
+  REF_CALL_2("gwwm client","client-set-tiled" ,WRAP_CLIENT(c), scm_from_uint32(edges));
 }
 
 static inline struct wlr_surface *
