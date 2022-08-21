@@ -34,6 +34,10 @@
   (REF_CALL_1("wlroots types seat", "wrap-wlr-seat", FROM_P(p)))
 #define UNWRAP_WLR_SEAT(p)                                                  \
   (TO_P(REF_CALL_1("wlroots types seat", "unwrap-wlr-seat", p)))
+#define WRAP_WLR_EVENT_POINTER_AXIS(p)                                                    \
+  (REF_CALL_1("wlroots types pointer", "wrap-wlr-event-pointer-axis", FROM_P(p)))
+#define UNWRAP_WLR_EVENT_POINTER_AXIS(p)                                                  \
+  (TO_P(REF_CALL_1("wlroots types pointer", "unwrap-wlr-event-pointer-axis", p)))
 
 #define WRAP_WLR_XWAYLAND_SURFACE(p)                                                    \
   (REF_CALL_1("wlroots xwayland", "wrap-wlr-xwayland-surface", FROM_P(p)))

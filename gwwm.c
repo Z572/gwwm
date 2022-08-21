@@ -720,6 +720,8 @@ axisnotify(struct wl_listener *listener, void *data)
 	/* This event is forwarded by the cursor when a pointer emits an axis event,
 	 * for example when you move the scroll wheel. */
 	struct wlr_event_pointer_axis *event = data;
+    scm_c_run_hook(REF("gwwm hooks", "axis-event-hook"),
+                   scm_list_1(WRAP_WLR_EVENT_POINTER_AXIS(event)));
 	wlr_idle_notify_activity(idle, seat);
 	/* Notify the client with pointer focus of the axis event. */
 	wlr_seat_pointer_notify_axis(seat,
