@@ -2123,6 +2123,7 @@ setsel(struct wl_listener *listener, void *data)
 	 * ignore such requests if they so choose, but in dwl we always honor
 	 */
 	struct wlr_seat_request_set_selection_event *event = data;
+    scm_c_run_hook(REF("gwwm hooks", "selection-hook"), scm_list_1(WRAP_WLR_SEAT_REWUEST_SET_SELECTION_EVENT(event)));
 	wlr_seat_set_selection(seat, event->source, event->serial);
 }
 
