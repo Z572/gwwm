@@ -578,6 +578,18 @@ SCM_DEFINE(gwwm_keyboard_input_device,"keyboard-input-device",1,0,0,(SCM k),""){
   return WRAP_WLR_INPUT_DEVICE(kb->device);
 }
 
+SCM_DEFINE (gwwm_layer_list , "layer-list",0,0,0,(),"")
+#define FUNC_NAME s_gwwm_layer_list
+{
+  SCM a=scm_make_list(scm_from_int(0), SCM_UNSPECIFIED);
+  for (int i=0; i <LENGTH(layers); i++){
+    a=scm_cons(WRAP_WLR_SCENE_NODE(layers[i]),a);
+  }
+  return a;
+}
+#undef FUNC_NAME
+
+
 SCM_DEFINE (gwwm_monitor_list , "monitor-list",0,0,0,(),"")
 #define FUNC_NAME s_gwwm_monitor_list
 {
