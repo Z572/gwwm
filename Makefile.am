@@ -81,5 +81,5 @@ GUILE_WARNINGS =                                          \
 .scm.go:
 	$(AM_V_GEN)$(top_builddir)/pre-inst-env $(GUILE_TOOLS) compile $(GUILE_TARGET) $(GUILE_WARNINGS) -o "$@" "$<"
 
-run:
+run: all
 	exec $(top_builddir)/pre-inst-env $(top_builddir)/gwwm
