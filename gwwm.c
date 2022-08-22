@@ -2010,6 +2010,9 @@ setcursor(struct wl_listener *listener, void *data)
 void
 setfloating(Client *c, int floating)
 {
+  if (c->isfullscreen){
+    setfullscreen(c, 0);
+  };
 	c->isfloating = floating;
 	wlr_scene_node_reparent(c->scene, layers[c->isfloating ? LyrFloat : LyrTile]);
 	arrange(c->mon);
