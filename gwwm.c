@@ -1109,6 +1109,8 @@ createnotify(struct wl_listener *listener, void *data)
 void
 createpointer(struct wlr_input_device *device)
 {
+  scm_c_run_hook(REF("gwwm hooks", "create-pointer-hook"),
+                 scm_list_1(WRAP_WLR_INPUT_DEVICE(device)));
 	if (wlr_input_device_is_libinput(device)) {
 		struct libinput_device *libinput_device =  (struct libinput_device*)
 			wlr_libinput_get_device_handle(device);
