@@ -1,7 +1,8 @@
 (define-module (gwwm monitor)
   #:use-module (oop goops)
   #:use-module (wlroots types output)
-  #:export (monitor-name
+  #:export (current-monitor
+            monitor-name
             monitor-description
             monitor-enabled
             monitor-scale
@@ -13,6 +14,8 @@
             monitor=?
             <gwwm-monitor>))
 
+(define (current-monitor)
+  ((@@ (gwwm) current-monitor)))
 (define-class <gwwm-monitor> ()
   (data #:init-keyword #:data #:accessor .data))
 
