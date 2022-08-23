@@ -9,3 +9,4 @@
 (define-public axis-event-hook (make-hook 1))
 (define-public update-title-hook (make-hook 1))
 (define-public selection-hook (make-hook 1))
+(define-public modifiers-event-hook (make-hook 1))

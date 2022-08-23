@@ -1487,6 +1487,8 @@ keypressmod(struct wl_listener *listener, void *data)
 	/* This event is raised when a modifier key, such as shift or alt, is
 	 * pressed. We simply communicate this to the client. */
 	Keyboard *kb = wl_container_of(listener, kb, modifiers);
+    scm_c_run_hook(REF("gwwm hooks", "modifiers-event-hook"),
+                   scm_list_1(WRAP_KEYBOARD(kb)));
 	/*
 	 * A seat can only have one keyboard, but this is a limitation of the
 	 * Wayland protocol - not wlroots. We assign all connected keyboards to the

@@ -3,6 +3,7 @@
              (gwwm keymap)
              (gwwm monitor)
              (wlroots types output)
+             (wlroots types seat)
              (gwwm hooks)
              (gwwm commands)
              (srfi srfi-1)
@@ -82,3 +83,7 @@ gwwm [options]
   (let ((output (monitor-wlr-output m)))
     (wlr-output-set-mode output (wlr-output-preferred-mode output))))
 (add-hook! create-monitor-hook set-mode)
+
+(define (pass-modifiers k)
+  (wlr-seat-set-keyboard (gwwm-seat) (keyboard-input-device k)))
+(add-hook! modifiers-event-hook pass-modifiers )
