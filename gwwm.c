@@ -394,6 +394,8 @@ SCM_DEFINE_PUBLIC(gwwm_visibleon, "visibleon", 2, 0, 0, (SCM c, SCM m), "")
 
 #define GWWM_FOCUSCOLOR() (TO_P(REF_CALL_1("gwwm color","color->pointer",REF_CALL_1("gwwm config", "config-focuscolor", gwwm_config))))
 
+#define GWWM_FULLSCREEN_BG() (TO_P(REF_CALL_1("gwwm color","color->pointer",REF_CALL_1("gwwm config", "config-fullscreenbg", gwwm_config))))
+
 SCM_DEFINE(gwwm_selmon ,"current-monitor" ,0,0,0,(),""){
   return WRAP_MONITOR(current_monitor);
 }
@@ -2052,8 +2054,9 @@ setfullscreen(Client *c, int fullscreen)
 		 * For brevity we set a black background for all clients
 		 */
 		if (!c->fullscreen_bg) {
-			c->fullscreen_bg = wlr_scene_rect_create(c->scene,
-				c->geom.width, c->geom.height, fullscreen_bg);
+			c->fullscreen_bg = wlr_scene_rect_create
+              (c->scene,
+               c->geom.width, c->geom.height, GWWM_FULLSCREEN_BG());
 			wlr_scene_node_lower_to_bottom(&c->fullscreen_bg->node);
 		}
 	} else {
