@@ -10,6 +10,7 @@
             config-bordercolor
             config-focuscolor
             config-fullscreenbg
+            config-cursor-normal-image
             load-init-file
             get-xdg-config-home
             init-file
@@ -66,6 +67,9 @@
   (rootcolor)
   (tags)
   (rules)
+  (cursor-normal-image #:init-value "right_ptr"
+                       #:init-keyword #:cursor-normal-image
+                       #:accessor config-cursor-normal-image)
   (fullscreenbg #:init-value (make-color 0.1 0.1 0.1 1.0)
                 #:init-keyword #:fullscreenbg
                 #:accessor config-fullscreenbg)
