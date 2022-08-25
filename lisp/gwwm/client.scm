@@ -1,6 +1,7 @@
 (define-module (gwwm client)
   #:use-module (srfi srfi-1)
   #:use-module (wlroots xwayland)
+  #:use-module (wlroots util box)
   #:use-module (wlroots types xdg-shell)
   #:use-module (oop goops)
   #:export (current-client
@@ -22,6 +23,7 @@
             client-set-tiled
             client-xwayland-surface
             client-xdg-surface
+            client-resize
             <gwwm-client>))
 
 (define-class <gwwm-client> ()
@@ -115,3 +117,14 @@
   (make-procedure-with-setter
    client-is-fullscreen?
    client-set-fullscreen!))
+
+(define-method (client-resize (c <gwwm-client>) geo (interact? <boolean>))
+  ((@@ (gwwm) %resize) c geo interact?))
+
+(define-method (client-resize (c <gwwm-client>) geo)
+  (client-resize c geo #f))
+
+(define-method (client-resize (c <gwwm-client>)
+                              (geo <list>)
+                              interact?)
+  (client-resize c (list->wlr-box geo) interact?))

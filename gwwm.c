@@ -1931,6 +1931,13 @@ resize(Client *c, struct wlr_box geo, int interact)
 			c->geom.height - 2 * c->bw);
 }
 
+SCM_DEFINE(gwwm_resize ,"%resize",3,0,0,(SCM c,SCM geo,SCM interact),"")
+{
+  struct wlr_box *box=UNWRAP_WLR_BOX(geo);
+  resize(UNWRAP_CLIENT(c),*box, scm_to_bool(interact));
+  return SCM_UNSPECIFIED;
+}
+
 void
 run(char *startup_cmd)
 {

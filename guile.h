@@ -52,12 +52,17 @@
   (REF_CALL_1("wlroots xwayland", "wrap-wlr-xwayland-surface", FROM_P(p)))
 #define UNWRAP_WLR_XWAYLAND_SURFACE(p)                                                  \
   (TO_P(REF_CALL_1("wlroots xwayland", "wrap-wlr-xwayland-surface", p)))
+#define WRAP_WLR_BOX(p)                                                    \
+  (REF_CALL_1("wlroots util box", "wrap-wlr-box", FROM_P(p)))
+#define UNWRAP_WLR_BOX(p)                                                  \
+  (TO_P(REF_CALL_1("wlroots util box", "unwrap-wlr-box", p)))
+
+
 #define WRAP_KEYBOARD(o)                                                        \
   (scm_call_3(REF("oop goops", "make"), REF("gwwm keyboard", "<gwwm-keyboard>"), \
               scm_from_utf8_keyword("data"), FROM_P(o)))
 #define UNWRAP_KEYBOARD(o)                                                      \
   (TO_P(scm_call_1(REFP("gwwm keyboard", ".data"), o)))
-
 void init_scm() {
   scm_primitive_load(
       scm_sys_search_load_path(scm_from_utf8_string("gwwm.scm")));
