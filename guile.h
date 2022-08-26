@@ -57,6 +57,10 @@
 #define UNWRAP_WLR_BOX(p)                                                  \
   (TO_P(REF_CALL_1("wlroots util box", "unwrap-wlr-box", p)))
 
+#define WRAP_WLR_EVENT_KEYBOARD_KEY(p) \
+  (REF_CALL_1("wlroots types keyboard", "wrap-wlr-event-keyboard-key", FROM_P(p)))
+#define UNWRAP_WLR_EVENT_KEYBOARD_KEY(p)                                                  \
+  (TO_P(REF_CALL_1("wlroots types keyboard", "unwrap-wlr-event-keyboard-key", p)))
 
 #define WRAP_KEYBOARD(o)                                                        \
   (scm_call_3(REF("oop goops", "make"), REF("gwwm keyboard", "<gwwm-keyboard>"), \

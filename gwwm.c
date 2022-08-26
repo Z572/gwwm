@@ -1465,7 +1465,9 @@ keypress(struct wl_listener *listener, void *data)
 	/* This event is raised when a key is pressed or released. */
 	Keyboard *kb = wl_container_of(listener, kb, key);
 	struct wlr_event_keyboard_key *event = data;
-
+    scm_c_run_hook(REF("gwwm hooks", "keypress-event-hook"),
+                   scm_list_2(WRAP_KEYBOARD(kb),
+                              WRAP_WLR_EVENT_KEYBOARD_KEY(event)));
 	/* Translate libinput keycode -> xkbcommon */
 	uint32_t keycode = event->keycode + 8;
 	int handled = 0;
