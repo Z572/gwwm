@@ -2579,10 +2579,10 @@ updatemons(struct wl_listener *listener, void *data)
 		config_head->state.y = m->m.y;
 	}
 
-	if (selmon && selmon->wlr_output->enabled)
+	if (current_monitor && current_monitor->wlr_output->enabled)
 		wl_list_for_each(c, &clients, link)
 			if (!c->mon && client_is_mapped(c))
-				setmon(c, selmon, c->tags);
+				setmon(c, current_monitor, c->tags);
 
 	wlr_output_manager_v1_set_configuration(output_mgr, config);
 }
