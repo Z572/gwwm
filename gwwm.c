@@ -1324,6 +1324,10 @@ SCM_DEFINE (gwwm_focusclient, "focusclient" ,2,0,0,(SCM client,SCM lift),"") {
   return SCM_UNSPECIFIED;
 }
 
+SCM_DEFINE(gwwm_idle,"gwwm-idle",0,0,0,(),""){
+  return WRAP_WLR_IDLE(idle);
+}
+
 void
 focusmon(const Arg *arg)
 {

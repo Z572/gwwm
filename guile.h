@@ -56,7 +56,10 @@
   (REF_CALL_1("wlroots util box", "wrap-wlr-box", FROM_P(p)))
 #define UNWRAP_WLR_BOX(p)                                                  \
   (TO_P(REF_CALL_1("wlroots util box", "unwrap-wlr-box", p)))
-
+#define WRAP_WLR_IDLE(p)                                                    \
+  (REF_CALL_1("wlroots types idle", "wrap-wlr-idle", FROM_P(p)))
+#define UNWRAP_WLR_IDLE(p)                                                  \
+  (TO_P(REF_CALL_1("wlroots types idle", "unwrap-wlr-idle", p)))
 #define WRAP_WLR_EVENT_KEYBOARD_KEY(p) \
   (REF_CALL_1("wlroots types keyboard", "wrap-wlr-event-keyboard-key", FROM_P(p)))
 #define UNWRAP_WLR_EVENT_KEYBOARD_KEY(p)                                                  \
