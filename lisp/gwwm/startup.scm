@@ -1,7 +1,9 @@
 (use-modules (ice-9 getopt-long)
+             (ice-9 format)
              (system repl server)
              (gwwm keymap)
              (gwwm monitor)
+             (gwwm utils srfi-215)
              (wlroots types output)
              (wlroots types seat)
              (gwwm hooks)
@@ -29,6 +31,25 @@ gwwm [options]
   -s --exec     run program
 "))
                (exit 0)))))
+
+
+
+(current-log-callback
+ (lambda (msg)
+   (let ((p (current-error-port))
+         (msg2 msg))
+     (format p "[~a]| ~a | "
+             (cdr (assq 'SEVERITY msg))
+             (cdr (assq 'MESSAGE msg)))
+     (set! msg2 (assoc-remove! (assoc-remove! msg2 'SEVERITY) 'MESSAGE))
+     (for-each (lambda (a)
+                 (display (car a) p)
+                 (display ":" p)
+                 (display (object->string(cdr a)) p)
+                 (display " " p))
+               msg2)
+     (newline p))))
+
 
 (false-if-exception (spawn-server (make-tcp-server-socket)))
 

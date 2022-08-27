@@ -1,4 +1,6 @@
 #include <libguile.h>
+#include <stdarg.h>
+#include <string.h>
 #define REF(A, B) (scm_c_public_ref(A, B))
 #define REFP(A, B) (scm_c_private_ref(A, B))
 #define FROM_P(P) (scm_from_pointer(P, NULL))
@@ -70,10 +72,35 @@
               scm_from_utf8_keyword("data"), FROM_P(o)))
 #define UNWRAP_KEYBOARD(o)                                                      \
   (TO_P(scm_call_1(REFP("gwwm keyboard", ".data"), o)))
+/* #define SEND_LOG(o ...) */
 void init_scm() {
   scm_primitive_load(
       scm_sys_search_load_path(scm_from_utf8_string("gwwm.scm")));
   scm_primitive_load(
       scm_sys_search_load_path(scm_from_utf8_string("gwwm/startup.scm")));
   scm_call_0(SCM_LOOKUP_REF("parse-command-line"));
+}
+
+#define send_log(v,b,...) _send_log(v,b, ##__VA_ARGS__, "/0")
+void
+_send_log(const char *arg, ...) {
+	va_list ap;
+    SCM scm =scm_make_list(scm_from_int(0), SCM_UNSPECIFIED);
+    char *para;
+    char *para2;
+
+	va_start(ap, arg);
+    scm=scm_cons(REF("gwwm utils srfi-215",arg) ,scm);
+    scm=scm_cons(scm_from_utf8_string(va_arg(ap, char *)),scm);
+    while(1) {
+      para=va_arg(ap, char *);
+      if ( strcmp( para, "/0") == 0 )
+        break;
+      para2=va_arg(ap, char *);
+      scm=scm_cons2(scm_from_utf8_string(para2),
+                    scm_from_utf8_symbol(para),
+                    scm);
+    }
+	va_end(ap);
+    scm_apply_0(REF("gwwm utils srfi-215","send-log"), scm_reverse(scm)) ;
 }

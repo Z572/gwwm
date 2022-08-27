@@ -58,6 +58,7 @@ nodist_mod_DATA = lisp/gwwm/color.scm   \
 		lisp/gwwm/keyboard.scm \
 		lisp/gwwm/hooks.scm \
 		lisp/gwwm/utils.scm    \
+		lisp/gwwm/utils/srfi-215.scm    \
 		lisp/gwwm/keys.scm    \
 		lisp/gwwm/commands.scm \
 		lisp/gwwm/startup.scm

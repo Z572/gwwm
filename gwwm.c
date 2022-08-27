@@ -1836,12 +1836,13 @@ printstatus(void)
 				urg |= c->tags;
 		}
 		if ((c = focustop(m))) {
-			printf("%s title %s\n", m->wlr_output->name, client_get_title(c));
-			printf("%s fullscreen %u\n", m->wlr_output->name, c->isfullscreen);
-			printf("%s floating %u\n", m->wlr_output->name, c->isfloating);
+          send_log("INFO","MONITOR and TITLE","MONITOR",m->wlr_output->name,"TITLE",client_get_title(c));
+          /* send_log("INFO","is FULLSCREEN","MONITOR",m->wlr_output->name, ((c->isfullscreen)? "#t": "#f")); */
+          /* send_log("INFO","is FLOATING","MONITOR",m->wlr_output->name, ((c->isfloating)? "#t": "#f")); */
 			sel = c->tags;
 		} else {
 			printf("%s title \n", m->wlr_output->name);
+            send_log("INFO","MONITOR","MONITOR",m->wlr_output->name);
 			printf("%s fullscreen \n", m->wlr_output->name);
 			printf("%s floating \n", m->wlr_output->name);
 			sel = 0;
