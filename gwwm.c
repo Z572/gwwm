@@ -1836,23 +1836,26 @@ printstatus(void)
 				urg |= c->tags;
 		}
 		if ((c = focustop(m))) {
-          send_log("INFO","MONITOR and TITLE","MONITOR",m->wlr_output->name,"TITLE",client_get_title(c));
-          /* send_log("INFO","is FULLSCREEN","MONITOR",m->wlr_output->name, ((c->isfullscreen)? "#t": "#f")); */
-          /* send_log("INFO","is FLOATING","MONITOR",m->wlr_output->name, ((c->isfloating)? "#t": "#f")); */
+          send_log("INFO","MONITOR and TITLE",
+                   "MONITOR",m->wlr_output->name,
+                   "TITLE",client_get_title(c));
+          send_log("INFO","is FULLSCREEN","MONITOR",m->wlr_output->name,
+                   "FULLSCREEN",((c->isfullscreen) ? "#t" : "#f"));
+          send_log("INFO","is FLOATING",
+                   "MONITOR",m->wlr_output->name,
+                   "FLOATING", ((c->isfloating)? "#t": "#f"));
 			sel = c->tags;
 		} else {
-			printf("%s title \n", m->wlr_output->name);
-            send_log("INFO","MONITOR","MONITOR",m->wlr_output->name);
-			printf("%s fullscreen \n", m->wlr_output->name);
-			printf("%s floating \n", m->wlr_output->name);
-			sel = 0;
+          send_log("INFO", "title" ,"MONITOR", m->wlr_output->name);
+          send_log("INFO","MONITOR","MONITOR",m->wlr_output->name);
+          send_log("INFO","fullscreen","MONITOR", m->wlr_output->name);
+          send_log("INFO","floating","MONITOR", m->wlr_output->name);
+          sel = 0;
 		}
-
-		printf("%s current_monitor %u\n", m->wlr_output->name, m == current_monitor);
-		printf("%s tags %u %u %u %u\n", m->wlr_output->name, occ, m->tagset[m->seltags],
-				sel, urg);
-		printf("%s layout %s\n", m->wlr_output->name, m->lt[m->sellt]->symbol);
-	}
+        send_log("INFO" ,"current-monitor" ,
+                 "MONITOR", m->wlr_output->name,
+                 "BOOL",((m == current_monitor)? "#t" : "#f"));
+    }
 }
 
 void
