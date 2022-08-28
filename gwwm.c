@@ -121,7 +121,6 @@ typedef struct {
 	unsigned int tags;
 	int isfloating, isurgent, isfullscreen;
 	uint32_t resize; /* configure serial of a pending resize */
-  SCM _self;
 } Client;
 
 typedef struct {
@@ -1095,10 +1094,6 @@ createnotify(struct wl_listener *listener, void *data)
 	c = xdg_surface->data = ecalloc(1, sizeof(*c));
 	c->surface.xdg = xdg_surface;
 	c->bw = GWWM_BORDERPX();
-    c->_self=(scm_call_3(REF("oop goops","make"), \
-                                  REF("gwwm client","<gwwm-client>"), \
-                                  scm_from_utf8_keyword("data"), \
-                                  FROM_P(c)));
 
 	LISTEN(&xdg_surface->events.map, &c->map, mapnotify);
 	LISTEN(&xdg_surface->events.unmap, &c->unmap, unmapnotify);
