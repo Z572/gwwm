@@ -8,10 +8,7 @@
 
 /* Leave these functions first; they're used in the others */
 
-#define WRAP_CLIENT(o) (scm_call_3(REF("oop goops","make"), \
-                                  REF("gwwm client","<gwwm-client>"), \
-                                  scm_from_utf8_keyword("data"), \
-                                  FROM_P(o)))
+#define WRAP_CLIENT(o) o->_self
 #define UNWRAP_CLIENT(o) (Client *)(TO_P(scm_call_1(REFP("gwwm client",".data"),o)))
 
 
