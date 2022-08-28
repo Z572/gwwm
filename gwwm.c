@@ -1836,23 +1836,23 @@ printstatus(void)
 				urg |= c->tags;
 		}
 		if ((c = focustop(m))) {
-          send_log("INFO","MONITOR and TITLE",
+          send_log(INFO,"MONITOR and TITLE",
                    "MONITOR",m->wlr_output->name,
                    "TITLE",client_get_title(c));
-          send_log("INFO","is FULLSCREEN","MONITOR",m->wlr_output->name,
+          send_log(INFO,"is FULLSCREEN","MONITOR",m->wlr_output->name,
                    "FULLSCREEN",((c->isfullscreen) ? "#t" : "#f"));
-          send_log("INFO","is FLOATING",
+          send_log(INFO,"is FLOATING",
                    "MONITOR",m->wlr_output->name,
                    "FLOATING", ((c->isfloating)? "#t": "#f"));
 			sel = c->tags;
 		} else {
-          send_log("INFO", "title" ,"MONITOR", m->wlr_output->name);
-          send_log("INFO","MONITOR","MONITOR",m->wlr_output->name);
-          send_log("INFO","fullscreen","MONITOR", m->wlr_output->name);
-          send_log("INFO","floating","MONITOR", m->wlr_output->name);
+          send_log(INFO, "title" ,"MONITOR", m->wlr_output->name);
+          send_log(INFO,"MONITOR","MONITOR",m->wlr_output->name);
+          send_log(INFO,"fullscreen","MONITOR", m->wlr_output->name);
+          send_log(INFO,"floating","MONITOR", m->wlr_output->name);
           sel = 0;
 		}
-        send_log("INFO" ,"current-monitor" ,
+        send_log(INFO ,"current-monitor" ,
                  "MONITOR", m->wlr_output->name,
                  "BOOL",((m == current_monitor)? "#t" : "#f"));
     }

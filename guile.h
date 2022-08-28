@@ -81,7 +81,7 @@ void init_scm() {
   scm_call_0(SCM_LOOKUP_REF("parse-command-line"));
 }
 
-#define send_log(v,b,...) _send_log(v,b, ##__VA_ARGS__, "/0")
+#define send_log(v,b,...) _send_log(#v,b, ##__VA_ARGS__, "/0")
 void
 _send_log(const char *arg, ...) {
 	va_list ap;
