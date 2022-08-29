@@ -208,7 +208,6 @@ static void arrangelayer(Monitor *m, struct wl_list *list,
 static void arrangelayers(Monitor *m);
 static void axisnotify(struct wl_listener *listener, void *data);
 static void buttonpress(struct wl_listener *listener, void *data);
-static void chvt(const Arg *arg);
 static void cleanup(void);
 static void cleanupkeyboard(struct wl_listener *listener, void *data);
 static void cleanupmon(struct wl_listener *listener, void *data);
@@ -273,7 +272,7 @@ static void tag(const Arg *arg);
 static void tagmon(const Arg *arg);
 static void tile(Monitor *m);
 static void togglefloating(const Arg *arg);
-static void togglefullscreen(const Arg *arg);
+
 static void toggletag(const Arg *arg);
 static void toggleview(const Arg *arg);
 static void unmaplayersurfacenotify(struct wl_listener *listener, void *data);
@@ -797,12 +796,6 @@ buttonpress(struct wl_listener *listener, void *data)
 	 * pointer focus that a button press has occurred */
 	wlr_seat_pointer_notify_button(seat,
 			event->time_msec, event->button, event->state);
-}
-
-void
-chvt(const Arg *arg)
-{
-  REF_CALL_1("gwwm commands", "chvt", scm_from_unsigned_integer(arg->ui));
 }
 
 void
@@ -2462,12 +2455,6 @@ SCM_DEFINE (gwwm_togglefloating, "togglefloating",0, 0,0,
   return SCM_UNSPECIFIED;
 }
 #undef FUNC_NAME
-
-void
-togglefullscreen(const Arg *arg)
-{
-  REF_CALL_0("gwwm commands", "togglefullscreen");
-}
 
 void
 toggletag(const Arg *arg)
