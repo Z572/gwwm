@@ -288,6 +288,11 @@ client_restack_surface(Client *c)
 #endif
 	return;
 }
+static inline void
+client_set_resizing(Client *c,int resizing)
+{
+  REF_CALL_2("gwwm client","client-set-resizing!" ,WRAP_CLIENT(c), scm_from_bool(resizing));
+}
 
 static inline void *
 toplevel_from_popup(struct wlr_xdg_popup *popup)

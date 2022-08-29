@@ -781,7 +781,7 @@ buttonpress(struct wl_listener *listener, void *data)
               xytonode(cursor->x, cursor->y, NULL, &c, NULL, NULL, NULL) &&
               (c && !client_is_unmanaged(c)))
             {
-              wlr_xdg_toplevel_set_resizing(c->surface.xdg,0);
+              client_set_resizing(c,0);
             }
           wlr_xcursor_manager_set_cursor_image(cursor_mgr, GWWM_CURSOR_NORMAL_IMAGE(), cursor);
 			cursor_mode = CurNormal;
@@ -1687,7 +1687,7 @@ moveresize(const Arg *arg)
 		wlr_xcursor_manager_set_cursor_image(cursor_mgr, "fleur", cursor);
 		break;
 	case CurResize:
-      wlr_xdg_toplevel_set_resizing(grabc->surface.xdg,1);
+      client_set_resizing(grabc,1);
 		/* Doesn't work for X11 output - the next absolute motion event
 		 * returns the cursor to where it started */
 		wlr_cursor_warp_closest(cursor, NULL,

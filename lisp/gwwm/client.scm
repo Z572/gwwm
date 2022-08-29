@@ -24,6 +24,7 @@
             client-xwayland-surface
             client-xdg-surface
             client-resize
+            client-set-resizing!
             <gwwm-client>))
 
 (define-class <gwwm-client> ()
@@ -79,6 +80,10 @@
 
 (define (client-is-floating? client)
   ((@@ (gwwm) client-is-floating?) client))
+
+(define (client-set-resizing! client resizing?)
+  (unless (client-is-x11? client)
+    (wlr-xdg-toplevel-set-resizing (client-xdg-surface client) resizing?)))
 
 (define (client-alive? client)
   "return #t if client is alive, or #f deaded."
