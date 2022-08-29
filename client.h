@@ -18,11 +18,7 @@
 static inline int
 client_is_x11(Client *c)
 {
-#ifdef XWAYLAND
-	return c->type == X11Managed || c->type == X11Unmanaged;
-#else
-	return 0;
-#endif
+  return (scm_to_bool(REF_CALL_1("gwwm client","client-is-x11?", WRAP_CLIENT(c))));
 }
 
 static inline struct wlr_surface *
