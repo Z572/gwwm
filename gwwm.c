@@ -778,6 +778,12 @@ buttonpress(struct wl_listener *listener, void *data)
 		/* If you released any buttons, we exit interactive move/resize mode. */
 		/* TODO should reset to the pointer focus's current setcursor */
 		if (cursor_mode != CurNormal) {
+          if (cursor_mode == CurResize &&
+              xytonode(cursor->x, cursor->y, NULL, &c, NULL, NULL, NULL) &&
+              (c && !client_is_unmanaged(c)))
+            {
+              wlr_xdg_toplevel_set_resizing(c->surface.xdg,0);
+            }
           wlr_xcursor_manager_set_cursor_image(cursor_mgr, GWWM_CURSOR_NORMAL_IMAGE(), cursor);
 			cursor_mode = CurNormal;
 			/* Drop the window off on its new monitor */
@@ -1688,6 +1694,7 @@ moveresize(const Arg *arg)
 		wlr_xcursor_manager_set_cursor_image(cursor_mgr, "fleur", cursor);
 		break;
 	case CurResize:
+      wlr_xdg_toplevel_set_resizing(grabc->surface.xdg,1);
 		/* Doesn't work for X11 output - the next absolute motion event
 		 * returns the cursor to where it started */
 		wlr_cursor_warp_closest(cursor, NULL,
