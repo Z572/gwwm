@@ -13,8 +13,7 @@
 (setlocale LC_ALL "")
 (define option-spec
   '((version (single-char #\v) (value #f))
-    (help (single-char #\h) (value #f))
-    (exec (single-char #\s) (value #t))))
+    (help (single-char #\h) (value #f))))
 (define-public (parse-command-line)
   (let* ((options (getopt-long (command-line) option-spec))
          (help-wanted (option-ref options 'help #f))

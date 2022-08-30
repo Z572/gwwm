@@ -255,7 +255,7 @@ static void quitsignal(int signo);
 static void rendermon(struct wl_listener *listener, void *data);
 static void requeststartdrag(struct wl_listener *listener, void *data);
 static void resize(Client *c, struct wlr_box geo, int interact);
-static void run(char *startup_cmd);
+static void run();
 static Client *current_client(void);
 static void setcursor(struct wl_listener *listener, void *data);
 static void setfloating(Client *c, int floating);
@@ -1946,7 +1946,7 @@ SCM_DEFINE(gwwm_resize ,"%resize",3,0,0,(SCM c,SCM geo,SCM interact),"")
 }
 
 void
-run(char *startup_cmd)
+run()
 {
 	/* Add a Unix socket to the Wayland display. */
 	const char *socket = wl_display_add_socket_auto(dpy);
@@ -1954,25 +1954,7 @@ run(char *startup_cmd)
 		die("startup: display_add_socket_auto");
 	setenv("WAYLAND_DISPLAY", socket, 1);
 
-	/* Now that the socket exists, run the startup command */
-	if (startup_cmd) {
-		int piperw[2];
-		if (pipe(piperw) < 0)
-			die("startup: pipe:");
-		if ((child_pid = fork()) < 0)
-			die("startup: fork:");
-		if (child_pid == 0) {
-			dup2(piperw[0], STDIN_FILENO);
-			close(piperw[0]);
-			close(piperw[1]);
-			execl("/bin/sh", "/bin/sh", "-c", startup_cmd, NULL);
-			die("startup: execl:");
-		}
-		dup2(piperw[1], STDOUT_FILENO);
-		close(piperw[1]);
-		close(piperw[0]);
-	}
-	/* If nobody is reading the status output, don't terminate */
+
 	signal(SIGPIPE, SIG_IGN);
 	printstatus();
 
@@ -2836,26 +2818,12 @@ inner_main(void *closure,int argc, char *argv[])
 #include "gwwm.x"
 #endif
     scm_call_0(SCM_LOOKUP_REF("init-global-keybind"));
-  char *startup_cmd = NULL;
-	int c;
-
-	while ((c = getopt(argc, argv, "s:hv")) != -1) {
-		if (c == 's')
-			startup_cmd = optarg;
-		else if (c == 'v')
-			die("dwl " VERSION);
-		else
-			die("Usage: %s [-v] [-s startup command]", argv[0]);
-	}
-	if (optind < argc)
-	    die("Usage: %s [-v] [-s startup command]", argv[0]);;
-
 	/* Wayland requires XDG_RUNTIME_DIR for creating its communications socket */
 	if (!getenv("XDG_RUNTIME_DIR"))
 		die("XDG_RUNTIME_DIR must be set");
 	setup();
     config_setup();
-	run(startup_cmd);
+	run();
 	cleanup();
 	/* return EXIT_SUCCESS; */
 
