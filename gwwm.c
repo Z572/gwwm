@@ -889,25 +889,23 @@ commitlayersurfacenotify(struct wl_listener *listener, void *data)
 {
 	LayerSurface *layersurface = wl_container_of(listener, layersurface, surface_commit);
 	struct wlr_layer_surface_v1 *wlr_layer_surface = layersurface->layer_surface;
-	struct wlr_output *wlr_output = wlr_layer_surface->output;
 
-	if (!wlr_output || !(layersurface->mon = wlr_output->data))
+	if (!layersurface->mon)
 		return;
 
-	wlr_scene_node_reparent(layersurface->scene,
-			layers[wlr_layer_surface->current.layer]);
+	if (layers[wlr_layer_surface->current.layer] != layersurface->scene) {
+		wlr_scene_node_reparent(layersurface->scene,
+				layers[wlr_layer_surface->current.layer]);
+		wl_list_remove(&layersurface->link);
+		wl_list_insert(&layersurface->mon->layers[wlr_layer_surface->current.layer],
+				&layersurface->link);
+	}
 
 	if (wlr_layer_surface->current.committed == 0
 			&& layersurface->mapped == wlr_layer_surface->mapped)
 		return;
-
 	layersurface->mapped = wlr_layer_surface->mapped;
 
-	if (layers[wlr_layer_surface->current.layer] != layersurface->scene) {
-		wl_list_remove(&layersurface->link);
-		wl_list_insert(&layersurface->mon->layers[wlr_layer_surface->current.layer],
-			&layersurface->link);
-	}
 	arrangelayers(layersurface->mon);
 }
 
@@ -982,15 +980,13 @@ createlayersurface(struct wl_listener *listener, void *data)
 	struct wlr_layer_surface_v1 *wlr_layer_surface = data;
 	LayerSurface *layersurface;
 	struct wlr_layer_surface_v1_state old_state;
-
 	if (!wlr_layer_surface->output) {
 		wlr_layer_surface->output = current_monitor->wlr_output;
 	}
-
 	layersurface = ecalloc(1, sizeof(LayerSurface));
 	layersurface->type = LayerShell;
 	LISTEN(&wlr_layer_surface->surface->events.commit,
-		&layersurface->surface_commit, commitlayersurfacenotify);
+			&layersurface->surface_commit, commitlayersurfacenotify);
 	LISTEN(&wlr_layer_surface->events.destroy, &layersurface->destroy,
 			destroylayersurfacenotify);
 	LISTEN(&wlr_layer_surface->events.map, &layersurface->map,
@@ -999,8 +995,8 @@ createlayersurface(struct wl_listener *listener, void *data)
 			unmaplayersurfacenotify);
 
 	layersurface->layer_surface = wlr_layer_surface;
-	wlr_layer_surface->data = layersurface;
 	layersurface->mon = wlr_layer_surface->output->data;
+	wlr_layer_surface->data = layersurface;
 
 	layersurface->scene = wlr_layer_surface->surface->data =
 			wlr_scene_subsurface_tree_create(layers[wlr_layer_surface->pending.layer],
@@ -1192,11 +1188,8 @@ destroylayersurfacenotify(struct wl_listener *listener, void *data)
 	wl_list_remove(&layersurface->unmap.link);
 	wl_list_remove(&layersurface->surface_commit.link);
 	wlr_scene_node_destroy(layersurface->scene);
-	if (layersurface->layer_surface->output) {
-		if ((layersurface->mon = layersurface->layer_surface->output->data))
-			arrangelayers(layersurface->mon);
-		layersurface->layer_surface->output = NULL;
-	}
+	if (layersurface->mon)
+		arrangelayers(layersurface->mon);
 	free(layersurface);
 }
 
@@ -1520,10 +1513,8 @@ keypressmod(struct wl_listener *listener, void *data)
 void
 maplayersurfacenotify(struct wl_listener *listener, void *data)
 {
-	LayerSurface *layersurface = wl_container_of(listener, layersurface, map);
-	layersurface->mon = layersurface->layer_surface->output->data;
-	wlr_surface_send_enter(layersurface->layer_surface->surface,
-		layersurface->mon->wlr_output);
+	LayerSurface *l = wl_container_of(listener, l, map);
+	wlr_surface_send_enter(l->layer_surface->surface, l->mon->wlr_output);
 	motionnotify(0);
 }
 
