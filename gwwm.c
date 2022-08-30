@@ -694,7 +694,6 @@ arrangelayers(Monitor *m)
 		ZWLR_LAYER_SHELL_V1_LAYER_TOP,
 	};
 	LayerSurface *layersurface;
-	struct wlr_keyboard *kb = wlr_seat_get_keyboard(seat);
 
 	/* Arrange exclusive surfaces from top->bottom */
 	for (i = 3; i >= 0; i--)
@@ -718,11 +717,7 @@ arrangelayers(Monitor *m)
 				/* Deactivate the focused client. */
 				focusclient(NULL, 0);
 				exclusive_focus = layersurface->layer_surface->surface;
-				if (kb)
-					wlr_seat_keyboard_notify_enter(seat, exclusive_focus,
-							kb->keycodes, kb->num_keycodes, &kb->modifiers);
-				else
-					wlr_seat_keyboard_notify_enter(seat, exclusive_focus, NULL, 0, NULL);
+				client_notify_enter(exclusive_focus, wlr_seat_get_keyboard(seat));
 				return;
 			}
 		}
@@ -1240,7 +1235,6 @@ void
 focusclient(Client *c, int lift)
 {
 	struct wlr_surface *old = seat->keyboard_state.focused_surface;
-	struct wlr_keyboard *kb;
 	int i;
 	/* Do not focus clients if a layer surface is focused */
 	if (exclusive_focus)
@@ -1301,12 +1295,7 @@ focusclient(Client *c, int lift)
 	}
 
 	/* Have a client, so focus its top-level wlr_surface */
-	kb = wlr_seat_get_keyboard(seat);
-	if (kb)
-		wlr_seat_keyboard_notify_enter(seat, client_surface(c),
-				kb->keycodes, kb->num_keycodes, &kb->modifiers);
-	else
-		wlr_seat_keyboard_notify_enter(seat, client_surface(c), NULL, 0, NULL);
+	client_notify_enter(client_surface(c), wlr_seat_get_keyboard(seat));
 
 	/* Activate the new client */
 	client_activate_surface(client_surface(c), 1);
