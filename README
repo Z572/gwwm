@@ -1,1 +1,64 @@
-Thanks of dwl , tinywl ,sway
+# -*- mode: org -*-
+#+title: gwwm - guile wayland windows mamager.
+
+fork from dwl, add guile to configure it.
+
+* how to build
+you need
+- automake
+- autoconf
+- bash
+- guile
+- [[https://github.com/Z572/guile-wayland][guile-wayland]]
+- [[https://github.com/Z572/guile-wlroots][guile-wlroots]]
+- pkg-config
+- texinfo
+- wlroots
+- xorg-server-xwayland
+
+#+begin_src sh
+  autoreconf -fiv
+  ./configure
+  make -j
+#+end_src
+
+* develop
+If you use emacs, you can use =geiser-connect= to connect gwwm.
+
+If you use guix:
+#+begin_src sh
+  git clone gwwm
+  git clone guile-wayland
+  git clone guile-wlroots
+  cd gwwm
+  guix shell -D -f guix.scm
+#+end_src
+
+* configure
+simple example
+~/.config/gwwm/init.scm:
+#+begin_src scheme
+  (use-modules (gwwm config)
+               (gwwm keymap)
+               (gwwm hooks)
+               (gwwm color))
+  ;;; win+d
+  (keymap-global-set (kbd (s d)) (lambda () (spawn "firefox")))
+  (gwwm
+   (borderpx 1)
+   (sloppyfocus? #t)
+   (xkb-rules
+    (make-xkb-rules
+     "us"
+     #:model "asus_laptop"
+     #:options
+     '("ctrl:ralt_rctrl"
+       "ctrl:swapcaps_hyper"
+       "shift:both_capslock")))
+   (bordercolor (make-color 1.0 1.0 1.0 0.1)))
+
+#+end_src
+
+
+* thanks
+Thanks of guile, dwl , tinywl ,sway.
