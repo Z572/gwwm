@@ -8,12 +8,33 @@
 
 /* Leave these functions first; they're used in the others */
 
-#define WRAP_CLIENT(o) (scm_call_3(REF("oop goops","make"), \
+#define MAKE_CLIENT(o) (scm_call_3(REF("oop goops","make"), \
                                   REF("gwwm client","<gwwm-client>"), \
                                   scm_from_utf8_keyword("data"), \
                                   FROM_P(o)))
+
+#define WRAP_CLIENT(o) find_client(o)
 #define UNWRAP_CLIENT(o) (Client *)(TO_P(scm_call_1(REFP("gwwm client",".data"),o)))
 
+#define INNER_CLIENTS_HASH_TABLE REFP("gwwm client", "%clients")
+static inline SCM
+find_client(Client *c) {
+  const int *p=&c;
+  return scm_hashq_ref(INNER_CLIENTS_HASH_TABLE, (scm_from_int(*p)) ,NULL);
+}
+
+static inline void
+register_client(Client *c) {
+  const int *p=&c;
+  scm_hashq_set_x(INNER_CLIENTS_HASH_TABLE, (scm_from_int(*p)),MAKE_CLIENT(c));
+}
+
+static inline void
+logout_client(Client *c){
+  const int *p=&c;
+  scm_hashq_remove_x(INNER_CLIENTS_HASH_TABLE, scm_from_int(*p));
+  free(c);
+}
 
 static inline int
 client_is_x11(Client *c)

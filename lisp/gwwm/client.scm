@@ -30,6 +30,9 @@
 (define-class <gwwm-client> ()
   (data #:init-keyword #:data #:accessor .data))
 
+(define-once %clients
+  (make-weak-key-hash-table))
+
 (define-method (write (client <gwwm-client>) port)
   (format port "#<<gwwm-client ~a>"
           (if (client-alive? client)
