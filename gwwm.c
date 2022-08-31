@@ -119,7 +119,7 @@ typedef struct {
 #endif
 	unsigned int bw;
 	unsigned int tags;
-	int isfloating, isurgent, isfullscreen;
+  int isfloating, isurgent;//, isfullscreen;
 	uint32_t resize; /* configure serial of a pending resize */
 } Client;
 
@@ -432,7 +432,7 @@ struct NumTags { char limitexceeded[LENGTH(tags) > 31 ? -1 : 1]; };
 void
 applybounds(Client *c, struct wlr_box *bbox)
 {
-	if (!c->isfullscreen) {
+  if (!CLIENT_IS_FULLSCREEN(c)) {
 		struct wlr_box min = {0}, max = {0};
 		client_get_size_hints(c, &max, &min);
 		/* try to set size hints */
@@ -1345,7 +1345,7 @@ focusstack(const Arg *arg)
 {
 	/* Focus the next or previous client (in tiling order) on current_monitor */
 	Client *c, *sel = current_client();
-	if (!sel || (sel->isfullscreen && GWWM_LOCKFULLSCREEN_P()))
+	if (!sel || (CLIENT_IS_FULLSCREEN(sel) && GWWM_LOCKFULLSCREEN_P()))
 		return;
 	if (arg->i > 0) {
 		wl_list_for_each(c, &sel->link, link) {
@@ -1405,7 +1405,7 @@ fullscreennotify(struct wl_listener *listener, void *data)
 
 	if (!c->mon) {
 		/* if the client is not mapped yet, let mapnotify() call setfullscreen() */
-		c->isfullscreen = fullscreen;
+      /* CLIENT_SET_FULLSCREEN(c ,fullscreen); */
 		return;
 	}
 	setfullscreen(c, fullscreen);
@@ -1577,7 +1577,7 @@ mapnotify(struct wl_listener *listener, void *data)
 	}
 	printstatus();
 
-	if (c->isfullscreen)
+	if (CLIENT_IS_FULLSCREEN(c))
 		setfullscreen(c, 1);
 
 	c->mon->un_map = 1;
@@ -1589,7 +1589,7 @@ monocle(Monitor *m)
 	Client *c;
 
 	wl_list_for_each(c, &clients, link) {
-		if (!VISIBLEON(c, m) || c->isfloating || c->isfullscreen)
+		if (!VISIBLEON(c, m) || c->isfloating || CLIENT_IS_FULLSCREEN(c))
 			continue;
 		resize(c, m->w, 0);
 	}
@@ -1675,7 +1675,7 @@ moveresize(const Arg *arg)
 	if (cursor_mode != CurNormal)
 		return;
 	xytonode(cursor->x, cursor->y, NULL, &grabc, NULL, NULL, NULL);
-	if (!grabc || client_is_unmanaged(grabc) || grabc->isfullscreen)
+	if (!grabc || client_is_unmanaged(grabc) || CLIENT_IS_FULLSCREEN(grabc))
 		return;
 
 	/* Float the window and tell motionnotify to grab it */
@@ -1840,7 +1840,7 @@ printstatus(void)
                    "MONITOR",m->wlr_output->name,
                    "TITLE",client_get_title(c));
           send_log(INFO,"is FULLSCREEN","MONITOR",m->wlr_output->name,
-                   "FULLSCREEN",((c->isfullscreen) ? "#t" : "#f"));
+                   "FULLSCREEN",((CLIENT_IS_FULLSCREEN(c)) ? "#t" : "#f"));
           send_log(INFO,"is FLOATING",
                    "MONITOR",m->wlr_output->name,
                    "FLOATING", ((c->isfloating)? "#t": "#f"));
@@ -2025,7 +2025,7 @@ setcursor(struct wl_listener *listener, void *data)
 void
 setfloating(Client *c, int floating)
 {
-  if (c->isfullscreen){
+  if (CLIENT_IS_FULLSCREEN(c)){
     setfullscreen(c, 0);
   };
 	c->isfloating = floating;
@@ -2037,7 +2037,7 @@ setfloating(Client *c, int floating)
 void
 setfullscreen(Client *c, int fullscreen)
 {
-	c->isfullscreen = fullscreen;
+  /* CLIENT_SET_FULLSCREEN(c,fullscreen); */
 	c->bw = fullscreen ? 0 : GWWM_BORDERPX();
 	client_set_fullscreen(c, fullscreen);
 
@@ -2393,7 +2393,7 @@ tile(Monitor *m)
 	Client *c;
 
 	wl_list_for_each(c, &clients, link)
-		if (VISIBLEON(c, m) && !c->isfloating && !c->isfullscreen)
+		if (VISIBLEON(c, m) && !c->isfloating && !CLIENT_IS_FULLSCREEN(c))
 			n++;
 	if (n == 0)
 		return;
@@ -2404,7 +2404,7 @@ tile(Monitor *m)
 		mw = m->w.width;
 	i = my = ty = 0;
 	wl_list_for_each(c, &clients, link) {
-		if (!VISIBLEON(c, m) || c->isfloating || c->isfullscreen)
+		if (!VISIBLEON(c, m) || c->isfloating || CLIENT_IS_FULLSCREEN(c))
 			continue;
 		if (i < m->nmaster) {
 			resize(c, (struct wlr_box){.x = m->w.x, .y = m->w.y + my, .width = mw,
@@ -2424,7 +2424,7 @@ togglefloating(const Arg *arg)
 {
 	Client *sel = current_client();
 	/* return if fullscreen */
-	if (sel && !sel->isfullscreen)
+	if (sel && !CLIENT_IS_FULLSCREEN(sel))
 		setfloating(sel, !sel->isfloating);
 }
 
@@ -2726,7 +2726,7 @@ createnotifyx11(struct wl_listener *listener, void *data)
 	struct wlr_xwayland_surface *xwayland_surface = data;
 	Client *c;
 	wl_list_for_each(c, &clients, link)
-		if (c->isfullscreen && VISIBLEON(c, c->mon))
+		if (CLIENT_IS_FULLSCREEN(c) && VISIBLEON(c, c->mon))
 			setfullscreen(c, 0);
 
 	/* Allocate a Client for this surface */

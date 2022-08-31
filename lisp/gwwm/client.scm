@@ -3,6 +3,7 @@
   #:use-module (wlroots xwayland)
   #:use-module (wlroots util box)
   #:use-module (wlroots types xdg-shell)
+  #:use-module (srfi srfi-17)
   #:use-module (oop goops)
   #:export (current-client
             client-floating?
@@ -28,10 +29,19 @@
             <gwwm-client>))
 
 (define-class <gwwm-client> ()
-  (data #:init-keyword #:data #:accessor .data))
+  (data #:init-keyword #:data #:accessor .data)
+  (fullscreen? #:init-value #f
+               #:accessor client-fullscreen?))
+
+(define client-is-fullscreen? client-fullscreen?)
 
 (define-once %clients
-  (make-weak-key-hash-table))
+  (make-hash-table))
+
+(define client-set-fullscreen! (setter client-fullscreen?))
+(define-method (client-set-fullscreen! (c <gwwm-client>) (f? <boolean>))
+  ((@@ (gwwm) %setfullscreen ) c f?)
+  (slot-set! c 'fullscreen? f?))
 
 (define-method (write (client <gwwm-client>) port)
   (format port "#<<gwwm-client ~a>"
@@ -106,12 +116,6 @@
 (define (client-set-floating! client floating?)
   ((@@ (gwwm) client-set-floating!) client floating? ))
 
-(define (client-is-fullscreen? client)
-  ((@@ (gwwm) client-is-fullscreen?) client))
-
-(define (client-set-fullscreen! client fullscreen?)
-  ((@@ (gwwm) client-set-fullscreen!) client fullscreen? ))
-
 (define (client-toggle-fullscreen client)
   (set! (client-fullscreen? client)
         (not (client-fullscreen? client))))
@@ -120,11 +124,6 @@
   (make-procedure-with-setter
    client-is-floating?
    client-set-floating!))
-
-(define client-fullscreen?
-  (make-procedure-with-setter
-   client-is-fullscreen?
-   client-set-fullscreen!))
 
 (define-method (client-resize (c <gwwm-client>) geo (interact? <boolean>))
   ((@@ (gwwm) %resize) c geo interact?))

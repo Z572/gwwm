@@ -17,6 +17,9 @@
 #define UNWRAP_CLIENT(o) (Client *)(TO_P(scm_call_1(REFP("gwwm client",".data"),o)))
 
 #define INNER_CLIENTS_HASH_TABLE REFP("gwwm client", "%clients")
+#define CLIENT_IS_FULLSCREEN(c) scm_to_bool(REF_CALL_1("gwwm client" ,"client-fullscreen?",WRAP_CLIENT(c)))
+#define CLIENT_SET_FULLSCREEN(c ,f) \
+  (REF_CALL_2("gwwm client","client-set-fullscreen!",(WRAP_CLIENT(c)), (scm_from_bool(f))))
 static inline SCM
 find_client(Client *c) {
   const int *p=&c;
@@ -347,14 +350,6 @@ toplevel_from_popup(struct wlr_xdg_popup *popup)
 		}
 	}
 }
-SCM_DEFINE (gwwm_client_is_fullscreen_p, "client-is-fullscreen?" ,1,0,0,
-            (SCM c), "")
-#define FUNC_NAME s_gwwm_client_is_fullscreen_p
-{
-  Client *cl = UNWRAP_CLIENT(c);
-  return scm_from_bool(cl->isfullscreen);
-}
-#undef FUNC_NAME
 
 SCM_DEFINE (gwwm_client_is_floating_p, "client-is-floating?" ,1,0,0,
             (SCM c), "")
@@ -471,7 +466,7 @@ SCM_DEFINE (gwwm_client_set_floating, "client-set-floating!" ,2,0,0,
 }
 #undef FUNC_NAME
 
-SCM_DEFINE (gwwm_setfullscreen, "client-set-fullscreen!",2,0,0,(SCM c,SCM yes),"")
+SCM_DEFINE (gwwm_setfullscreen, "%setfullscreen",2,0,0,(SCM c,SCM yes),"")
 #define FUNC_NAME s_gwwm_setfullscreen
 {
   setfullscreen(UNWRAP_CLIENT(c),scm_to_bool(yes));
