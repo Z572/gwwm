@@ -34,20 +34,20 @@ gwwm [options]
 
 
 (current-log-callback
- (lambda (msg)
-   (let ((p (current-error-port))
-         (msg2 msg))
-     (format p "[~a]| ~a | "
-             (cdr (assq 'SEVERITY msg))
-             (cdr (assq 'MESSAGE msg)))
-     (set! msg2 (assoc-remove! (assoc-remove! msg2 'SEVERITY) 'MESSAGE))
-     (for-each (lambda (a)
-                 (display (car a) p)
-                 (display ":" p)
-                 (display (object->string(cdr a)) p)
-                 (display " " p))
-               msg2)
-     (newline p))))
+ (let ((p (current-error-port)))
+   (lambda (msg)
+     (let ((msg2 msg))
+       (format p "[~a]| ~a | "
+               (cdr (assq 'SEVERITY msg))
+               (cdr (assq 'MESSAGE msg)))
+       (set! msg2 (assoc-remove! (assoc-remove! msg2 'SEVERITY) 'MESSAGE))
+       (for-each (lambda (a)
+                   (display (car a) p)
+                   (display ":" p)
+                   (display (object->string(cdr a)) p)
+                   (display " " p))
+                 msg2)
+       (newline p)))))
 
 
 (false-if-exception (spawn-server (make-tcp-server-socket)))
