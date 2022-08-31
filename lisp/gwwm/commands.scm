@@ -10,7 +10,7 @@
 
 (define* (togglefullscreen #:optional (client (current-client)))
   (when client
-    (client-toggle-fullscreen client)) )
+    ((@@ (gwwm) %setfullscreen) client (not (client-fullscreen? client)))))
 
 (define (spawn program . args)
   (when (= (primitive-fork) 0)

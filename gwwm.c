@@ -1405,7 +1405,7 @@ fullscreennotify(struct wl_listener *listener, void *data)
 
 	if (!c->mon) {
 		/* if the client is not mapped yet, let mapnotify() call setfullscreen() */
-      /* CLIENT_SET_FULLSCREEN(c ,fullscreen); */
+      CLIENT_SET_FULLSCREEN(c ,fullscreen);
 		return;
 	}
 	setfullscreen(c, fullscreen);
@@ -2037,7 +2037,7 @@ setfloating(Client *c, int floating)
 void
 setfullscreen(Client *c, int fullscreen)
 {
-  /* CLIENT_SET_FULLSCREEN(c,fullscreen); */
+  CLIENT_SET_FULLSCREEN(c,fullscreen);
 	c->bw = fullscreen ? 0 : GWWM_BORDERPX();
 	client_set_fullscreen(c, fullscreen);
 

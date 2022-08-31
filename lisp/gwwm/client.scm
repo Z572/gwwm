@@ -12,7 +12,6 @@
             client-fullscreen?
             client-is-fullscreen?
             client-set-fullscreen!
-            client-toggle-fullscreen
             client-list
             client-get-appid
             client-alive?
@@ -39,16 +38,12 @@
   (make-hash-table))
 
 (define client-set-fullscreen! (setter client-fullscreen?))
-(define-method (client-set-fullscreen! (c <gwwm-client>) (f? <boolean>))
-  ((@@ (gwwm) %setfullscreen ) c f?)
-  (slot-set! c 'fullscreen? f?))
 
 (define-method (write (client <gwwm-client>) port)
   (format port "#<<gwwm-client ~a>"
           (if (client-alive? client)
               (client-get-appid client)
-              "*deaded*"))
-  )
+              "*deaded*")))
 (define (client-get-appid c)
   (if (client-is-x11? c)
       (wlr-xwayland-surface-class
@@ -115,10 +110,6 @@
      edges)))
 (define (client-set-floating! client floating?)
   ((@@ (gwwm) client-set-floating!) client floating? ))
-
-(define (client-toggle-fullscreen client)
-  (set! (client-fullscreen? client)
-        (not (client-fullscreen? client))))
 
 (define client-floating?
   (make-procedure-with-setter
