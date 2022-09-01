@@ -28,6 +28,7 @@
             client-xdg-surface
             client-resize
             client-set-resizing!
+            client-title
             <gwwm-client>))
 
 (define-class <gwwm-client> ()
@@ -35,7 +36,14 @@
   (fullscreen? #:init-value #f
                #:accessor client-fullscreen?)
   (urgent? #:init-value #f
-           #:accessor client-urgent?))
+           #:accessor client-urgent?)
+  (title #:allocation #:virtual
+         #:slot-ref (lambda (c)
+                      (if (client-alive? c)
+                          ((@@ (gwwm) client-get-title) c)
+                          "*deaded*"))
+         #:slot-set! (lambda _ #t)
+         #:getter client-title))
 
 (define client-is-fullscreen? client-fullscreen?)
 
