@@ -12,6 +12,9 @@
             client-fullscreen?
             client-is-fullscreen?
             client-set-fullscreen!
+            client-urgent?
+            client-is-urgent?
+            client-set-urgent!
             client-list
             client-get-appid
             client-alive?
@@ -30,7 +33,9 @@
 (define-class <gwwm-client> ()
   (data #:init-keyword #:data #:accessor .data)
   (fullscreen? #:init-value #f
-               #:accessor client-fullscreen?))
+               #:accessor client-fullscreen?)
+  (urgent? #:init-value #f
+           #:accessor client-urgent?))
 
 (define client-is-fullscreen? client-fullscreen?)
 
@@ -38,6 +43,8 @@
   (make-hash-table))
 
 (define client-set-fullscreen! (setter client-fullscreen?))
+(define client-is-urgent? client-urgent?)
+(define client-set-urgent! (setter client-urgent?))
 
 (define-method (write (client <gwwm-client>) port)
   (format port "#<<gwwm-client ~a>"

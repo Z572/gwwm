@@ -119,7 +119,7 @@ typedef struct {
 #endif
 	unsigned int bw;
 	unsigned int tags;
-  int isfloating, isurgent;//, isfullscreen;
+  int isfloating;
 	uint32_t resize; /* configure serial of a pending resize */
 } Client;
 
@@ -1265,7 +1265,7 @@ focusclient(Client *c, int lift)
 		wl_list_remove(&c->flink);
 		wl_list_insert(&fstack, &c->flink);
 	    current_monitor = c->mon;
-		c->isurgent = 0;
+        CLIENT_SET_URGENT(c ,0);
 		client_restack_surface(c);
 
 		for (i = 0; i < 4; i++)
@@ -1832,7 +1832,7 @@ printstatus(void)
 			if (c->mon != m)
 				continue;
 			occ |= c->tags;
-			if (c->isurgent)
+			if (CLIENT_IS_URGENT_P(c))
 				urg |= c->tags;
 		}
 		if ((c = focustop(m))) {
@@ -2582,7 +2582,7 @@ urgent(struct wl_listener *listener, void *data)
 	struct wlr_xdg_activation_v1_request_activate_event *event = data;
 	Client *c = client_from_wlr_surface(event->surface);
 	if (c && c != current_client()) {
-		c->isurgent = 1;
+      CLIENT_SET_URGENT(c,1);
 		printstatus();
 	}
 }
@@ -2766,7 +2766,7 @@ sethints(struct wl_listener *listener, void *data)
 {
 	Client *c = wl_container_of(listener, c, set_hints);
 	if (c != current_client()) {
-		c->isurgent = c->surface.xwayland->hints_urgency;
+      CLIENT_SET_URGENT(c, c->surface.xwayland->hints_urgency);
 		printstatus();
 	}
 }

@@ -20,6 +20,9 @@
 #define CLIENT_IS_FULLSCREEN(c) scm_to_bool(REF_CALL_1("gwwm client" ,"client-fullscreen?",WRAP_CLIENT(c)))
 #define CLIENT_SET_FULLSCREEN(c ,f) \
   (REF_CALL_2("gwwm client","client-set-fullscreen!",(WRAP_CLIENT(c)), (scm_from_bool(f))))
+#define CLIENT_IS_URGENT_P(c) scm_to_bool(REF_CALL_1("gwwm client" ,"client-urgent?",WRAP_CLIENT(c)))
+#define CLIENT_SET_URGENT(c ,f) \
+  (REF_CALL_2("gwwm client","client-set-urgent!",(WRAP_CLIENT(c)), (scm_from_bool(f))))
 static inline SCM
 find_client(Client *c) {
   const int *p=&c;
