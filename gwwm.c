@@ -92,7 +92,6 @@ typedef struct {
 typedef struct Monitor Monitor;
 typedef struct {
 	/* Must keep these three elements in this order */
-	unsigned int type; /* XDGShell or X11* */
 	struct wlr_box geom;  /* layout-relative, includes border */
 	Monitor *mon;
 	struct wlr_scene_node *scene;
@@ -1204,7 +1203,7 @@ destroynotify(struct wl_listener *listener, void *data)
 	wl_list_remove(&c->set_title.link);
 	wl_list_remove(&c->fullscreen.link);
 #ifdef XWAYLAND
-	if (c->type != XDGShell) {
+	if (CLIENT_TYPE(c) != "XDGShell") {
 		wl_list_remove(&c->configure.link);
 		wl_list_remove(&c->set_hints.link);
 		wl_list_remove(&c->activate.link);
@@ -1527,7 +1526,7 @@ mapnotify(struct wl_listener *listener, void *data)
 
 	/* Create scene tree for this client and its border */
 	c->scene = &wlr_scene_tree_create(layers[LyrTile])->node;
-	c->scene_surface = c->type == XDGShell
+	c->scene_surface = CLIENT_TYPE(c) == "XDGShell"
 			? wlr_scene_xdg_surface_create(c->scene, c->surface.xdg)
 			: wlr_scene_subsurface_tree_create(c->scene, client_surface(c));
 	if (client_surface(c)) {
@@ -1886,7 +1885,7 @@ rendermon(struct wl_listener *listener, void *data)
 	 * this monitor. */
 	/* Checking m->un_map for every client is not optimal but works */
 	wl_list_for_each(c, &clients, link) {
-		if ((c->resize && m->un_map) || (c->type == XDGShell
+      if ((c->resize && m->un_map) || (CLIENT_TYPE(c) == "XDGShell"
 				&& (c->surface.xdg->pending.geometry.width !=
 				c->surface.xdg->current.geometry.width
 				|| c->surface.xdg->pending.geometry.height !=
@@ -2643,7 +2642,7 @@ xytonode(double x, double y, struct wlr_surface **psurface,
 			/* Walk the tree to find a node that knows the client */
 			for (pnode = node; pnode && !c; pnode = pnode->parent)
 				c = pnode->data;
-			if (c && c->type == LayerShell) {
+			if (c && CLIENT_TYPE(c) == "LayerShell") {
 				c = NULL;
 				l = pnode->data;
 			}
@@ -2707,7 +2706,7 @@ activatex11(struct wl_listener *listener, void *data)
 	Client *c = wl_container_of(listener, c, activate);
 
 	/* Only "managed" windows can be activated */
-	if (c->type == X11Managed)
+	if (CLIENT_TYPE(c) == "X11Managed")
 		wlr_xwayland_surface_activate(c->surface.xwayland, 1);
 }
 
@@ -2732,7 +2731,7 @@ createnotifyx11(struct wl_listener *listener, void *data)
 	/* Allocate a Client for this surface */
 	c = xwayland_surface->data = ecalloc(1, sizeof(*c));
 	c->surface.xwayland = xwayland_surface;
-	c->type = xwayland_surface->override_redirect ? X11Unmanaged : X11Managed;
+	SET_CLIENT_TYPE(c,xwayland_surface->override_redirect ? "X11Unmanaged" : "X11Managed");
 	c->bw = GWWM_BORDERPX();
 
 	/* Listen to the various events it can emit */

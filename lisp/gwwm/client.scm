@@ -29,6 +29,7 @@
 
 (define-class <gwwm-client> ()
   (data #:init-keyword #:data #:accessor .data)
+  (type #:init-value "XDGShell" #:accessor client-type)
   (fullscreen? #:init-value #f
                #:accessor client-fullscreen?))
 
@@ -75,8 +76,8 @@
 (define (client-xdg-surface client)
   ((@@ (gwwm) client-xdg-surface) client))
 
-(define (client-type client)
-  ((@@ (gwwm) client-type) client))
+;; (define (client-type client)
+;;   ((@@ (gwwm) client-type) client))
 (define (client-is-x11? client)
   (->bool (member (client-type client) '("X11Managed" "X11Unmanaged"))))
 

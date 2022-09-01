@@ -20,6 +20,14 @@
 #define CLIENT_IS_FULLSCREEN(c) scm_to_bool(REF_CALL_1("gwwm client" ,"client-fullscreen?",WRAP_CLIENT(c)))
 #define CLIENT_SET_FULLSCREEN(c ,f) \
   (REF_CALL_2("gwwm client","client-set-fullscreen!",(WRAP_CLIENT(c)), (scm_from_bool(f))))
+#define CLIENT_TYPE(c) scm_to_utf8_string(REF_CALL_1("gwwm client" ,"client-type",WRAP_CLIENT(c)))
+#define SET_CLIENT_TYPE(c,type)                     \
+  (scm_call_2(REF_CALL_1                            \
+              ("srfi srfi-17",                      \
+               "setter",                            \
+               REF("gwwm client", "client-type")),  \
+              (WRAP_CLIENT(c)),                     \
+              scm_from_utf8_string(type)))
 static inline SCM
 find_client(Client *c) {
   const int *p=&c;
@@ -232,7 +240,7 @@ static inline int
 client_is_unmanaged(Client *c)
 {
 #ifdef XWAYLAND
-	return c->type == X11Unmanaged;
+  return CLIENT_TYPE(c) == "X11Unmanaged";
 #endif
 	return 0;
 }
@@ -411,29 +419,6 @@ SCM_DEFINE (gwwm_set_client_border_width, "client-set-border-width" , 2,0,0,
   return WRAP_CLIENT(cl);
 }
 #undef FUNC_NAME
-
-SCM_DEFINE (gwwm_client_type, "client-type" , 1,0,0,
-            (SCM c), "")
-{
-  Client *cl = UNWRAP_CLIENT(c);
-  char* t;
-  switch (cl->type)
-    {
-    case XDGShell:
-      t="XDGShell";
-      break;
-    case LayerShell:
-      t="LayerShell";
-      break;
-    case X11Managed:
-      t="X11Managed";
-      break;
-    case X11Unmanaged:
-      t="X11Unmanaged";
-      break;
-    }
-  return scm_from_utf8_string(t);
-}
 
 SCM_DEFINE (gwwm_client_wants_fullscreen_p , "client-wants-fullscreen?",1,0,0,
             (SCM client), "")
