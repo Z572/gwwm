@@ -50,7 +50,8 @@ gwwm [options]
        (newline p)))))
 
 
-(false-if-exception (spawn-server (make-tcp-server-socket)))
+(define (setup-server)
+  (false-if-exception (spawn-server (make-tcp-server-socket))))
 
 (define-once global-keymap
   (make-parameter (make-keymap)))

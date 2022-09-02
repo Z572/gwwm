@@ -2823,7 +2823,9 @@ inner_main(void *closure,int argc, char *argv[])
 		die("XDG_RUNTIME_DIR must be set");
 	setup();
     config_setup();
-	run();
+    scm_set_current_module (scm_c_resolve_module ("guile-user"));
+    (scm_call_0(REFP("gwwm","setup-server")));
+    run();
 	cleanup();
 	/* return EXIT_SUCCESS; */
 
