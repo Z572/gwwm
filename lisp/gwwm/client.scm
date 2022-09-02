@@ -17,6 +17,7 @@
             client-set-urgent!
             client-list
             client-get-appid
+            client-get-title
             client-alive?
             client=?
             client-get-parent
@@ -40,7 +41,7 @@
   (title #:allocation #:virtual
          #:slot-ref (lambda (c)
                       (if (client-alive? c)
-                          ((@@ (gwwm) client-get-title) c)
+                          (client-get-title c)
                           "*deaded*"))
          #:slot-set! (lambda _ #t)
          #:getter client-title))
@@ -64,6 +65,14 @@
       (wlr-xwayland-surface-class
        (client-xwayland-surface c))
       (wlr-xdg-toplevel-appid
+       (wlr-xdg-surface-toplevel
+        (client-xdg-surface c)))))
+
+(define (client-get-title c)
+  (if (client-is-x11? c)
+      (wlr-xwayland-surface-title
+       (client-xwayland-surface c))
+      (wlr-xdg-toplevel-title
        (wlr-xdg-surface-toplevel
         (client-xdg-surface c)))))
 

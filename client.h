@@ -160,11 +160,7 @@ client_get_size_hints(Client *c, struct wlr_box *max, struct wlr_box *min)
 static inline const char *
 client_get_title(Client *c)
 {
-#ifdef XWAYLAND
-	if (client_is_x11(c))
-		return c->surface.xwayland->title;
-#endif
-	return c->surface.xdg->toplevel->title;
+  return (scm_to_utf8_string(REF_CALL_1("gwwm client","client-get-title", WRAP_CLIENT(c))));
 }
 
 static inline Client *
@@ -371,16 +367,6 @@ SCM_DEFINE (gwwm_client_border_width, "client-border-width" , 1,0,0,
   return scm_from_unsigned_integer(cl->bw);
 }
 #undef FUNC_NAME
-
-SCM_DEFINE (gwwm_client_get_title, "client-get-title" ,1,0,0,
-            (SCM c), "")
-#define FUNC_NAME s_gwwm_client_get_title
-{
-  Client *cl = UNWRAP_CLIENT(c);
-  return scm_from_locale_string(client_get_title(cl));
-}
-#undef FUNC_NAME
-
 
 SCM_DEFINE (gwwm_client_get_appid, "client-get-appid" ,1,0,0,
             (SCM c), "")
