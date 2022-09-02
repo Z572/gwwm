@@ -5,6 +5,7 @@
   #:use-module (wlroots types xdg-shell)
   #:use-module (srfi srfi-17)
   #:use-module (oop goops)
+  #:use-module (oop goops describe)
   #:export (current-client
             client-floating?
             client-set-floating!
@@ -55,6 +56,12 @@
          #:getter client-title))
 
 (define client-is-fullscreen? client-fullscreen?)
+
+(define-method (describe (c <gwwm-client>))
+  (if (client-alive? c)
+      (next-method)
+      (begin (format #t "~S is a *deaded* client.~%" c)
+             *unspecified*)))
 
 (define-once %clients
   (make-hash-table))
