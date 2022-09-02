@@ -368,15 +368,6 @@ SCM_DEFINE (gwwm_client_border_width, "client-border-width" , 1,0,0,
 }
 #undef FUNC_NAME
 
-SCM_DEFINE (gwwm_client_get_appid, "client-get-appid" ,1,0,0,
-            (SCM c), "")
-#define FUNC_NAME s_gwwm_client_get_appid
-{
-  Client *cl = UNWRAP_CLIENT(c);
-  return scm_from_locale_string(client_get_appid(cl));
-}
-#undef FUNC_NAME
-
 SCM_DEFINE (gwwm_client_get_parent, "client-get-parent" ,1,0,0,
             (SCM c), "")
 #define FUNC_NAME s_gwwm_client_get_parent
