@@ -119,7 +119,7 @@
   (->bool (member (client-type client) '("X11Managed" "X11Unmanaged"))))
 
 (define (client-list)
-  ((@@ (gwwm) client-list)))
+  (hash-map->list (lambda (_ b) b) %clients))
 
 (define (current-client)
   ((@@ (gwwm) current-client)))

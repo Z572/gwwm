@@ -423,19 +423,6 @@ SCM_DEFINE (gwwm_client_wants_fullscreen_p , "client-wants-fullscreen?",1,0,0,
 }
 #undef FUNC_NAME
 
-SCM_DEFINE (gwwm_client_list , "client-list",0,0,0,(),"")
-#define FUNC_NAME s_gwwm_client_list
-{
-  SCM a=scm_make_list(scm_from_int(0), SCM_UNSPECIFIED);
-  	Client *c;
-	wl_list_for_each(c, &clients, link) {
-      a=scm_cons(WRAP_CLIENT(c), a);
-    }
-    return a;
-}
-#undef FUNC_NAME
-
-
 SCM_DEFINE (gwwm_client_set_floating, "client-set-floating!" ,2,0,0,
             (SCM c ,SCM floating), "")
 #define FUNC_NAME s_gwwm_client_set_floating
