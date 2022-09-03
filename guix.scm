@@ -112,10 +112,11 @@
      (list #:make-flags
            #~(list "GUILE_AUTO_COMPILE=0")
                      ;;; XXX: is a bug? why can't use gexp for #:modules
-           #:modules '((guix build gnu-build-system)
-                       (guix build utils)
-                       (ice-9 rdelim)
-                       (ice-9 popen))
+           #:modules `(((guix build guile-build-system)
+                        #:select (target-guile-effective-version))
+                       ,@%gnu-build-system-modules)
+           #:imported-modules `((guix build guile-build-system)
+                                ,@%gnu-build-system-modules)
            #:phases
            #~(modify-phases %standard-phases
                (add-after 'build 'load-extension
@@ -139,31 +140,21 @@
                                      '("guile-wayland"
                                        "guile-wlroots"
                                        "guile-bytestructures")))
-                          (effective (read-line
-                                      (open-pipe*
-                                       OPEN_READ
-                                       "guile" "-c"
-                                       "(display (effective-version))")))
+                          (effective (target-guile-effective-version))
                           (mods (map (lambda (o)
                                        (string-append
-                                        o "/share/guile/site/"
-                                        effective))
+                                        o "/share/guile/site/" effective))
                                      (cons out deps)))
                           (gos
                            (map (lambda (o)
                                   (string-append
-                                   o
-                                   "/lib/guile/"
-                                   effective
-                                   "/site-ccache"))
+                                   o "/lib/guile/" effective "/site-ccache"))
                                 (cons out deps))))
                      (wrap-program (search-input-file outputs "bin/gwwm")
                        #:sh (search-input-file inputs "bin/bash")
                        `("GUILE_AUTO_COMPILE" ":" = ("0"))
-                       `("GUILE_LOAD_PATH" ":" prefix
-                         ,mods)
-                       `("GUILE_LOAD_COMPILED_PATH" ":" prefix
-                         ,gos))))))))
+                       `("GUILE_LOAD_PATH" ":" prefix ,mods)
+                       `("GUILE_LOAD_COMPILED_PATH" ":" prefix ,gos))))))))
     (native-inputs
      (list autoconf automake
            pkg-config
