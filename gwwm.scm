@@ -12,8 +12,7 @@
   #:export (main))
 
 (eval-when (expand load eval)
-  (load-extension "libgwwm"
-                  "scm_init_gwwm"))
+  (load-extension "libgwwm" "scm_init_gwwm"))
 
 
 (define-public (keymap-global-set key command)
