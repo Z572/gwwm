@@ -49,32 +49,30 @@ EXTRA_DIST = $(SOURCES)  $(protocols)
 
 #
 GOBJECTS = $(SOURCES:%.scm=%.go) $(NODIST_SOURCES:%.scm=%.go)
-
 moddir=$(guilemoduledir)/gwwm
 godir=$(guileobjectdir)/gwwm
-nodist_mod_DATA = lisp/gwwm/color.scm   \
-		lisp/gwwm/monitor.scm \
-		lisp/gwwm/client.scm  \
-		lisp/gwwm/keymap.scm  \
-		lisp/gwwm/keybind.scm \
-		lisp/gwwm/keyboard.scm \
-		lisp/gwwm/hooks.scm \
-		lisp/gwwm/utils.scm    \
-		lisp/gwwm/utils/srfi-215.scm    \
-		lisp/gwwm/utils/ref.scm \
-		lisp/gwwm/keys.scm    \
-		lisp/gwwm/commands.scm \
-		lisp/gwwm/config.scm
+nobase_guilemodule_DATA = gwwm.scm \
+		gwwm/color.scm   \
+		gwwm/monitor.scm \
+		gwwm/client.scm  \
+		gwwm/keymap.scm  \
+		gwwm/keybind.scm \
+		gwwm/keyboard.scm \
+		gwwm/hooks.scm \
+		gwwm/utils.scm    \
+		gwwm/utils/srfi-215.scm    \
+		gwwm/utils/ref.scm \
+		gwwm/keys.scm    \
+		gwwm/commands.scm \
+		gwwm/config.scm
 
-dist_bin_SCRIPTS=gwwm
-nodist_go_DATA = $(GOBJECTS)
-nodist_guilemodule_DATA=lisp/gwwm.scm
-nodist_guileobject_DATA=$(nodist_guilemodule_DATA:%.scm=%.go)
-SOURCES=$(nodist_mod_DATA) $(nodist_guilemodule_DATA)
+dist_bin_SCRIPTS=bin/gwwm
+# nobase_go_DATA = $(GOBJECTS)
+nobase_guileobject_DATA=$(nobase_guilemodule_DATA:%.scm=%.go)
+SOURCES=$(nobase_guilemodule_DATA)
 
-guile_install_go_files = install-nobase_goDATA
-$(guile_install_go_files): install-nodist_modDATA install-nobase_guilemoduleDATA
-gwwm:
+guile_install_go_files = install-nobase_guileobject_DATA
+$(guile_install_go_files): install-nobase_guilemodule_DATA
 
 CLEANFILES += $(GOBJECTS)
 GUILE_WARNINGS =                                          \
@@ -86,6 +84,6 @@ GUILE_WARNINGS =                                          \
 
 .scm.go:
 	$(AM_V_GEN)$(top_builddir)/pre-inst-env $(GUILE_TOOLS) compile $(GUILE_TARGET) $(GUILE_WARNINGS) -o "$@" "$<"
-
+.PHONY: run
 run: all
-	exec $(top_builddir)/pre-inst-env $(top_builddir)/gwwm
+	exec $(top_builddir)/pre-inst-env $(top_srcdir)/bin/gwwm

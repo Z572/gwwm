@@ -1,0 +1,4 @@
+#!/gnu/store/57svhqws4sqy0xhb4ygxffvjixsqvagk-profile/bin/guile
+!#
+(use-modules (gwwm))
+(main)
