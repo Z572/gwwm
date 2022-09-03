@@ -9,6 +9,7 @@ AM_INIT_AUTOMAKE([1.14 gnu tar-ustar silent-rules subdir-objects \
 AM_SILENT_RULES([yes])
 
 AC_CONFIG_FILES([Makefile])
+AC_CONFIG_FILES([gwwm], [chmod +x gwwm])
 AC_CONFIG_FILES([pre-inst-env], [chmod +x pre-inst-env])
 AC_PROG_CC
 GUILE_PKG([3.0 2.2])
@@ -19,6 +20,7 @@ dnl AC_CONFIG_FILES([pre-inst-env], [chmod +x pre-inst-env])
 guilemoduledir="${datarootdir}/guile/site/$GUILE_EFFECTIVE_VERSION"
 guileobjectdir="${libdir}/guile/$GUILE_EFFECTIVE_VERSION/site-ccache"
 AC_USE_SYSTEM_EXTENSIONS
+LT_INIT([dlopen])
 dnl m4_pattern_allow([AC_LIB_LINKFLAGS_FROM_LIBS])
 PKG_CHECK_MODULES([GUILE], [guile-3.0])
 PKG_CHECK_MODULES([WAYLAND_SERVER], [wayland-server])

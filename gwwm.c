@@ -813,8 +813,7 @@ checkidleinhibitor(struct wlr_surface *exclude)
 	wlr_idle_set_enabled(idle, NULL, !inhibited);
 }
 
-void
-cleanup(void)
+SCM_DEFINE (gwwm_cleanup, "%gwwm-cleanup",0,0,0, () ,"")
 {
 #ifdef XWAYLAND
 	wlr_xwayland_destroy(xwayland);
@@ -830,6 +829,7 @@ cleanup(void)
 	wlr_output_layout_destroy(output_layout);
 	wlr_seat_destroy(seat);
 	wl_display_destroy(dpy);
+    return SCM_UNSPECIFIED;
 }
 
 void
@@ -1945,8 +1945,7 @@ SCM_DEFINE(gwwm_resize ,"%resize",3,0,0,(SCM c,SCM geo,SCM interact),"")
   return SCM_UNSPECIFIED;
 }
 
-void
-run()
+SCM_DEFINE (gwwm_run,"%gwwm-run",0,0,0,(),"")
 {
 	/* Add a Unix socket to the Wayland display. */
 	const char *socket = wl_display_add_socket_auto(dpy);
@@ -1979,6 +1978,7 @@ run()
 	 * loop configuration to listen to libinput events, DRM events, generate
 	 * frame events at the refresh rate, and so on. */
 	wl_display_run(dpy);
+    return SCM_UNSPECIFIED;
 }
 
 Client *
@@ -2146,13 +2146,12 @@ setsel(struct wl_listener *listener, void *data)
 	wlr_seat_set_selection(seat, event->source, event->serial);
 }
 
-void
-setup(void)
+
+SCM_DEFINE (gwwm_setup,"%gwwm-setup" ,0,0,0,(),"")
 {
 	/* Force line-buffered stdout */
 	setvbuf(stdout, NULL, _IOLBF, 0);
-
-	/* The Wayland display is managed by libwayland. It handles accepting
+    /* The Wayland display is managed by libwayland. It handles accepting
 	 * clients from the Unix socket, manging Wayland globals, and so on. */
 	dpy = wl_display_create();
 
@@ -2319,6 +2318,7 @@ setup(void)
 		fprintf(stderr, "failed to setup XWayland X server, continuing without it\n");
 	}
 #endif
+    return SCM_UNSPECIFIED;
 }
 
 void
@@ -2803,34 +2803,41 @@ xwaylandready(struct wl_listener *listener, void *data)
 }
 #endif
 
-void config_setup(){
-  gwwm_config = (scm_call_0 (SCM_LOOKUP_REF("load-init-file")));
-
-  /* borderpx= GWWM_BORDERPX(); */
-  /* sloppyfocus= GWWM_SLOPPYFOCUS_P(); */
-  /* scm_c_primitive_load(("")); */
-}
-void
-inner_main(void *closure,int argc, char *argv[])
+SCM_DEFINE (config_setup,"%config-setup" ,0,0,0,(),"")
 {
-  init_scm();
+  gwwm_config = (REF_CALL_0("gwwm config","load-init-file"));
+  return SCM_UNSPECIFIED;
+}
+/* void */
+/* inner_main(/\* void *closure,int argc, char *argv[] *\/) */
+/* { */
+/*   /\* init_scm(); *\/ */
+/* /\* #ifndef SCM_MAGIC_SNARFER *\/ */
+/* /\* #include "gwwm.x" *\/ */
+/* /\* #endif *\/ */
+/*     /\* scm_call_0(SCM_LOOKUP_REF("init-global-keybind")); *\/ */
+/* 	/\* Wayland requires XDG_RUNTIME_DIR for creating its communications socket *\/ */
+/* 	/\* if (!getenv("XDG_RUNTIME_DIR")) *\/ */
+/* 	/\* 	die("XDG_RUNTIME_DIR must be set"); *\/ */
+/* 	/\* setup(); *\/ */
+/*     /\* config_setup(); *\/ */
+/*     /\* scm_set_current_module (scm_c_resolve_module ("guile-user")); *\/ */
+/*     /\* (scm_call_0(REFP("gwwm","setup-server"))); *\/ */
+/*     /\* run(); *\/ */
+/* 	/\* cleanup(); *\/ */
+/* 	/\* return EXIT_SUCCESS; *\/ */
+
+/* } */
+/* int main(int argc, char *argv[]) { */
+/*   scm_boot_guile(argc, argv, inner_main, 0); */
+/*   return EXIT_SUCCESS; */
+/* } */
+
+void
+scm_init_gwwm(void)
+{
 #ifndef SCM_MAGIC_SNARFER
 #include "gwwm.x"
 #endif
-    scm_call_0(SCM_LOOKUP_REF("init-global-keybind"));
-	/* Wayland requires XDG_RUNTIME_DIR for creating its communications socket */
-	if (!getenv("XDG_RUNTIME_DIR"))
-		die("XDG_RUNTIME_DIR must be set");
-	setup();
-    config_setup();
-    scm_set_current_module (scm_c_resolve_module ("guile-user"));
-    (scm_call_0(REFP("gwwm","setup-server")));
-    run();
-	cleanup();
-	/* return EXIT_SUCCESS; */
-
-}
-int main(int argc, char *argv[]) {
-  scm_boot_guile(argc, argv, inner_main, 0);
-  return EXIT_SUCCESS;
+  /* inner_main(); */
 }

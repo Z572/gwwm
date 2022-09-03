@@ -1,0 +1,4 @@
+#!@GUILE@
+!#
+(use-modules (gwwm))
+(main)

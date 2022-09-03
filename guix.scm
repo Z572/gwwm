@@ -108,49 +108,66 @@
                         #:recursive? #t
                         #:select? (git-predicate %srcdir)))
     (build-system gnu-build-system)
-    (arguments (list #:make-flags #~(list "GUILE_AUTO_COMPILE=0")
+    (arguments
+     (list #:make-flags
+           #~(list "GUILE_AUTO_COMPILE=0")
                      ;;; XXX: is a bug? why can't use gexp for #:modules
-                     #:modules '((guix build gnu-build-system)
-                                 (guix build utils)
-                                 (ice-9 rdelim)
-                                 (ice-9 popen))
-                     #:phases #~(modify-phases %standard-phases
-                                  (add-after 'install 'wrap-executable
-                                    (lambda* (#:key inputs outputs #:allow-other-keys)
-                                      (let* ((out (assoc-ref outputs "out"))
-                                             (deps (map (lambda (a)
-                                                          (assoc-ref inputs a ))
-                                                        '("guile-wayland"
-                                                          "guile-wlroots"
-                                                          "guile-bytestructures")))
-                                             (effective (read-line
-                                                         (open-pipe*
-                                                          OPEN_READ
-                                                          "guile" "-c"
-                                                          "(display (effective-version))")))
-                                             (mods (map (lambda (o)
-                                                          (string-append
-                                                           o "/share/guile/site/"
-                                                           effective))
-                                                        (cons out deps)))
-                                             (gos
-                                              (map (lambda (o)
-                                                     (string-append
-                                                      o
-                                                      "/lib/guile/"
-                                                      effective
-                                                      "/site-ccache"))
-                                                   (cons out deps))))
-                                        (wrap-program (search-input-file outputs "bin/gwwm")
-                                          #:sh (search-input-file inputs "bin/bash")
-                                          `("GUILE_AUTO_COMPILE" ":" = ("0"))
-                                          `("GUILE_LOAD_PATH" ":" prefix
-                                            ,mods)
-                                          `("GUILE_LOAD_COMPILED_PATH" ":" prefix
-                                            ,gos))))))))
+           #:modules '((guix build gnu-build-system)
+                       (guix build utils)
+                       (ice-9 rdelim)
+                       (ice-9 popen))
+           #:phases
+           #~(modify-phases %standard-phases
+               (add-after 'build 'load-extension
+                 (lambda* (#:key outputs #:allow-other-keys)
+                   (substitute*
+                       (find-files "." ".*\\.scm")
+                     (("\\(load-extension \"libgwwm\" *\"(.*)\"\\)" _ o)
+                      (string-append
+                       (object->string
+                        `(or (false-if-exception (load-extension "libgwwm" ,o))
+                             (load-extension
+                              ,(string-append
+                                (assoc-ref outputs "out")
+                                "/lib/libgwwm.so")
+                              ,o))))))))
+               (add-after 'install 'wrap-executable
+                 (lambda* (#:key inputs outputs #:allow-other-keys)
+                   (let* ((out (assoc-ref outputs "out"))
+                          (deps (map (lambda (a)
+                                       (assoc-ref inputs a ))
+                                     '("guile-wayland"
+                                       "guile-wlroots"
+                                       "guile-bytestructures")))
+                          (effective (read-line
+                                      (open-pipe*
+                                       OPEN_READ
+                                       "guile" "-c"
+                                       "(display (effective-version))")))
+                          (mods (map (lambda (o)
+                                       (string-append
+                                        o "/share/guile/site/"
+                                        effective))
+                                     (cons out deps)))
+                          (gos
+                           (map (lambda (o)
+                                  (string-append
+                                   o
+                                   "/lib/guile/"
+                                   effective
+                                   "/site-ccache"))
+                                (cons out deps))))
+                     (wrap-program (search-input-file outputs "bin/gwwm")
+                       #:sh (search-input-file inputs "bin/bash")
+                       `("GUILE_AUTO_COMPILE" ":" = ("0"))
+                       `("GUILE_LOAD_PATH" ":" prefix
+                         ,mods)
+                       `("GUILE_LOAD_COMPILED_PATH" ":" prefix
+                         ,gos))))))))
     (native-inputs
      (list autoconf automake
            pkg-config
+           libtool
            guile-3.0-latest
            bash-minimal
            texinfo))

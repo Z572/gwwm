@@ -73,14 +73,6 @@
 #define UNWRAP_KEYBOARD(o)                                                      \
   (TO_P(scm_call_1(REFP("gwwm keyboard", ".data"), o)))
 /* #define SEND_LOG(o ...) */
-void init_scm() {
-  scm_primitive_load(
-      scm_sys_search_load_path(scm_from_utf8_string("gwwm.scm")));
-  scm_primitive_load(
-      scm_sys_search_load_path(scm_from_utf8_string("gwwm/startup.scm")));
-  scm_call_0(SCM_LOOKUP_REF("parse-command-line"));
-}
-
 #define send_log(v,b,...) _send_log(#v,b, ##__VA_ARGS__, "/0")
 void
 _send_log(const char *arg, ...) {
