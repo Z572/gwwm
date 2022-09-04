@@ -1947,13 +1947,6 @@ SCM_DEFINE(gwwm_resize ,"%resize",3,0,0,(SCM c,SCM geo,SCM interact),"")
 
 SCM_DEFINE (gwwm_run,"%gwwm-run",0,0,0,(),"")
 {
-	/* Add a Unix socket to the Wayland display. */
-	const char *socket = wl_display_add_socket_auto(dpy);
-	if (!socket)
-		die("startup: display_add_socket_auto");
-	setenv("WAYLAND_DISPLAY", socket, 1);
-
-
 	signal(SIGPIPE, SIG_IGN);
 	printstatus();
 

@@ -5,6 +5,7 @@
   #:use-module (gwwm keymap)
   #:use-module (gwwm monitor)
   #:use-module (gwwm utils srfi-215)
+  #:use-module (wayland display)
   #:use-module (wlroots types output)
   #:use-module (wlroots types seat)
   #:use-module (gwwm hooks)
@@ -82,6 +83,13 @@ gwwm [options]
   (false-if-exception (spawn-server (make-tcp-server-socket))))
 ;; (primitive-load-path "gwwm/startup.scm")
 
+(define (setup-socket)
+  (let ((socket (wl-display-add-socket-auto (gwwm-display))))
+    (if socket
+        (setenv "WAYLAND_DISPLAY" socket)
+        (begin
+          (send-log EMERGENCY "wl-display-add-socket-auto fail." 'SOCKET socket)
+          (exit 1)))))
 (define (main)
   (setlocale LC_ALL "")
   (define (set-mode m)
@@ -117,5 +125,6 @@ gwwm [options]
   (%config-setup)
   (set-current-module (resolve-module '(guile-user)))
   (setup-server)
+  (setup-socket)
   (%gwwm-run)
   (%gwwm-cleanup))
