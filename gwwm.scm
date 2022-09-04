@@ -111,7 +111,7 @@ gwwm [options]
   (parse-command-line)
   (init-global-keybind)
   (unless (getenv "XDG_RUNTIME_DIR")
-    (write "XDG_RUNTIME_DIR must be set." (current-error-port))
+    (send-log EMERGENCY "XDG_RUNTIME_DIR must be set.")
     (exit 1))
   (%gwwm-setup)
   (%config-setup)
