@@ -122,6 +122,8 @@ gwwm [options]
   (unless (getenv "XDG_RUNTIME_DIR")
     (send-log EMERGENCY (G_ "XDG_RUNTIME_DIR must be set."))
     (exit 1))
+  (setvbuf (current-output-port) 'line)
+  (setvbuf (current-error-port) 'line)
   (%gwwm-setup)
   (%config-setup)
   (set-current-module (resolve-module '(guile-user)))
