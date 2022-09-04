@@ -45,6 +45,10 @@
   (REF_CALL_1("wlroots types pointer", "wrap-wlr-event-pointer-axis", FROM_P(p)))
 #define UNWRAP_WLR_EVENT_POINTER_AXIS(p)                                                  \
   (TO_P(REF_CALL_1("wlroots types pointer", "unwrap-wlr-event-pointer-axis", p)))
+#define WRAP_WLR_EVENT_POINTER_BUTTON(p)                                                    \
+  (REF_CALL_1("wlroots types pointer", "wrap-wlr-event-pointer-button", FROM_P(p)))
+#define UNWRAP_WLR_EVENT_POINTER_BUTTON(p)                                                  \
+  (TO_P(REF_CALL_1("wlroots types pointer", "unwrap-wlr-event-pointer-button", p)))
 #define WRAP_WLR_SEAT_REWUEST_SET_SELECTION_EVENT(p)                                                    \
   (REF_CALL_1("wlroots types seat", "wrap-wlr-seat-request-set-selection-event", FROM_P(p)))
 #define UNWRAP_WLR_SEAT_REWUEST_SET_SELECTION_EVENT(p)                                                  \

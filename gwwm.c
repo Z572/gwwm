@@ -747,7 +747,9 @@ buttonpress(struct wl_listener *listener, void *data)
 	const Button *b;
 
 	wlr_idle_notify_activity(idle, seat);
-
+    scm_c_run_hook(REF("gwwm hooks", "cursor-button-event-hook"),
+                   scm_list_1(WRAP_WLR_EVENT_POINTER_BUTTON(event)));
+ ;
 	switch (event->state) {
 	case WLR_BUTTON_PRESSED:
 		/* Change focus if the button was _pressed_ over a client */

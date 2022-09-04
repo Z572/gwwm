@@ -5,7 +5,8 @@
             update-title-hook
             selection-hook
             modifiers-event-hook
-            keypress-event-hook))
+            keypress-event-hook
+            cursor-button-event-hook))
 
 (define-public create-monitor-hook (make-hook 1))
 (define-public create-pointer-hook (make-hook 1))
@@ -14,3 +15,4 @@
 (define-public selection-hook (make-hook 1))
 (define-public modifiers-event-hook (make-hook 1))
 (define-public keypress-event-hook (make-hook 2))
+(define-public cursor-button-event-hook (make-hook 1))
