@@ -4,6 +4,7 @@
  (gnu packages xorg)
  (guix download)
  (guix git-download)
+ (gnu packages gettext)
  (guix gexp)
  (gnu packages gl)
  (gnu packages xdisorg)
@@ -159,6 +160,7 @@
      (list autoconf automake
            pkg-config
            libtool
+           gettext-minimal
            guile-3.0-latest
            bash-minimal
            texinfo))

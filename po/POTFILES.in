@@ -1,0 +1,4 @@
+# List of source files which contain translatable strings.
+gwwm.scm
+gwwm/command.scm
+gwwm/i18n.scm

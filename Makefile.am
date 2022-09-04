@@ -37,7 +37,7 @@ idle-protocol.h:
 	$(AM_V_GEN) $(WAYLAND_SCANNER) server-header \
 	$(top_builddir)/protocols/idle.xml $@
 
-
+SUBDIRS=po
 do_subst = $(SED)					\
   -e 's,[@]GUILE[@],$(GUILE),g'				\
   -e 's,[@]guilemoduledir[@],$(guilemoduledir),g'	\
@@ -58,6 +58,7 @@ nobase_guilemodule_DATA = gwwm.scm \
 		gwwm/keymap.scm  \
 		gwwm/keybind.scm \
 		gwwm/keyboard.scm \
+		gwwm/i18n.scm \
 		gwwm/hooks.scm \
 		gwwm/utils.scm    \
 		gwwm/utils/srfi-215.scm    \
@@ -67,6 +68,12 @@ nobase_guilemodule_DATA = gwwm.scm \
 		gwwm/config.scm
 
 dist_bin_SCRIPTS=bin/gwwm
+bin/gwwm: bin/gwwm.in Makefile
+	$(AM_V_at)rm -f $@ $@-t
+	$(AM_V_at)$(MKDIR_P) "$(@D)"
+	$(AM_V_GEN)$(do_subst) < "$(srcdir)/$@.in" > "$@-t"
+	$(AM_V_at)chmod a+x,a-w "$@-t" && mv -f "$@-t" "$@"
+
 # nobase_go_DATA = $(GOBJECTS)
 nobase_guileobject_DATA=$(nobase_guilemodule_DATA:%.scm=%.go)
 SOURCES=$(nobase_guilemodule_DATA)

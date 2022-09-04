@@ -1,0 +1,33 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR Zheng Junjie
+# This file is distributed under the same license as the gwwm package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: gwwm 0.0.1\n"
+"Report-Msgid-Bugs-To: 873216071@qq.com\n"
+"POT-Creation-Date: 2022-09-04 11:54+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: gwwm.scm:74
+msgid ""
+"gwwm [options]\n"
+"  -v --version  Display version\n"
+"  -h --help     Display this help\n"
+msgstr ""
+
+#: gwwm.scm:91
+msgid "wl-display-add-socket-auto fail."
+msgstr ""
+
+#: gwwm.scm:122
+msgid "XDG_RUNTIME_DIR must be set."
+msgstr ""

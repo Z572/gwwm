@@ -3,6 +3,7 @@
   #:use-module (ice-9 format)
   #:use-module (system repl server)
   #:use-module (gwwm keymap)
+  #:use-module (gwwm i18n)
   #:use-module (gwwm monitor)
   #:use-module (gwwm utils srfi-215)
   #:use-module (wayland display)
@@ -70,12 +71,11 @@
                    (display "gwwm v0.0.1
 "))
                (if help-wanted
-                   (display "\
+                   (display (G_ "\
 gwwm [options]
   -v --version  Display version
   -h --help     Display this help
-  -s --exec     run program
-"))
+")))
                (exit 0)))))
 (define-once global-keymap
   (make-parameter (make-keymap)))
@@ -88,10 +88,11 @@ gwwm [options]
     (if socket
         (setenv "WAYLAND_DISPLAY" socket)
         (begin
-          (send-log EMERGENCY "wl-display-add-socket-auto fail." 'SOCKET socket)
+          (send-log EMERGENCY (G_ "wl-display-add-socket-auto fail.") 'SOCKET socket)
           (exit 1)))))
 (define (main)
   (setlocale LC_ALL "")
+  (textdomain %gettext-domain)
   (define (set-mode m)
     (let ((output (monitor-wlr-output m)))
       (wlr-output-set-mode output (wlr-output-preferred-mode output))))
@@ -119,7 +120,7 @@ gwwm [options]
   (parse-command-line)
   (init-global-keybind)
   (unless (getenv "XDG_RUNTIME_DIR")
-    (send-log EMERGENCY "XDG_RUNTIME_DIR must be set.")
+    (send-log EMERGENCY (G_ "XDG_RUNTIME_DIR must be set."))
     (exit 1))
   (%gwwm-setup)
   (%config-setup)

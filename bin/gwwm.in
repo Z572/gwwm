@@ -1,4 +1,9 @@
 #!@GUILE@
 !#
 (use-modules (gwwm))
+
+(bindtextdomain "gwwm" "@localedir@")
 (main)
+;;; Local Variables:
+;;; mode: scheme
+;;; End:
