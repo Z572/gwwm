@@ -1,6 +1,7 @@
 (define-module (gwwm keymap)
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-71)
+  #:use-module (gwwm i18n)
   #:use-module (ice-9 match)
   #:use-module (oop goops)
   #:use-module (gwwm utils)
@@ -68,7 +69,7 @@
 
 (define-method (keymap-set o (ks <list>) d)
   (if (> (length ks) 1)
-      (warn "for now, gwwm not support multi key define, ignore others."))
+      (warn (G_ "for now, gwwm not support multi key define, ignore others.")))
   (keymap-set o (car ks) d))
 
 (define-method (keymap-set (keymap <keymap>)

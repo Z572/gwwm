@@ -2,3 +2,13 @@
 gwwm.scm
 gwwm/command.scm
 gwwm/i18n.scm
+gwwm/keymap.scm
+gwwm/config.scm
+gwwm/client.scm
+gwwm/color.scm
+gwwm/commands.scm
+gwwm/keys.scm
+gwwm/monitor.scm
+gwwm/utils.scm
+gwwm/keybind.scm
+gwwm/keyboard.scm

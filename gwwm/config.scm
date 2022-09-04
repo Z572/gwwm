@@ -1,6 +1,7 @@
 (define-module (gwwm config)
   #:use-module (oop goops)
   #:use-module (oop goops describe)
+  #:use-module (gwwm i18n)
   #:use-module (gwwm color)
   #:export (gwwm
             config-borderpx
@@ -38,7 +39,7 @@
          (lambda ()
            (primitive-load
             init-file)))
-        (warn (string-append  "initfile not found:" init-file )))))
+        (warn (string-append (G_ "initfile not found:") init-file )))))
 
 (define-class <xkb-rules> ()
   (rules #:init-keyword #:rules #:getter xkb-rults-names-rules #:init-value "")
@@ -85,7 +86,7 @@
          (map slot-definition-init-keyword (class-slots <gwwm-config>))))
     (if (and-map (lambda (m)
                    (or (member  m init-keywords)
-                       (error "unknow init-keyword!: ~s"
+                       (error (G_ "unknow init-keyword!: ~s")
                               (list (keyword->symbol m)))))
                  (list (symbol->keyword 'init) ...))
         (let* ((init value) ...)

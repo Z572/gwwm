@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gwwm 0.0.1\n"
 "Report-Msgid-Bugs-To: 873216071@qq.com\n"
-"POT-Creation-Date: 2022-09-04 11:54+0800\n"
+"POT-Creation-Date: 2022-09-04 13:18+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -28,6 +28,24 @@ msgstr ""
 msgid "wl-display-add-socket-auto fail."
 msgstr ""
 
-#: gwwm.scm:122
+#: gwwm.scm:123
 msgid "XDG_RUNTIME_DIR must be set."
+msgstr ""
+
+#: gwwm/keymap.scm:72
+msgid "for now, gwwm not support multi key define, ignore others."
+msgstr ""
+
+#: gwwm/config.scm:42
+msgid "initfile not found:"
+msgstr ""
+
+#: gwwm/config.scm:89
+#, scheme-format
+msgid "unknow init-keyword!: ~s"
+msgstr ""
+
+#: gwwm/client.scm:64
+#, scheme-format
+msgid "~S is a *deaded* client.~%"
 msgstr ""

@@ -3,6 +3,7 @@
   #:use-module (wlroots xwayland)
   #:use-module (wlroots util box)
   #:use-module (wlroots types xdg-shell)
+  #:use-module (gwwm i18n)
   #:use-module (srfi srfi-17)
   #:use-module (oop goops)
   #:use-module (oop goops describe)
@@ -60,7 +61,7 @@
 (define-method (describe (c <gwwm-client>))
   (if (client-alive? c)
       (next-method)
-      (begin (format #t "~S is a *deaded* client.~%" c)
+      (begin (format #t (G_ "~S is a *deaded* client.~%") c)
              *unspecified*)))
 
 (define-once %clients

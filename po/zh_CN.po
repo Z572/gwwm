@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gwwm 0.0.1\n"
 "Report-Msgid-Bugs-To: 873216071@qq.com\n"
-"POT-Creation-Date: 2022-09-04 11:54+0800\n"
-"PO-Revision-Date: 2022-09-04 12:01+0800\n"
+"POT-Creation-Date: 2022-09-04 13:18+0800\n"
+"PO-Revision-Date: 2022-09-04 13:18+0800\n"
 "Last-Translator: Z572 <873216071@qq.com>\n"
 "Language-Team: Chinese (simplified) <i18n-zh@googlegroups.com>\n"
 "Language: zh_CN\n"
@@ -30,6 +30,24 @@ msgstr ""
 msgid "wl-display-add-socket-auto fail."
 msgstr "wl-display-add-socket-auto 失败."
 
-#: gwwm.scm:122
+#: gwwm.scm:123
 msgid "XDG_RUNTIME_DIR must be set."
 msgstr "必须设置 XDG_RUNTIME_DIR 环境变量."
+
+#: gwwm/keymap.scm:72
+msgid "for now, gwwm not support multi key define, ignore others."
+msgstr "在当前, gwwm 不支持多键定义,忽略后面的键."
+
+#: gwwm/config.scm:42
+msgid "initfile not found:"
+msgstr "配置文件未找到"
+
+#: gwwm/config.scm:89
+#, scheme-format
+msgid "unknow init-keyword!: ~s"
+msgstr "未知 init-keyword !: ~s"
+
+#: gwwm/client.scm:64
+#, scheme-format
+msgid "~S is a *deaded* client.~%"
+msgstr "~S 是个死去的客户端.~%"
