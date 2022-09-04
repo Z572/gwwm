@@ -1,5 +1,6 @@
 (define-module (gwwm client)
   #:use-module (srfi srfi-1)
+  #:use-module (ice-9 control)
   #:use-module (wlroots xwayland)
   #:use-module (wlroots util box)
   #:use-module (wlroots types xdg-shell)
@@ -134,10 +135,12 @@
 
 (define (client-alive? client)
   "return #t if client is alive, or #f deaded."
-  (->bool
-   (find
-    (lambda (c) (client=? client c))
-    (client-list))))
+  (let/ec return
+    (hash-for-each
+     (lambda (_ b)
+       (when (equal? b client)
+         (return #t)))
+     %clients) #f))
 
 (define-method (client-set-tiled c (edges <list>))
   (client-set-tiled c (apply logior edges)))
