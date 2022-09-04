@@ -9,7 +9,7 @@ AM_INIT_AUTOMAKE([1.14 gnu tar-ustar silent-rules subdir-objects \
 AM_SILENT_RULES([yes])
 
 AC_CONFIG_FILES([Makefile])
-AC_CONFIG_FILES([bin/gwwm], [chmod +x gwwm])
+AC_CONFIG_FILES([bin/gwwm], [chmod +x bin/gwwm])
 AC_CONFIG_FILES([pre-inst-env], [chmod +x pre-inst-env])
 AC_PROG_CC
 GUILE_PKG([3.0 2.2])
