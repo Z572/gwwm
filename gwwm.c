@@ -209,7 +209,6 @@ static void arrangelayers(Monitor *m);
 static void axisnotify(struct wl_listener *listener, void *data);
 static void buttonpress(struct wl_listener *listener, void *data);
 static void checkidleinhibitor(struct wlr_surface *exclude);
-static void cleanup(void);
 static void cleanupkeyboard(struct wl_listener *listener, void *data);
 static void cleanupmon(struct wl_listener *listener, void *data);
 static void closemon(Monitor *m);
@@ -255,7 +254,6 @@ static void quitsignal(int signo);
 static void rendermon(struct wl_listener *listener, void *data);
 static void requeststartdrag(struct wl_listener *listener, void *data);
 static void resize(Client *c, struct wlr_box geo, int interact);
-static void run();
 static Client *current_client(void);
 static void setcursor(struct wl_listener *listener, void *data);
 static void setfloating(Client *c, int floating);
@@ -265,7 +263,6 @@ static void setmfact(const Arg *arg);
 static void setmon(Client *c, Monitor *m, unsigned int newtags);
 static void setpsel(struct wl_listener *listener, void *data);
 static void setsel(struct wl_listener *listener, void *data);
-static void setup(void);
 static void sigchld(int unused);
 static void spawn(const Arg *arg);
 static void startdrag(struct wl_listener *listener, void *data);
@@ -2801,30 +2798,6 @@ SCM_DEFINE (config_setup,"%config-setup" ,0,0,0,(),"")
   gwwm_config = (REF_CALL_0("gwwm config","load-init-file"));
   return SCM_UNSPECIFIED;
 }
-/* void */
-/* inner_main(/\* void *closure,int argc, char *argv[] *\/) */
-/* { */
-/*   /\* init_scm(); *\/ */
-/* /\* #ifndef SCM_MAGIC_SNARFER *\/ */
-/* /\* #include "gwwm.x" *\/ */
-/* /\* #endif *\/ */
-/*     /\* scm_call_0(SCM_LOOKUP_REF("init-global-keybind")); *\/ */
-/* 	/\* Wayland requires XDG_RUNTIME_DIR for creating its communications socket *\/ */
-/* 	/\* if (!getenv("XDG_RUNTIME_DIR")) *\/ */
-/* 	/\* 	die("XDG_RUNTIME_DIR must be set"); *\/ */
-/* 	/\* setup(); *\/ */
-/*     /\* config_setup(); *\/ */
-/*     /\* scm_set_current_module (scm_c_resolve_module ("guile-user")); *\/ */
-/*     /\* (scm_call_0(REFP("gwwm","setup-server"))); *\/ */
-/*     /\* run(); *\/ */
-/* 	/\* cleanup(); *\/ */
-/* 	/\* return EXIT_SUCCESS; *\/ */
-
-/* } */
-/* int main(int argc, char *argv[]) { */
-/*   scm_boot_guile(argc, argv, inner_main, 0); */
-/*   return EXIT_SUCCESS; */
-/* } */
 
 void
 scm_init_gwwm(void)
@@ -2832,5 +2805,4 @@ scm_init_gwwm(void)
 #ifndef SCM_MAGIC_SNARFER
 #include "gwwm.x"
 #endif
-  /* inner_main(); */
 }
