@@ -4,7 +4,7 @@
   #:export (current-monitor
             monitor-name
             monitor-description
-            monitor-enabled
+            monitor-enabled?
             monitor-scale
             monitor-height
             monitor-width
@@ -31,7 +31,7 @@
   (enabled? #:allocation #:virtual
             #:slot-ref (lambda (m) (wlr-output-enabled (monitor-wlr-output m)))
             #:slot-set! (lambda _ #f)
-            #:getter monitor-enabled)
+            #:getter monitor-enabled?)
   (width  #:allocation #:virtual
           #:slot-ref (lambda (m) (wlr-output-width (monitor-wlr-output m)))
           #:slot-set! (lambda _ #f)
