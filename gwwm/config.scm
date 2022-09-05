@@ -20,13 +20,16 @@
             gwwm-default-focuscolor))
 
 (define* (getenv* nam #:optional fallback)
+  "like getenv, but if NAM environment variable not found return FALLBACK."
   (or (getenv nam) fallback))
 
 (define (get-xdg-config-home)
+  "return XDG_CONFIG_HOME."
   (getenv* "XDG_CONFIG_HOME"
            (string-append (getenv "HOME") "/.config")))
 
 (define (init-file)
+  "return init file."
   (string-append
    (get-xdg-config-home)
    "/gwwm/init.scm"))

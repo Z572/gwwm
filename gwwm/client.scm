@@ -104,6 +104,7 @@
   ((@@ (gwwm) client-monitor) client))
 
 (define (client-get-parent client)
+  "return CLIENT's parent or #f not found."
   ((@@ (gwwm) client-get-parent) client))
 
 (define-method (equal? (o1 <gwwm-client>)
@@ -121,9 +122,11 @@
   (->bool (member (client-type client) '("X11Managed" "X11Unmanaged"))))
 
 (define (client-list)
+  "return all clients."
   (hash-map->list (lambda (_ b) b) %clients))
 
 (define (current-client)
+  "return current client or #f."
   ((@@ (gwwm) current-client)))
 
 (define (client-is-floating? client)

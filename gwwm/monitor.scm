@@ -15,6 +15,7 @@
             <gwwm-monitor>))
 
 (define (current-monitor)
+  "return current monitor or #f not found."
   ((@@ (gwwm) current-monitor)))
 (define-class <gwwm-monitor> ()
   (data #:init-keyword #:data #:accessor .data))
