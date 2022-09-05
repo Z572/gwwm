@@ -40,6 +40,7 @@ simple example
 #+begin_src scheme
   (use-modules (gwwm)
                (gwwm config)
+               (gwwm commands)
                (gwwm keymap)
                (gwwm hooks)
                (gwwm color))
