@@ -50,6 +50,8 @@
                          (client-type c)
                          "*deaded*"))
         #:slot-set! (lambda _ #t))
+  (floating? #:init-value #f
+             #:accessor client-floating?)
   (fullscreen? #:init-value #f
                #:accessor client-fullscreen?)
   (urgent? #:init-value #f
@@ -74,6 +76,8 @@
   (make-hash-table))
 
 (define client-set-fullscreen! (setter client-fullscreen?))
+(define client-is-floating? client-floating?)
+(define client-set-floating! (setter client-floating?))
 (define client-is-urgent? client-urgent?)
 (define client-set-urgent! (setter client-urgent?))
 
@@ -134,9 +138,6 @@
   "return current client or #f."
   ((@@ (gwwm) current-client)))
 
-(define (client-is-floating? client)
-  ((@@ (gwwm) client-is-floating?) client))
-
 (define (client-set-resizing! client resizing?)
   (unless (client-is-x11? client)
     (wlr-xdg-toplevel-set-resizing (client-xdg-surface client) resizing?)))
@@ -158,13 +159,6 @@
     (wlr-xdg-toplevel-set-tiled
      (client-xdg-surface c)
      edges)))
-(define (client-set-floating! client floating?)
-  ((@@ (gwwm) client-set-floating!) client floating? ))
-
-(define client-floating?
-  (make-procedure-with-setter
-   client-is-floating?
-   client-set-floating!))
 
 (define-method (client-resize (c <gwwm-client>) geo (interact? <boolean>))
   ((@@ (gwwm) %resize) c geo interact?))

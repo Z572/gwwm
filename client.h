@@ -20,6 +20,9 @@
 #define CLIENT_IS_FULLSCREEN(c) scm_to_bool(REF_CALL_1("gwwm client" ,"client-fullscreen?",WRAP_CLIENT(c)))
 #define CLIENT_SET_FULLSCREEN(c ,f) \
   (REF_CALL_2("gwwm client","client-set-fullscreen!",(WRAP_CLIENT(c)), (scm_from_bool(f))))
+#define CLIENT_IS_FLOATING(c) scm_to_bool(REF_CALL_1("gwwm client" ,"client-floating?",WRAP_CLIENT(c)))
+#define CLIENT_SET_FLOATING(c ,f) \
+  (REF_CALL_2("gwwm client","client-set-floating!",(WRAP_CLIENT(c)), (scm_from_bool(f))))
 #define CLIENT_IS_URGENT_P(c) scm_to_bool(REF_CALL_1("gwwm client" ,"client-urgent?",WRAP_CLIENT(c)))
 #define CLIENT_SET_URGENT(c ,f) \
   (REF_CALL_2("gwwm client","client-set-urgent!",(WRAP_CLIENT(c)), (scm_from_bool(f))))
@@ -356,15 +359,6 @@ toplevel_from_popup(struct wlr_xdg_popup *popup)
 	}
 }
 
-SCM_DEFINE (gwwm_client_is_floating_p, "client-is-floating?" ,1,0,0,
-            (SCM c), "")
-#define FUNC_NAME s_gwwm_client_is_floating_p
-{
-  Client *cl = UNWRAP_CLIENT(c);
-  return scm_from_bool(cl->isfloating);
-}
-#undef FUNC_NAME
-
 SCM_DEFINE (gwwm_client_border_width, "client-border-width" , 1,0,0,
             (SCM c), "")
 #define FUNC_NAME s_gwwm_client_border_width
@@ -426,16 +420,6 @@ SCM_DEFINE (gwwm_client_wants_fullscreen_p , "client-wants-fullscreen?",1,0,0,
 #define FUNC_NAME s_gwwm_client_wants_fullscreen
 {
   return scm_from_bool(client_wants_fullscreen(UNWRAP_CLIENT(client)));
-}
-#undef FUNC_NAME
-
-SCM_DEFINE (gwwm_client_set_floating, "client-set-floating!" ,2,0,0,
-            (SCM c ,SCM floating), "")
-#define FUNC_NAME s_gwwm_client_set_floating
-{
-  Client *cl = UNWRAP_CLIENT(c);
-  setfloating(cl , scm_to_bool(floating));
-  return SCM_UNSPECIFIED;
 }
 #undef FUNC_NAME
 

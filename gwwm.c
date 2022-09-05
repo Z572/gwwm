@@ -119,7 +119,7 @@ typedef struct {
 #endif
 	unsigned int bw;
 	unsigned int tags;
-  int isfloating;
+  /* int isfloating; */
 	uint32_t resize; /* configure serial of a pending resize */
 } Client;
 
@@ -515,7 +515,7 @@ applyrules(Client *c)
 	const Rule *r;
 	Monitor *mon = current_monitor, *m;
 
-	c->isfloating = client_is_float_type(c);
+    CLIENT_SET_FLOATING(c,client_is_float_type(c));
 	if (!(appid = client_get_appid(c)))
 		appid = broken;
 	if (!(title = client_get_title(c)))
@@ -524,7 +524,7 @@ applyrules(Client *c)
 	for (r = rules; r < END(rules); r++) {
 		if ((!r->title || strstr(title, r->title))
 				&& (!r->id || strstr(appid, r->id))) {
-			c->isfloating = r->isfloating;
+          CLIENT_SET_FLOATING(c,scm_from_bool(r->isfloating));
 			newtags |= r->tags;
 			i = 0;
 			wl_list_for_each(m, &mons, link)
@@ -532,7 +532,7 @@ applyrules(Client *c)
 					mon = m;
 		}
 	}
-	wlr_scene_node_reparent(c->scene, layers[c->isfloating ? LyrFloat : LyrTile]);
+	wlr_scene_node_reparent(c->scene, layers[CLIENT_IS_FLOATING(c) ? LyrFloat : LyrTile]);
 	setmon(c, mon, newtags);
 }
 
@@ -874,7 +874,7 @@ closemon(Monitor *m)
 	Client *c;
 
 	wl_list_for_each(c, &clients, link) {
-		if (c->isfloating && c->geom.x > m->m.width)
+		if (CLIENT_IS_FLOATING(c) && c->geom.x > m->m.width)
 			resize(c, (struct wlr_box){.x = c->geom.x - m->w.width, .y = c->geom.y,
 				.width = c->geom.width, .height = c->geom.height}, 0);
 		if (c->mon == m)
@@ -1567,7 +1567,7 @@ mapnotify(struct wl_listener *listener, void *data)
 	/* Set initial monitor, tags, floating status, and focus */
 	if ((p = client_get_parent(c))) {
 		/* Set the same monitor and tags than its parent */
-		c->isfloating = 1;
+      CLIENT_SET_FLOATING(c,1);
 		wlr_scene_node_reparent(c->scene, layers[LyrFloat]);
 		/* TODO recheck if !p->mon is possible with wlroots 0.16.0 */
 		setmon(c, p->mon ? p->mon : current_monitor, p->tags);
@@ -1588,7 +1588,7 @@ monocle(Monitor *m)
 	Client *c;
 
 	wl_list_for_each(c, &clients, link) {
-		if (!VISIBLEON(c, m) || c->isfloating || CLIENT_IS_FULLSCREEN(c))
+		if (!VISIBLEON(c, m) || CLIENT_IS_FLOATING(c) || CLIENT_IS_FULLSCREEN(c))
 			continue;
 		resize(c, m->w, 0);
 	}
@@ -1842,7 +1842,7 @@ printstatus(void)
                    "FULLSCREEN",((CLIENT_IS_FULLSCREEN(c)) ? "#t" : "#f"));
           send_log(INFO,"is FLOATING",
                    "MONITOR",m->wlr_output->name,
-                   "FLOATING", ((c->isfloating)? "#t": "#f"));
+                   "FLOATING", ((CLIENT_IS_FLOATING(c))? "#t": "#f"));
 			sel = c->tags;
 		} else {
           send_log(INFO, "title" ,"MONITOR", m->wlr_output->name);
@@ -2020,8 +2020,8 @@ setfloating(Client *c, int floating)
   if (CLIENT_IS_FULLSCREEN(c)){
     setfullscreen(c, 0);
   };
-	c->isfloating = floating;
-	wlr_scene_node_reparent(c->scene, layers[c->isfloating ? LyrFloat : LyrTile]);
+  CLIENT_SET_FLOATING(c,floating);
+	wlr_scene_node_reparent(c->scene, layers[CLIENT_IS_FLOATING(c) ? LyrFloat : LyrTile]);
 	arrange(c->mon);
 	printstatus();
 }
@@ -2383,7 +2383,7 @@ tile(Monitor *m)
 	Client *c;
 
 	wl_list_for_each(c, &clients, link)
-		if (VISIBLEON(c, m) && !c->isfloating && !CLIENT_IS_FULLSCREEN(c))
+      if (VISIBLEON(c, m) && !(CLIENT_IS_FLOATING(c)) && !CLIENT_IS_FULLSCREEN(c))
 			n++;
 	if (n == 0)
 		return;
@@ -2394,7 +2394,7 @@ tile(Monitor *m)
 		mw = m->w.width;
 	i = my = ty = 0;
 	wl_list_for_each(c, &clients, link) {
-		if (!VISIBLEON(c, m) || c->isfloating || CLIENT_IS_FULLSCREEN(c))
+      if (!VISIBLEON(c, m) || CLIENT_IS_FLOATING(c) || CLIENT_IS_FULLSCREEN(c))
 			continue;
 		if (i < m->nmaster) {
 			resize(c, (struct wlr_box){.x = m->w.x, .y = m->w.y + my, .width = mw,
@@ -2415,7 +2415,7 @@ togglefloating(const Arg *arg)
 	Client *sel = current_client();
 	/* return if fullscreen */
 	if (sel && !CLIENT_IS_FULLSCREEN(sel))
-		setfloating(sel, !sel->isfloating);
+      setfloating(sel, !(CLIENT_IS_FLOATING(sel)));
 }
 
 SCM_DEFINE (gwwm_togglefloating, "togglefloating",0, 0,0,
@@ -2653,13 +2653,13 @@ zoom(const Arg *arg)
 {
 	Client *c, *sel = current_client();
 
-	if (!sel || !current_monitor->lt[current_monitor->sellt]->arrange || sel->isfloating)
+	if (!sel || !current_monitor->lt[current_monitor->sellt]->arrange || (CLIENT_IS_FLOATING(sel)))
 		return;
 
 	/* Search for the first tiled window that is not sel, marking sel as
 	 * NULL if we pass it along the way */
 	wl_list_for_each(c, &clients, link)
-		if (VISIBLEON(c, current_monitor) && !c->isfloating) {
+		if (VISIBLEON(c, current_monitor) && !CLIENT_IS_FLOATING(c)) {
 			if (c != sel)
 				break;
 			sel = NULL;

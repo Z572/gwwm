@@ -6,12 +6,15 @@
             chvt
             killclient
             togglefullscreen
+            togglefloating
             gwwm-quit))
 
 (define* (togglefullscreen #:optional (client (current-client)))
   (when client
     ((@@ (gwwm) %setfullscreen) client (not (client-fullscreen? client)))))
 
+(define (togglefloating)
+  ((@@ (gwwm) togglefloating)))
 (define (spawn program . args)
   (when (= (primitive-fork) 0)
     (dup2 (port->fdes (current-error-port))
