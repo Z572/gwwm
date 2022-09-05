@@ -207,6 +207,12 @@ client_is_float_type(Client *c)
 		|| c->surface.xdg->toplevel->parent;
 }
 
+SCM_DEFINE (gwwm_client_is_float_type_p,"client-is-float-type?",1,0,0,
+            (SCM c),"")
+{
+  return scm_from_bool(client_is_float_type(UNWRAP_CLIENT(c)));
+}
+
 static inline int
 client_is_mapped(Client *c)
 {

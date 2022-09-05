@@ -26,6 +26,7 @@
             client-get-parent
             client-is-x11?
             client-type
+            client-is-float-type?
             client-send-close
             client-set-tiled
             client-xwayland-surface
@@ -37,6 +38,10 @@
 
 (define (client-type client)
   ((@@ (gwwm) client-type) client))
+
+(define (client-is-float-type? client)
+  ((@@ (gwwm) client-is-float-type?) client))
+
 (define-class <gwwm-client> ()
   (data #:init-keyword #:data #:accessor .data)
   (type #:allocation #:virtual
