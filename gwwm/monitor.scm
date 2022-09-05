@@ -17,8 +17,47 @@
 (define (current-monitor)
   "return current monitor or #f not found."
   ((@@ (gwwm) current-monitor)))
+
 (define-class <gwwm-monitor> ()
-  (data #:init-keyword #:data #:accessor .data))
+  (data #:init-keyword #:data #:accessor .data)
+  (name #:allocation #:virtual
+        #:slot-ref (lambda (m) (wlr-output-name (monitor-wlr-output m)))
+        #:slot-set! (lambda _ #f)
+        #:getter monitor-name)
+  (description #:allocation #:virtual
+               #:slot-ref (lambda (m) (wlr-output-description (monitor-wlr-output m)))
+               #:slot-set! (lambda _ #f)
+               #:getter monitor-description)
+  (enabled? #:allocation #:virtual
+            #:slot-ref (lambda (m) (wlr-output-enabled (monitor-wlr-output m)))
+            #:slot-set! (lambda _ #f)
+            #:getter monitor-enabled)
+  (width  #:allocation #:virtual
+          #:slot-ref (lambda (m) (wlr-output-width (monitor-wlr-output m)))
+          #:slot-set! (lambda _ #f)
+          #:getter monitor-width)
+  (height #:allocation #:virtual
+          #:slot-ref (lambda (m) (wlr-output-height (monitor-wlr-output m)))
+          #:slot-set! (lambda _ #f)
+          #:getter monitor-height)
+  (scale #:allocation #:virtual
+         #:slot-ref (lambda (m) (wlr-output-scale (monitor-wlr-output m)))
+         #:slot-set! (lambda _ #f)
+         #:getter monitor-scale)
+  (refresh #:allocation #:virtual
+           #:slot-ref (lambda (m) (wlr-output-refresh (monitor-wlr-output m)))
+           #:slot-set! (lambda _ #f)
+           #:getter monitor-refresh)
+  (physical-width #:allocation #:virtual
+                  #:slot-ref (lambda (m)
+                               (wlr-output-physical-width (monitor-wlr-output m)))
+                  #:slot-set! (lambda _ #f)
+                  #:getter monitor-physical-width)
+  (physical-height #:allocation #:virtual
+                   #:slot-ref (lambda (m)
+                                (wlr-output-physical-height (monitor-wlr-output m)))
+                   #:slot-set! (lambda _ #f)
+                   #:getter monitor-physical-height))
 
 (define-method (write (o <gwwm-monitor>) port)
   (format port "#<<gwwm-monitor ~a (~a . ~a) scale: ~a>"
@@ -37,30 +76,3 @@
 
 (define (monitor-wlr-output m)
   ((@@ (gwwm) monitor-wlr-output) m))
-
-(define (monitor-height m)
-  (wlr-output-height (monitor-wlr-output m)))
-
-(define (monitor-width m)
-  (wlr-output-width (monitor-wlr-output m)))
-
-(define (monitor-name m)
-  (wlr-output-name (monitor-wlr-output m)))
-
-(define (monitor-description m)
-  (wlr-output-description (monitor-wlr-output m)))
-
-(define (monitor-enabled m)
-  (wlr-output-enabled (monitor-wlr-output m)))
-
-(define (monitor-scale m)
-  (wlr-output-scale (monitor-wlr-output m)))
-
-(define (monitor-refresh m)
-  (wlr-output-refresh (monitor-wlr-output m)))
-
-(define (monitor-physical-width m)
-  (wlr-output-physical-width (monitor-wlr-output m)))
-
-(define (monitor-physical-height m)
-  (wlr-output-physical-height (monitor-wlr-output m)))
