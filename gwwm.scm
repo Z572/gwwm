@@ -7,6 +7,7 @@
   #:use-module (gwwm monitor)
   #:use-module (gwwm utils srfi-215)
   #:use-module (wayland display)
+  #:use-module (wlroots types pointer)
   #:use-module (wlroots types output)
   #:use-module (wlroots types seat)
   #:use-module (gwwm hooks)
@@ -100,6 +101,15 @@ gwwm [options]
 
   (define (pass-modifiers k)
     (wlr-seat-set-keyboard (gwwm-seat) (keyboard-input-device k)))
+  (add-hook! axis-event-hook
+             (lambda (event)
+               (wlr-seat-pointer-notify-axis
+                (gwwm-seat)
+                (wlr-event-pointer-axis-time-msec event)
+                (wlr-event-pointer-axis-orientation event)
+                (wlr-event-pointer-axis-delta event)
+                (wlr-event-pointer-axis-delta-discrete event)
+                (wlr-event-pointer-axis-source event))))
   (current-log-callback
    (let ((p (current-error-port)))
      (lambda (msg)

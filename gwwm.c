@@ -731,10 +731,6 @@ axisnotify(struct wl_listener *listener, void *data)
     scm_c_run_hook(REF("gwwm hooks", "axis-event-hook"),
                    scm_list_1(WRAP_WLR_EVENT_POINTER_AXIS(event)));
 	wlr_idle_notify_activity(idle, seat);
-	/* Notify the client with pointer focus of the axis event. */
-	wlr_seat_pointer_notify_axis(seat,
-			event->time_msec, event->orientation, event->delta,
-			event->delta_discrete, event->source);
 }
 
 void
