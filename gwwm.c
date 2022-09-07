@@ -95,7 +95,7 @@ typedef struct {
 	unsigned int type; /* XDGShell or X11* */
 	struct wlr_box geom;  /* layout-relative, includes border */
 	Monitor *mon;
-	struct wlr_scene_node *scene;
+	/* struct wlr_scene_node *scene; */
 	struct wlr_scene_rect *border[4]; /* top, bottom, left, right */
 	struct wlr_scene_node *scene_surface;
 	struct wlr_scene_rect *fullscreen_bg; /* See setfullscreen() for info */
@@ -532,7 +532,7 @@ applyrules(Client *c)
 					mon = m;
 		}
 	}
-	wlr_scene_node_reparent(c->scene, layers[CLIENT_IS_FLOATING(c) ? LyrFloat : LyrTile]);
+	wlr_scene_node_reparent(CLIENT_SCENE(c), layers[CLIENT_IS_FLOATING(c) ? LyrFloat : LyrTile]);
 	setmon(c, mon, newtags);
 }
 
@@ -541,7 +541,7 @@ arrange(Monitor *m)
 {
 	Client *c;
 	wl_list_for_each(c, &clients, link)
-		wlr_scene_node_set_enabled(c->scene, VISIBLEON(c, c->mon));
+		wlr_scene_node_set_enabled(CLIENT_SCENE(c), VISIBLEON(c, c->mon));
 
 	if (m->lt[m->sellt]->arrange)
 		m->lt[m->sellt]->arrange(m);
@@ -1250,7 +1250,7 @@ focusclient(Client *c, int lift)
 
 	/* Raise client in stacking order if requested */
 	if (c && lift)
-		wlr_scene_node_raise_to_top(c->scene);
+		wlr_scene_node_raise_to_top(CLIENT_SCENE(c));
 
 	if (c && client_surface(c) == old)
 		return;
@@ -1521,31 +1521,31 @@ mapnotify(struct wl_listener *listener, void *data)
 	int i;
 
 	/* Create scene tree for this client and its border */
-	c->scene = &wlr_scene_tree_create(layers[LyrTile])->node;
-	c->scene_surface = c->type == XDGShell
-			? wlr_scene_xdg_surface_create(c->scene, c->surface.xdg)
-			: wlr_scene_subsurface_tree_create(c->scene, client_surface(c));
+	CLIENT_SET_SCENE(c,&wlr_scene_tree_create(layers[LyrTile])->node);
+	CLIENT_SCENE_SURFACE(c) = c->type == XDGShell
+			? wlr_scene_xdg_surface_create(CLIENT_SCENE(c), c->surface.xdg)
+			: wlr_scene_subsurface_tree_create(CLIENT_SCENE(c), client_surface(c));
 	if (client_surface(c)) {
-		client_surface(c)->data = c->scene;
+		client_surface(c)->data = CLIENT_SCENE(c);
 		/* Ideally we should do this in createnotify{,x11} but at that moment
 		* wlr_xwayland_surface doesn't have wlr_surface yet
 		*/
 		LISTEN(&client_surface(c)->events.commit, &c->commit, commitnotify);
 
 	}
-	c->scene->data = c->scene_surface->data = c;
+	CLIENT_SCENE(c)->data = c->scene_surface->data = c;
 
 	if (client_is_unmanaged(c)) {
 		client_get_geometry(c, &c->geom);
 		/* Floating */
-		wlr_scene_node_reparent(c->scene, layers[LyrFloat]);
-		wlr_scene_node_set_position(c->scene, c->geom.x + GWWM_BORDERPX(),
+		wlr_scene_node_reparent(CLIENT_SCENE(c), layers[LyrFloat]);
+		wlr_scene_node_set_position(CLIENT_SCENE(c), c->geom.x + GWWM_BORDERPX(),
 			c->geom.y + GWWM_BORDERPX());
 		return;
 	}
 
 	for (i = 0; i < 4; i++) {
-		c->border[i] = wlr_scene_rect_create(c->scene, 0, 0, GWWM_BORDERCOLOR());
+		c->border[i] = wlr_scene_rect_create(CLIENT_SCENE(c), 0, 0, GWWM_BORDERCOLOR());
 		c->border[i]->node.data = c;
 		wlr_scene_rect_set_color(c->border[i], GWWM_BORDERCOLOR());
 	}
@@ -1564,7 +1564,7 @@ mapnotify(struct wl_listener *listener, void *data)
 	if ((p = client_get_parent(c))) {
 		/* Set the same monitor and tags than its parent */
       CLIENT_SET_FLOATING(c,1);
-		wlr_scene_node_reparent(c->scene, layers[LyrFloat]);
+		wlr_scene_node_reparent(CLIENT_SCENE(c), layers[LyrFloat]);
 		/* TODO recheck if !p->mon is possible with wlroots 0.16.0 */
 		setmon(c, p->mon ? p->mon : current_monitor, p->tags);
 	} else {
@@ -1918,8 +1918,8 @@ resize(Client *c, struct wlr_box geo, int interact)
 	applybounds(c, bbox);
 
 	/* Update scene-graph, including borders */
-	wlr_scene_node_set_position(c->scene, c->geom.x, c->geom.y);
-	wlr_scene_node_set_position(c->scene_surface, c->bw, c->bw);
+	wlr_scene_node_set_position(CLIENT_SCENE(c), c->geom.x, c->geom.y);
+	wlr_scene_node_set_position(CLIENT_SCENE_SURFACE(c), c->bw, c->bw);
 	wlr_scene_rect_set_size(c->border[0], c->geom.width, c->bw);
 	wlr_scene_rect_set_size(c->border[1], c->geom.width, c->bw);
 	wlr_scene_rect_set_size(c->border[2], c->bw, c->geom.height - 2 * c->bw);
@@ -2017,7 +2017,7 @@ setfloating(Client *c, int floating)
     setfullscreen(c, 0);
   };
   CLIENT_SET_FLOATING(c,floating);
-	wlr_scene_node_reparent(c->scene, layers[CLIENT_IS_FLOATING(c) ? LyrFloat : LyrTile]);
+	wlr_scene_node_reparent(CLIENT_SCENE(c), layers[CLIENT_IS_FLOATING(c) ? LyrFloat : LyrTile]);
 	arrange(c->mon);
 	printstatus();
 }
@@ -2043,7 +2043,7 @@ setfullscreen(Client *c, int fullscreen)
 		 */
 		if (!c->fullscreen_bg) {
 			c->fullscreen_bg = wlr_scene_rect_create
-              (c->scene,
+              (CLIENT_SCENE(c),
                c->geom.width, c->geom.height, GWWM_FULLSCREEN_BG());
 			wlr_scene_node_lower_to_bottom(&c->fullscreen_bg->node);
 		}
@@ -2497,7 +2497,7 @@ unmapnotify(struct wl_listener *listener, void *data)
 		c->mon->un_map = 1;
 
 	if (client_is_unmanaged(c)) {
-		wlr_scene_node_destroy(c->scene);
+		wlr_scene_node_destroy(CLIENT_SCENE(c));
 		return;
 	}
 
@@ -2505,7 +2505,7 @@ unmapnotify(struct wl_listener *listener, void *data)
 	setmon(c, NULL, 0);
 	wl_list_remove(&c->flink);
 	wl_list_remove(&c->commit.link);
-	wlr_scene_node_destroy(c->scene);
+	wlr_scene_node_destroy(CLIENT_SCENE(c));
 	printstatus();
 }
 

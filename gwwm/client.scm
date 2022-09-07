@@ -34,6 +34,8 @@
             client-resize
             client-set-resizing!
             client-title
+            client-scene
+            client-set-scene!
             <gwwm-client>))
 
 (define (client-type client)
@@ -62,7 +64,10 @@
                           (client-get-title c)
                           "*deaded*"))
          #:slot-set! (lambda _ #t)
-         #:getter client-title))
+         #:getter client-title)
+  (scene #:init-value #f
+         #:accessor client-scene
+         #:setter client-set-scene!))
 
 (define client-is-fullscreen? client-fullscreen?)
 
