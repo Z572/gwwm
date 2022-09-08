@@ -908,6 +908,7 @@ void
 commitnotify(struct wl_listener *listener, void *data)
 {
 	Client *c = wl_container_of(listener, c, commit);
+    scm_c_run_hook(REF("gwwm hooks", "surface-commit-event-hook"), scm_list_1(WRAP_CLIENT(c)));
 	struct wlr_box box = {0};
 	client_get_geometry(c, &box);
 
