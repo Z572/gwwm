@@ -14,6 +14,8 @@
             monitor=?
             <gwwm-monitor>))
 
+(define-once %monitors
+  (make-hash-table))
 (define (current-monitor)
   "return current monitor or #f not found."
   ((@@ (gwwm) current-monitor)))

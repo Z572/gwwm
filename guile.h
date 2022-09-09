@@ -76,6 +76,12 @@
               scm_from_utf8_keyword("data"), FROM_P(o)))
 #define UNWRAP_KEYBOARD(o)                                                      \
   (TO_P(scm_call_1(REFP("gwwm keyboard", ".data"), o)))
+
+#define INNER_MONITOR_HASH_TABLE REFP("gwwm monitor", "%monitors")
+#define MAKE_MONITOR(o) (scm_call_3(REF("oop goops","make"), \
+                                  REF("gwwm monitor","<gwwm-monitor>"), \
+                                  scm_from_utf8_keyword("data"), \
+                                  FROM_P(o)))
 /* #define SEND_LOG(o ...) */
 #define send_log(v,b,...) _send_log(#v,b, ##__VA_ARGS__, "/0")
 void

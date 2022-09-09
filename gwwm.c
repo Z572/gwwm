@@ -269,6 +269,7 @@ static void startdrag(struct wl_listener *listener, void *data);
 static void tag(const Arg *arg);
 static void tagmon(const Arg *arg);
 static void tile(Monitor *m);
+static inline void logout_monitor(Monitor *m);
 static void togglefloating(const Arg *arg);
 
 static void toggletag(const Arg *arg);
@@ -860,7 +861,7 @@ cleanupmon(struct wl_listener *listener, void *data)
 
 	focusclient(focustop(current_monitor), 1);
 	closemon(m);
-	free(m);
+    logout_monitor(m);
 }
 
 void
@@ -1011,6 +1012,25 @@ createlayersurface(struct wl_listener *listener, void *data)
 	wlr_layer_surface->current = old_state;
 }
 
+static inline void
+register_monitor(Monitor *m) {
+  const int *p=&m;
+  scm_hashq_set_x(INNER_MONITOR_HASH_TABLE, (scm_from_int(*p)),MAKE_MONITOR(m));
+}
+
+static inline SCM
+find_monitor(Monitor *m) {
+  const int *p=&m;
+  return scm_hashq_ref(INNER_MONITOR_HASH_TABLE, (scm_from_int(*p)) ,NULL);
+}
+
+static inline void
+logout_monitor(Monitor *m){
+  const int *p=&m;
+  scm_hashq_remove_x(INNER_MONITOR_HASH_TABLE, scm_from_int(*p));
+  free(m);
+}
+
 void
 createmon(struct wl_listener *listener, void *data)
 {
@@ -1020,6 +1040,7 @@ createmon(struct wl_listener *listener, void *data)
 	const MonitorRule *r;
 	Client *c;
 	Monitor *m = wlr_output->data = ecalloc(1, sizeof(*m));
+    register_monitor(m);
 	m->wlr_output = wlr_output;
 
 	wlr_output_init_render(wlr_output, alloc, drw);
