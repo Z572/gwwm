@@ -2133,6 +2133,14 @@ setmon(Client *c, Monitor *m, unsigned int newtags)
 	focusclient(focustop(current_monitor), 1);
 }
 
+SCM_DEFINE_PUBLIC(gwwm_setmon, "%setmon", 3, 0, 0, (SCM c ,SCM m, SCM newtags), "")
+{
+  setmon(UNWRAP_CLIENT(c),
+         UNWRAP_MONITOR(m),
+         scm_to_unsigned_integer(newtags, 0, 12));
+  return SCM_UNSPECIFIED;
+}
+
 void
 setpsel(struct wl_listener *listener, void *data)
 {
