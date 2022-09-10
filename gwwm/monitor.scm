@@ -7,6 +7,7 @@
             monitor-enabled?
             monitor-scale
             monitor-height
+            monitor-list
             monitor-width
             monitor-refresh
             monitor-physical-width
@@ -16,6 +17,9 @@
 
 (define-once %monitors
   (make-hash-table))
+(define (monitor-list)
+  "return all monitors."
+  (hash-map->list (lambda (_ b) b) %monitors))
 (define (current-monitor)
   "return current monitor or #f not found."
   ((@@ (gwwm) current-monitor)))

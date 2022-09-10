@@ -592,20 +592,6 @@ SCM_DEFINE (gwwm_layer_list , "layer-list",0,0,0,(),"")
 }
 #undef FUNC_NAME
 
-
-SCM_DEFINE (gwwm_monitor_list , "monitor-list",0,0,0,(),"")
-#define FUNC_NAME s_gwwm_monitor_list
-{
-  SCM a=scm_make_list(scm_from_int(0), SCM_UNSPECIFIED);
-  	Monitor *m;
-	wl_list_for_each(m, &mons, link) {
-      a=scm_cons(WRAP_MONITOR(m), a);
-    }
-    return a;
-}
-#undef FUNC_NAME
-
-
 void
 arrangelayer(Monitor *m, struct wl_list *list, struct wlr_box *usable_area, int exclusive)
 {
