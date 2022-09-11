@@ -1,6 +1,8 @@
 (define-module (gwwm monitor)
   #:use-module (oop goops)
   #:use-module (wlroots types output)
+  #:use-module (wlroots types output-layout)
+  #:autoload (system foreign) (pointer-address)
   #:export (current-monitor
             monitor-name
             monitor-description
@@ -13,6 +15,7 @@
             monitor-physical-width
             monitor-physical-height
             monitor=?
+            monitor-at
             <gwwm-monitor>))
 
 (define-once %monitors
@@ -72,6 +75,12 @@
           (monitor-height o)
           (monitor-scale o)))
 
+(define (monitor-at x y)
+  (hash-ref %monitors
+            (pointer-address
+             (and=> (wlr-output-layout-output-at
+                     ((@@ (gwwm) gwwm-output-layout)) x y)
+                    wlr-output-data))))
 (define-method (equal? (o1 <gwwm-monitor>)
                        (o2 <gwwm-monitor>))
   (monitor=? o1 o2))

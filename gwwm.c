@@ -2623,13 +2623,8 @@ virtualkeyboard(struct wl_listener *listener, void *data)
 Monitor *
 xytomon(double x, double y)
 {
-	struct wlr_output *o = wlr_output_layout_output_at(output_layout, x, y);
-	return o ? o->data : NULL;
-}
-
-SCM_DEFINE (gwwm_xytomon, "xytomon",2,0,0,(SCM x,SCM y),""){
-  Monitor *m =xytomon(scm_to_double(x), scm_to_double(y));
-  return (m) ? (WRAP_MONITOR(m)) :SCM_BOOL_F;
+  SCM o=(REF_CALL_2("gwwm monitor","monitor-at",scm_from_double(x),scm_from_double(y)));
+  return scm_is_false(o) ? NULL : (UNWRAP_MONITOR(o));
 }
 
 struct wlr_scene_node *
