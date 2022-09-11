@@ -16,6 +16,7 @@
             monitor-physical-height
             monitor=?
             monitor-at
+            monitor-wlr-output
             <gwwm-monitor>))
 
 (define-once %monitors
@@ -66,7 +67,9 @@
                    #:slot-ref (lambda (m)
                                 (wlr-output-physical-height (monitor-wlr-output m)))
                    #:slot-set! (lambda _ #f)
-                   #:getter monitor-physical-height))
+                   #:getter monitor-physical-height)
+  (wlr-output #:accessor monitor-wlr-output
+              #:setter set-.wlr-output!))
 
 (define-method (write (o <gwwm-monitor>) port)
   (format port "#<<gwwm-monitor ~a (~a . ~a) scale: ~a>"
@@ -89,6 +92,3 @@
 (define-method (monitor=? (o1 <gwwm-monitor>)
                           (o2 <gwwm-monitor>))
   (equal? (.data o1) (.data o2)))
-
-(define (monitor-wlr-output m)
-  ((@@ (gwwm) monitor-wlr-output) m))

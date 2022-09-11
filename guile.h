@@ -27,6 +27,10 @@
   (REF_CALL_1("wlroots types output-layout", "wrap-wlr-output-layout", FROM_P(p)))
 #define UNWRAP_WLR_OUTPUT_LAYOUT(p)                                                   \
   (TO_P(REF_CALL_1("wlroots types output-layout ", "unwrap-wlr-output-layout", p)))
+#define WRAP_WLR_OUTPUT(p)                                                     \
+  (REF_CALL_1("wlroots types output", "wrap-wlr-output", FROM_P(p)))
+#define UNWRAP_WLR_OUTPUT(p)                                                   \
+  (struct wlr_output *)(TO_P(REF_CALL_1("wlroots types output ", "unwrap-wlr-output", p)))
 #define WRAP_MONITOR(o)                                                        \
   find_monitor(o)
 #define UNWRAP_MONITOR(o)                                                      \

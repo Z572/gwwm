@@ -160,10 +160,15 @@ typedef struct {
 	const char *symbol;
 	void (*arrange)(Monitor *);
 } Layout;
-
+#define MONITOR_WLR_OUTPUT(m)                                       \
+  (struct wlr_output *)(UNWRAP_WLR_OUTPUT(scm_call_1(REFP("gwwm monitor","monitor-wlr-output"),  \
+                               (WRAP_MONITOR(m)))))
+#define SET_MONITOR_WLR_OUTPUT(m,o)                     \
+  scm_call_2(REFP("gwwm monitor","set-.wlr-output!"),   \
+             (WRAP_MONITOR(m)), WRAP_WLR_OUTPUT(o))
 struct Monitor {
 	struct wl_list link;
-	struct wlr_output *wlr_output;
+  //	struct wlr_output *wlr_output;
 	struct wlr_scene_output *scene_output;
 	struct wl_listener frame;
 	struct wl_listener destroy;
@@ -377,12 +382,6 @@ static Atom netatom[NetLast];
 /* attempt to encapsulate suck into one file */
 #include "guile.h"
 #include "client.h"
-
-
-SCM_DEFINE_PUBLIC(gwwm_monitor_wlr_output, "monitor-wlr-output", 1, 0, 0, (SCM m), ""){
-  return (REF_CALL_1("wlroots types output","wrap-wlr-output",(FROM_P((UNWRAP_MONITOR(m))->wlr_output))));
-}
-
 
 SCM_DEFINE_PUBLIC(gwwm_visibleon, "visibleon", 2, 0, 0, (SCM c, SCM m), "")
 {
@@ -842,13 +841,13 @@ cleanupmon(struct wl_listener *listener, void *data)
 	wl_list_remove(&m->destroy.link);
 	wl_list_remove(&m->frame.link);
 	wl_list_remove(&m->link);
-	wlr_output_layout_remove(output_layout, m->wlr_output);
+	wlr_output_layout_remove(output_layout, MONITOR_WLR_OUTPUT(m));
 	wlr_scene_output_destroy(m->scene_output);
 
 	if ((nmons = wl_list_length(&mons)))
 		do /* don't switch to disabled mons */
 		    current_monitor = wl_container_of(mons.prev, current_monitor, link);
-		while (!current_monitor->wlr_output->enabled && i++ < nmons);
+		while (!(MONITOR_WLR_OUTPUT(current_monitor))->enabled && i++ < nmons);
 
 	focusclient(focustop(current_monitor), 1);
 	closemon(m);
@@ -969,7 +968,7 @@ createlayersurface(struct wl_listener *listener, void *data)
 	LayerSurface *layersurface;
 	struct wlr_layer_surface_v1_state old_state;
 	if (!wlr_layer_surface->output) {
-		wlr_layer_surface->output = current_monitor->wlr_output;
+		wlr_layer_surface->output = MONITOR_WLR_OUTPUT(current_monitor);
 	}
 	layersurface = ecalloc(1, sizeof(LayerSurface));
 	layersurface->type = LayerShell;
@@ -1032,7 +1031,7 @@ createmon(struct wl_listener *listener, void *data)
 	Client *c;
 	Monitor *m = wlr_output->data = ecalloc(1, sizeof(*m));
     register_monitor(m);
-	m->wlr_output = wlr_output;
+	SET_MONITOR_WLR_OUTPUT(m,wlr_output);
 
 	wlr_output_init_render(wlr_output, alloc, drw);
 
@@ -1226,11 +1225,11 @@ dirtomon(enum wlr_direction dir)
 {
 	struct wlr_output *next;
 	if ((next = wlr_output_layout_adjacent_output(output_layout,
-			dir, current_monitor->wlr_output, current_monitor->m.x, current_monitor->m.y)))
+			dir, MONITOR_WLR_OUTPUT(current_monitor), current_monitor->m.x, current_monitor->m.y)))
 		return next->data;
 	if ((next = wlr_output_layout_farthest_output(output_layout,
 			dir ^ (WLR_DIRECTION_LEFT|WLR_DIRECTION_RIGHT),
-		    current_monitor->wlr_output, current_monitor->m.x, current_monitor->m.y)))
+		    MONITOR_WLR_OUTPUT(current_monitor), current_monitor->m.x, current_monitor->m.y)))
 		return next->data;
 	return current_monitor;
 }
@@ -1339,7 +1338,7 @@ focusmon(const Arg *arg)
 	if (nmons)
 		do /* don't switch to disabled mons */
 		    current_monitor = dirtomon(arg->i);
-		while (!current_monitor->wlr_output->enabled && i++ < nmons);
+		while (!MONITOR_WLR_OUTPUT(current_monitor)->enabled && i++ < nmons);
 	focusclient(focustop(current_monitor), 1);
 }
 
@@ -1522,7 +1521,7 @@ void
 maplayersurfacenotify(struct wl_listener *listener, void *data)
 {
 	LayerSurface *l = wl_container_of(listener, l, map);
-	wlr_surface_send_enter(l->layer_surface->surface, l->mon->wlr_output);
+	wlr_surface_send_enter(l->layer_surface->surface, MONITOR_WLR_OUTPUT(l->mon));
 	motionnotify(0);
 }
 
@@ -1845,23 +1844,23 @@ printstatus(void)
 		}
 		if ((c = focustop(m))) {
           send_log(INFO,"MONITOR and TITLE",
-                   "MONITOR",m->wlr_output->name,
+                   "MONITOR",MONITOR_WLR_OUTPUT(m)->name,
                    "TITLE",client_get_title(c));
-          send_log(INFO,"is FULLSCREEN","MONITOR",m->wlr_output->name,
+          send_log(INFO,"is FULLSCREEN","MONITOR",MONITOR_WLR_OUTPUT(m)->name,
                    "FULLSCREEN",((CLIENT_IS_FULLSCREEN(c)) ? "#t" : "#f"));
           send_log(INFO,"is FLOATING",
-                   "MONITOR",m->wlr_output->name,
+                   "MONITOR",MONITOR_WLR_OUTPUT(m)->name,
                    "FLOATING", ((CLIENT_IS_FLOATING(c))? "#t": "#f"));
 			sel = c->tags;
 		} else {
-          send_log(INFO, "title" ,"MONITOR", m->wlr_output->name);
-          send_log(INFO,"MONITOR","MONITOR",m->wlr_output->name);
-          send_log(INFO,"fullscreen","MONITOR", m->wlr_output->name);
-          send_log(INFO,"floating","MONITOR", m->wlr_output->name);
+          send_log(INFO, "title" ,"MONITOR", MONITOR_WLR_OUTPUT(m)->name);
+          send_log(INFO,"MONITOR","MONITOR",MONITOR_WLR_OUTPUT(m)->name);
+          send_log(INFO,"fullscreen","MONITOR", MONITOR_WLR_OUTPUT(m)->name);
+          send_log(INFO,"floating","MONITOR", MONITOR_WLR_OUTPUT(m)->name);
           sel = 0;
 		}
         send_log(INFO ,"current-monitor" ,
-                 "MONITOR", m->wlr_output->name,
+                 "MONITOR", MONITOR_WLR_OUTPUT(m)->name,
                  "BOOL",((m == current_monitor)? "#t" : "#f"));
     }
 }
@@ -2111,13 +2110,13 @@ setmon(Client *c, Monitor *m, unsigned int newtags)
 
 	/* TODO leave/enter is not optimal but works */
 	if (oldmon) {
-		wlr_surface_send_leave(client_surface(c), oldmon->wlr_output);
+		wlr_surface_send_leave(client_surface(c), MONITOR_WLR_OUTPUT(oldmon));
 		arrange(oldmon);
 	}
 	if (m) {
 		/* Make sure window actually overlaps with the monitor */
 		resize(c, c->geom, 0);
-		wlr_surface_send_enter(client_surface(c), m->wlr_output);
+		wlr_surface_send_enter(client_surface(c), MONITOR_WLR_OUTPUT(m));
 		c->tags = newtags ? newtags : m->tagset[m->seltags]; /* assign tags of target monitor */
 		arrange(m);
 	}
@@ -2547,26 +2546,26 @@ updatemons(struct wl_listener *listener, void *data)
 	sgeom = *wlr_output_layout_get_box(output_layout, NULL);
 	wl_list_for_each(m, &mons, link) {
 		struct wlr_output_configuration_head_v1 *config_head =
-			wlr_output_configuration_head_v1_create(config, m->wlr_output);
+			wlr_output_configuration_head_v1_create(config, MONITOR_WLR_OUTPUT(m));
 
 		/* TODO: move clients off disabled monitors */
 		/* TODO: move focus if current_monitor is disabled */
 
 		/* Get the effective monitor geometry to use for surfaces */
-		m->m = m->w = *wlr_output_layout_get_box(output_layout, m->wlr_output);
+		m->m = m->w = *wlr_output_layout_get_box(output_layout, MONITOR_WLR_OUTPUT(m));
 		wlr_scene_output_set_position(m->scene_output, m->m.x, m->m.y);
 		/* Calculate the effective monitor geometry to use for clients */
 		arrangelayers(m);
 		/* Don't move clients to the left output when plugging monitors */
 		arrange(m);
 
-		config_head->state.enabled = m->wlr_output->enabled;
-		config_head->state.mode = m->wlr_output->current_mode;
+		config_head->state.enabled = MONITOR_WLR_OUTPUT(m)->enabled;
+		config_head->state.mode = ((MONITOR_WLR_OUTPUT(m))->current_mode);
 		config_head->state.x = m->m.x;
 		config_head->state.y = m->m.y;
 	}
 
-	if (current_monitor && current_monitor->wlr_output->enabled)
+	if (current_monitor && MONITOR_WLR_OUTPUT(current_monitor)->enabled)
 		wl_list_for_each(c, &clients, link)
 			if (!c->mon && client_is_mapped(c))
 				setmon(c, current_monitor, c->tags);
