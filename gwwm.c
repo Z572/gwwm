@@ -414,6 +414,10 @@ SCM_DEFINE (gwwm_display, "gwwm-display",0,0,0,(),"") {
   return WRAP_WL_DISPLAY(dpy);
 }
 
+SCM_DEFINE (gwwm_output_layout, "gwwm-output-layout",0,0,0,(),"") {
+  return WRAP_WLR_OUTPUT_LAYOUT(output_layout);
+}
+
 SCM_DEFINE (gwwm_c_config, "gwwm-config",0, 0,0,
             () ,
             "c")

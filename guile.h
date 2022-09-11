@@ -23,6 +23,10 @@
   (REF_CALL_1("wayland display", "wrap-wl-display", FROM_P(p)))
 #define UNWRAP_WL_DISPLAY(p)                                                   \
   (TO_P(REF_CALL_1("wayland display", "unwrap-wl-display", p)))
+#define WRAP_WLR_OUTPUT_LAYOUT(p)                                                     \
+  (REF_CALL_1("wlroots types output-layout", "wrap-wlr-output-layout", FROM_P(p)))
+#define UNWRAP_WLR_OUTPUT_LAYOUT(p)                                                   \
+  (TO_P(REF_CALL_1("wlroots types output-layout ", "unwrap-wlr-output-layout", p)))
 #define WRAP_MONITOR(o)                                                        \
   find_monitor(o)
 #define UNWRAP_MONITOR(o)                                                      \
