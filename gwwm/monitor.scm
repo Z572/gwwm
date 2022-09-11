@@ -76,11 +76,12 @@
           (monitor-scale o)))
 
 (define (monitor-at x y)
-  (hash-ref %monitors
-            (pointer-address
-             (and=> (wlr-output-layout-output-at
-                     ((@@ (gwwm) gwwm-output-layout)) x y)
-                    wlr-output-data))))
+  (and=> (wlr-output-layout-output-at
+          ((@@ (gwwm) gwwm-output-layout)) x y)
+         (lambda (o)
+           (hash-ref %monitors
+                     (pointer-address
+                      (wlr-output-data o))))))
 (define-method (equal? (o1 <gwwm-monitor>)
                        (o2 <gwwm-monitor>))
   (monitor=? o1 o2))
