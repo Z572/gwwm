@@ -8,6 +8,7 @@
   #:use-module (gwwm utils srfi-215)
   #:use-module (wayland display)
   #:use-module (wlroots types pointer)
+  #:use-module (wlroots backend)
   #:use-module (wlroots types output)
   #:use-module (wlroots types seat)
   #:use-module (gwwm hooks)
@@ -139,5 +140,11 @@ gwwm [options]
   (set-current-module (resolve-module '(guile-user)))
   (setup-server)
   (setup-socket)
+  ;; Start the backend. This will enumerate outputs and inputs, become the DRM
+  ;; master, etc
+  (if (wlr-backend-start (gwwm-backend))
+      (send-log INFO (G_ "backend is started."))
+      (begin (send-log ERROR (G_ "gwwm cannot start backend!"))
+             (exit 1)))
   (%gwwm-run)
   (%gwwm-cleanup))

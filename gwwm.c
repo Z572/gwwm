@@ -1959,8 +1959,6 @@ SCM_DEFINE (gwwm_run,"%gwwm-run",0,0,0,(),"")
 
 	/* Start the backend. This will enumerate outputs and inputs, become the DRM
 	 * master, etc */
-	if (!wlr_backend_start(backend))
-		die("startup: backend_start");
 
 	/* Now that outputs are initialized, choose initial current_monitor based on
 	 * cursor position, and set default cursor image */

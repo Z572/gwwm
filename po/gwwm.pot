@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gwwm 0.0.1\n"
 "Report-Msgid-Bugs-To: 873216071@qq.com\n"
-"POT-Creation-Date: 2022-09-04 13:18+0800\n"
+"POT-Creation-Date: 2022-09-12 21:29+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,35 +17,50 @@ msgstr ""
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: gwwm.scm:74
+#: gwwm.scm:76
 msgid ""
 "gwwm [options]\n"
 "  -v --version  Display version\n"
 "  -h --help     Display this help\n"
 msgstr ""
 
-#: gwwm.scm:91
+#: gwwm.scm:93
 msgid "wl-display-add-socket-auto fail."
 msgstr ""
 
-#: gwwm.scm:123
+#: gwwm.scm:134
 msgid "XDG_RUNTIME_DIR must be set."
+msgstr ""
+
+#: gwwm.scm:146
+msgid "backend is started."
+msgstr ""
+
+#: gwwm.scm:147
+msgid "gwwm cannot start backend!"
 msgstr ""
 
 #: gwwm/keymap.scm:72
 msgid "for now, gwwm not support multi key define, ignore others."
 msgstr ""
 
-#: gwwm/config.scm:42
+#: gwwm/config.scm:45
 msgid "initfile not found:"
 msgstr ""
 
-#: gwwm/config.scm:89
+#: gwwm/config.scm:92
 #, scheme-format
 msgid "unknow init-keyword!: ~s"
 msgstr ""
 
-#: gwwm/client.scm:64
+#: gwwm/client.scm:77
 #, scheme-format
 msgid "~S is a *deaded* client.~%"
+msgstr ""
+
+#: gwwm/utils.scm:10
+#, scheme-format
+msgid ""
+"~S is a hashtable, value is:~%~:{\t~s => ~s\n"
+"~}.~%"
 msgstr ""
