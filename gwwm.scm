@@ -11,6 +11,7 @@
   #:use-module (wlroots backend)
   #:use-module (wlroots types output)
   #:use-module (wlroots types seat)
+  #:use-module (gwwm configuration)
   #:use-module (gwwm hooks)
   #:use-module (gwwm commands)
   #:export (main))
@@ -69,11 +70,10 @@
          (help-wanted (option-ref options 'help #f))
          (version-wanted (option-ref options 'version #f)))
     (if (or version-wanted help-wanted)
-        (begin (if version-wanted
-                   (display "gwwm v0.0.1
-"))
-               (if help-wanted
-                   (display (G_ "\
+        (begin (when version-wanted
+                 (display (string-append "gwwm " %version "\n")))
+               (when help-wanted
+                 (display (G_ "\
 gwwm [options]
   -v --version  Display version
   -h --help     Display this help

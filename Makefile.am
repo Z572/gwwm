@@ -65,6 +65,7 @@ nobase_guilemodule_DATA = gwwm.scm \
 		gwwm/utils/ref.scm \
 		gwwm/keys.scm    \
 		gwwm/commands.scm \
+		gwwm/configuration.scm \
 		gwwm/config.scm
 
 dist_bin_SCRIPTS=bin/gwwm
