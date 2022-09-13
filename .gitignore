@@ -32,6 +32,7 @@ po/Makevars.template
 libtool
 build-aux/
 .libs/
+gwwm/configuration.scm
 po/POTFILES
 po/Rules-quot
 po/boldquot.sed
