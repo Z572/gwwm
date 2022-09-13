@@ -95,3 +95,14 @@ GUILE_WARNINGS =                                          \
 .PHONY: run
 run: all
 	exec $(top_builddir)/pre-inst-env $(top_srcdir)/bin/gwwm
+
+TESTS = tests/keymap.scm
+TEST_EXTENSIONS = .scm
+SCM_LOG_DRIVER =                                \
+  $(top_builddir)/pre-inst-env                  \
+  $(GUILE) --no-auto-compile -e main            \
+  $(top_srcdir)/build-aux/test-driver.scm
+AM_SCM_LOG_DRIVER_FLAGS = --brief=no
+AM_SCM_LOG_FLAGS = --no-auto-compile -L "$(top_srcdir)"
+AM_TESTS_ENVIRONMENT = abs_top_srcdir="$(abs_top_srcdir)"
+CLEANFILES += $(TESTS:tests/%.scm=%.log)
