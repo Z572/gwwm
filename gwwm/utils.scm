@@ -4,7 +4,18 @@
   #:use-module (ice-9 format)
   #:use-module (gwwm i18n)
   #:export (->symbol
-            ->string))
+            ->string
+            getenv*
+            get-xdg-config-home))
+
+(define* (getenv* nam #:optional fallback)
+  "like getenv, but if NAM environment variable not found return FALLBACK."
+  (or (getenv nam) fallback))
+
+(define (get-xdg-config-home)
+  "return XDG_CONFIG_HOME."
+  (getenv* "XDG_CONFIG_HOME"
+           (string-append (getenv "HOME") "/.config")))
 
 (define-method (describe (m <hashtable>))
   (format #t (G_ "~S is a hashtable, value is:~%~:{\t~s => ~s\n~}.~%")

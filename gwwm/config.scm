@@ -1,6 +1,7 @@
 (define-module (gwwm config)
   #:use-module (oop goops)
   #:use-module (oop goops describe)
+  #:use-module (gwwm utils)
   #:use-module (gwwm i18n)
   #:use-module (gwwm color)
   #:export (gwwm
@@ -13,20 +14,10 @@
             config-fullscreenbg
             config-cursor-normal-image
             load-init-file
-            get-xdg-config-home
             init-file
             make-xkb-rules
             gwwm-default-bordercolor
             gwwm-default-focuscolor))
-
-(define* (getenv* nam #:optional fallback)
-  "like getenv, but if NAM environment variable not found return FALLBACK."
-  (or (getenv nam) fallback))
-
-(define (get-xdg-config-home)
-  "return XDG_CONFIG_HOME."
-  (getenv* "XDG_CONFIG_HOME"
-           (string-append (getenv "HOME") "/.config")))
 
 (define (init-file)
   "return init file."
