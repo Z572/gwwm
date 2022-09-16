@@ -5,6 +5,7 @@
   #:use-module (gwwm keymap)
   #:use-module (gwwm i18n)
   #:use-module (gwwm monitor)
+  #:use-module (gwwm utils)
   #:use-module (gwwm utils srfi-215)
   #:use-module (wayland display)
   #:use-module (wlroots types pointer)
@@ -92,6 +93,14 @@ gwwm [options]
         (begin
           (send-log EMERGENCY (G_ "wl-display-add-socket-auto fail.") 'SOCKET socket)
           (exit 1)))))
+
+(define (config-setup)
+  (add-to-load-path
+   (string-append
+    (get-xdg-config-home)
+    "/" "gwwm"))
+  (%config-setup))
+
 (define (main)
   (setlocale LC_ALL "")
   (textdomain %gettext-domain)
@@ -136,7 +145,7 @@ gwwm [options]
   (setvbuf (current-output-port) 'line)
   (setvbuf (current-error-port) 'line)
   (%gwwm-setup)
-  (%config-setup)
+  (config-setup)
   (set-current-module (resolve-module '(guile-user)))
   (setup-server)
   (setup-socket)
