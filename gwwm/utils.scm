@@ -6,7 +6,36 @@
   #:export (->symbol
             ->string
             getenv*
-            get-xdg-config-home))
+            get-xdg-config-home)
+  #:export-syntax (save-environment-excursion
+                   with-env))
+
+;;; copy from guix.
+(define-syntax-rule (save-environment-excursion body ...)
+  "Save the current environment variables, run BODY..., and restore them."
+  (let ((env (environ)))
+    (dynamic-wind
+      (const #t)
+      (lambda ()
+        body ...)
+      (lambda ()
+        (environ env)))))
+
+(define-syntax with-env
+  (lambda (x)
+    "
+(getenv \"HOME\") => \"/root\"
+(with-env ((\"HOME\" \"/tmp\"))
+  (getenv \"HOME\")) => \"/tmp\"
+"
+    (syntax-case x ()
+      ((_ ((env value) ...) body ...)
+       #'(save-environment-excursion
+          (setenv env value)
+          ...
+          body ...)))))
+
+
 
 (define* (getenv* nam #:optional fallback)
   "like getenv, but if NAM environment variable not found return FALLBACK."
