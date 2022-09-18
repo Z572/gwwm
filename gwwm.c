@@ -226,6 +226,10 @@ static void createlayersurface(struct wl_listener *listener, void *data);
 static void createmon(struct wl_listener *listener, void *data);
 static void createnotify(struct wl_listener *listener, void *data);
 static void createpointer(struct wlr_input_device *device);
+static void create_touch(struct wlr_input_device *device);
+static void create_tablet_tool(struct wlr_input_device *device);
+static void create_tablet_pad(struct wlr_input_device *device);
+static void create_switch(struct wlr_input_device *device);
 static void cursorframe(struct wl_listener *listener, void *data);
 static void destroyidleinhibitor(struct wl_listener *listener, void *data);
 static void destroylayersurfacenotify(struct wl_listener *listener, void *data);
@@ -1434,6 +1438,22 @@ incnmaster(const Arg *arg)
 }
 
 void
+create_touch(struct wlr_input_device *device){
+  send_log(WARNING, "TODO: impl create touch function" );
+}
+void
+create_tablet_tool(struct wlr_input_device *device){
+  send_log(WARNING, "TODO: impl create tablet_tool function" );
+}
+void
+create_tablet_pad(struct wlr_input_device *device){
+  send_log(WARNING, "TODO: impl create tablet_pad function" );
+}
+void
+create_switch(struct wlr_input_device *device){
+  send_log(WARNING, "TODO: impl create switch function" );
+}
+void
 inputdevice(struct wl_listener *listener, void *data)
 {
 	/* This event is raised by the backend when a new input device becomes
@@ -1448,11 +1468,23 @@ inputdevice(struct wl_listener *listener, void *data)
 	case WLR_INPUT_DEVICE_POINTER:
 		createpointer(device);
 		break;
+    case WLR_INPUT_DEVICE_TOUCH:
+      create_touch(device);
+      break;
+    case WLR_INPUT_DEVICE_TABLET_TOOL:
+      create_tablet_tool(device);
+      break;
+    case WLR_INPUT_DEVICE_TABLET_PAD:
+      create_tablet_pad(device);
+      break;
+    case WLR_INPUT_DEVICE_SWITCH:
+      create_switch(device);
+      break;
 	default:
+      send_log(WARNING,"unknow input device");
 		/* TODO handle other input device types */
 		break;
 	}
-
 	/* We need to let the wlr_seat know what our capabilities are, which is
 	 * communiciated to the client. In dwl we always have a cursor, even if
 	 * there are no pointer devices, so we always include that capability. */
