@@ -823,7 +823,9 @@ cleanupkeyboard(struct wl_listener *listener, void *data)
 {
 	struct wlr_input_device *device = data;
 	Keyboard *kb = device->data;
-
+    scm_c_run_hook(REF("gwwm hooks", "cleanup-keyboard-hook"),
+                   scm_list_2(WRAP_WLR_INPUT_DEVICE(device),
+                              WRAP_KEYBOARD(kb)));
 	wl_list_remove(&kb->link);
 	wl_list_remove(&kb->modifiers.link);
 	wl_list_remove(&kb->key.link);
