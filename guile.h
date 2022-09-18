@@ -48,6 +48,11 @@
 #define UNWRAP_WLR_SCENE_NODE(p)                                                    \
   (TO_P(REF_CALL_1("wlroots types scene", "unwrap-wlr-scene-node", p)))
 
+#define WRAP_WLR_SCENE(p)                                                    \
+  (REF_CALL_1("wlroots types scene", "wrap-wlr-scene", FROM_P(p)))
+#define UNWRAP_WLR_SCENE(p)                                                    \
+  (TO_P(REF_CALL_1("wlroots types scene", "unwrap-wlr-scene", p)))
+
 #define WRAP_WLR_EVENT_POINTER_AXIS(p)                                                    \
   (REF_CALL_1("wlroots types pointer", "wrap-wlr-event-pointer-axis", FROM_P(p)))
 #define UNWRAP_WLR_EVENT_POINTER_AXIS(p)                                                  \

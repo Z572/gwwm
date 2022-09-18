@@ -408,6 +408,10 @@ SCM_DEFINE (gwwm_seat, "gwwm-seat",0,0,0,(),"") {
   return WRAP_WLR_SEAT(seat);
 }
 
+SCM_DEFINE (gwwm_scene, "gwwm-scene",0,0,0,(),"") {
+  return WRAP_WLR_SCENE(scene);
+}
+
 
 SCM_DEFINE (gwwm_display, "gwwm-display",0,0,0,(),"") {
   return WRAP_WL_DISPLAY(dpy);
