@@ -2657,6 +2657,21 @@ virtualkeyboard(struct wl_listener *listener, void *data)
 	createkeyboard(device);
 }
 
+SCM_DEFINE (gwwm_monitor_tagset, "%monitor-tagset",1, 0,0,
+            (SCM m) ,
+            "return M's tagset.")
+#define FUNC_NAME s_gwwm_monitor_tagset
+{
+  Monitor *rm=UNWRAP_MONITOR(m);
+  SCM a= scm_make_list(scm_from_int(0), SCM_UNSPECIFIED);
+  for (size_t i = 0; i < LENGTH((rm)->tagset); i++)
+    {
+      a=scm_cons(scm_from_unsigned_integer((rm)->tagset[i]),a);
+    };
+  return a;
+}
+#undef FUNC_NAME
+
 SCM_DEFINE (gwwm_monitor_seltags, "%monitor-seltags",1, 0,0,
             (SCM m) ,
             "return M's seltags.")
