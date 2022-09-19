@@ -2657,6 +2657,15 @@ virtualkeyboard(struct wl_listener *listener, void *data)
 	createkeyboard(device);
 }
 
+SCM_DEFINE (gwwm_monitor_seltags, "%monitor-seltags",1, 0,0,
+            (SCM m) ,
+            "return M's seltags.")
+#define FUNC_NAME s_gwwm_monitor_seltags
+{
+  return (scm_from_unsigned_integer((UNWRAP_MONITOR(m))->seltags));
+}
+#undef FUNC_NAME
+
 Monitor *
 xytomon(double x, double y)
 {
