@@ -1701,6 +1701,16 @@ motionnotify(uint32_t time)
 	pointerfocus(c, surface, sx, sy, time);
 }
 
+SCM_DEFINE (gwwm_motionnotify, "%motionnotify" , 1,0,0,
+            (SCM time), "")
+#define FUNC_NAME s_gwwm_motionnotify
+{
+  motionnotify(scm_to_uint32( time));
+  return SCM_UNSPECIFIED;
+}
+#undef FUNC_NAME
+
+
 void
 motionrelative(struct wl_listener *listener, void *data)
 {
