@@ -80,6 +80,15 @@
 (define-once %clients
   (make-hash-table))
 
+(define* (client-do-set-fullscreen client #:optional fullscreen?)
+  (let ((fullscreen? (or fullscreen? (client-fullscreen? client))))
+    (if (client-is-x11? client)
+        (wlr-xwayland-surface-set-fullscreen
+         (client-xwayland-surface client)
+         fullscreen?)
+        (wlr-xdg-toplevel-set-fullscreen
+         (client-xdg-surface client)
+         fullscreen?))))
 (define client-set-fullscreen! (setter client-fullscreen?))
 (define client-is-floating? client-floating?)
 (define client-set-floating! (setter client-floating?))

@@ -269,13 +269,9 @@ client_send_close(Client *c)
 static inline void
 client_set_fullscreen(Client *c, int fullscreen)
 {
-#ifdef XWAYLAND
-	if (client_is_x11(c)) {
-		wlr_xwayland_surface_set_fullscreen(c->surface.xwayland, fullscreen);
-		return;
-	}
-#endif
-	wlr_xdg_toplevel_set_fullscreen(c->surface.xdg, fullscreen);
+  scm_call_2(REFP("gwwm client","client-do-set-fullscreen"),
+             WRAP_CLIENT(c),
+             scm_from_bool(fullscreen));
 }
 
 SCM_DEFINE (gwwm_client_xdg_surface ,"client-xdg-surface",1,0,0,(SCM c),"")
