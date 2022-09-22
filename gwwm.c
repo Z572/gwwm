@@ -202,6 +202,7 @@ typedef struct {
 } Rule;
 
 /* function declarations */
+Monitor *current_monitor();
 static void applybounds(Client *c, struct wlr_box *bbox);
 static void applyexclusive(struct wlr_box *usable_area, uint32_t anchor,
 		int32_t exclusive, int32_t margin_top, int32_t margin_right,
@@ -331,7 +332,6 @@ static int grabcx, grabcy; /* client-relative */
 static struct wlr_output_layout *output_layout;
 static struct wlr_box sgeom;
 static struct wl_list mons;
-static Monitor *current_monitor;
 
 /* global event handlers */
 static struct wl_listener cursor_axis = {.notify = axisnotify};
@@ -400,10 +400,6 @@ SCM_DEFINE_PUBLIC(gwwm_visibleon, "visibleon", 2, 0, 0, (SCM c, SCM m), "")
 
 #define GWWM_FULLSCREEN_BG() (TO_P(REF_CALL_1("gwwm color","color->pointer",REF_CALL_1("gwwm config", "config-fullscreenbg", gwwm_config))))
 
-SCM_DEFINE(gwwm_selmon ,"current-monitor" ,0,0,0,(),""){
-  return WRAP_MONITOR(current_monitor);
-}
-
 SCM_DEFINE (gwwm_backend, "gwwm-backend",0,0,0,(),"") {
   return WRAP_WLR_BACKEND(backend);
 }
@@ -438,7 +434,17 @@ SCM_DEFINE (gwwm_c_config, "gwwm-config",0, 0,0,
 struct NumTags { char limitexceeded[LENGTH(tags) > 31 ? -1 : 1]; };
 
 /* function implementations */
-
+Monitor *
+current_monitor(){
+  SCM o=(REF_CALL_0("gwwm monitor", "current-monitor"));
+  return scm_is_false(o) ? NULL: UNWRAP_MONITOR(o);
+/* _current_monitor; */
+}
+void
+set_current_monitor(Monitor *m){
+  /* _current_monitor=m; */
+  scm_call_1(REFP("gwwm monitor","set-current-monitor"),WRAP_MONITOR(m));
+}
 void
 applybounds(Client *c, struct wlr_box *bbox)
 {
@@ -526,7 +532,7 @@ applyrules(Client *c)
 	const char *appid, *title;
 	unsigned int i, newtags = 0;
 	const Rule *r;
-	Monitor *mon = current_monitor, *m;
+	Monitor *mon = current_monitor(), *m;
 
     CLIENT_SET_FLOATING(c,client_is_float_type(c));
 	if (!(appid = client_get_appid(c)))
@@ -776,8 +782,8 @@ buttonpress(struct wl_listener *listener, void *data)
           wlr_xcursor_manager_set_cursor_image(cursor_mgr, GWWM_CURSOR_NORMAL_IMAGE(), cursor);
 			cursor_mode = CurNormal;
 			/* Drop the window off on its new monitor */
-		    current_monitor = xytomon(cursor->x, cursor->y);
-			setmon(grabc, current_monitor, 0);
+		    set_current_monitor(xytomon(cursor->x, cursor->y));
+			setmon(grabc, current_monitor(), 0);
 			return;
 		}
 		break;
@@ -856,10 +862,10 @@ cleanupmon(struct wl_listener *listener, void *data)
 
 	if ((nmons = wl_list_length(&mons)))
 		do /* don't switch to disabled mons */
-		    current_monitor = wl_container_of(mons.prev, current_monitor, link);
-		while (!(MONITOR_WLR_OUTPUT(current_monitor))->enabled && i++ < nmons);
+          set_current_monitor(wl_container_of(mons.prev, (current_monitor()), link));
+		while (!(MONITOR_WLR_OUTPUT(current_monitor()))->enabled && i++ < nmons);
 
-	focusclient(focustop(current_monitor), 1);
+	focusclient(focustop(current_monitor()), 1);
 	closemon(m);
     logout_monitor(m);
 }
@@ -875,7 +881,7 @@ closemon(Monitor *m)
 			resize(c, (struct wlr_box){.x = c->geom.x - m->w.width, .y = c->geom.y,
 				.width = c->geom.width, .height = c->geom.height}, 0);
 		if (c->mon == m)
-			setmon(c, current_monitor, c->tags);
+          setmon(c, current_monitor(), c->tags);
 	}
 	printstatus();
 }
@@ -978,7 +984,7 @@ createlayersurface(struct wl_listener *listener, void *data)
 	LayerSurface *layersurface;
 	struct wlr_layer_surface_v1_state old_state;
 	if (!wlr_layer_surface->output) {
-		wlr_layer_surface->output = MONITOR_WLR_OUTPUT(current_monitor);
+      wlr_layer_surface->output = MONITOR_WLR_OUTPUT(current_monitor());
 	}
 	layersurface = ecalloc(1, sizeof(LayerSurface));
 	layersurface->type = LayerShell;
@@ -1234,14 +1240,20 @@ Monitor *
 dirtomon(enum wlr_direction dir)
 {
 	struct wlr_output *next;
-	if ((next = wlr_output_layout_adjacent_output(output_layout,
-			dir, MONITOR_WLR_OUTPUT(current_monitor), current_monitor->m.x, current_monitor->m.y)))
+	if ((next = wlr_output_layout_adjacent_output
+         (output_layout,
+          dir, MONITOR_WLR_OUTPUT(current_monitor()),
+          (current_monitor())->m.x,
+          (current_monitor())->m.y)))
 		return next->data;
-	if ((next = wlr_output_layout_farthest_output(output_layout,
-			dir ^ (WLR_DIRECTION_LEFT|WLR_DIRECTION_RIGHT),
-		    MONITOR_WLR_OUTPUT(current_monitor), current_monitor->m.x, current_monitor->m.y)))
+	if ((next = wlr_output_layout_farthest_output
+         (output_layout,
+          dir ^ (WLR_DIRECTION_LEFT|WLR_DIRECTION_RIGHT),
+          MONITOR_WLR_OUTPUT(current_monitor()),
+          (current_monitor())->m.x,
+          (current_monitor())->m.y)))
 		return next->data;
-	return current_monitor;
+	return current_monitor();
 }
 
 SCM_DEFINE (gwwm_dirtomon ,"dirtomon" ,1,0,0,(SCM dir),"")
@@ -1281,7 +1293,7 @@ focusclient(Client *c, int lift)
 	if (c) {
 		wl_list_remove(&c->flink);
 		wl_list_insert(&fstack, &c->flink);
-	    current_monitor = c->mon;
+	    set_current_monitor(c->mon);
         CLIENT_SET_URGENT(c ,0);
 		client_restack_surface(c);
 
@@ -1347,9 +1359,9 @@ focusmon(const Arg *arg)
 	int i = 0, nmons = wl_list_length(&mons);
 	if (nmons)
 		do /* don't switch to disabled mons */
-		    current_monitor = dirtomon(arg->i);
-		while (!MONITOR_WLR_OUTPUT(current_monitor)->enabled && i++ < nmons);
-	focusclient(focustop(current_monitor), 1);
+		    set_current_monitor(dirtomon(arg->i));
+		while (!MONITOR_WLR_OUTPUT(current_monitor())->enabled && i++ < nmons);
+	focusclient(focustop(current_monitor()), 1);
 }
 
 SCM_DEFINE (gwwm_focusmon ,"focusmon",1,0,0,(SCM a),"" ){
@@ -1368,14 +1380,14 @@ focusstack(const Arg *arg)
 		wl_list_for_each(c, &sel->link, link) {
 			if (&c->link == &clients)
 				continue;  /* wrap past the sentinel node */
-			if (VISIBLEON(c, current_monitor))
+			if (VISIBLEON(c, current_monitor()))
 				break;  /* found it */
 		}
 	} else {
 		wl_list_for_each_reverse(c, &sel->link, link) {
 			if (&c->link == &clients)
 				continue;  /* wrap past the sentinel node */
-			if (VISIBLEON(c, current_monitor))
+			if (VISIBLEON(c, current_monitor()))
 				break;  /* found it */
 		}
 	}
@@ -1433,8 +1445,8 @@ fullscreennotify(struct wl_listener *listener, void *data)
 void
 incnmaster(const Arg *arg)
 {
-    current_monitor->nmaster = MAX(current_monitor->nmaster + arg->i, 0);
-	arrange(current_monitor);
+  (current_monitor())->nmaster = MAX((current_monitor())->nmaster + arg->i, 0);
+  arrange(current_monitor());
 }
 
 void
@@ -1618,7 +1630,7 @@ mapnotify(struct wl_listener *listener, void *data)
       CLIENT_SET_FLOATING(c,1);
 		wlr_scene_node_reparent(CLIENT_SCENE(c), layers[LyrFloat]);
 		/* TODO recheck if !p->mon is possible with wlroots 0.16.0 */
-		setmon(c, p->mon ? p->mon : current_monitor, p->tags);
+		setmon(c, p->mon ? p->mon : current_monitor(), p->tags);
 	} else {
 		applyrules(c);
 	}
@@ -1671,7 +1683,7 @@ motionnotify(uint32_t time)
 
 		/* Update current_monitor (even while dragging a window) */
 		if (GWWM_SLOPPYFOCUS_P())
-			current_monitor = xytomon(cursor->x, cursor->y);
+			set_current_monitor(xytomon(cursor->x, cursor->y));
 	}
 
 	if (seat->drag && (icon = seat->drag->icon))
@@ -1911,7 +1923,7 @@ printstatus(void)
 		}
         send_log(INFO ,"current-monitor" ,
                  "MONITOR", MONITOR_WLR_OUTPUT(m)->name,
-                 "BOOL",((m == current_monitor)? "#t" : "#f"));
+                 "BOOL",((m == current_monitor())? "#t" : "#f"));
     }
 }
 
@@ -2012,7 +2024,7 @@ SCM_DEFINE (gwwm_run,"%gwwm-run",0,0,0,(),"")
 
 	/* Now that outputs are initialized, choose initial current_monitor based on
 	 * cursor position, and set default cursor image */
-	current_monitor = xytomon(cursor->x, cursor->y);
+	set_current_monitor(xytomon(cursor->x, cursor->y));
 
 	/* TODO hack to get cursor to display in its initial location (100, 100)
 	 * instead of (0, 0) and then jumping.  still may not be fully
@@ -2033,7 +2045,7 @@ Client *
 current_client(void)
 {
 	Client *c = wl_container_of(fstack.next, c, flink);
-	if (wl_list_empty(&fstack) || !VISIBLEON(c, current_monitor))
+	if (wl_list_empty(&fstack) || !VISIBLEON(c, current_monitor()))
 		return NULL;
 	return c;
 }
@@ -2123,12 +2135,12 @@ setfullscreen(Client *c, int fullscreen)
 void
 setlayout(const Arg *arg)
 {
-	if (!arg || !arg->v || arg->v != current_monitor->lt[current_monitor->sellt])
-		current_monitor->sellt ^= 1;
+  if (!arg || !arg->v || arg->v != (current_monitor())->lt[(current_monitor())->sellt])
+    (current_monitor())->sellt ^= 1;
 	if (arg && arg->v)
-		current_monitor->lt[current_monitor->sellt] = (Layout *)arg->v;
+      (current_monitor())->lt[(current_monitor())->sellt] = (Layout *)arg->v;
 	/* TODO change layout symbol? */
-	arrange(current_monitor);
+	arrange(current_monitor());
 	printstatus();
 }
 
@@ -2138,13 +2150,13 @@ setmfact(const Arg *arg)
 {
 	float f;
 
-	if (!arg || !current_monitor->lt[current_monitor->sellt]->arrange)
+	if (!arg || !current_monitor()->lt[(current_monitor())->sellt]->arrange)
 		return;
-	f = arg->f < 1.0 ? arg->f + current_monitor->mfact : arg->f - 1.0;
+	f = arg->f < 1.0 ? arg->f + (current_monitor())->mfact : arg->f - 1.0;
 	if (f < 0.1 || f > 0.9)
 		return;
-	current_monitor->mfact = f;
-	arrange(current_monitor);
+	(current_monitor())->mfact = f;
+	arrange(current_monitor());
 }
 
 void
@@ -2168,7 +2180,7 @@ setmon(Client *c, Monitor *m, unsigned int newtags)
 		c->tags = newtags ? newtags : m->tagset[m->seltags]; /* assign tags of target monitor */
 		arrange(m);
 	}
-	focusclient(focustop(current_monitor), 1);
+	focusclient(focustop(current_monitor()), 1);
 }
 
 SCM_DEFINE_PUBLIC(gwwm_setmon, "%setmon", 3, 0, 0, (SCM c ,SCM m, SCM newtags), "")
@@ -2420,8 +2432,8 @@ tag(const Arg *arg)
 	Client *sel = current_client();
 	if (sel && arg->ui & TAGMASK) {
 		sel->tags = arg->ui & TAGMASK;
-		focusclient(focustop(current_monitor), 1);
-		arrange(current_monitor);
+		focusclient(focustop(current_monitor()), 1);
+		arrange(current_monitor());
 	}
 	printstatus();
 }
@@ -2502,8 +2514,8 @@ toggletag(const Arg *arg)
 	newtags = sel->tags ^ (arg->ui & TAGMASK);
 	if (newtags) {
 		sel->tags = newtags;
-		focusclient(focustop(current_monitor), 1);
-		arrange(current_monitor);
+		focusclient(focustop(current_monitor()), 1);
+		arrange(current_monitor());
 	}
 	printstatus();
 }
@@ -2521,12 +2533,12 @@ SCM_DEFINE (gwwm_toggletag, "toggletag",1, 0,0,
 void
 toggleview(const Arg *arg)
 {
-	unsigned int newtagset = current_monitor->tagset[current_monitor->seltags] ^ (arg->ui & TAGMASK);
+  unsigned int newtagset = (current_monitor())->tagset[(current_monitor())->seltags] ^ (arg->ui & TAGMASK);
 
 	if (newtagset) {
-		current_monitor->tagset[current_monitor->seltags] = newtagset;
-		focusclient(focustop(current_monitor), 1);
-		arrange(current_monitor);
+      (current_monitor())->tagset[(current_monitor())->seltags] = newtagset;
+      focusclient(focustop(current_monitor()), 1);
+      arrange(current_monitor());
 	}
 	printstatus();
 }
@@ -2613,10 +2625,10 @@ updatemons(struct wl_listener *listener, void *data)
 		config_head->state.y = m->m.y;
 	}
 
-	if (current_monitor && MONITOR_WLR_OUTPUT(current_monitor)->enabled)
+	if (current_monitor() && MONITOR_WLR_OUTPUT(current_monitor())->enabled)
 		wl_list_for_each(c, &clients, link)
 			if (!c->mon && client_is_mapped(c))
-				setmon(c, current_monitor, c->tags);
+              setmon(c, current_monitor(), c->tags);
 
 	wlr_output_manager_v1_set_configuration(output_mgr, config);
 }
@@ -2644,13 +2656,13 @@ urgent(struct wl_listener *listener, void *data)
 void
 view(const Arg *arg)
 {
-	if ((arg->ui & TAGMASK) == current_monitor->tagset[current_monitor->seltags])
+  if ((arg->ui & TAGMASK) == current_monitor()->tagset[(current_monitor())->seltags])
 		return;
-	current_monitor->seltags ^= 1; /* toggle sel tagset */
+  (current_monitor())->seltags ^= 1; /* toggle sel tagset */
 	if (arg->ui & TAGMASK)
-		current_monitor->tagset[current_monitor->seltags] = arg->ui & TAGMASK;
-	focusclient(focustop(current_monitor), 1);
-	arrange(current_monitor);
+      (current_monitor())->tagset[(current_monitor())->seltags] = arg->ui & TAGMASK;
+	focusclient(focustop(current_monitor()), 1);
+	arrange(current_monitor());
 	printstatus();
 }
 
@@ -2736,13 +2748,13 @@ zoom(const Arg *arg)
 {
 	Client *c, *sel = current_client();
 
-	if (!sel || !current_monitor->lt[current_monitor->sellt]->arrange || (CLIENT_IS_FLOATING(sel)))
+	if (!sel || !(current_monitor())->lt[(current_monitor())->sellt]->arrange || (CLIENT_IS_FLOATING(sel)))
 		return;
 
 	/* Search for the first tiled window that is not sel, marking sel as
 	 * NULL if we pass it along the way */
 	wl_list_for_each(c, &clients, link)
-		if (VISIBLEON(c, current_monitor) && !CLIENT_IS_FLOATING(c)) {
+      if (VISIBLEON(c, current_monitor()) && !CLIENT_IS_FLOATING(c)) {
 			if (c != sel)
 				break;
 			sel = NULL;
@@ -2760,7 +2772,7 @@ zoom(const Arg *arg)
 	wl_list_insert(&clients, &sel->link);
 
 	focusclient(sel, 1);
-	arrange(current_monitor);
+	arrange(current_monitor());
 }
 
 SCM_DEFINE (gwwm_zoom, "zoom",0, 0,0,

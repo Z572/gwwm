@@ -24,10 +24,14 @@
 (define (monitor-list)
   "return all monitors."
   (hash-map->list (lambda (_ b) b) %monitors))
-(define (current-monitor)
-  "return current monitor or #f not found."
-  ((@@ (gwwm) current-monitor)))
-
+(define-once %current-monitor #f)
+(define (get-current-monitor)
+  %current-monitor)
+(define (set-current-monitor m)
+  (set! %current-monitor m))
+(define current-monitor (make-procedure-with-setter
+                         get-current-monitor
+                         set-current-monitor))
 (define-class <gwwm-monitor> ()
   (data #:init-keyword #:data #:accessor .data)
   (name #:allocation #:virtual
