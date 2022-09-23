@@ -299,7 +299,6 @@ static void zoom(const Arg *arg);
 
 /* variables */
 static const char broken[] = "broken";
-static pid_t child_pid = -1;
 static struct wlr_surface *exclusive_focus;
 static struct wl_display *dpy;
 static struct wlr_backend *backend;
@@ -819,10 +818,6 @@ SCM_DEFINE (gwwm_cleanup, "%gwwm-cleanup",0,0,0, () ,"")
 	wlr_xwayland_destroy(xwayland);
 #endif
 	wl_display_destroy_clients(dpy);
-	if (child_pid > 0) {
-		kill(child_pid, SIGTERM);
-		waitpid(child_pid, NULL, 0);
-	}
 	wlr_backend_destroy(backend);
 	wlr_xcursor_manager_destroy(cursor_mgr);
 	wlr_cursor_destroy(cursor);
@@ -2398,9 +2393,6 @@ sigchld(int unused)
 	pid_t pid;
 	if (signal(SIGCHLD, sigchld) == SIG_ERR)
 		die("can't install SIGCHLD handler:");
-	while (0 < (pid = waitpid(-1, NULL, WNOHANG)))
-		if (pid == child_pid)
-			child_pid = -1;
 }
 
 void
