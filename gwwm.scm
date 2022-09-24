@@ -89,7 +89,10 @@ gwwm [options]
 (define (setup-socket)
   (let ((socket (wl-display-add-socket-auto (gwwm-display))))
     (if socket
-        (setenv "WAYLAND_DISPLAY" socket)
+        (begin (setenv "WAYLAND_DISPLAY" socket)
+               (send-log DEBUG
+                         (format #f (G_ "set WAYLAND_DISPLAY to ~S.") socket)
+                         'SOCKET socket))
         (begin
           (send-log EMERGENCY (G_ "wl-display-add-socket-auto fail.") 'SOCKET socket)
           (exit 1)))))
@@ -136,15 +139,17 @@ gwwm [options]
                    msg2)
          (newline p)))))
   (add-hook! modifiers-event-hook pass-modifiers )
-
   (parse-command-line)
+  (send-log DEBUG (G_ "init global keybind ..."))
   (init-global-keybind)
   (unless (getenv "XDG_RUNTIME_DIR")
     (send-log EMERGENCY (G_ "XDG_RUNTIME_DIR must be set."))
     (exit 1))
   (setvbuf (current-output-port) 'line)
   (setvbuf (current-error-port) 'line)
+
   (%gwwm-setup)
+
   (config-setup)
   (set-current-module (resolve-module '(guile-user)))
   (setup-server)
