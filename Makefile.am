@@ -55,6 +55,7 @@ nobase_guilemodule_DATA = gwwm.scm \
 		gwwm/color.scm   \
 		gwwm/monitor.scm \
 		gwwm/layout.scm  \
+		gwwm/layout/monocle.scm  \
 		gwwm/client.scm  \
 		gwwm/keymap.scm  \
 		gwwm/keybind.scm \
