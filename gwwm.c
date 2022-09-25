@@ -1356,7 +1356,7 @@ focusclient(Client *c, int lift)
 }
 
 SCM_DEFINE (gwwm_focusclient, "focusclient" ,2,0,0,(SCM client,SCM lift),"") {
-  Client *c= UNWRAP_CLIENT(client);
+  Client *c= scm_is_false(client)? NULL:  UNWRAP_CLIENT(client);
   focusclient(c, scm_to_bool(lift));
   return SCM_UNSPECIFIED;
 }
