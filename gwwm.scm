@@ -1,10 +1,12 @@
 (define-module (gwwm)
+  #:use-module (oop goops)
   #:use-module (ice-9 getopt-long)
   #:use-module (ice-9 format)
   #:use-module (system repl server)
   #:use-module (gwwm keymap)
   #:use-module (gwwm i18n)
   #:use-module (gwwm monitor)
+  #:use-module (gwwm layout)
   #:use-module (gwwm utils)
   #:use-module (gwwm utils srfi-215)
   #:use-module (wayland display)
@@ -111,6 +113,13 @@ gwwm [options]
     (let ((output (monitor-wlr-output m)))
       (wlr-output-set-mode output (wlr-output-preferred-mode output))))
   (add-hook! create-monitor-hook set-mode)
+  (define (set-default-layout m)
+    (set! (monitor-layouts m)
+          (make-list 2
+                     (make <layout>
+                       #:symbol "[]="
+                       #:procedure %tile))))
+  (add-hook! create-monitor-hook set-default-layout)
 
   (define (pass-modifiers k)
     (wlr-seat-set-keyboard (gwwm-seat) (keyboard-input-device k)))

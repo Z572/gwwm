@@ -17,6 +17,8 @@
             monitor=?
             monitor-at
             monitor-wlr-output
+            monitor-layouts
+            monitor-window-area
             <gwwm-monitor>))
 
 (define-once %monitors
@@ -73,8 +75,13 @@
                    #:slot-set! (lambda _ #f)
                    #:getter monitor-physical-height)
   (wlr-output #:accessor monitor-wlr-output
-              #:setter set-.wlr-output!))
+              #:setter set-.wlr-output!)
+  (layouts #:init-value (list)
+           #:accessor monitor-layouts
+           #:setter set-.monitor-layouts))
 
+(define (monitor-window-area m)
+  ((@@ (gwwm) monitor-window-area) m))
 (define-method (write (o <gwwm-monitor>) port)
   (format port "#<<gwwm-monitor ~a (~a . ~a) scale: ~a>"
           (monitor-name o)

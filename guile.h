@@ -88,7 +88,7 @@
               scm_from_utf8_keyword("data"), FROM_P(o)))
 #define UNWRAP_KEYBOARD(o)                                                      \
   (TO_P(scm_call_1(REFP("gwwm keyboard", ".data"), o)))
-
+#define LAYOUT_PROCEDURE(l) (REF_CALL_1("gwwm layout","layout-procedure",l))
 #define INNER_MONITOR_HASH_TABLE REFP("gwwm monitor", "%monitors")
 #define MAKE_MONITOR(o) (scm_call_3(REF("oop goops","make"), \
                                   REF("gwwm monitor","<gwwm-monitor>"), \

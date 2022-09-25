@@ -163,6 +163,7 @@ typedef struct {
 #define MONITOR_WLR_OUTPUT(m)                                       \
   (struct wlr_output *)(UNWRAP_WLR_OUTPUT(scm_call_1(REFP("gwwm monitor","monitor-wlr-output"),  \
                                (WRAP_MONITOR(m)))))
+#define MONITOR_LAYOUTS(m) (REF_CALL_1("gwwm monitor", "monitor-layouts", (WRAP_MONITOR(m))))
 #define SET_MONITOR_WLR_OUTPUT(m,o)                     \
   scm_call_2(REFP("gwwm monitor","set-.wlr-output!"),   \
              (WRAP_MONITOR(m)), WRAP_WLR_OUTPUT(o))
@@ -175,7 +176,7 @@ struct Monitor {
 	struct wlr_box m;      /* monitor area, layout-relative */
 	struct wlr_box w;      /* window area, layout-relative */
 	struct wl_list layers[4]; /* LayerSurface::link */
-	const Layout *lt[2];
+	/* const Layout *lt[2]; */
 	unsigned int seltags;
 	unsigned int sellt;
 	unsigned int tagset[2];
@@ -386,6 +387,10 @@ static Atom netatom[NetLast];
 #include "guile.h"
 #include "client.h"
 
+SCM_DEFINE_PUBLIC(gwwm_monitor_window_area,"monitor-window-area",1,0,0,(SCM m),"")
+{
+  return (WRAP_WLR_BOX(&(UNWRAP_MONITOR(m))->w));
+}
 SCM_DEFINE_PUBLIC(gwwm_visibleon, "visibleon", 2, 0, 0, (SCM c, SCM m), "")
 {
   Client *s =(UNWRAP_CLIENT(c));
@@ -560,9 +565,21 @@ arrange(Monitor *m)
 	Client *c;
 	wl_list_for_each(c, &clients, link)
 		wlr_scene_node_set_enabled(CLIENT_SCENE(c), VISIBLEON(c, c->mon));
-
-	if (m->lt[m->sellt]->arrange)
-		m->lt[m->sellt]->arrange(m);
+    if (scm_is_true
+        (LAYOUT_PROCEDURE
+         (scm_list_ref
+          (MONITOR_LAYOUTS(m),
+           scm_from_unsigned_integer
+           ((m)
+            ->sellt)))))
+      {
+        scm_call_1(LAYOUT_PROCEDURE
+         (scm_list_ref
+          (MONITOR_LAYOUTS(m),
+           scm_from_unsigned_integer
+           ((m)
+            ->sellt))),WRAP_MONITOR(m));
+      };
 	motionnotify(0);
 }
 SCM_DEFINE(gwwm_arrange,"arrange",1,0,0,(SCM m),"") {
@@ -1056,7 +1073,7 @@ createmon(struct wl_listener *listener, void *data)
 			m->nmaster = r->nmaster;
 			wlr_output_set_scale(wlr_output, r->scale);
 			wlr_xcursor_manager_load(cursor_mgr, r->scale);
-			m->lt[0] = m->lt[1] = r->lt;
+			/* m->lt[0] = m->lt[1] = r->lt; */
 			wlr_output_set_transform(wlr_output, r->rr);
 			break;
 		}
@@ -2127,32 +2144,32 @@ setfullscreen(Client *c, int fullscreen)
 	printstatus();
 }
 
-void
-setlayout(const Arg *arg)
-{
-  if (!arg || !arg->v || arg->v != (current_monitor())->lt[(current_monitor())->sellt])
-    (current_monitor())->sellt ^= 1;
-	if (arg && arg->v)
-      (current_monitor())->lt[(current_monitor())->sellt] = (Layout *)arg->v;
-	/* TODO change layout symbol? */
-	arrange(current_monitor());
-	printstatus();
-}
+/* void */
+/* setlayout(const Arg *arg) */
+/* { */
+/*   if (!arg || !arg->v || arg->v != (current_monitor())->lt[(current_monitor())->sellt]) */
+/*     (current_monitor())->sellt ^= 1; */
+/* 	if (arg && arg->v) */
+/*       (current_monitor())->lt[(current_monitor())->sellt] = (Layout *)arg->v; */
+/* 	/\* TODO change layout symbol? *\/ */
+/* 	arrange(current_monitor()); */
+/* 	printstatus(); */
+/* } */
 
 /* arg > 1.0 will set mfact absolutely */
-void
-setmfact(const Arg *arg)
-{
-	float f;
+/* void */
+/* setmfact(const Arg *arg) */
+/* { */
+/* 	float f; */
 
-	if (!arg || !current_monitor()->lt[(current_monitor())->sellt]->arrange)
-		return;
-	f = arg->f < 1.0 ? arg->f + (current_monitor())->mfact : arg->f - 1.0;
-	if (f < 0.1 || f > 0.9)
-		return;
-	(current_monitor())->mfact = f;
-	arrange(current_monitor());
-}
+/* 	if (!arg || !current_monitor()->lt[(current_monitor())->sellt]->arrange) */
+/* 		return; */
+/* 	f = arg->f < 1.0 ? arg->f + (current_monitor())->mfact : arg->f - 1.0; */
+/* 	if (f < 0.1 || f > 0.9) */
+/* 		return; */
+/* 	(current_monitor())->mfact = f; */
+/* 	arrange(current_monitor()); */
+/* } */
 
 void
 setmon(Client *c, Monitor *m, unsigned int newtags)
@@ -2477,6 +2494,16 @@ tile(Monitor *m)
 	}
 }
 
+SCM_DEFINE (gwwm_tile, "%tile",1, 0,0,
+            (SCM m) ,
+            "c")
+#define FUNC_NAME s_gwwm_tile
+{
+  tile(UNWRAP_MONITOR(m));
+  return SCM_UNSPECIFIED;
+}
+#undef FUNC_NAME
+
 void
 togglefloating(const Arg *arg)
 {
@@ -2739,8 +2766,15 @@ void
 zoom(const Arg *arg)
 {
 	Client *c, *sel = current_client();
-
-	if (!sel || !(current_monitor())->lt[(current_monitor())->sellt]->arrange || (CLIENT_IS_FLOATING(sel)))
+	if (!sel
+        || scm_is_false
+        (LAYOUT_PROCEDURE
+         (scm_list_ref
+          (MONITOR_LAYOUTS(current_monitor()),
+           scm_from_unsigned_integer
+           ((current_monitor())
+            ->sellt))))
+        || (CLIENT_IS_FLOATING(sel)))
 		return;
 
 	/* Search for the first tiled window that is not sel, marking sel as

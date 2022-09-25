@@ -54,6 +54,7 @@ godir=$(guileobjectdir)/gwwm
 nobase_guilemodule_DATA = gwwm.scm \
 		gwwm/color.scm   \
 		gwwm/monitor.scm \
+		gwwm/layout.scm  \
 		gwwm/client.scm  \
 		gwwm/keymap.scm  \
 		gwwm/keybind.scm \
