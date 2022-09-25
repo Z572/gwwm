@@ -8,7 +8,8 @@
   #:use-module (srfi srfi-17)
   #:use-module (oop goops)
   #:use-module (oop goops describe)
-  #:export (current-client
+  #:export (visibleon
+            current-client
             client-floating?
             client-set-floating!
             client-is-floating?
@@ -38,6 +39,8 @@
             client-set-scene!
             <gwwm-client>))
 
+(define (visibleon c m)
+  ((@@ (gwwm) visibleon) c m))
 (define (client-type client)
   ((@@ (gwwm) client-type) client))
 
