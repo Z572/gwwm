@@ -7,6 +7,8 @@
             killclient
             togglefullscreen
             togglefloating
+            focusclient
+            focustop
             gwwm-quit))
 
 (define* (togglefullscreen #:optional (client (current-client)))
@@ -15,6 +17,13 @@
 
 (define (togglefloating)
   ((@@ (gwwm) togglefloating)))
+
+(define (focusclient client lift)
+  ((@@ (gwwm) focusclient) client lift))
+
+(define (focustop monitor)
+  ((@@ (gwwm) focustop) monitor))
+
 (define (spawn program . args)
   (when (= (primitive-fork) 0)
     (dup2 (port->fdes (current-error-port))
