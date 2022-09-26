@@ -37,6 +37,7 @@
             client-title
             client-scene
             client-set-scene!
+            client-monitor
             <gwwm-client>))
 
 (define (visibleon c m)
