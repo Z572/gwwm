@@ -592,8 +592,7 @@ SCM_DEFINE (gwwm_client_monitor, "client-monitor" , 1,0,0,
 #define FUNC_NAME s_gwwm_client_monitor
 {
     Client *cl = UNWRAP_CLIENT(c);
-
-  return (WRAP_MONITOR(cl->mon));
+    return (cl->mon) ? (WRAP_MONITOR(cl->mon)) : SCM_BOOL_F;
 }
 #undef FUNC_NAME
 
