@@ -566,25 +566,7 @@ SCM_DEFINE(gwwm_monitor_sellt,"%monitor-sellt",1,0,0,(SCM m),"") {
 void
 arrange(Monitor *m)
 {
-	Client *c;
-	wl_list_for_each(c, &clients, link)
-		wlr_scene_node_set_enabled(CLIENT_SCENE(c), VISIBLEON(c, c->mon));
-    if (scm_is_true
-        (LAYOUT_PROCEDURE
-         (scm_list_ref
-          (MONITOR_LAYOUTS(m),
-           scm_from_unsigned_integer
-           ((m)
-            ->sellt)))))
-      {
-        scm_call_1(LAYOUT_PROCEDURE
-         (scm_list_ref
-          (MONITOR_LAYOUTS(m),
-           scm_from_unsigned_integer
-           ((m)
-            ->sellt))),WRAP_MONITOR(m));
-      };
-	motionnotify(0);
+  REF_CALL_1("gwwm commands","arrange",(WRAP_MONITOR(m)));
 }
 SCM_DEFINE(gwwm_arrange,"arrange",1,0,0,(SCM m),"") {
   arrange(UNWRAP_MONITOR(m));
