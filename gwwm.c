@@ -559,6 +559,10 @@ applyrules(Client *c)
 	setmon(c, mon, newtags);
 }
 
+SCM_DEFINE(gwwm_monitor_sellt,"%monitor-sellt",1,0,0,(SCM m),"") {
+  return (scm_from_unsigned_integer((UNWRAP_MONITOR(m))->sellt));
+}
+
 void
 arrange(Monitor *m)
 {
