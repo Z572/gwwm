@@ -26,6 +26,7 @@
             client=?
             client-get-parent
             client-is-x11?
+            client-is-unmanaged?
             client-type
             client-is-float-type?
             client-send-close
@@ -147,6 +148,9 @@
 
 (define (client-is-x11? client)
   (->bool (member (client-type client) '("X11Managed" "X11Unmanaged"))))
+
+(define (client-is-unmanaged? client)
+  (string= (client-type client) "X11Unmanaged"))
 
 (define (client-list)
   "return all clients."

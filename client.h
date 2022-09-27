@@ -244,10 +244,7 @@ client_wants_fullscreen(Client *c)
 static inline int
 client_is_unmanaged(Client *c)
 {
-#ifdef XWAYLAND
-	return c->type == X11Unmanaged;
-#endif
-	return 0;
+  return (scm_to_bool(REF_CALL_1("gwwm client","client-is-unmanaged?", WRAP_CLIENT(c))));
 }
 
 static inline void
