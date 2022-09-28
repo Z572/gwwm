@@ -96,6 +96,8 @@
                                   FROM_P(o)))
 /* #define SEND_LOG(o ...) */
 #define send_log(v,b,...) _send_log(#v,b, ##__VA_ARGS__, "/0")
+#define PRINT_FUNCTION send_log(DEBUG,__FUNCTION__ );
+
 void
 _send_log(const char *arg, ...) {
 	va_list ap;

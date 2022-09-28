@@ -389,10 +389,12 @@ static Atom netatom[NetLast];
 
 SCM_DEFINE_PUBLIC(gwwm_monitor_window_area,"monitor-window-area",1,0,0,(SCM m),"")
 {
+  PRINT_FUNCTION
   return (WRAP_WLR_BOX(&(UNWRAP_MONITOR(m))->w));
 }
 SCM_DEFINE_PUBLIC(gwwm_visibleon, "visibleon", 2, 0, 0, (SCM c, SCM m), "")
 {
+  PRINT_FUNCTION
   Client *s =(UNWRAP_CLIENT(c));
   int a = (VISIBLEON(s,(struct Monitor*)(UNWRAP_MONITOR(m))));
   return scm_from_bool(a);
@@ -440,18 +442,21 @@ struct NumTags { char limitexceeded[LENGTH(tags) > 31 ? -1 : 1]; };
 /* function implementations */
 Monitor *
 current_monitor(){
+  PRINT_FUNCTION
   SCM o=(REF_CALL_0("gwwm monitor", "current-monitor"));
   return scm_is_false(o) ? NULL: UNWRAP_MONITOR(o);
 /* _current_monitor; */
 }
 void
 set_current_monitor(Monitor *m){
+  PRINT_FUNCTION
   /* _current_monitor=m; */
   scm_call_1(REFP("gwwm monitor","set-current-monitor"),WRAP_MONITOR(m));
 }
 void
 applybounds(Client *c, struct wlr_box *bbox)
 {
+  PRINT_FUNCTION
   if (!CLIENT_IS_FULLSCREEN(c)) {
 		struct wlr_box min = {0}, max = {0};
 		client_get_size_hints(c, &max, &min);
@@ -479,6 +484,7 @@ applyexclusive(struct wlr_box *usable_area,
 		uint32_t anchor, int32_t exclusive,
 		int32_t margin_top, int32_t margin_right,
 		int32_t margin_bottom, int32_t margin_left) {
+  PRINT_FUNCTION
 	Edge edges[] = {
 		{ /* Top */
 			.singular_anchor = ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP,
@@ -532,6 +538,7 @@ applyexclusive(struct wlr_box *usable_area,
 void
 applyrules(Client *c)
 {
+  PRINT_FUNCTION
 	/* rule matching */
 	const char *appid, *title;
 	unsigned int i, newtags = 0;
@@ -560,6 +567,7 @@ applyrules(Client *c)
 }
 
 SCM_DEFINE(gwwm_monitor_sellt,"%monitor-sellt",1,0,0,(SCM m),"") {
+  PRINT_FUNCTION
   return (scm_from_unsigned_integer((UNWRAP_MONITOR(m))->sellt));
 }
 
@@ -613,6 +621,7 @@ SCM_DEFINE (gwwm_layer_list , "layer-list",0,0,0,(),"")
 void
 arrangelayer(Monitor *m, struct wl_list *list, struct wlr_box *usable_area, int exclusive)
 {
+  PRINT_FUNCTION
 	LayerSurface *layersurface;
 	struct wlr_box full_area = m->m;
 
@@ -691,6 +700,7 @@ arrangelayer(Monitor *m, struct wl_list *list, struct wlr_box *usable_area, int 
 void
 arrangelayers(Monitor *m)
 {
+  PRINT_FUNCTION
 	int i;
 	struct wlr_box usable_area = m->m;
 	uint32_t layers_above_shell[] = {
@@ -731,6 +741,7 @@ arrangelayers(Monitor *m)
 void
 axisnotify(struct wl_listener *listener, void *data)
 {
+  PRINT_FUNCTION
 	/* This event is forwarded by the cursor when a pointer emits an axis event,
 	 * for example when you move the scroll wheel. */
 	struct wlr_event_pointer_axis *event = data;
@@ -742,6 +753,7 @@ axisnotify(struct wl_listener *listener, void *data)
 void
 buttonpress(struct wl_listener *listener, void *data)
 {
+  PRINT_FUNCTION
 	struct wlr_event_pointer_button *event = data;
 	struct wlr_keyboard *keyboard;
 	uint32_t mods;
@@ -798,6 +810,7 @@ buttonpress(struct wl_listener *listener, void *data)
 void
 checkidleinhibitor(struct wlr_surface *exclude)
 {
+  PRINT_FUNCTION
 	Client *c, *w;
 	int inhibited = 0;
 	struct wlr_idle_inhibitor_v1 *inhibitor;
@@ -816,6 +829,7 @@ checkidleinhibitor(struct wlr_surface *exclude)
 
 SCM_DEFINE (gwwm_cleanup, "%gwwm-cleanup",0,0,0, () ,"")
 {
+  PRINT_FUNCTION
 #ifdef XWAYLAND
 	wlr_xwayland_destroy(xwayland);
 #endif
@@ -832,6 +846,7 @@ SCM_DEFINE (gwwm_cleanup, "%gwwm-cleanup",0,0,0, () ,"")
 void
 cleanupkeyboard(struct wl_listener *listener, void *data)
 {
+  PRINT_FUNCTION
 	struct wlr_input_device *device = data;
 	Keyboard *kb = device->data;
     scm_c_run_hook(REF("gwwm hooks", "cleanup-keyboard-hook"),
@@ -847,6 +862,7 @@ cleanupkeyboard(struct wl_listener *listener, void *data)
 void
 cleanupmon(struct wl_listener *listener, void *data)
 {
+  PRINT_FUNCTION
 	struct wlr_output *wlr_output = data;
 	Monitor *m = wlr_output->data;
 	int nmons, i = 0;
@@ -870,6 +886,7 @@ cleanupmon(struct wl_listener *listener, void *data)
 void
 closemon(Monitor *m)
 {
+  PRINT_FUNCTION
 	/* move closed monitor's clients to the focused one */
 	Client *c;
 
@@ -886,6 +903,7 @@ closemon(Monitor *m)
 void
 commitlayersurfacenotify(struct wl_listener *listener, void *data)
 {
+  PRINT_FUNCTION
 	LayerSurface *layersurface = wl_container_of(listener, layersurface, surface_commit);
 	struct wlr_layer_surface_v1 *wlr_layer_surface = layersurface->layer_surface;
 
@@ -911,6 +929,7 @@ commitlayersurfacenotify(struct wl_listener *listener, void *data)
 void
 commitnotify(struct wl_listener *listener, void *data)
 {
+  PRINT_FUNCTION
 	Client *c = wl_container_of(listener, c, commit);
     scm_c_run_hook(REF("gwwm hooks", "surface-commit-event-hook"), scm_list_1(WRAP_CLIENT(c)));
 	struct wlr_box box = {0};
@@ -930,6 +949,7 @@ commitnotify(struct wl_listener *listener, void *data)
 void
 createidleinhibitor(struct wl_listener *listener, void *data)
 {
+  PRINT_FUNCTION
 	struct wlr_idle_inhibitor_v1 *idle_inhibitor = data;
 	wl_signal_add(&idle_inhibitor->events.destroy, &idle_inhibitor_destroy);
 
@@ -939,6 +959,7 @@ createidleinhibitor(struct wl_listener *listener, void *data)
 void
 createkeyboard(struct wlr_input_device *device)
 {
+  PRINT_FUNCTION
 	struct xkb_context *context;
 	struct xkb_keymap *keymap;
 	Keyboard *kb = device->data = ecalloc(1, sizeof(*kb));
@@ -977,6 +998,7 @@ createkeyboard(struct wlr_input_device *device)
 void
 createlayersurface(struct wl_listener *listener, void *data)
 {
+  PRINT_FUNCTION
 	struct wlr_layer_surface_v1 *wlr_layer_surface = data;
 	LayerSurface *layersurface;
 	struct wlr_layer_surface_v1_state old_state;
@@ -1017,6 +1039,7 @@ createlayersurface(struct wl_listener *listener, void *data)
 
 static inline void
 register_monitor(Monitor *m) {
+  PRINT_FUNCTION
   const int *p=&m;
   scm_hashq_set_x(INNER_MONITOR_HASH_TABLE, (scm_from_int(*p)),MAKE_MONITOR(m));
 }
@@ -1037,6 +1060,7 @@ logout_monitor(Monitor *m){
 void
 createmon(struct wl_listener *listener, void *data)
 {
+  PRINT_FUNCTION
 	/* This event is raised by the backend when a new output (aka a display or
 	 * monitor) becomes available. */
 	struct wlr_output *wlr_output = data;
@@ -1094,6 +1118,7 @@ createmon(struct wl_listener *listener, void *data)
 void
 createnotify(struct wl_listener *listener, void *data)
 {
+  PRINT_FUNCTION
 	/* This event is raised when wlr_xdg_shell receives a new xdg surface from a
 	 * client, either a toplevel (application window) or popup,
 	 * or when wlr_layer_shell receives a new popup from a layer.
@@ -1136,6 +1161,7 @@ createnotify(struct wl_listener *listener, void *data)
 void
 createpointer(struct wlr_input_device *device)
 {
+  PRINT_FUNCTION
   scm_c_run_hook(REF("gwwm hooks", "create-pointer-hook"),
                  scm_list_1(WRAP_WLR_INPUT_DEVICE(device)));
 	if (wlr_input_device_is_libinput(device)) {
@@ -1181,6 +1207,7 @@ createpointer(struct wlr_input_device *device)
 void
 cursorframe(struct wl_listener *listener, void *data)
 {
+  PRINT_FUNCTION
 	/* This event is forwarded by the cursor when a pointer emits an frame
 	 * event. Frame events are sent after regular pointer events to group
 	 * multiple events together. For instance, two axis events may happen at the
@@ -1192,6 +1219,7 @@ cursorframe(struct wl_listener *listener, void *data)
 void
 destroyidleinhibitor(struct wl_listener *listener, void *data)
 {
+  PRINT_FUNCTION
 	/* `data` is the wlr_surface of the idle inhibitor being destroyed,
 	 * at this point the idle inhibitor is still in the list of the manager */
 	checkidleinhibitor(data);
@@ -1200,6 +1228,7 @@ destroyidleinhibitor(struct wl_listener *listener, void *data)
 void
 destroylayersurfacenotify(struct wl_listener *listener, void *data)
 {
+  PRINT_FUNCTION
 	LayerSurface *layersurface = wl_container_of(listener, layersurface, destroy);
 
 	wl_list_remove(&layersurface->link);
@@ -1216,6 +1245,7 @@ destroylayersurfacenotify(struct wl_listener *listener, void *data)
 void
 destroynotify(struct wl_listener *listener, void *data)
 {
+  PRINT_FUNCTION
 	/* Called when the surface is destroyed and should never be shown again. */
 	Client *c = wl_container_of(listener, c, destroy);
 	wl_list_remove(&c->map.link);
@@ -1236,6 +1266,7 @@ destroynotify(struct wl_listener *listener, void *data)
 Monitor *
 dirtomon(enum wlr_direction dir)
 {
+  PRINT_FUNCTION
 	struct wlr_output *next;
 	if ((next = wlr_output_layout_adjacent_output
          (output_layout,
@@ -1263,6 +1294,7 @@ SCM_DEFINE (gwwm_dirtomon ,"dirtomon" ,1,0,0,(SCM dir),"")
 void
 dragicondestroy(struct wl_listener *listener, void *data)
 {
+  PRINT_FUNCTION
 	struct wlr_drag_icon *icon = data;
 	wlr_scene_node_destroy(icon->data);
 	// Focus enter isn't sent during drag, so refocus the focused node.
@@ -1273,6 +1305,7 @@ dragicondestroy(struct wl_listener *listener, void *data)
 void
 focusclient(Client *c, int lift)
 {
+  PRINT_FUNCTION
 	struct wlr_surface *old = seat->keyboard_state.focused_surface;
 	int i;
 	/* Do not focus clients if a layer surface is focused */
@@ -1353,6 +1386,7 @@ SCM_DEFINE(gwwm_idle,"gwwm-idle",0,0,0,(),""){
 void
 focusmon(const Arg *arg)
 {
+  PRINT_FUNCTION
 	int i = 0, nmons = wl_list_length(&mons);
 	if (nmons)
 		do /* don't switch to disabled mons */
@@ -1369,6 +1403,7 @@ SCM_DEFINE (gwwm_focusmon ,"focusmon",1,0,0,(SCM a),"" ){
 void
 focusstack(const Arg *arg)
 {
+  PRINT_FUNCTION
 	/* Focus the next or previous client (in tiling order) on current_monitor */
 	Client *c, *sel = current_client();
 	if (!sel || (CLIENT_IS_FULLSCREEN(sel) && GWWM_LOCKFULLSCREEN_P()))
@@ -1407,6 +1442,7 @@ SCM_DEFINE (gwwm_focusstack, "focusstack" ,1,0,0,
 Client *
 focustop(Monitor *m)
 {
+  PRINT_FUNCTION
 	Client *c;
 	wl_list_for_each(c, &fstack, flink)
 		if (VISIBLEON(c, m))
@@ -1426,6 +1462,7 @@ SCM_DEFINE (gwwm_focustop ,"focustop",1,0,0,(SCM monitor),"")
 void
 fullscreennotify(struct wl_listener *listener, void *data)
 {
+  PRINT_FUNCTION
 	Client *c = wl_container_of(listener, c, fullscreen);
 	int fullscreen = client_wants_fullscreen(c);
     scm_c_run_hook(REF("gwwm hooks", "fullscreen-event-hook"),
@@ -1442,29 +1479,35 @@ fullscreennotify(struct wl_listener *listener, void *data)
 void
 incnmaster(const Arg *arg)
 {
+  PRINT_FUNCTION
   (current_monitor())->nmaster = MAX((current_monitor())->nmaster + arg->i, 0);
   arrange(current_monitor());
 }
 
 void
 create_touch(struct wlr_input_device *device){
-  send_log(WARNING, "TODO: impl create touch function" );
+  PRINT_FUNCTION
+  send_log(WARNING, "TODO: impl create touch function");
 }
 void
 create_tablet_tool(struct wlr_input_device *device){
+  PRINT_FUNCTION
   send_log(WARNING, "TODO: impl create tablet_tool function" );
 }
 void
 create_tablet_pad(struct wlr_input_device *device){
+  PRINT_FUNCTION
   send_log(WARNING, "TODO: impl create tablet_pad function" );
 }
 void
 create_switch(struct wlr_input_device *device){
+  PRINT_FUNCTION
   send_log(WARNING, "TODO: impl create switch function" );
 }
 void
 inputdevice(struct wl_listener *listener, void *data)
 {
+  PRINT_FUNCTION
 	/* This event is raised by the backend when a new input device becomes
 	 * available. */
 	struct wlr_input_device *device = data;
@@ -1507,6 +1550,7 @@ inputdevice(struct wl_listener *listener, void *data)
 int
 keybinding(uint32_t mods, xkb_keycode_t keycode)
 {
+  PRINT_FUNCTION
 	/*
 	 * Here we handle compositor keybindings. This is when the compositor is
 	 * processing keys, rather than passing them on to the client for its own
@@ -1520,6 +1564,7 @@ keybinding(uint32_t mods, xkb_keycode_t keycode)
 void
 keypress(struct wl_listener *listener, void *data)
 {
+  PRINT_FUNCTION
 	/* This event is raised when a key is pressed or released. */
 	Keyboard *kb = wl_container_of(listener, kb, key);
 	struct wlr_event_keyboard_key *event = data;
@@ -1550,6 +1595,7 @@ keypress(struct wl_listener *listener, void *data)
 void
 keypressmod(struct wl_listener *listener, void *data)
 {
+  PRINT_FUNCTION
 	/* This event is raised when a modifier key, such as shift or alt, is
 	 * pressed. We simply communicate this to the client. */
 	Keyboard *kb = wl_container_of(listener, kb, modifiers);
@@ -1569,6 +1615,7 @@ keypressmod(struct wl_listener *listener, void *data)
 void
 maplayersurfacenotify(struct wl_listener *listener, void *data)
 {
+  PRINT_FUNCTION
 	LayerSurface *l = wl_container_of(listener, l, map);
 	wlr_surface_send_enter(l->layer_surface->surface, MONITOR_WLR_OUTPUT(l->mon));
 	motionnotify(0);
@@ -1577,6 +1624,7 @@ maplayersurfacenotify(struct wl_listener *listener, void *data)
 void
 mapnotify(struct wl_listener *listener, void *data)
 {
+  PRINT_FUNCTION
 	/* Called when the surface is mapped, or ready to display on-screen. */
 	Client *p, *c = wl_container_of(listener, c, map);
 	int i;
@@ -1642,6 +1690,7 @@ mapnotify(struct wl_listener *listener, void *data)
 void
 monocle(Monitor *m)
 {
+  PRINT_FUNCTION
 	Client *c;
 
 	wl_list_for_each(c, &clients, link) {
@@ -1655,6 +1704,7 @@ monocle(Monitor *m)
 void
 motionabsolute(struct wl_listener *listener, void *data)
 {
+  PRINT_FUNCTION
 	/* This event is forwarded by the cursor when a pointer emits an _absolute_
 	 * motion event, from 0..1 on each axis. This happens, for example, when
 	 * wlroots is running under a Wayland window rather than KMS+DRM, and you
@@ -1669,6 +1719,7 @@ motionabsolute(struct wl_listener *listener, void *data)
 void
 motionnotify(uint32_t time)
 {
+  PRINT_FUNCTION
 	double sx = 0, sy = 0;
 	Client *c = NULL;
 	struct wlr_surface *surface = NULL;
@@ -1723,6 +1774,7 @@ SCM_DEFINE (gwwm_motionnotify, "%motionnotify" , 1,0,0,
 void
 motionrelative(struct wl_listener *listener, void *data)
 {
+  PRINT_FUNCTION
 	/* This event is forwarded by the cursor when a pointer emits a _relative_
 	 * pointer motion event (i.e. a delta) */
 	struct wlr_event_pointer_motion *event = data;
@@ -1738,6 +1790,7 @@ motionrelative(struct wl_listener *listener, void *data)
 void
 moveresize(const Arg *arg)
 {
+  PRINT_FUNCTION
 	if (cursor_mode != CurNormal)
 		return;
 	xytonode(cursor->x, cursor->y, NULL, &grabc, NULL, NULL, NULL);
@@ -1768,6 +1821,7 @@ moveresize(const Arg *arg)
 void
 outputmgrapply(struct wl_listener *listener, void *data)
 {
+  PRINT_FUNCTION
 	struct wlr_output_configuration_v1 *config = data;
 	outputmgrapplyortest(config, 0);
 }
@@ -1775,6 +1829,7 @@ outputmgrapply(struct wl_listener *listener, void *data)
 void
 outputmgrapplyortest(struct wlr_output_configuration_v1 *config, int test)
 {
+  PRINT_FUNCTION
 	/*
 	 * Called when a client such as wlr-randr requests a change in output
 	 * configuration.  This is only one way that the layout can be changed,
@@ -1852,6 +1907,7 @@ outputmgrapplyortest(struct wlr_output_configuration_v1 *config, int test)
 void
 outputmgrtest(struct wl_listener *listener, void *data)
 {
+  PRINT_FUNCTION
 	struct wlr_output_configuration_v1 *config = data;
 	outputmgrapplyortest(config, 1);
 }
@@ -1860,6 +1916,7 @@ void
 pointerfocus(Client *c, struct wlr_surface *surface, double sx, double sy,
 		uint32_t time)
 {
+  PRINT_FUNCTION
 	struct timespec now;
 	int internal_call = !time;
 
@@ -1888,6 +1945,7 @@ pointerfocus(Client *c, struct wlr_surface *surface, double sx, double sy,
 void
 printstatus(void)
 {
+
 	Monitor *m = NULL;
 	Client *c;
 	unsigned int occ, urg, sel;
@@ -1939,6 +1997,7 @@ quitsignal(int signo)
 void
 rendermon(struct wl_listener *listener, void *data)
 {
+  PRINT_FUNCTION
 	/* This function is called every time an output is ready to display a frame,
 	 * generally at the output's refresh rate (e.g. 60Hz). */
 	Monitor *m = wl_container_of(listener, m, frame);
@@ -1972,6 +2031,7 @@ rendermon(struct wl_listener *listener, void *data)
 void
 requeststartdrag(struct wl_listener *listener, void *data)
 {
+  PRINT_FUNCTION
 	struct wlr_seat_request_start_drag_event *event = data;
 
 	if (wlr_seat_validate_pointer_grab_serial(seat, event->origin,
@@ -1984,6 +2044,7 @@ requeststartdrag(struct wl_listener *listener, void *data)
 void
 resize(Client *c, struct wlr_box geo, int interact)
 {
+  PRINT_FUNCTION
 	struct wlr_box *bbox = interact ? &sgeom : &c->mon->w;
 	c->geom = geo;
 	applybounds(c, bbox);
@@ -2041,6 +2102,7 @@ SCM_DEFINE (gwwm_run,"%gwwm-run",0,0,0,(),"")
 Client *
 current_client(void)
 {
+  PRINT_FUNCTION
 	Client *c = wl_container_of(fstack.next, c, flink);
 	if (wl_list_empty(&fstack) || !VISIBLEON(c, current_monitor()))
 		return NULL;
@@ -2063,6 +2125,7 @@ SCM_DEFINE (gwwm_current_client, "current-client",0, 0,0,
 void
 setcursor(struct wl_listener *listener, void *data)
 {
+  PRINT_FUNCTION
 	/* This event is raised by the seat when a client provides a cursor image */
 	struct wlr_seat_pointer_request_set_cursor_event *event = data;
 	/* If we're "grabbing" the cursor, don't use the client's image */
@@ -2082,6 +2145,7 @@ setcursor(struct wl_listener *listener, void *data)
 void
 setfloating(Client *c, int floating)
 {
+  PRINT_FUNCTION
   if (CLIENT_IS_FULLSCREEN(c)){
     setfullscreen(c, 0);
   };
@@ -2094,6 +2158,7 @@ setfloating(Client *c, int floating)
 void
 setfullscreen(Client *c, int fullscreen)
 {
+  PRINT_FUNCTION
   CLIENT_SET_FULLSCREEN(c,fullscreen);
 	c->bw = fullscreen ? 0 : GWWM_BORDERPX();
 	client_set_fullscreen(c, fullscreen);
@@ -2159,6 +2224,7 @@ setfullscreen(Client *c, int fullscreen)
 void
 setmon(Client *c, Monitor *m, unsigned int newtags)
 {
+  PRINT_FUNCTION
 	Monitor *oldmon = c->mon;
 
 	if (oldmon == m)
@@ -2191,6 +2257,7 @@ SCM_DEFINE_PUBLIC(gwwm_setmon, "%setmon", 3, 0, 0, (SCM c ,SCM m, SCM newtags), 
 void
 setpsel(struct wl_listener *listener, void *data)
 {
+  PRINT_FUNCTION
 	/* This event is raised by the seat when a client wants to set the selection,
 	 * usually when the user copies something. wlroots allows compositors to
 	 * ignore such requests if they so choose, but in dwl we always honor
@@ -2202,6 +2269,7 @@ setpsel(struct wl_listener *listener, void *data)
 void
 setsel(struct wl_listener *listener, void *data)
 {
+  PRINT_FUNCTION
 	/* This event is raised by the seat when a client wants to set the selection,
 	 * usually when the user copies something. wlroots allows compositors to
 	 * ignore such requests if they so choose, but in dwl we always honor
@@ -2410,6 +2478,7 @@ spawn(const Arg *arg)
 void
 startdrag(struct wl_listener *listener, void *data)
 {
+  PRINT_FUNCTION
 	struct wlr_drag *drag = data;
 
 	if (!drag->icon)
@@ -2423,6 +2492,7 @@ startdrag(struct wl_listener *listener, void *data)
 void
 tag(const Arg *arg)
 {
+  PRINT_FUNCTION
 	Client *sel = current_client();
 	if (sel && arg->ui & TAGMASK) {
 		sel->tags = arg->ui & TAGMASK;
@@ -2440,6 +2510,7 @@ SCM_DEFINE (gwwm_tag, "tag",1,0,0,(SCM ui),""){
 void
 tagmon(const Arg *arg)
 {
+  PRINT_FUNCTION
 	Client *sel = current_client();
 	if (!sel)
 		return;
@@ -2492,6 +2563,7 @@ SCM_DEFINE (gwwm_tile, "%tile",1, 0,0,
 void
 togglefloating(const Arg *arg)
 {
+  PRINT_FUNCTION
 	Client *sel = current_client();
 	/* return if fullscreen */
 	if (sel && !CLIENT_IS_FULLSCREEN(sel))
@@ -2511,6 +2583,7 @@ SCM_DEFINE (gwwm_togglefloating, "togglefloating",0, 0,0,
 void
 toggletag(const Arg *arg)
 {
+  PRINT_FUNCTION
 	unsigned int newtags;
 	Client *sel = current_client();
 	if (!sel)
@@ -2537,6 +2610,7 @@ SCM_DEFINE (gwwm_toggletag, "toggletag",1, 0,0,
 void
 toggleview(const Arg *arg)
 {
+  PRINT_FUNCTION
   unsigned int newtagset = (current_monitor())->tagset[(current_monitor())->seltags] ^ (arg->ui & TAGMASK);
 
 	if (newtagset) {
@@ -2555,6 +2629,7 @@ SCM_DEFINE (gwwm_toggleview, "toggleview",1,0,0,(SCM ui),""){
 void
 unmaplayersurfacenotify(struct wl_listener *listener, void *data)
 {
+  PRINT_FUNCTION
 	LayerSurface *layersurface = wl_container_of(listener, layersurface, unmap);
 
 	layersurface->layer_surface->mapped = (layersurface->mapped = 0);
@@ -2570,6 +2645,7 @@ unmaplayersurfacenotify(struct wl_listener *listener, void *data)
 void
 unmapnotify(struct wl_listener *listener, void *data)
 {
+  PRINT_FUNCTION
 	/* Called when the surface is unmapped, and should no longer be shown. */
 	Client *c = wl_container_of(listener, c, unmap);
 	if (c == grabc) {
@@ -2596,6 +2672,7 @@ unmapnotify(struct wl_listener *listener, void *data)
 void
 updatemons(struct wl_listener *listener, void *data)
 {
+  PRINT_FUNCTION
 	/*
 	 * Called whenever the output layout changes: adding or removing a
 	 * monitor, changing an output's mode or position, etc.  This is where
@@ -2640,6 +2717,7 @@ updatemons(struct wl_listener *listener, void *data)
 void
 updatetitle(struct wl_listener *listener, void *data)
 {
+  PRINT_FUNCTION
 	Client *c = wl_container_of(listener, c, set_title);
     scm_c_run_hook(REF("gwwm hooks", "update-title-hook"), scm_list_1(WRAP_CLIENT(c)));
 	if (c == focustop(c->mon))
@@ -2649,6 +2727,7 @@ updatetitle(struct wl_listener *listener, void *data)
 void
 urgent(struct wl_listener *listener, void *data)
 {
+  PRINT_FUNCTION
 	struct wlr_xdg_activation_v1_request_activate_event *event = data;
 	Client *c = client_from_wlr_surface(event->surface);
 	if (c && c != current_client()) {
@@ -2660,6 +2739,7 @@ urgent(struct wl_listener *listener, void *data)
 void
 view(const Arg *arg)
 {
+  PRINT_FUNCTION
   if ((arg->ui & TAGMASK) == current_monitor()->tagset[(current_monitor())->seltags])
 		return;
   (current_monitor())->seltags ^= 1; /* toggle sel tagset */
@@ -2678,6 +2758,7 @@ SCM_DEFINE (gwwm_view, "view",1,0,0,(SCM ui),""){
 void
 virtualkeyboard(struct wl_listener *listener, void *data)
 {
+  PRINT_FUNCTION
 	struct wlr_virtual_keyboard_v1 *keyboard = data;
 	struct wlr_input_device *device = &keyboard->input_device;
 	createkeyboard(device);
@@ -2710,6 +2791,7 @@ SCM_DEFINE (gwwm_monitor_seltags, "%monitor-seltags",1, 0,0,
 Monitor *
 xytomon(double x, double y)
 {
+  PRINT_FUNCTION
   SCM o=(REF_CALL_2("gwwm monitor","monitor-at",scm_from_double(x),scm_from_double(y)));
   return scm_is_false(o) ? NULL : (UNWRAP_MONITOR(o));
 }
@@ -2718,6 +2800,7 @@ struct wlr_scene_node *
 xytonode(double x, double y, struct wlr_surface **psurface,
 		Client **pc, LayerSurface **pl, double *nx, double *ny)
 {
+  PRINT_FUNCTION
 	struct wlr_scene_node *node, *pnode;
 	struct wlr_surface *surface = NULL;
 	Client *c = NULL;
@@ -2750,6 +2833,7 @@ xytonode(double x, double y, struct wlr_surface **psurface,
 void
 zoom(const Arg *arg)
 {
+  PRINT_FUNCTION
 	Client *c, *sel = current_client();
 	if (!sel
         || scm_is_false
@@ -2800,6 +2884,7 @@ SCM_DEFINE (gwwm_zoom, "zoom",0, 0,0,
 void
 activatex11(struct wl_listener *listener, void *data)
 {
+  PRINT_FUNCTION
 	Client *c = wl_container_of(listener, c, activate);
 
 	/* Only "managed" windows can be activated */
@@ -2810,6 +2895,7 @@ activatex11(struct wl_listener *listener, void *data)
 void
 configurex11(struct wl_listener *listener, void *data)
 {
+  PRINT_FUNCTION
 	Client *c = wl_container_of(listener, c, configure);
 	struct wlr_xwayland_surface_configure_event *event = data;
 	wlr_xwayland_surface_configure(c->surface.xwayland,
@@ -2819,6 +2905,7 @@ configurex11(struct wl_listener *listener, void *data)
 void
 createnotifyx11(struct wl_listener *listener, void *data)
 {
+  PRINT_FUNCTION
 	struct wlr_xwayland_surface *xwayland_surface = data;
 	Client *c;
 	wl_list_for_each(c, &clients, link)
@@ -2847,6 +2934,7 @@ createnotifyx11(struct wl_listener *listener, void *data)
 Atom
 getatom(xcb_connection_t *xc, const char *name)
 {
+  PRINT_FUNCTION
 	Atom atom = 0;
 	xcb_intern_atom_reply_t *reply;
 	xcb_intern_atom_cookie_t cookie = xcb_intern_atom(xc, 0, strlen(name), name);
@@ -2860,6 +2948,7 @@ getatom(xcb_connection_t *xc, const char *name)
 void
 sethints(struct wl_listener *listener, void *data)
 {
+  PRINT_FUNCTION
 	Client *c = wl_container_of(listener, c, set_hints);
 	if (c != current_client()) {
       CLIENT_SET_URGENT(c, c->surface.xwayland->hints_urgency);
@@ -2870,6 +2959,7 @@ sethints(struct wl_listener *listener, void *data)
 void
 xwaylandready(struct wl_listener *listener, void *data)
 {
+  PRINT_FUNCTION
 	struct wlr_xcursor *xcursor;
 	xcb_connection_t *xc = xcb_connect(xwayland->display_name, NULL);
 	int err = xcb_connection_has_error(xc);
