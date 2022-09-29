@@ -2917,7 +2917,7 @@ createnotifyx11(struct wl_listener *listener, void *data)
 	c->surface.xwayland = xwayland_surface;
 	c->type = xwayland_surface->override_redirect ? X11Unmanaged : X11Managed;
 	c->bw = GWWM_BORDERPX();
-
+    register_client(c);
 	/* Listen to the various events it can emit */
 	LISTEN(&xwayland_surface->events.map, &c->map, mapnotify);
 	LISTEN(&xwayland_surface->events.unmap, &c->unmap, unmapnotify);
