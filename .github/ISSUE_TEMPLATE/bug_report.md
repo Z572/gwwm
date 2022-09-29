@@ -1,6 +1,6 @@
 ---
 name: Bug report
-about: Something in dwl isn't working correctly
+about: Something in gwwm isn't working correctly
 title: ''
 labels: 'A: bug'
 assignees: ''
@@ -8,15 +8,12 @@ assignees: ''
 ---
 
 ## Info
-dwl's commit:
+gwwm's commit:
+guile-wlroots's commit:
+guile-wayland's commit:
+guile version:
 wlroots version:
+OS:
+log file:
 ## Description
-<!--
-Only report bugs that can be reproduced on the main line
-Report patch issues to their respective authors
-If the patch author doesn't respond within a reasonable time, email me:
-
-Leonardo Hernández Hernández <leohdz172@protonmail.com>
-
-but note that I'm NOT making any promises
--->
+<!-- log file can use "gwwm 2&1 1&> gwwm.log" get -->
