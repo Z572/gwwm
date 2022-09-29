@@ -101,7 +101,8 @@
 (define client-set-urgent! (setter client-urgent?))
 
 (define-method (write (client <gwwm-client>) port)
-  (format port "#<<gwwm-client ~a>"
+  (format port "#<~s ~a>"
+          (class-name (class-of client))
           (if (client-alive? client)
               (client-get-appid client)
               "*deaded*")))
