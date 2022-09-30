@@ -393,12 +393,15 @@ SCM_DEFINE_PUBLIC(gwwm_monitor_window_area,"monitor-window-area",1,0,0,(SCM m),"
   return (WRAP_WLR_BOX(&(UNWRAP_MONITOR(m))->w));
 }
 SCM_DEFINE_PUBLIC(gwwm_visibleon, "visibleon", 2, 0, 0, (SCM c, SCM m), "")
+#define FUNC_NAME s_gwwm_visibleon
 {
+  GWWM_ASSERT_CLIENT_OR_FALSE(c ,1);
   PRINT_FUNCTION
   Client *s =(UNWRAP_CLIENT(c));
   int a = (VISIBLEON(s,(struct Monitor*)(UNWRAP_MONITOR(m))));
   return scm_from_bool(a);
 }
+#undef FUNC_NAME
 
 #define GWWM_BORDERCOLOR() (TO_P(REF_CALL_1("gwwm color","color->pointer",REF_CALL_1("gwwm config", "config-bordercolor", gwwm_config))))
 
@@ -585,8 +588,9 @@ SCM_DEFINE (gwwm_client_monitor, "client-monitor" , 1,0,0,
             (SCM c), "")
 #define FUNC_NAME s_gwwm_client_monitor
 {
-    Client *cl = UNWRAP_CLIENT(c);
-    return (cl->mon) ? (WRAP_MONITOR(cl->mon)) : SCM_BOOL_F;
+  GWWM_ASSERT_CLIENT_OR_FALSE(c ,1);
+  Client *cl = UNWRAP_CLIENT(c);
+  return (cl->mon) ? (WRAP_MONITOR(cl->mon)) : SCM_BOOL_F;
 }
 #undef FUNC_NAME
 
@@ -1373,11 +1377,15 @@ focusclient(Client *c, int lift)
 	client_activate_surface(client_surface(c), 1);
 }
 
-SCM_DEFINE (gwwm_focusclient, "focusclient" ,2,0,0,(SCM client,SCM lift),"") {
+SCM_DEFINE (gwwm_focusclient, "focusclient" ,2,0,0,(SCM client,SCM lift),"")
+#define FUNC_NAME s_gwwm_focusclient
+{
+  GWWM_ASSERT_CLIENT_OR_FALSE(client ,1);
   Client *c= scm_is_false(client)? NULL:  UNWRAP_CLIENT(client);
   focusclient(c, scm_to_bool(lift));
   return SCM_UNSPECIFIED;
 }
+#undef FUNC_NAME
 
 SCM_DEFINE(gwwm_idle,"gwwm-idle",0,0,0,(),""){
   return WRAP_WLR_IDLE(idle);
@@ -2066,11 +2074,14 @@ resize(Client *c, struct wlr_box geo, int interact)
 }
 
 SCM_DEFINE(gwwm_resize ,"%resize",3,0,0,(SCM c,SCM geo,SCM interact),"")
+#define FUNC_NAME s_gwwm_resize
 {
+  GWWM_ASSERT_CLIENT_OR_FALSE(c ,1);
   struct wlr_box *box=UNWRAP_WLR_BOX(geo);
   resize(UNWRAP_CLIENT(c),*box, scm_to_bool(interact));
   return SCM_UNSPECIFIED;
 }
+#undef FUNC_NAME
 
 SCM_DEFINE (gwwm_run,"%gwwm-run",0,0,0,(),"")
 {
@@ -2247,12 +2258,15 @@ setmon(Client *c, Monitor *m, unsigned int newtags)
 }
 
 SCM_DEFINE_PUBLIC(gwwm_setmon, "%setmon", 3, 0, 0, (SCM c ,SCM m, SCM newtags), "")
+#define FUNC_NAME s_gwwm_setmon
 {
+  GWWM_ASSERT_CLIENT_OR_FALSE(c ,1);
   setmon(UNWRAP_CLIENT(c),
          UNWRAP_MONITOR(m),
          scm_to_unsigned_integer(newtags, 0, 12));
   return SCM_UNSPECIFIED;
 }
+#undef FUNC_NAME
 
 void
 setpsel(struct wl_listener *listener, void *data)

@@ -217,9 +217,12 @@ client_is_float_type(Client *c)
 
 SCM_DEFINE (gwwm_client_is_float_type_p,"client-is-float-type?",1,0,0,
             (SCM c),"")
+#define FUNC_NAME s_gwwm_client_is_float_type_p
 {
+  GWWM_ASSERT_CLIENT_OR_FALSE(c ,1);
   return scm_from_bool(client_is_float_type(UNWRAP_CLIENT(c)));
 }
+#undef FUNC_NAME
 
 static inline int
 client_is_mapped(Client *c)
@@ -274,6 +277,7 @@ client_set_fullscreen(Client *c, int fullscreen)
 SCM_DEFINE (gwwm_client_xdg_surface ,"client-xdg-surface",1,0,0,(SCM c),"")
 #define FUNC_NAME s_gwwm_client_xdg_surface
 {
+  GWWM_ASSERT_CLIENT_OR_FALSE(c ,1);
   Client *cl= (UNWRAP_CLIENT(c));
   return WRAP_WLR_XDG_SURFACE(cl->surface.xdg);
 }
@@ -281,7 +285,9 @@ SCM_DEFINE (gwwm_client_xdg_surface ,"client-xdg-surface",1,0,0,(SCM c),"")
 
 SCM_DEFINE (gwwm_client_xwayland_surface ,"client-xwayland-surface",1,0,0,(SCM c),"")
 #define FUNC_NAME s_gwwm_client_xwayland_surface
-{ Client *cl=(UNWRAP_CLIENT(c));
+{
+  GWWM_ASSERT_CLIENT_OR_FALSE(c ,1);
+  Client *cl=(UNWRAP_CLIENT(c));
   return WRAP_WLR_XWAYLAND_SURFACE(cl->surface.xwayland);
 }
 #undef FUNC_NAME
@@ -361,7 +367,8 @@ SCM_DEFINE (gwwm_client_border_width, "client-border-width" , 1,0,0,
             (SCM c), "")
 #define FUNC_NAME s_gwwm_client_border_width
 {
-    Client *cl = UNWRAP_CLIENT(c);
+  GWWM_ASSERT_CLIENT_OR_FALSE(c ,1);
+  Client *cl = UNWRAP_CLIENT(c);
   return scm_from_unsigned_integer(cl->bw);
 }
 #undef FUNC_NAME
@@ -370,6 +377,7 @@ SCM_DEFINE (gwwm_client_get_parent, "client-get-parent" ,1,0,0,
             (SCM c), "")
 #define FUNC_NAME s_gwwm_client_get_parent
 {
+  GWWM_ASSERT_CLIENT_OR_FALSE(c ,1);
   Client *cl = UNWRAP_CLIENT(c);
   Client *p = client_get_parent(cl);
   if (p) {
@@ -381,18 +389,21 @@ SCM_DEFINE (gwwm_client_get_parent, "client-get-parent" ,1,0,0,
 
 SCM_DEFINE (gwwm_set_client_border_width, "client-set-border-width" , 2,0,0,
             (SCM c ,SCM w), "")
-#define FUNC_NAME s_gwwm_client_border_width_set
+#define FUNC_NAME s_gwwm_set_client_border_width
 {
-    Client *cl = UNWRAP_CLIENT(c);
-    cl->bw=scm_to_signed_integer(w ,0, 1240);
-    arrange(current_monitor());
+  GWWM_ASSERT_CLIENT_OR_FALSE(c ,1);
+  Client *cl = UNWRAP_CLIENT(c);
+  cl->bw=scm_to_signed_integer(w ,0, 1240);
+  arrange(current_monitor());
   return WRAP_CLIENT(cl);
 }
 #undef FUNC_NAME
 
 SCM_DEFINE (gwwm_client_type, "client-type" , 1,0,0,
             (SCM c), "")
+#define FUNC_NAME s_gwwm_client_type
 {
+  GWWM_ASSERT_CLIENT_OR_FALSE(c ,1);
   Client *cl = UNWRAP_CLIENT(c);
   char* t;
   switch (cl->type)
@@ -412,11 +423,13 @@ SCM_DEFINE (gwwm_client_type, "client-type" , 1,0,0,
     }
   return scm_from_utf8_string(t);
 }
+#undef FUNC_NAME
 
 SCM_DEFINE (gwwm_client_wants_fullscreen_p , "client-wants-fullscreen?",1,0,0,
             (SCM client), "")
-#define FUNC_NAME s_gwwm_client_wants_fullscreen
+#define FUNC_NAME s_gwwm_client_wants_fullscreen_p
 {
+  GWWM_ASSERT_CLIENT_OR_FALSE(client ,1);
   return scm_from_bool(client_wants_fullscreen(UNWRAP_CLIENT(client)));
 }
 #undef FUNC_NAME
@@ -424,6 +437,7 @@ SCM_DEFINE (gwwm_client_wants_fullscreen_p , "client-wants-fullscreen?",1,0,0,
 SCM_DEFINE (gwwm_setfullscreen, "%setfullscreen",2,0,0,(SCM c,SCM yes),"")
 #define FUNC_NAME s_gwwm_setfullscreen
 {
+  GWWM_ASSERT_CLIENT_OR_FALSE(c ,1);
   setfullscreen(UNWRAP_CLIENT(c),scm_to_bool(yes));
   return SCM_UNSPECIFIED;
 }

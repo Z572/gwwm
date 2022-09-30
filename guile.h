@@ -97,7 +97,10 @@
 /* #define SEND_LOG(o ...) */
 #define send_log(v,b,...) _send_log(#v,b, ##__VA_ARGS__, "/0")
 #define PRINT_FUNCTION send_log(DEBUG,__FUNCTION__ );
-
+#define GWWM_ASSERT_CLIENT_OR_FALSE(client,position)         \
+  SCM_ASSERT((SCM_IS_A_P(client,REF("gwwm client","<gwwm-client>")) || \
+              scm_is_false(client))                                    \
+             ,client,position, FUNC_NAME)
 void
 _send_log(const char *arg, ...) {
 	va_list ap;
