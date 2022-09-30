@@ -1044,20 +1044,17 @@ createlayersurface(struct wl_listener *listener, void *data)
 static inline void
 register_monitor(Monitor *m) {
   PRINT_FUNCTION
-  const int *p=&m;
-  scm_hashq_set_x(INNER_MONITOR_HASH_TABLE, (scm_from_int(*p)),MAKE_MONITOR(m));
+  scm_hashq_set_x(INNER_MONITOR_HASH_TABLE, (scm_pointer_address(scm_from_pointer(m ,NULL))),MAKE_MONITOR(m));
 }
 
 static inline SCM
 find_monitor(Monitor *m) {
-  const int *p=&m;
-  return scm_hashq_ref(INNER_MONITOR_HASH_TABLE, (scm_from_int(*p)) ,NULL);
+  return scm_hashq_ref(INNER_MONITOR_HASH_TABLE, (scm_pointer_address(scm_from_pointer(m ,NULL))) ,NULL);
 }
 
 static inline void
 logout_monitor(Monitor *m){
-  const int *p=&m;
-  scm_hashq_remove_x(INNER_MONITOR_HASH_TABLE, scm_from_int(*p));
+  scm_hashq_remove_x(INNER_MONITOR_HASH_TABLE, scm_pointer_address(scm_from_pointer(m ,NULL)));
   free(m);
 }
 

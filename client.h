@@ -33,20 +33,17 @@
 #define CLIENT_SCENE_SURFACE(c) c->scene_surface
 static inline SCM
 find_client(Client *c) {
-  const int *p=&c;
-  return scm_hashq_ref(INNER_CLIENTS_HASH_TABLE, (scm_from_int(*p)) ,NULL);
+  return scm_hashq_ref(INNER_CLIENTS_HASH_TABLE, (scm_pointer_address(scm_from_pointer(c ,NULL))) ,NULL);
 }
 
 static inline void
 register_client(Client *c) {
-  const int *p=&c;
-  scm_hashq_set_x(INNER_CLIENTS_HASH_TABLE, (scm_from_int(*p)),MAKE_CLIENT(c));
+  scm_hashq_set_x(INNER_CLIENTS_HASH_TABLE, (scm_pointer_address(scm_from_pointer(c ,NULL))),MAKE_CLIENT(c));
 }
 
 static inline void
 logout_client(Client *c){
-  const int *p=&c;
-  scm_hashq_remove_x(INNER_CLIENTS_HASH_TABLE, scm_from_int(*p));
+  scm_hashq_remove_x(INNER_CLIENTS_HASH_TABLE, scm_pointer_address(scm_from_pointer(c ,NULL)));
   free(c);
 }
 
