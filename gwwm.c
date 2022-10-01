@@ -387,6 +387,14 @@ static Atom netatom[NetLast];
 #include "guile.h"
 #include "client.h"
 
+SCM_DEFINE(client_geom ,"client-geom",1,0,0,(SCM c),"")
+#define FUNC_NAME s_client_geom
+{
+  GWWM_ASSERT_CLIENT_OR_FALSE(c,1);
+  return WRAP_WLR_BOX (&(UNWRAP_CLIENT(c))->geom);
+}
+#undef FUNC_NAME
+
 SCM_DEFINE_PUBLIC(gwwm_monitor_window_area,"monitor-window-area",1,0,0,(SCM m),"")
 {
   PRINT_FUNCTION
