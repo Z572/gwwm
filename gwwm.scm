@@ -7,6 +7,7 @@
   #:use-module (gwwm i18n)
   #:use-module (gwwm monitor)
   #:use-module (gwwm layout)
+  #:use-module (gwwm layout tile)
   #:use-module (gwwm utils)
   #:use-module (gwwm utils srfi-215)
   #:use-module (wayland display)
@@ -116,9 +117,11 @@ gwwm [options]
   (define (set-default-layout m)
     (set! (monitor-layouts m)
           (make-list 2
-                     (make <layout>
-                       #:symbol "[]="
-                       #:procedure %tile))))
+                     tile-layout
+                     ;; (make <layout>
+                     ;;   #:symbol "[]="
+                     ;;   #:procedure %tile)
+                     )))
   (add-hook! create-monitor-hook set-default-layout)
 
   (define (pass-modifiers k)
