@@ -42,6 +42,14 @@ register_client(Client *c) {
 }
 
 static inline void
+register_x_client(Client *c) {
+  scm_hashq_set_x(INNER_CLIENTS_HASH_TABLE, (scm_pointer_address(scm_from_pointer(c ,NULL))),(scm_call_3(REF("oop goops","make"), \
+                                  REF("gwwm client","<gwwm-x-client>"), \
+                                  scm_from_utf8_keyword("data"), \
+                                  FROM_P(c))));
+}
+
+static inline void
 logout_client(Client *c){
   scm_hashq_remove_x(INNER_CLIENTS_HASH_TABLE, scm_pointer_address(scm_from_pointer(c ,NULL)));
   free(c);
