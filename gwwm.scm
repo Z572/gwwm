@@ -1,6 +1,7 @@
 (define-module (gwwm)
   #:use-module (oop goops)
   #:use-module (ice-9 getopt-long)
+  #:use-module (srfi srfi-19)
   #:use-module (ice-9 format)
   #:use-module (system repl server)
   #:use-module (gwwm keymap)
@@ -139,7 +140,8 @@ gwwm [options]
    (let ((p (current-error-port)))
      (lambda (msg)
        (let ((msg2 msg))
-         (format p "[~a]| ~a | "
+         (format p "~a: [~a]| ~a | "
+                 (date->string (current-date) "~m-~d ~3 ~N")
                  (cdr (assq 'SEVERITY msg))
                  (cdr (assq 'MESSAGE msg)))
          (set! msg2 (assoc-remove! (assoc-remove! msg2 'SEVERITY) 'MESSAGE))
