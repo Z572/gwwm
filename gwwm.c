@@ -841,7 +841,9 @@ checkidleinhibitor(struct wlr_surface *exclude)
 
 SCM_DEFINE (gwwm_cleanup, "%gwwm-cleanup",0,0,0, () ,"")
 {
-  PRINT_FUNCTION
+  PRINT_FUNCTION;
+  scm_c_run_hook(REF("gwwm hooks", "gwwm-cleanup-hook"),
+                 scm_make_list(scm_from_int(0), SCM_UNSPECIFIED));
 #ifdef XWAYLAND
 	wlr_xwayland_destroy(xwayland);
 #endif

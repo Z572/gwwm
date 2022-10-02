@@ -8,7 +8,8 @@
             keypress-event-hook
             cursor-button-event-hook
             surface-commit-event-hook
-            fullscreen-event-hook))
+            fullscreen-event-hook
+            gwwm-cleanup-hook))
 
 (define-public create-monitor-hook (make-hook 1))
 (define-public create-pointer-hook (make-hook 1))
@@ -21,3 +22,4 @@
 (define-public cleanup-keyboard-hook (make-hook 2))
 (define-public cursor-button-event-hook (make-hook 1))
 (define-public surface-commit-event-hook (make-hook 1))
+(define-public gwwm-cleanup-hook (make-hook 0))
