@@ -65,6 +65,13 @@
                          (client-type c)
                          "*deaded*"))
         #:slot-set! (lambda _ #t))
+  (appid #:allocation #:virtual
+         #:slot-ref (lambda (c)
+                      (wlr-xdg-toplevel-appid
+                       (wlr-xdg-surface-toplevel
+                        (client-xdg-surface c))))
+         #:slot-set! (const #f)
+         #:getter client-get-appid)
   (floating? #:init-value #f
              #:accessor client-floating?)
   (fullscreen? #:init-value #f
@@ -120,10 +127,6 @@
           (if (client-alive? client)
               (client-get-appid client)
               "*deaded*")))
-(define-method (client-get-appid (c <gwwm-client>))
-  (wlr-xdg-toplevel-appid
-   (wlr-xdg-surface-toplevel
-    (client-xdg-surface c))))
 
 (define-method (client-get-appid (c <gwwm-x-client>))
   (wlr-xwayland-surface-class
