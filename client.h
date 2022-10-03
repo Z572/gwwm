@@ -30,6 +30,10 @@
 #define CLIENT_SET_SCENE(c,s) (REF_CALL_2("gwwm client","client-set-scene!",\
                                           (WRAP_CLIENT(c)),             \
                                           (WRAP_WLR_SCENE_NODE(s))))
+#define CLIENT_BW(c) (scm_to_unsigned_integer(REF_CALL_1("gwwm client" ,"client-border-width",WRAP_CLIENT(c)),0,100))
+#define CLIENT_SET_BW(c,b) (REF_CALL_2("gwwm client","client-set-border-width!", \
+                                       (WRAP_CLIENT(c)),                \
+                                       scm_from_unsigned_integer(b)))
 #define CLIENT_SCENE_SURFACE(c) c->scene_surface
 static inline SCM
 find_client(Client *c) {
@@ -368,16 +372,6 @@ toplevel_from_popup(struct wlr_xdg_popup *popup)
 	}
 }
 
-SCM_DEFINE (gwwm_client_border_width, "client-border-width" , 1,0,0,
-            (SCM c), "")
-#define FUNC_NAME s_gwwm_client_border_width
-{
-  GWWM_ASSERT_CLIENT_OR_FALSE(c ,1);
-  Client *cl = UNWRAP_CLIENT(c);
-  return scm_from_unsigned_integer(cl->bw);
-}
-#undef FUNC_NAME
-
 SCM_DEFINE (gwwm_client_get_parent, "client-get-parent" ,1,0,0,
             (SCM c), "")
 #define FUNC_NAME s_gwwm_client_get_parent
@@ -389,18 +383,6 @@ SCM_DEFINE (gwwm_client_get_parent, "client-get-parent" ,1,0,0,
     return WRAP_CLIENT(p);
   };
   return SCM_BOOL_F;
-}
-#undef FUNC_NAME
-
-SCM_DEFINE (gwwm_set_client_border_width, "client-set-border-width" , 2,0,0,
-            (SCM c ,SCM w), "")
-#define FUNC_NAME s_gwwm_set_client_border_width
-{
-  GWWM_ASSERT_CLIENT_OR_FALSE(c ,1);
-  Client *cl = UNWRAP_CLIENT(c);
-  cl->bw=scm_to_signed_integer(w ,0, 1240);
-  arrange(current_monitor());
-  return WRAP_CLIENT(cl);
 }
 #undef FUNC_NAME
 

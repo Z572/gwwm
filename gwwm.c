@@ -117,7 +117,7 @@ typedef struct {
 	struct wl_listener configure;
 	struct wl_listener set_hints;
 #endif
-	unsigned int bw;
+	/* unsigned int bw; */
 	unsigned int tags;
   /* int isfloating; */
 	uint32_t resize; /* configure serial of a pending resize */
@@ -472,21 +472,21 @@ applybounds(Client *c, struct wlr_box *bbox)
 		struct wlr_box min = {0}, max = {0};
 		client_get_size_hints(c, &max, &min);
 		/* try to set size hints */
-		c->geom.width = MAX(min.width + (2 * c->bw), c->geom.width);
-		c->geom.height = MAX(min.height + (2 * c->bw), c->geom.height);
-		if (max.width > 0 && !(2 * c->bw > INT_MAX - max.width)) // Checks for overflow
-			c->geom.width = MIN(max.width + (2 * c->bw), c->geom.width);
-		if (max.height > 0 && !(2 * c->bw > INT_MAX - max.height)) // Checks for overflow
-			c->geom.height = MIN(max.height + (2 * c->bw), c->geom.height);
+		c->geom.width = MAX(min.width + (2 * CLIENT_BW(c)), c->geom.width);
+		c->geom.height = MAX(min.height + (2 * CLIENT_BW(c)), c->geom.height);
+		if (max.width > 0 && !(2 * CLIENT_BW(c) > INT_MAX - max.width)) // Checks for overflow
+			c->geom.width = MIN(max.width + (2 * CLIENT_BW(c)), c->geom.width);
+		if (max.height > 0 && !(2 * CLIENT_BW(c) > INT_MAX - max.height)) // Checks for overflow
+			c->geom.height = MIN(max.height + (2 * CLIENT_BW(c)), c->geom.height);
 	}
 
 	if (c->geom.x >= bbox->x + bbox->width)
 		c->geom.x = bbox->x + bbox->width - c->geom.width;
 	if (c->geom.y >= bbox->y + bbox->height)
 		c->geom.y = bbox->y + bbox->height - c->geom.height;
-	if (c->geom.x + c->geom.width + 2 * c->bw <= bbox->x)
+	if (c->geom.x + c->geom.width + 2 * CLIENT_BW(c) <= bbox->x)
 		c->geom.x = bbox->x;
-	if (c->geom.y + c->geom.height + 2 * c->bw <= bbox->y)
+	if (c->geom.y + c->geom.height + 2 * CLIENT_BW(c) <= bbox->y)
 		c->geom.y = bbox->y;
 }
 
@@ -949,8 +949,8 @@ commitnotify(struct wl_listener *listener, void *data)
 	struct wlr_box box = {0};
 	client_get_geometry(c, &box);
 
-	if (c->mon && !wlr_box_empty(&box) && (box.width != c->geom.width - 2 * c->bw
-			|| box.height != c->geom.height - 2 * c->bw))
+	if (c->mon && !wlr_box_empty(&box) && (box.width != c->geom.width - 2 * CLIENT_BW(c)
+			|| box.height != c->geom.height - 2 * CLIENT_BW(c)))
 		arrange(c->mon);
 
 	/* mark a pending resize as completed */
@@ -1158,9 +1158,9 @@ createnotify(struct wl_listener *listener, void *data)
 
 	/* Allocate a Client for this surface */
 	c = xdg_surface->data = ecalloc(1, sizeof(*c));
-	c->surface.xdg = xdg_surface;
-	c->bw = GWWM_BORDERPX();
     register_client(c);
+	c->surface.xdg = xdg_surface;
+    CLIENT_SET_BW(c,GWWM_BORDERPX());
 	LISTEN(&xdg_surface->events.map, &c->map, mapnotify);
 	LISTEN(&xdg_surface->events.unmap, &c->unmap, unmapnotify);
 	LISTEN(&xdg_surface->events.destroy, &c->destroy, destroynotify);
@@ -1677,8 +1677,8 @@ mapnotify(struct wl_listener *listener, void *data)
 	/* Initialize client geometry with room for border */
 	client_set_tiled(c, WLR_EDGE_TOP | WLR_EDGE_BOTTOM | WLR_EDGE_LEFT | WLR_EDGE_RIGHT);
 	client_get_geometry(c, &c->geom);
-	c->geom.width += 2 * c->bw;
-	c->geom.height += 2 * c->bw;
+	c->geom.width += 2 * CLIENT_BW(c);
+	c->geom.height += 2 * CLIENT_BW(c);
 
 	/* Insert this client into client lists. */
 	wl_list_insert(&clients, &c->link);
@@ -2066,18 +2066,18 @@ resize(Client *c, struct wlr_box geo, int interact)
 
 	/* Update scene-graph, including borders */
 	wlr_scene_node_set_position(CLIENT_SCENE(c), c->geom.x, c->geom.y);
-	wlr_scene_node_set_position(CLIENT_SCENE_SURFACE(c), c->bw, c->bw);
-	wlr_scene_rect_set_size(c->border[0], c->geom.width, c->bw);
-	wlr_scene_rect_set_size(c->border[1], c->geom.width, c->bw);
-	wlr_scene_rect_set_size(c->border[2], c->bw, c->geom.height - 2 * c->bw);
-	wlr_scene_rect_set_size(c->border[3], c->bw, c->geom.height - 2 * c->bw);
-	wlr_scene_node_set_position(&c->border[1]->node, 0, c->geom.height - c->bw);
-	wlr_scene_node_set_position(&c->border[2]->node, 0, c->bw);
-	wlr_scene_node_set_position(&c->border[3]->node, c->geom.width - c->bw, c->bw);
+	wlr_scene_node_set_position(CLIENT_SCENE_SURFACE(c), CLIENT_BW(c), CLIENT_BW(c));
+	wlr_scene_rect_set_size(c->border[0], c->geom.width, CLIENT_BW(c));
+	wlr_scene_rect_set_size(c->border[1], c->geom.width, CLIENT_BW(c));
+	wlr_scene_rect_set_size(c->border[2], CLIENT_BW(c), c->geom.height - 2 * CLIENT_BW(c));
+	wlr_scene_rect_set_size(c->border[3], CLIENT_BW(c), c->geom.height - 2 * CLIENT_BW(c));
+	wlr_scene_node_set_position(&c->border[1]->node, 0, c->geom.height - CLIENT_BW(c));
+	wlr_scene_node_set_position(&c->border[2]->node, 0, CLIENT_BW(c));
+	wlr_scene_node_set_position(&c->border[3]->node, c->geom.width - CLIENT_BW(c), CLIENT_BW(c));
 
 	/* wlroots makes this a no-op if size hasn't changed */
-	c->resize = client_set_size(c, c->geom.width - 2 * c->bw,
-			c->geom.height - 2 * c->bw);
+	c->resize = client_set_size(c, c->geom.width - 2 * CLIENT_BW(c),
+			c->geom.height - 2 * CLIENT_BW(c));
 }
 
 SCM_DEFINE(gwwm_resize ,"%resize",3,0,0,(SCM c,SCM geo,SCM interact),"")
@@ -2178,7 +2178,7 @@ setfullscreen(Client *c, int fullscreen)
 {
   PRINT_FUNCTION
   CLIENT_SET_FULLSCREEN(c,fullscreen);
-	c->bw = fullscreen ? 0 : GWWM_BORDERPX();
+  CLIENT_SET_BW(c,(fullscreen ? 0 : GWWM_BORDERPX())) ;
 	client_set_fullscreen(c, fullscreen);
 
 	if (fullscreen) {
@@ -2935,10 +2935,10 @@ createnotifyx11(struct wl_listener *listener, void *data)
 
 	/* Allocate a Client for this surface */
 	c = xwayland_surface->data = ecalloc(1, sizeof(*c));
-	c->surface.xwayland = xwayland_surface;
-	c->type = xwayland_surface->override_redirect ? X11Unmanaged : X11Managed;
-	c->bw = GWWM_BORDERPX();
     register_x_client(c);
+    c->surface.xwayland = xwayland_surface;
+	c->type = xwayland_surface->override_redirect ? X11Unmanaged : X11Managed;
+	CLIENT_SET_BW(c,GWWM_BORDERPX());
 	/* Listen to the various events it can emit */
 	LISTEN(&xwayland_surface->events.map, &c->map, mapnotify);
 	LISTEN(&xwayland_surface->events.unmap, &c->unmap, unmapnotify);

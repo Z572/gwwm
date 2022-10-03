@@ -39,6 +39,8 @@
             client-scene
             client-set-scene!
             client-monitor
+            client-border-width
+            client-set-border-width!
             <gwwm-client>
             <gwwm-x-client>))
 
@@ -49,6 +51,7 @@
 
 (define (client-is-float-type? client)
   ((@@ (gwwm) client-is-float-type?) client))
+
 
 (define-class <gwwm-client> ()
   (data #:init-keyword #:data #:accessor .data)
@@ -73,11 +76,17 @@
          #:getter client-title)
   (scene #:init-value #f
          #:accessor client-scene
-         #:setter client-set-scene!))
+         #:setter client-set-scene!)
+  (border-width #:init-value 1 #:accessor client-border-width))
 
 (define-class <gwwm-x-client> (<gwwm-client>))
 
 (define client-is-fullscreen? client-fullscreen?)
+(define client-set-border-width! (setter client-border-width))
+
+
+;; (define (client-set-border-width! c width)
+;;   (set! (client-border-width c) (max 0 width)))
 
 (define-method (describe (c <gwwm-client>))
   (if (client-alive? c)
