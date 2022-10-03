@@ -41,6 +41,7 @@
             client-monitor
             client-border-width
             client-set-border-width!
+            client-get-size-hints
             <gwwm-client>
             <gwwm-x-client>))
 
@@ -48,6 +49,9 @@
   ((@@ (gwwm) visibleon) c m))
 (define (client-type client)
   ((@@ (gwwm) client-type) client))
+
+(define (client-get-size-hints c)
+  ((@@ (gwwm) client-get-size-hints) c))
 
 (define (client-is-float-type? client)
   ((@@ (gwwm) client-is-float-type?) client))

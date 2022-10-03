@@ -174,6 +174,18 @@ client_get_size_hints(Client *c, struct wlr_box *max, struct wlr_box *min)
 	min->height = state->min_height;
 }
 
+SCM_DEFINE (gwwm_client_get_size_hints,"client-get-size-hints",1,0,0,
+            (SCM c),"")
+#define FUNC_NAME s_gwwm_client_get_size_hints
+{
+  GWWM_ASSERT_CLIENT_OR_FALSE(c ,1);
+  struct wlr_box min = {0}, max = {0};
+  Client *cl =UNWRAP_CLIENT(c);
+  client_get_size_hints(cl, &max, &min);
+  return scm_cons(WRAP_WLR_BOX(&max),WRAP_WLR_BOX(&min));
+}
+#undef FUNC_NAME
+
 static inline const char *
 client_get_title(Client *c)
 {
