@@ -88,6 +88,7 @@
   (scene #:init-value #f
          #:accessor client-scene
          #:setter client-set-scene!)
+  (borders #:init-value (list))
   (border-width #:init-value 1 #:accessor client-border-width))
 
 (define-class <gwwm-x-client> (<gwwm-client>))

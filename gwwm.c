@@ -65,6 +65,11 @@
 #define END(A)                  ((A) + LENGTH(A))
 #define TAGMASK                 ((1 << LENGTH(tags)) - 1)
 #define LISTEN(E, L, H)         wl_signal_add((E), ((L)->notify = (H), (L)))
+#define GWWM_BORDERCOLOR() (TO_P(REF_CALL_1("gwwm color","color->pointer",REF_CALL_1("gwwm config", "config-bordercolor", gwwm_config))))
+
+#define GWWM_FOCUSCOLOR() (TO_P(REF_CALL_1("gwwm color","color->pointer",REF_CALL_1("gwwm config", "config-focuscolor", gwwm_config))))
+
+#define GWWM_FULLSCREEN_BG() (TO_P(REF_CALL_1("gwwm color","color->pointer",REF_CALL_1("gwwm config", "config-fullscreenbg", gwwm_config))))
 
 /* enums */
 enum { CurNormal, CurMove, CurResize }; /* cursor */
@@ -96,7 +101,7 @@ typedef struct {
 	struct wlr_box geom;  /* layout-relative, includes border */
 	Monitor *mon;
 	/* struct wlr_scene_node *scene; */
-	struct wlr_scene_rect *border[4]; /* top, bottom, left, right */
+	/* struct wlr_scene_rect *border[4]; /\* top, bottom, left, right *\/ */
 	struct wlr_scene_node *scene_surface;
 	struct wlr_scene_rect *fullscreen_bg; /* See setfullscreen() for info */
 	struct wl_list link;
@@ -411,11 +416,6 @@ SCM_DEFINE_PUBLIC(gwwm_visibleon, "visibleon", 2, 0, 0, (SCM c, SCM m), "")
 }
 #undef FUNC_NAME
 
-#define GWWM_BORDERCOLOR() (TO_P(REF_CALL_1("gwwm color","color->pointer",REF_CALL_1("gwwm config", "config-bordercolor", gwwm_config))))
-
-#define GWWM_FOCUSCOLOR() (TO_P(REF_CALL_1("gwwm color","color->pointer",REF_CALL_1("gwwm config", "config-focuscolor", gwwm_config))))
-
-#define GWWM_FULLSCREEN_BG() (TO_P(REF_CALL_1("gwwm color","color->pointer",REF_CALL_1("gwwm config", "config-fullscreenbg", gwwm_config))))
 
 SCM_DEFINE (gwwm_backend, "gwwm-backend",0,0,0,(),"") {
   return WRAP_WLR_BACKEND(backend);
@@ -1338,8 +1338,7 @@ focusclient(Client *c, int lift)
         CLIENT_SET_URGENT(c ,0);
 		client_restack_surface(c);
 
-		for (i = 0; i < 4; i++)
-          wlr_scene_rect_set_color(c->border[i], GWWM_FOCUSCOLOR());
+        CLIENT_SET_BORDER_COLOR(c ,GWWM_FOCUSCOLOR());
 	}
 
 	/* Deactivate old client if focus is changing */
@@ -1361,8 +1360,7 @@ focusclient(Client *c, int lift)
 		} else {
 			Client *w;
 			if ((w = client_from_wlr_surface(old)))
-				for (i = 0; i < 4; i++)
-					wlr_scene_rect_set_color(w->border[i], GWWM_BORDERCOLOR());
+              {CLIENT_SET_BORDER_COLOR(w,GWWM_BORDERCOLOR());};
 
 			client_activate_surface(old, 0);
 		}
@@ -1667,12 +1665,7 @@ mapnotify(struct wl_listener *listener, void *data)
 			c->geom.y + GWWM_BORDERPX());
 		return;
 	}
-
-	for (i = 0; i < 4; i++) {
-		c->border[i] = wlr_scene_rect_create(CLIENT_SCENE(c), 0, 0, GWWM_BORDERCOLOR());
-		c->border[i]->node.data = c;
-		wlr_scene_rect_set_color(c->border[i], GWWM_BORDERCOLOR());
-	}
+    client_init_border(c);
 
 	/* Initialize client geometry with room for border */
 	client_set_tiled(c, WLR_EDGE_TOP | WLR_EDGE_BOTTOM | WLR_EDGE_LEFT | WLR_EDGE_RIGHT);
@@ -2067,13 +2060,13 @@ resize(Client *c, struct wlr_box geo, int interact)
 	/* Update scene-graph, including borders */
 	wlr_scene_node_set_position(CLIENT_SCENE(c), c->geom.x, c->geom.y);
 	wlr_scene_node_set_position(CLIENT_SCENE_SURFACE(c), CLIENT_BW(c), CLIENT_BW(c));
-	wlr_scene_rect_set_size(c->border[0], c->geom.width, CLIENT_BW(c));
-	wlr_scene_rect_set_size(c->border[1], c->geom.width, CLIENT_BW(c));
-	wlr_scene_rect_set_size(c->border[2], CLIENT_BW(c), c->geom.height - 2 * CLIENT_BW(c));
-	wlr_scene_rect_set_size(c->border[3], CLIENT_BW(c), c->geom.height - 2 * CLIENT_BW(c));
-	wlr_scene_node_set_position(&c->border[1]->node, 0, c->geom.height - CLIENT_BW(c));
-	wlr_scene_node_set_position(&c->border[2]->node, 0, CLIENT_BW(c));
-	wlr_scene_node_set_position(&c->border[3]->node, c->geom.width - CLIENT_BW(c), CLIENT_BW(c));
+	wlr_scene_rect_set_size(client_border_n(c,0), c->geom.width, CLIENT_BW(c));
+	wlr_scene_rect_set_size(client_border_n(c,1), c->geom.width, CLIENT_BW(c));
+	wlr_scene_rect_set_size(client_border_n(c,2), CLIENT_BW(c), c->geom.height - 2 * CLIENT_BW(c));
+	wlr_scene_rect_set_size(client_border_n(c,3), CLIENT_BW(c), c->geom.height - 2 * CLIENT_BW(c));
+	wlr_scene_node_set_position(&client_border_n(c,1)->node, 0, c->geom.height - CLIENT_BW(c));
+	wlr_scene_node_set_position(&client_border_n(c,2)->node, 0, CLIENT_BW(c));
+	wlr_scene_node_set_position(&client_border_n(c,3)->node, c->geom.width - CLIENT_BW(c), CLIENT_BW(c));
 
 	/* wlroots makes this a no-op if size hasn't changed */
 	c->resize = client_set_size(c, c->geom.width - 2 * CLIENT_BW(c),

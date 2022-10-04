@@ -58,6 +58,28 @@ logout_client(Client *c){
   scm_hashq_remove_x(INNER_CLIENTS_HASH_TABLE, scm_pointer_address(scm_from_pointer(c ,NULL)));
   free(c);
 }
+static inline struct wlr_scene_rect *
+client_border_n(Client *c, int n)
+{
+  /* return c->border[n]; */
+  return (UNWRAP_WLR_SCENE_RECT(scm_list_ref(scm_slot_ref(WRAP_CLIENT(c), scm_from_utf8_symbol("borders")),scm_from_int(n))));
+}
+
+#define CLIENT_SET_BORDER_COLOR(c,color) for (i = 0; i < 4; i++) {wlr_scene_rect_set_color(client_border_n(c,i), color);};
+
+void
+client_init_border(Client *c)
+{
+  PRINT_FUNCTION;
+  SCM list =scm_make_list(scm_from_int(0), SCM_UNSPECIFIED);
+  for (int i = 0; i < 4; i++) {
+    struct wlr_scene_rect *rect= wlr_scene_rect_create(CLIENT_SCENE(c), 0, 0, GWWM_BORDERCOLOR());
+    rect->node.data = c;
+    wlr_scene_rect_set_color(rect, GWWM_BORDERCOLOR());
+    list=scm_cons(WRAP_WLR_SCENE_RECT(rect), list);
+  }
+  scm_slot_set_x(WRAP_CLIENT(c), scm_from_utf8_symbol("borders"), list);
+}
 
 static inline int
 client_is_x11(Client *c)
