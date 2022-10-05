@@ -490,6 +490,15 @@ applybounds(Client *c, struct wlr_box *bbox)
 		c->geom.y = bbox->y;
 }
 
+SCM_DEFINE(gwwm_applybounds ,"%applybounds",2,0,0,(SCM c,SCM bbox),"")
+#define FUNC_NAME s_gwwm_applybounds
+{
+  GWWM_ASSERT_CLIENT_OR_FALSE(c ,1);
+  applybounds(UNWRAP_CLIENT(c),UNWRAP_WLR_BOX(bbox));
+  return SCM_UNSPECIFIED;
+}
+#undef FUNC_NAME
+
 void
 applyexclusive(struct wlr_box *usable_area,
 		uint32_t anchor, int32_t exclusive,
