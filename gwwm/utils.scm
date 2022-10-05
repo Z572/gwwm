@@ -6,9 +6,16 @@
   #:export (->symbol
             ->string
             getenv*
-            get-xdg-config-home)
+            get-xdg-config-home
+            string-split-length)
   #:export-syntax (save-environment-excursion
                    with-env))
+
+(define* (string-split-length s length)
+  (let loop ((s s))
+    (if (> (string-length s ) length)
+        (cons (string-take s length) (loop (string-drop s length)))
+        (list s))))
 
 ;;; copy from guix.
 (define-syntax-rule (save-environment-excursion body ...)
