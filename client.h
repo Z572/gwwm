@@ -14,7 +14,7 @@
                                   FROM_P(o)))
 
 #define WRAP_CLIENT(o) find_client(o)
-#define UNWRAP_CLIENT(o) (Client *)(TO_P(scm_call_1(REFP("gwwm client",".data"),o)))
+#define UNWRAP_CLIENT(o) unwrap_client_1(o)
 
 #define INNER_CLIENTS_HASH_TABLE REFP("gwwm client", "%clients")
 #define CLIENT_IS_FULLSCREEN(c) scm_to_bool(REF_CALL_1("gwwm client" ,"client-fullscreen?",WRAP_CLIENT(c)))
@@ -40,6 +40,16 @@ find_client(Client *c) {
   return scm_hashq_ref(INNER_CLIENTS_HASH_TABLE, (scm_pointer_address(scm_from_pointer(c ,NULL))) ,NULL);
 }
 
+static inline Client* unwrap_client_1(SCM o)
+{
+  SCM a=scm_call_1(REFP("gwwm client",".data"),o);
+  if (scm_is_false(a)) {
+    scm_error(scm_misc_error_key,"unwrap-client","client is delated" ,SCM_EOL,SCM_EOL);
+    return NULL;
+  }
+  return (TO_P(a));
+}
+
 static inline void
 register_client(Client *c) {
   scm_hashq_set_x(INNER_CLIENTS_HASH_TABLE, (scm_pointer_address(scm_from_pointer(c ,NULL))),MAKE_CLIENT(c));
@@ -55,6 +65,7 @@ register_x_client(Client *c) {
 
 static inline void
 logout_client(Client *c){
+  scm_slot_set_x(WRAP_CLIENT(c),scm_from_utf8_symbol("data"),SCM_BOOL_F);
   scm_hashq_remove_x(INNER_CLIENTS_HASH_TABLE, scm_pointer_address(scm_from_pointer(c ,NULL)));
   free(c);
 }
