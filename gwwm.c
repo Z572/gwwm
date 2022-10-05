@@ -858,6 +858,8 @@ SCM_DEFINE (gwwm_cleanup, "%gwwm-cleanup",0,0,0, () ,"")
 #endif
 	wl_display_destroy_clients(dpy);
 	wlr_backend_destroy(backend);
+    wlr_renderer_destroy(drw);
+	wlr_allocator_destroy(alloc);
 	wlr_xcursor_manager_destroy(cursor_mgr);
 	wlr_cursor_destroy(cursor);
 	wlr_output_layout_destroy(output_layout);
