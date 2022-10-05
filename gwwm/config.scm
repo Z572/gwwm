@@ -54,8 +54,8 @@
     #:model model
     #:options (string-join options ",")))
 
-(define gwwm-default-bordercolor (make-color 0.5 0.5 0.5 1.0))
-(define gwwm-default-focuscolor (make-color 1.0 0.0 0.0 1.0))
+(define gwwm-default-bordercolor (make-color 255/2 255/2 255/2 255))
+(define gwwm-default-focuscolor (make-color 255 0 0 255))
 (define-class <gwwm-config> ()
   (borderpx #:init-value 1 #:init-keyword #:borderpx #:accessor config-borderpx)
   (sloppyfocus? #:init-value #t #:init-keyword #:sloppyfocus? #:accessor config-sloppyfocus?)
@@ -65,7 +65,7 @@
   (cursor-normal-image #:init-value "right_ptr"
                        #:init-keyword #:cursor-normal-image
                        #:accessor config-cursor-normal-image)
-  (fullscreenbg #:init-value (make-color 0.1 0.1 0.1 1.0)
+  (fullscreenbg #:init-value (make-color 0 0 0 1)
                 #:init-keyword #:fullscreenbg
                 #:accessor config-fullscreenbg)
   (xkb-rules #:init-value (make <xkb-rules>) #:init-keyword #:xkb-rules #:accessor config-xkb-rules )

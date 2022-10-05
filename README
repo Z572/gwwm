@@ -62,7 +62,7 @@ simple example
      '("ctrl:ralt_rctrl"
        "ctrl:swapcaps_hyper"
        "shift:both_capslock")))
-   (bordercolor (make-color 1.0 1.0 1.0 0.1)))
+   (bordercolor (make-color "#ffbbeeff")))
 
 #+end_src
 
