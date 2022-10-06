@@ -14,3 +14,8 @@
   (procedure #:init-value #f
              #:init-keyword #:procedure
              #:accessor layout-procedure))
+
+(define-method (equal? (layout1 <layout>) (layout2 <layout>))
+  (and (equal? (layout-symbol layout1) (layout-symbol layout2))
+       (equal? (layout-describe layout1) (layout-describe layout2))
+       (equal? (layout-procedure layout1) (layout-procedure layout2))))
