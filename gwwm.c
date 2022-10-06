@@ -169,9 +169,15 @@ typedef struct {
   (struct wlr_output *)(UNWRAP_WLR_OUTPUT(scm_call_1(REFP("gwwm monitor","monitor-wlr-output"),  \
                                (WRAP_MONITOR(m)))))
 #define MONITOR_LAYOUTS(m) (REF_CALL_1("gwwm monitor", "monitor-layouts", (WRAP_MONITOR(m))))
+#define MONITOR_SELLT(m)                                       \
+  scm_to_int(((scm_call_1(REFP("gwwm monitor","monitor-sellt"),  \
+                               (WRAP_MONITOR(m))))))
 #define SET_MONITOR_WLR_OUTPUT(m,o)                     \
   scm_call_2(REFP("gwwm monitor","set-.wlr-output!"),   \
              (WRAP_MONITOR(m)), WRAP_WLR_OUTPUT(o))
+#define SET_MONITOR_SELLT(m,o)                     \
+  scm_call_2(REFP("gwwm monitor","set-.monitor-sellt!"),   \
+             (WRAP_MONITOR(m)), scm_from_int(o))
 struct Monitor {
 	struct wl_list link;
   //	struct wlr_output *wlr_output;
@@ -183,7 +189,7 @@ struct Monitor {
 	struct wl_list layers[4]; /* LayerSurface::link */
 	/* const Layout *lt[2]; */
 	unsigned int seltags;
-	unsigned int sellt;
+	/* unsigned int sellt; */
 	unsigned int tagset[2];
 	double mfact;
 	int nmaster;
@@ -584,11 +590,6 @@ applyrules(Client *c)
 	}
 	wlr_scene_node_reparent(CLIENT_SCENE(c), layers[CLIENT_IS_FLOATING(c) ? LyrFloat : LyrTile]);
 	setmon(c, mon, newtags);
-}
-
-SCM_DEFINE(gwwm_monitor_sellt,"%monitor-sellt",1,0,0,(SCM m),"") {
-  PRINT_FUNCTION
-  return (scm_from_unsigned_integer((UNWRAP_MONITOR(m))->sellt));
 }
 
 void
@@ -2861,9 +2862,8 @@ zoom(const Arg *arg)
         (LAYOUT_PROCEDURE
          (scm_list_ref
           (MONITOR_LAYOUTS(current_monitor()),
-           scm_from_unsigned_integer
-           ((current_monitor())
-            ->sellt))))
+           (((scm_call_1(REFP("gwwm monitor","monitor-sellt"),  \
+                               (WRAP_MONITOR(current_monitor())))))))))
         || (CLIENT_IS_FLOATING(sel)))
 		return;
 

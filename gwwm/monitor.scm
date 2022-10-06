@@ -27,7 +27,6 @@
 (define (monitor-list)
   "return all monitors."
   (hash-map->list (lambda (_ b) b) %monitors))
-(define (monitor-sellt m) ((@@ (gwwm) %monitor-sellt) m))
 (define-once %current-monitor #f)
 (define (get-current-monitor)
   %current-monitor)
@@ -80,7 +79,10 @@
               #:setter set-.wlr-output!)
   (layouts #:init-value (list)
            #:accessor monitor-layouts
-           #:setter set-.monitor-layouts))
+           #:setter set-.monitor-layouts)
+  (sellt #:init-value 0
+         #:accessor monitor-sellt
+         #:setter set-.monitor-sellt!))
 
 (define (monitor-window-area m)
   ((@@ (gwwm) monitor-window-area) m))
