@@ -14,6 +14,7 @@
             focusclient
             focustop
             gwwm-quit
+            setlayout
             arrange))
 
 (define (arrange m)
@@ -30,6 +31,12 @@
 (define* (togglefullscreen #:optional (client (current-client)))
   (when client
     ((@@ (gwwm) %setfullscreen) client (not (client-fullscreen? client)))))
+
+(define* (setlayout layout #:optional (m (current-monitor)))
+  (unless (equal? (list-ref (monitor-layouts m) (monitor-sellt m)) layout)
+    (set! (monitor-sellt m) (logxor (monitor-sellt m)))
+    (list-set! (monitor-layouts m) (monitor-sellt m) layout)
+    (arrange m)))
 
 (define (togglefloating)
   ((@@ (gwwm) togglefloating)))
