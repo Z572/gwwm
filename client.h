@@ -35,9 +35,13 @@
                                        (WRAP_CLIENT(c)),                \
                                        scm_from_unsigned_integer(b)))
 #define CLIENT_SCENE_SURFACE(c) c->scene_surface
+SCM gwwm_client_type(SCM c);
 static inline SCM
-find_client(Client *c) {
-  return scm_hashq_ref(INNER_CLIENTS_HASH_TABLE, (scm_pointer_address(scm_from_pointer(c ,NULL))) ,NULL);
+find_client(void *c) {
+  return scm_hashq_ref(INNER_CLIENTS_HASH_TABLE, (scm_pointer_address(scm_from_pointer(c ,NULL))) ,
+                       scm_hashq_ref(REFP("gwwm client", "%layer-clients"),
+                                     (scm_pointer_address(scm_from_pointer(c ,NULL)))
+                                     ,SCM_BOOL_F));
 }
 
 static inline Client* unwrap_client_1(SCM o)
@@ -51,23 +55,26 @@ static inline Client* unwrap_client_1(SCM o)
 }
 
 static inline void
-register_client(Client *c) {
-  scm_hashq_set_x(INNER_CLIENTS_HASH_TABLE, (scm_pointer_address(scm_from_pointer(c ,NULL))),MAKE_CLIENT(c));
+register_client(void *c, char *type) {
+  scm_hashq_set_x((type=="<gwwm-layer-client>"
+                   ? REFP("gwwm client", "%layer-clients")
+                   : INNER_CLIENTS_HASH_TABLE),
+                  (scm_pointer_address(scm_from_pointer(c ,NULL))),
+                  (scm_call_3(REF("oop goops","make"),
+                              REF("gwwm client",type),
+                              scm_from_utf8_keyword("data"),
+                              FROM_P(c))));
 }
 
 static inline void
-register_x_client(Client *c) {
-  scm_hashq_set_x(INNER_CLIENTS_HASH_TABLE, (scm_pointer_address(scm_from_pointer(c ,NULL))),(scm_call_3(REF("oop goops","make"), \
-                                  REF("gwwm client","<gwwm-x-client>"), \
-                                  scm_from_utf8_keyword("data"), \
-                                  FROM_P(c))));
-}
-
-static inline void
-logout_client(Client *c){
-  scm_slot_set_x(WRAP_CLIENT(c),scm_from_utf8_symbol("data"),SCM_BOOL_F);
-  scm_hashq_remove_x(INNER_CLIENTS_HASH_TABLE, scm_pointer_address(scm_from_pointer(c ,NULL)));
-  free(c);
+logout_client(void *c){
+  scm_call_1(REFP("gwwm client","logout-client") ,WRAP_CLIENT(c));
+  /* scm_hashq_remove_x(((scm_to_utf8_string(gwwm_client_type(WRAP_CLIENT(c)))== "LayerShell") */
+  /*                     ? REFP("gwwm client", "%layer-clients") */
+  /*                     : INNER_CLIENTS_HASH_TABLE), */
+  /*                    scm_pointer_address(scm_from_pointer(c ,NULL))); */
+    /* scm_slot_set_x(WRAP_CLIENT(c),scm_from_utf8_symbol("data"),SCM_BOOL_F); */
+    free(c);
 }
 static inline struct wlr_scene_rect *
 client_border_n(Client *c, int n)

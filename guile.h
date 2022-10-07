@@ -102,7 +102,7 @@
 #define send_log(v,b,...) _send_log(#v,b, ##__VA_ARGS__, "/0")
 #define PRINT_FUNCTION send_log(DEBUG,__FUNCTION__ );
 #define GWWM_ASSERT_CLIENT_OR_FALSE(client,position)         \
-  SCM_ASSERT((SCM_IS_A_P(client,REF("gwwm client","<gwwm-client>")) || \
+  SCM_ASSERT((SCM_IS_A_P(client,REFP("gwwm client","<gwwm-base-client>")) || \
               scm_is_false(client))                                    \
              ,client,position, FUNC_NAME)
 void

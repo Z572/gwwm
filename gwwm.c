@@ -150,7 +150,7 @@ typedef struct {
 	unsigned int type; /* LayerShell */
 	struct wlr_box geom;
 	Monitor *mon;
-	struct wlr_scene_node *scene;
+	/* struct wlr_scene_node *scene; */
 	struct wl_list link;
 	int mapped;
 	struct wlr_layer_surface_v1 *layer_surface;
@@ -710,7 +710,7 @@ arrangelayer(Monitor *m, struct wl_list *list, struct wlr_box *usable_area, int 
 			applyexclusive(usable_area, state->anchor, state->exclusive_zone,
 					state->margin.top, state->margin.right,
 					state->margin.bottom, state->margin.left);
-		wlr_scene_node_set_position(layersurface->scene, box.x, box.y);
+		wlr_scene_node_set_position(CLIENT_SCENE(layersurface), box.x, box.y);
 		wlr_layer_surface_v1_configure(wlr_layer_surface, box.width, box.height);
 	}
 }
@@ -932,8 +932,8 @@ commitlayersurfacenotify(struct wl_listener *listener, void *data)
 	if (!layersurface->mon)
 		return;
 
-	if (layers[wlr_layer_surface->current.layer] != layersurface->scene) {
-		wlr_scene_node_reparent(layersurface->scene,
+	if (layers[wlr_layer_surface->current.layer] != CLIENT_SCENE(layersurface)) {
+		wlr_scene_node_reparent(CLIENT_SCENE(layersurface),
 				layers[wlr_layer_surface->current.layer]);
 		wl_list_remove(&layersurface->link);
 		wl_list_insert(&layersurface->mon->layers[wlr_layer_surface->current.layer],
@@ -1029,6 +1029,7 @@ createlayersurface(struct wl_listener *listener, void *data)
 	}
 	layersurface = ecalloc(1, sizeof(LayerSurface));
 	layersurface->type = LayerShell;
+    register_client(layersurface,"<gwwm-layer-client>");
 	LISTEN(&wlr_layer_surface->surface->events.commit,
 			&layersurface->surface_commit, commitlayersurfacenotify);
 	LISTEN(&wlr_layer_surface->events.destroy, &layersurface->destroy,
@@ -1042,10 +1043,10 @@ createlayersurface(struct wl_listener *listener, void *data)
 	layersurface->mon = wlr_layer_surface->output->data;
 	wlr_layer_surface->data = layersurface;
 
-	layersurface->scene = wlr_layer_surface->surface->data =
+	CLIENT_SET_SCENE(layersurface,(wlr_layer_surface->surface->data =
 			wlr_scene_subsurface_tree_create(layers[wlr_layer_surface->pending.layer],
-			wlr_layer_surface->surface);
-	layersurface->scene->data = layersurface;
+			wlr_layer_surface->surface)));
+	CLIENT_SCENE(layersurface)->data = layersurface;
 
 	wl_list_insert(&layersurface->mon->layers[wlr_layer_surface->pending.layer],
 			&layersurface->link);
@@ -1166,7 +1167,7 @@ createnotify(struct wl_listener *listener, void *data)
 
 	/* Allocate a Client for this surface */
 	c = xdg_surface->data = ecalloc(1, sizeof(*c));
-    register_client(c);
+    register_client(c,"<gwwm-client>");
 	c->surface.xdg = xdg_surface;
     CLIENT_SET_BW(c,GWWM_BORDERPX());
 	LISTEN(&xdg_surface->events.map, &c->map, mapnotify);
@@ -1255,10 +1256,10 @@ destroylayersurfacenotify(struct wl_listener *listener, void *data)
 	wl_list_remove(&layersurface->map.link);
 	wl_list_remove(&layersurface->unmap.link);
 	wl_list_remove(&layersurface->surface_commit.link);
-	wlr_scene_node_destroy(layersurface->scene);
+	wlr_scene_node_destroy(CLIENT_SCENE(layersurface));
 	if (layersurface->mon)
 		arrangelayers(layersurface->mon);
-	free(layersurface);
+    logout_client(layersurface);
 }
 
 void
@@ -2655,7 +2656,7 @@ unmaplayersurfacenotify(struct wl_listener *listener, void *data)
 	LayerSurface *layersurface = wl_container_of(listener, layersurface, unmap);
 
 	layersurface->layer_surface->mapped = (layersurface->mapped = 0);
-	wlr_scene_node_set_enabled(layersurface->scene, 0);
+	wlr_scene_node_set_enabled(CLIENT_SCENE(layersurface), 0);
 	if (layersurface->layer_surface->surface == exclusive_focus)
 		exclusive_focus = NULL;
 	if (layersurface->layer_surface->surface ==
@@ -2935,7 +2936,7 @@ createnotifyx11(struct wl_listener *listener, void *data)
 
 	/* Allocate a Client for this surface */
 	c = xwayland_surface->data = ecalloc(1, sizeof(*c));
-    register_x_client(c);
+    register_client(c,"<gwwm-x-client>");
     c->surface.xwayland = xwayland_surface;
 	c->type = xwayland_surface->override_redirect ? X11Unmanaged : X11Managed;
 	CLIENT_SET_BW(c,GWWM_BORDERPX());

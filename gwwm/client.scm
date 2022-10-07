@@ -3,6 +3,7 @@
   #:use-module (ice-9 control)
   #:use-module (wlroots xwayland)
   #:use-module (wlroots util box)
+  #:use-module ((system foreign) #:select (pointer-address))
   #:use-module (wlroots types xdg-shell)
   #:use-module (gwwm i18n)
   #:use-module (srfi srfi-17)
@@ -43,7 +44,8 @@
             client-set-border-width!
             client-get-size-hints
             <gwwm-client>
-            <gwwm-x-client>))
+            <gwwm-x-client>
+            <gwwm-layer-client>))
 
 (define (visibleon c m)
   ((@@ (gwwm) visibleon) c m))
@@ -56,9 +58,12 @@
 (define (client-is-float-type? client)
   ((@@ (gwwm) client-is-float-type?) client))
 
-
-(define-class <gwwm-client> ()
+(define-class <gwwm-base-client> ()
   (data #:init-keyword #:data #:accessor .data)
+  (scene #:init-value #f
+         #:accessor client-scene
+         #:setter client-set-scene!))
+(define-class <gwwm-client> (<gwwm-base-client>)
   (type #:allocation #:virtual
         #:slot-ref (lambda (c)
                      (if (client-alive? c)
@@ -85,11 +90,11 @@
                           "*deaded*"))
          #:slot-set! (lambda _ #t)
          #:getter client-title)
-  (scene #:init-value #f
-         #:accessor client-scene
-         #:setter client-set-scene!)
+
   (borders #:init-value (list))
   (border-width #:init-value 1 #:accessor client-border-width))
+
+(define-class <gwwm-layer-client> (<gwwm-base-client>))
 
 (define-class <gwwm-x-client> (<gwwm-client>))
 
@@ -107,6 +112,9 @@
              *unspecified*)))
 
 (define-once %clients
+  (make-hash-table))
+
+(define-once %layer-clients
   (make-hash-table))
 
 (define-method (client-do-set-fullscreen (c <gwwm-client>))
@@ -142,6 +150,12 @@
    (client-xwayland-surface c)))
 (define (client-xwayland-surface client)
   ((@@ (gwwm) client-xwayland-surface) client))
+
+(define-method (logout-client (c <gwwm-client>))
+  (hashq-remove! %clients (pointer-address(.data c))))
+(define-method (logout-client (c <gwwm-layer-client>))
+  (hashq-remove! %layer-clients (pointer-address(.data c)))
+  (set! (.data c) #f))
 
 (define-method (client-send-close (c <gwwm-client>))
   (wlr-xdg-toplevel-send-close (client-xdg-surface c)))
