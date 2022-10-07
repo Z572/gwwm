@@ -34,6 +34,12 @@
 #define CLIENT_SET_BW(c,b) (REF_CALL_2("gwwm client","client-set-border-width!", \
                                        (WRAP_CLIENT(c)),                \
                                        scm_from_unsigned_integer(b)))
+
+#define CLIENT_TYPE(c) (scm_to_utf8_string(REF_CALL_1("gwwm client" ,"client-type",WRAP_CLIENT(c))))
+#define CLIENT_SET_TYPE(c,b) (scm_call_2(REFP("gwwm client","client-set-type!"), \
+                                       (WRAP_CLIENT(c)),                \
+                                       scm_from_utf8_string(b)))
+
 #define CLIENT_SCENE_SURFACE(c) c->scene_surface
 SCM gwwm_client_type(SCM c);
 static inline SCM
@@ -435,32 +441,6 @@ SCM_DEFINE (gwwm_client_get_parent, "client-get-parent" ,1,0,0,
     return WRAP_CLIENT(p);
   };
   return SCM_BOOL_F;
-}
-#undef FUNC_NAME
-
-SCM_DEFINE (gwwm_client_type, "client-type" , 1,0,0,
-            (SCM c), "")
-#define FUNC_NAME s_gwwm_client_type
-{
-  GWWM_ASSERT_CLIENT_OR_FALSE(c ,1);
-  Client *cl = UNWRAP_CLIENT(c);
-  char* t;
-  switch (cl->type)
-    {
-    case XDGShell:
-      t="XDGShell";
-      break;
-    case LayerShell:
-      t="LayerShell";
-      break;
-    case X11Managed:
-      t="X11Managed";
-      break;
-    case X11Unmanaged:
-      t="X11Unmanaged";
-      break;
-    }
-  return scm_from_utf8_string(t);
 }
 #undef FUNC_NAME
 

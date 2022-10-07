@@ -49,8 +49,6 @@
 
 (define (visibleon c m)
   ((@@ (gwwm) visibleon) c m))
-(define (client-type client)
-  ((@@ (gwwm) client-type) client))
 
 (define (client-get-size-hints c)
   ((@@ (gwwm) client-get-size-hints) c))
@@ -60,16 +58,13 @@
 
 (define-class <gwwm-base-client> ()
   (data #:init-keyword #:data #:accessor .data)
+  (type #:init-keyword #:type #:getter client-type
+        #:setter client-set-type!)
   (scene #:init-value #f
          #:accessor client-scene
          #:setter client-set-scene!))
+
 (define-class <gwwm-client> (<gwwm-base-client>)
-  (type #:allocation #:virtual
-        #:slot-ref (lambda (c)
-                     (if (client-alive? c)
-                         (client-type c)
-                         "*deaded*"))
-        #:slot-set! (lambda _ #t))
   (appid #:allocation #:virtual
          #:slot-ref (lambda (c)
                       (wlr-xdg-toplevel-appid
