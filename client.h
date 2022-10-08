@@ -44,10 +44,10 @@
 SCM gwwm_client_type(SCM c);
 static inline SCM
 find_client(void *c) {
-  return scm_hashq_ref(INNER_CLIENTS_HASH_TABLE, (scm_pointer_address(scm_from_pointer(c ,NULL))) ,
+  SCM p =(scm_pointer_address(scm_from_pointer(c ,NULL)));
+  return scm_hashq_ref(INNER_CLIENTS_HASH_TABLE, p ,
                        scm_hashq_ref(REFP("gwwm client", "%layer-clients"),
-                                     (scm_pointer_address(scm_from_pointer(c ,NULL)))
-                                     ,SCM_BOOL_F));
+                                     p ,SCM_BOOL_F));
 }
 
 static inline Client* unwrap_client_1(SCM o)
@@ -57,7 +57,7 @@ static inline Client* unwrap_client_1(SCM o)
     scm_error(scm_misc_error_key,"unwrap-client","client is delated" ,SCM_EOL,SCM_EOL);
     return NULL;
   }
-  return (TO_P(a));
+  return (TO_P(MAKE_P(a)));
 }
 
 static inline void
@@ -65,11 +65,11 @@ register_client(void *c, char *type) {
   scm_hashq_set_x((type=="<gwwm-layer-client>"
                    ? REFP("gwwm client", "%layer-clients")
                    : INNER_CLIENTS_HASH_TABLE),
-                  (scm_pointer_address(scm_from_pointer(c ,NULL))),
+                  (scm_pointer_address(FROM_P(c))),
                   (scm_call_3(REF("oop goops","make"),
                               REF("gwwm client",type),
                               scm_from_utf8_keyword("data"),
-                              FROM_P(c))));
+                              scm_pointer_address(FROM_P(c)))));
 }
 
 static inline void

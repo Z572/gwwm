@@ -57,7 +57,9 @@
   ((@@ (gwwm) client-is-float-type?) client))
 
 (define-class <gwwm-base-client> ()
-  (data #:init-keyword #:data #:accessor .data)
+  (data #:init-keyword #:data
+        #:accessor .data
+        #:class <hidden-slot>)
   (type #:init-keyword #:type #:getter client-type
         #:setter client-set-type!)
   (scene #:init-value #f
@@ -147,10 +149,11 @@
   ((@@ (gwwm) client-xwayland-surface) client))
 
 (define-method (logout-client (c <gwwm-client>))
-  (hashq-remove! %clients (pointer-address(.data c))))
+  (hashq-remove! %clients (.data c))
+  (set! (.data c) 0))
 (define-method (logout-client (c <gwwm-layer-client>))
-  (hashq-remove! %layer-clients (pointer-address(.data c)))
-  (set! (.data c) #f))
+  (hashq-remove! %layer-clients (.data c))
+  (set! (.data c) 0))
 
 (define-method (client-send-close (c <gwwm-client>))
   (wlr-xdg-toplevel-send-close (client-xdg-surface c)))
