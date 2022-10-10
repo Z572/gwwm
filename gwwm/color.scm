@@ -5,68 +5,18 @@
   #:use-module (ice-9 match)
   #:use-module (ice-9 format)
   #:use-module (oop goops)
+  #:use-module (util572 color)
   #:use-module (system foreign)
   #:export (make-color color->pointer))
 
-(define-class <color> ())
-(define-class <rgba-color> (<color>)
-  (r #:init-keyword #:r #:accessor color-r)
-  (g #:init-keyword #:g #:accessor color-g)
-  (b #:init-keyword #:b #:accessor color-b)
-  (a #:init-keyword #:a #:accessor color-a))
-
-(define-method (make-color r g b)
-  (make <rgba-color> #:r r #:g g #:b b #:a 0))
-(define-method (make-color r g b a)
-  (make <rgba-color> #:r r #:g g #:b b #:a a))
-
-(define-method (make-color (color <integer>))
-  (make-color (string-append "#" (number->string color 16))))
-
-(define-method (make-color (color <string>))
-  (define (color-error o)
-    (error (format #f (G_ "must be like '#rrggbbaa' or '#rgba', but get '~S'") o)))
-  (if (string-prefix? "#" color)
-      (let ((s (substring color 1)))
-        (case (string-length s)
-          ((8) (apply make-color
-                      (map (cut string->number <> 16)
-                           (string-split-length s 2))))
-          ((6) (make-color (string-append color "00")))
-          ((4) (apply make-color
-                      (map (lambda (o)
-                             (string->number (string-append o o) 16))
-                           (string-split-length s 1))))
-          ((3) (make-color (string-append color "0")))
-          (else (color-error color))))
-      (color-error color)))
-
+(define make-color make-rgba-color)
 (define-method (color->pointer (color <rgba-color>))
   (make-c-struct
    (list float float float float)
    (map (cut / <> 255)
-        (list
-         (color-r color)
-         (color-g color)
-         (color-b color)
-         (color-a color)))))
+        (color->list color))))
 
 (define-method (color->pointer (color <integer>))
   (color->pointer (make-color color)))
 (define-method (color->pointer (color <string>))
   (color->pointer (make-color color)))
-
-(define-method (write (color <rgba-color>) port)
-  (format port "<~a ~x r: ~a g: ~a b: ~a a: ~a>"
-          (class-name (class-of color))
-          (object-address color)
-          (color-r color)
-          (color-g color)
-          (color-b color)
-          (color-a color)))
-
-(define-method (equal? (color <rgba-color>) (color2 <rgba-color>))
-  (and (equal? (color-r color) (color-r color2))
-       (equal? (color-g color) (color-g color2))
-       (equal? (color-g color) (color-g color2))
-       (equal? (color-a color) (color-a color2))))

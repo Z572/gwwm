@@ -47,6 +47,7 @@ AC_SUBST([XCB_LIBDIR])
 GUILE_MODULE_REQUIRED([bytestructures guile])
 GUILE_MODULE_REQUIRED([wayland])
 GUILE_MODULE_REQUIRED([wlroots])
+GUILE_MODULE_REQUIRED([util572 color])
 
 AC_SUBST([guilemoduledir])
 AC_SUBST([guileobjectdir])
