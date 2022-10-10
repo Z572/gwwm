@@ -89,7 +89,7 @@ client_border_n(Client *c, int n)
   return (UNWRAP_WLR_SCENE_RECT(scm_list_ref(scm_slot_ref(WRAP_CLIENT(c), scm_from_utf8_symbol("borders")),scm_from_int(n))));
 }
 
-#define CLIENT_SET_BORDER_COLOR(c,color) for (i = 0; i < 4; i++) {wlr_scene_rect_set_color(client_border_n(c,i), color);};
+#define CLIENT_SET_BORDER_COLOR(c,color) scm_call_2(REFP("gwwm client" ,"client-set-border-color"),WRAP_CLIENT(c),color)
 
 void
 client_init_border(Client *c)

@@ -1,6 +1,8 @@
 (define-module (gwwm client)
   #:use-module (srfi srfi-1)
+  #:use-module (wlroots types scene)
   #:use-module (ice-9 control)
+  #:use-module (util572 color)
   #:use-module (wlroots xwayland)
   #:use-module (wlroots util box)
   #:use-module ((system foreign) #:select (pointer-address))
@@ -47,6 +49,8 @@
             <gwwm-x-client>
             <gwwm-layer-client>))
 
+(define-method (client-set-border-color c (color <rgba-color>))
+  #t)
 (define (visibleon c m)
   ((@@ (gwwm) visibleon) c m))
 
@@ -91,6 +95,9 @@
   (borders #:init-value (list))
   (border-width #:init-value 1 #:accessor client-border-width))
 
+(define-method (client-set-border-color (c <gwwm-client>) (color <rgba-color>))
+  (for-each (lambda (b) (wlr-scene-rect-set-color b color))
+            (slot-ref c 'borders)))
 (define-class <gwwm-layer-client> (<gwwm-base-client>))
 
 (define-class <gwwm-x-client> (<gwwm-client>))
