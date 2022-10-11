@@ -258,7 +258,6 @@ static void keypress(struct wl_listener *listener, void *data);
 static void keypressmod(struct wl_listener *listener, void *data);
 static void maplayersurfacenotify(struct wl_listener *listener, void *data);
 static void mapnotify(struct wl_listener *listener, void *data);
-static void monocle(Monitor *m);
 static void motionabsolute(struct wl_listener *listener, void *data);
 static void motionnotify(uint32_t time);
 static void motionrelative(struct wl_listener *listener, void *data);
@@ -1700,20 +1699,6 @@ mapnotify(struct wl_listener *listener, void *data)
 		setfullscreen(c, 1);
 
 	c->mon->un_map = 1;
-}
-
-void
-monocle(Monitor *m)
-{
-  PRINT_FUNCTION
-	Client *c;
-
-	wl_list_for_each(c, &clients, link) {
-		if (!VISIBLEON(c, m) || CLIENT_IS_FLOATING(c) || CLIENT_IS_FULLSCREEN(c))
-			continue;
-		resize(c, m->w, 0);
-	}
-	focusclient(focustop(m), 1);
 }
 
 void
