@@ -10,7 +10,7 @@ libgwwm_la_SOURCES=%D%/gwwm.c %D%/client.h %D%/config.h %D%/util.h %D%/util.c %D
 nodist_libgwwm_la_SOURCES = $(protocols_h)
 libgwwm_la_CFLAGS= $(WAYLAND_SERVER_CFLAGS) $(WLROOTS_CFLAGS) $(GUILE_CFLAGS) \
 			 $(XCB_CFLAGS) $(XKBCOMMON_CFLAGS) $(LIBINPUT_CFLAGS)       \
-			-I. -DWLR_USE_UNSTABLE # -DXWAYLAND
+			-I. -DWLR_USE_UNSTABLE -DXWAYLAND
 libgwwm_la_LIBADD= $(WLROOTS_LIBS) $(WAYLAND_SERVER_LIBS) $(XKBCOMMON_LIBS) \
 			$(GUILE_LIBS) $(LIBINPUT_LIBS) $(XCB_LIBS)
 snarfcppopts =  $(INCLUDES) $(CPPFLAGS) $(libgwwm_la_CFLAGS)
