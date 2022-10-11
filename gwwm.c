@@ -304,7 +304,6 @@ static void virtualkeyboard(struct wl_listener *listener, void *data);
 static Monitor *xytomon(double x, double y);
 static struct wlr_scene_node *xytonode(double x, double y, struct wlr_surface **psurface,
 		Client **pc, LayerSurface **pl, double *nx, double *ny);
-static void zoom(const Arg *arg);
 
 /* variables */
 static const char broken[] = "broken";
@@ -2852,8 +2851,10 @@ xytonode(double x, double y, struct wlr_surface **psurface,
 	return node;
 }
 
-void
-zoom(const Arg *arg)
+SCM_DEFINE (gwwm_zoom, "zoom",0, 0,0,
+            () ,
+            "c")
+#define FUNC_NAME s_gwwm_zoom
 {
   PRINT_FUNCTION
 	Client *c, *sel = current_client();
@@ -2865,7 +2866,7 @@ zoom(const Arg *arg)
            (((scm_call_1(REFP("gwwm monitor","monitor-sellt"),  \
                                (WRAP_MONITOR(current_monitor())))))))))
         || (CLIENT_IS_FLOATING(sel)))
-		return;
+		return SCM_UNSPECIFIED;
 
 	/* Search for the first tiled window that is not sel, marking sel as
 	 * NULL if we pass it along the way */
@@ -2878,7 +2879,7 @@ zoom(const Arg *arg)
 
 	/* Return if no other tiled window was found */
 	if (&c->link == &clients)
-		return;
+		return  SCM_UNSPECIFIED;
 
 	/* If we passed sel, move c to the front; otherwise, move sel to the
 	 * front */
@@ -2889,14 +2890,6 @@ zoom(const Arg *arg)
 
 	focusclient(sel, 1);
 	arrange(current_monitor());
-}
-
-SCM_DEFINE (gwwm_zoom, "zoom",0, 0,0,
-            () ,
-            "c")
-#define FUNC_NAME s_gwwm_zoom
-{
-  zoom(NULL);
   return SCM_UNSPECIFIED;
 }
 #undef FUNC_NAME
