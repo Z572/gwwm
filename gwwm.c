@@ -180,13 +180,17 @@ typedef struct {
 #define SET_MONITOR_WINDOW_AREA(m,o)                     \
   scm_call_2(REFP("gwwm monitor","set-.window-area!"),   \
              (WRAP_MONITOR(m)), WRAP_WLR_BOX(o))
+#define MONITOR_AREA(m)                                       \
+  ((struct wlr_box *)(UNWRAP_WLR_BOX(REF_CALL_1("gwwm monitor","monitor-area",(WRAP_MONITOR(m))))))
+#define SET_MONITOR_AREA(m,o)                     \
+  scm_call_2(REFP("gwwm monitor","set-.area!"),   \
+             (WRAP_MONITOR(m)), WRAP_WLR_BOX(o))
 struct Monitor {
 	struct wl_list link;
   //	struct wlr_output *wlr_output;
 	struct wlr_scene_output *scene_output;
 	struct wl_listener frame;
 	struct wl_listener destroy;
-	struct wlr_box m;      /* monitor area, layout-relative */
 	struct wl_list layers[4]; /* LayerSurface::link */
 	/* const Layout *lt[2]; */
 	unsigned int seltags;
@@ -635,7 +639,7 @@ arrangelayer(Monitor *m, struct wl_list *list, struct wlr_box *usable_area, int 
 {
   PRINT_FUNCTION
 	LayerSurface *layersurface;
-	struct wlr_box full_area = m->m;
+	struct wlr_box *full_area = MONITOR_AREA(m);
 
 	wl_list_for_each(layersurface, list, link) {
 		struct wlr_layer_surface_v1 *wlr_layer_surface = layersurface->layer_surface;
@@ -653,7 +657,7 @@ arrangelayer(Monitor *m, struct wl_list *list, struct wlr_box *usable_area, int 
 		if (exclusive != (state->exclusive_zone > 0))
 			continue;
 
-		bounds = state->exclusive_zone == -1 ? full_area : *usable_area;
+		bounds = state->exclusive_zone == -1 ? *full_area : *usable_area;
 
 		/* Horizontal axis */
 		if ((state->anchor & both_horiz) && box.width == 0) {
@@ -714,7 +718,7 @@ arrangelayers(Monitor *m)
 {
   PRINT_FUNCTION
 	int i;
-	struct wlr_box usable_area = m->m;
+	struct wlr_box usable_area = *MONITOR_AREA(m);
 	uint32_t layers_above_shell[] = {
 		ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY,
 		ZWLR_LAYER_SHELL_V1_LAYER_TOP,
@@ -907,7 +911,7 @@ closemon(Monitor *m)
 	Client *c;
 
 	wl_list_for_each(c, &clients, link) {
-		if (CLIENT_IS_FLOATING(c) && c->geom.x > m->m.width)
+      if (CLIENT_IS_FLOATING(c) && c->geom.x > (MONITOR_AREA(m))->width)
           resize(c, (struct wlr_box){.x = c->geom.x - (MONITOR_WINDOW_AREA(m))->width, .y = c->geom.y,
 				.width = c->geom.width, .height = c->geom.height}, 0);
 		if (c->mon == m)
@@ -1152,7 +1156,7 @@ createnotify(struct wl_listener *listener, void *data)
 			wlr_scene_node_reparent(xdg_surface->surface->data, layers[LyrTop]);
 		if (!l || !l->mon)
 			return;
-		box = CLIENT_TYPE(l) == "LayerShell" ? &l->mon->m : (MONITOR_WINDOW_AREA((l->mon)));
+		box = CLIENT_TYPE(l) == "LayerShell" ? MONITOR_AREA(l->mon) : (MONITOR_WINDOW_AREA((l->mon)));
 		box->x -= l->geom.x;
 		box->y -= l->geom.y;
 		wlr_xdg_popup_unconstrain_from_box(xdg_surface->popup, box);
@@ -1287,15 +1291,15 @@ dirtomon(enum wlr_direction dir)
 	if ((next = wlr_output_layout_adjacent_output
          (output_layout,
           dir, MONITOR_WLR_OUTPUT(current_monitor()),
-          (current_monitor())->m.x,
-          (current_monitor())->m.y)))
+          MONITOR_AREA((current_monitor()))->x,
+          MONITOR_AREA((current_monitor()))->y)))
 		return next->data;
 	if ((next = wlr_output_layout_farthest_output
          (output_layout,
           dir ^ (WLR_DIRECTION_LEFT|WLR_DIRECTION_RIGHT),
           MONITOR_WLR_OUTPUT(current_monitor()),
-          (current_monitor())->m.x,
-          (current_monitor())->m.y)))
+          MONITOR_AREA((current_monitor()))->x,
+          MONITOR_AREA((current_monitor()))->y)))
 		return next->data;
 	return current_monitor();
 }
@@ -2167,7 +2171,7 @@ setfullscreen(Client *c, int fullscreen)
 
 	if (fullscreen) {
 		c->prev = c->geom;
-		resize(c, c->mon->m, 0);
+		resize(c, *MONITOR_AREA(c->mon), 0);
 		/* The xdg-protocol specifies:
 		 *
 		 * If the fullscreened surface is not opaque, the compositor must make
@@ -2698,9 +2702,9 @@ updatemons(struct wl_listener *listener, void *data)
 		/* TODO: move focus if current_monitor is disabled */
 
 		/* Get the effective monitor geometry to use for surfaces */
-		m->m= *wlr_output_layout_get_box(output_layout, MONITOR_WLR_OUTPUT(m));
-        (SET_MONITOR_WINDOW_AREA(m ,&m->m));
-		wlr_scene_output_set_position(m->scene_output, m->m.x, m->m.y);
+		SET_MONITOR_AREA(m,wlr_output_layout_get_box(output_layout, MONITOR_WLR_OUTPUT(m)));
+        (SET_MONITOR_WINDOW_AREA(m ,MONITOR_AREA(m)));
+		wlr_scene_output_set_position(m->scene_output, (MONITOR_AREA(m))->x, (MONITOR_AREA(m))->y);
 		/* Calculate the effective monitor geometry to use for clients */
 		arrangelayers(m);
 		/* Don't move clients to the left output when plugging monitors */
@@ -2708,8 +2712,8 @@ updatemons(struct wl_listener *listener, void *data)
 
 		config_head->state.enabled = MONITOR_WLR_OUTPUT(m)->enabled;
 		config_head->state.mode = ((MONITOR_WLR_OUTPUT(m))->current_mode);
-		config_head->state.x = m->m.x;
-		config_head->state.y = m->m.y;
+		config_head->state.x = MONITOR_AREA(m)->x;
+		config_head->state.y = MONITOR_AREA(m)->y;
 	}
 
 	if (current_monitor() && MONITOR_WLR_OUTPUT(current_monitor())->enabled)

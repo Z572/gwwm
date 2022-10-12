@@ -19,6 +19,7 @@
             monitor-wlr-output
             monitor-layouts
             monitor-window-area
+            monitor-area
             monitor-sellt
             <gwwm-monitor>))
 
@@ -41,6 +42,8 @@
         #:slot-ref (lambda (m) (wlr-output-name (monitor-wlr-output m)))
         #:slot-set! (lambda _ #f)
         #:getter monitor-name)
+  (area #:accessor monitor-area
+        #:setter set-.area!)
   (window-area #:accessor monitor-window-area
                #:setter set-.window-area!)
   (description #:allocation #:virtual
