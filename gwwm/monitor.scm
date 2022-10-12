@@ -41,6 +41,8 @@
         #:slot-ref (lambda (m) (wlr-output-name (monitor-wlr-output m)))
         #:slot-set! (lambda _ #f)
         #:getter monitor-name)
+  (window-area #:accessor monitor-window-area
+               #:setter set-.window-area!)
   (description #:allocation #:virtual
                #:slot-ref (lambda (m) (wlr-output-description (monitor-wlr-output m)))
                #:slot-set! (lambda _ #f)
@@ -84,8 +86,6 @@
          #:accessor monitor-sellt
          #:setter set-.monitor-sellt!))
 
-(define (monitor-window-area m)
-  ((@@ (gwwm) monitor-window-area) m))
 (define-method (write (o <gwwm-monitor>) port)
   (format port "#<<gwwm-monitor ~a (~a . ~a) scale: ~a>"
           (monitor-name o)

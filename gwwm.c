@@ -175,6 +175,11 @@ typedef struct {
 #define SET_MONITOR_SELLT(m,o)                     \
   scm_call_2(REFP("gwwm monitor","set-.monitor-sellt!"),   \
              (WRAP_MONITOR(m)), scm_from_int(o))
+#define MONITOR_WINDOW_AREA(m)                                       \
+  (struct wlr_box *)(UNWRAP_WLR_BOX(REF_CALL_1("gwwm monitor","monitor-window-area",(WRAP_MONITOR(m)))))
+#define SET_MONITOR_WINDOW_AREA(m,o)                     \
+  scm_call_2(REFP("gwwm monitor","set-.window-area!"),   \
+             (WRAP_MONITOR(m)), WRAP_WLR_BOX(o))
 struct Monitor {
 	struct wl_list link;
   //	struct wlr_output *wlr_output;
@@ -182,7 +187,6 @@ struct Monitor {
 	struct wl_listener frame;
 	struct wl_listener destroy;
 	struct wlr_box m;      /* monitor area, layout-relative */
-	struct wlr_box w;      /* window area, layout-relative */
 	struct wl_list layers[4]; /* LayerSurface::link */
 	/* const Layout *lt[2]; */
 	unsigned int seltags;
@@ -401,11 +405,6 @@ SCM_DEFINE(client_geom ,"client-geom",1,0,0,(SCM c),"")
 }
 #undef FUNC_NAME
 
-SCM_DEFINE_PUBLIC(gwwm_monitor_window_area,"monitor-window-area",1,0,0,(SCM m),"")
-{
-  PRINT_FUNCTION
-  return (WRAP_WLR_BOX(&(UNWRAP_MONITOR(m))->w));
-}
 SCM_DEFINE_PUBLIC(gwwm_visibleon, "visibleon", 2, 0, 0, (SCM c, SCM m), "")
 #define FUNC_NAME s_gwwm_visibleon
 {
@@ -726,8 +725,8 @@ arrangelayers(Monitor *m)
 	for (i = 3; i >= 0; i--)
 		arrangelayer(m, &m->layers[i], &usable_area, 1);
 
-	if (memcmp(&usable_area, &m->w, sizeof(struct wlr_box))) {
-		m->w = usable_area;
+	if (memcmp(&usable_area, MONITOR_WINDOW_AREA(m), sizeof(struct wlr_box))) {
+      (SET_MONITOR_WINDOW_AREA(m, &usable_area));
 		arrange(m);
 	}
 
@@ -909,7 +908,7 @@ closemon(Monitor *m)
 
 	wl_list_for_each(c, &clients, link) {
 		if (CLIENT_IS_FLOATING(c) && c->geom.x > m->m.width)
-			resize(c, (struct wlr_box){.x = c->geom.x - m->w.width, .y = c->geom.y,
+          resize(c, (struct wlr_box){.x = c->geom.x - (MONITOR_WINDOW_AREA(m))->width, .y = c->geom.y,
 				.width = c->geom.width, .height = c->geom.height}, 0);
 		if (c->mon == m)
           setmon(c, current_monitor(), c->tags);
@@ -1144,7 +1143,7 @@ createnotify(struct wl_listener *listener, void *data)
 	Client *c;
 
 	if (xdg_surface->role == WLR_XDG_SURFACE_ROLE_POPUP) {
-		struct wlr_box box;
+		struct wlr_box *box;
 		LayerSurface *l = toplevel_from_popup(xdg_surface->popup);
 		xdg_surface->surface->data = wlr_scene_xdg_surface_create(
 				xdg_surface->popup->parent->data, xdg_surface);
@@ -1153,10 +1152,10 @@ createnotify(struct wl_listener *listener, void *data)
 			wlr_scene_node_reparent(xdg_surface->surface->data, layers[LyrTop]);
 		if (!l || !l->mon)
 			return;
-		box = CLIENT_TYPE(l) == "LayerShell" ? l->mon->m : l->mon->w;
-		box.x -= l->geom.x;
-		box.y -= l->geom.y;
-		wlr_xdg_popup_unconstrain_from_box(xdg_surface->popup, &box);
+		box = CLIENT_TYPE(l) == "LayerShell" ? &l->mon->m : (MONITOR_WINDOW_AREA((l->mon)));
+		box->x -= l->geom.x;
+		box->y -= l->geom.y;
+		wlr_xdg_popup_unconstrain_from_box(xdg_surface->popup, box);
 		return;
 	} else if (xdg_surface->role == WLR_XDG_SURFACE_ROLE_NONE)
 		return;
@@ -2045,7 +2044,7 @@ void
 resize(Client *c, struct wlr_box geo, int interact)
 {
   PRINT_FUNCTION
-	struct wlr_box *bbox = interact ? &sgeom : &c->mon->w;
+	struct wlr_box *bbox = interact ? &sgeom : (MONITOR_WINDOW_AREA(c->mon));
 	c->geom = geo;
 	applybounds(c, bbox);
 
@@ -2536,20 +2535,20 @@ tile(Monitor *m)
 		return;
 
 	if (n > m->nmaster)
-		mw = m->nmaster ? m->w.width * m->mfact : 0;
+      mw = m->nmaster ? (MONITOR_WINDOW_AREA(m))->width * m->mfact : 0;
 	else
-		mw = m->w.width;
+		mw = (MONITOR_WINDOW_AREA(m))->width;
 	i = my = ty = 0;
 	wl_list_for_each(c, &clients, link) {
       if (!VISIBLEON(c, m) || CLIENT_IS_FLOATING(c) || CLIENT_IS_FULLSCREEN(c))
 			continue;
 		if (i < m->nmaster) {
-			resize(c, (struct wlr_box){.x = m->w.x, .y = m->w.y + my, .width = mw,
-				.height = (m->w.height - my) / (MIN(n, m->nmaster) - i)}, 0);
+			resize(c, (struct wlr_box){.x = (MONITOR_WINDOW_AREA(m))->x, .y = (MONITOR_WINDOW_AREA(m))->y + my, .width = mw,
+				.height = ((MONITOR_WINDOW_AREA(m))->height - my) / (MIN(n, m->nmaster) - i)}, 0);
 			my += c->geom.height;
 		} else {
-			resize(c, (struct wlr_box){.x = m->w.x + mw, .y = m->w.y + ty,
-				.width = m->w.width - mw, .height = (m->w.height - ty) / (n - i)}, 0);
+			resize(c, (struct wlr_box){.x = (MONITOR_WINDOW_AREA(m))->x + mw, .y = (MONITOR_WINDOW_AREA(m))->y + ty,
+				.width = (MONITOR_WINDOW_AREA(m))->width - mw, .height = ((MONITOR_WINDOW_AREA(m))->height - ty) / (n - i)}, 0);
 			ty += c->geom.height;
 		}
 		i++;
@@ -2699,7 +2698,8 @@ updatemons(struct wl_listener *listener, void *data)
 		/* TODO: move focus if current_monitor is disabled */
 
 		/* Get the effective monitor geometry to use for surfaces */
-		m->m = m->w = *wlr_output_layout_get_box(output_layout, MONITOR_WLR_OUTPUT(m));
+		m->m= *wlr_output_layout_get_box(output_layout, MONITOR_WLR_OUTPUT(m));
+        (SET_MONITOR_WINDOW_AREA(m ,&m->m));
 		wlr_scene_output_set_position(m->scene_output, m->m.x, m->m.y);
 		/* Calculate the effective monitor geometry to use for clients */
 		arrangelayers(m);
