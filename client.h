@@ -114,11 +114,8 @@ client_is_x11(Client *c)
 static inline struct wlr_surface *
 client_surface(Client *c)
 {
-#ifdef XWAYLAND
-	if (client_is_x11(c))
-		return c->surface.xwayland->surface;
-#endif
-	return c->surface.xdg->surface;
+  PRINT_FUNCTION;
+  return c->surface;
 }
 
 static inline Client *
@@ -170,7 +167,7 @@ client_for_each_surface(Client *c, wlr_surface_iterator_func_t fn, void *data)
 	if (client_is_x11(c))
 		return;
 #endif
-	wlr_xdg_surface_for_each_popup_surface(c->surface.xdg, fn, data);
+	wlr_xdg_surface_for_each_popup_surface(wlr_xdg_surface_from_wlr_surface(c->surface), fn, data);
 }
 
 static inline const char *
@@ -184,14 +181,14 @@ client_get_geometry(Client *c, struct wlr_box *geom)
 {
 #ifdef XWAYLAND
 	if (client_is_x11(c)) {
-		geom->x = c->surface.xwayland->x;
-		geom->y = c->surface.xwayland->y;
-		geom->width = c->surface.xwayland->width;
-		geom->height = c->surface.xwayland->height;
+		geom->x = wlr_xwayland_surface_from_wlr_surface(c->surface)->x;
+		geom->y = wlr_xwayland_surface_from_wlr_surface(c->surface)->y;
+		geom->width = wlr_xwayland_surface_from_wlr_surface(c->surface)->width;
+		geom->height = wlr_xwayland_surface_from_wlr_surface(c->surface)->height;
 		return;
 	}
 #endif
-	wlr_xdg_surface_get_geometry(c->surface.xdg, geom);
+	wlr_xdg_surface_get_geometry(wlr_xdg_surface_from_wlr_surface(c->surface), geom);
 }
 
 static inline void
@@ -202,7 +199,7 @@ client_get_size_hints(Client *c, struct wlr_box *max, struct wlr_box *min)
 #ifdef XWAYLAND
 	if (client_is_x11(c)) {
 		struct wlr_xwayland_surface_size_hints *size_hints;
-		size_hints = c->surface.xwayland->size_hints;
+		size_hints = wlr_xwayland_surface_from_wlr_surface(c->surface)->size_hints;
 		if (size_hints) {
 			max->width = size_hints->max_width;
 			max->height = size_hints->max_height;
@@ -212,7 +209,7 @@ client_get_size_hints(Client *c, struct wlr_box *max, struct wlr_box *min)
 		return;
 	}
 #endif
-	toplevel = c->surface.xdg->toplevel;
+	toplevel = wlr_xdg_surface_from_wlr_surface(c->surface)->toplevel;
 	state = &toplevel->current;
 	max->width = state->max_width;
 	max->height = state->max_height;
@@ -243,11 +240,11 @@ client_get_parent(Client *c)
 {
 	Client *p;
 #ifdef XWAYLAND
-	if (client_is_x11(c) && c->surface.xwayland->parent)
-		return client_from_wlr_surface(c->surface.xwayland->parent->surface);
+	if (client_is_x11(c) && wlr_xwayland_surface_from_wlr_surface(c->surface)->parent)
+		return client_from_wlr_surface(wlr_xwayland_surface_from_wlr_surface(c->surface)->parent->surface);
 #endif
-	if (c->surface.xdg->toplevel->parent)
-		return client_from_wlr_surface(c->surface.xdg->toplevel->parent->surface);
+	if (wlr_xdg_surface_from_wlr_surface(c->surface)->toplevel->parent)
+		return client_from_wlr_surface(wlr_xdg_surface_from_wlr_surface(c->surface)->toplevel->parent->surface);
 
 	return NULL;
 }
@@ -260,7 +257,7 @@ client_is_float_type(Client *c)
 
 #ifdef XWAYLAND
 	if (client_is_x11(c)) {
-		struct wlr_xwayland_surface *surface = c->surface.xwayland;
+		struct wlr_xwayland_surface *surface = wlr_xwayland_surface_from_wlr_surface(c->surface);
 		if (surface->modal)
 			return 1;
 
@@ -273,13 +270,13 @@ client_is_float_type(Client *c)
 
 		return ((min.width > 0 || min.height > 0 || max.width > 0 || max.height > 0)
 			&& (min.width == max.width || min.height == max.height))
-			|| c->surface.xwayland->parent;
+			|| wlr_xwayland_surface_from_wlr_surface(c->surface)->parent;
 	}
 #endif
 
 	return ((min.width > 0 || min.height > 0 || max.width > 0 || max.height > 0)
 		&& (min.width == max.width || min.height == max.height))
-		|| c->surface.xdg->toplevel->parent;
+		|| wlr_xdg_surface_from_wlr_surface(c->surface)->toplevel->parent;
 }
 
 SCM_DEFINE (gwwm_client_is_float_type_p,"client-is-float-type?",1,0,0,
@@ -296,9 +293,9 @@ client_is_mapped(Client *c)
 {
 #ifdef XWAYLAND
 	if (client_is_x11(c))
-		return c->surface.xwayland->mapped;
+		return wlr_xwayland_surface_from_wlr_surface(c->surface)->mapped;
 #endif
-	return c->surface.xdg->mapped;
+	return wlr_xdg_surface_from_wlr_surface(c->surface)->mapped;
 }
 
 static inline int
@@ -306,9 +303,9 @@ client_wants_fullscreen(Client *c)
 {
 #ifdef XWAYLAND
 	if (client_is_x11(c))
-		return c->surface.xwayland->fullscreen;
+		return wlr_xwayland_surface_from_wlr_surface(c->surface)->fullscreen;
 #endif
-	return c->surface.xdg->toplevel->requested.fullscreen;
+	return wlr_xdg_surface_from_wlr_surface(c->surface)->toplevel->requested.fullscreen;
 }
 
 static inline int
@@ -346,7 +343,7 @@ SCM_DEFINE (gwwm_client_xdg_surface ,"client-xdg-surface",1,0,0,(SCM c),"")
 {
   GWWM_ASSERT_CLIENT_OR_FALSE(c ,1);
   Client *cl= (UNWRAP_CLIENT(c));
-  return WRAP_WLR_XDG_SURFACE(cl->surface.xdg);
+  return WRAP_WLR_XDG_SURFACE(wlr_xdg_surface_from_wlr_surface(cl->surface));
 }
 #undef FUNC_NAME
 
@@ -355,7 +352,7 @@ SCM_DEFINE (gwwm_client_xwayland_surface ,"client-xwayland-surface",1,0,0,(SCM c
 {
   GWWM_ASSERT_CLIENT_OR_FALSE(c ,1);
   Client *cl=(UNWRAP_CLIENT(c));
-  return WRAP_WLR_XWAYLAND_SURFACE(cl->surface.xwayland);
+  return WRAP_WLR_XWAYLAND_SURFACE(wlr_xwayland_surface_from_wlr_surface(cl->surface));
 }
 #undef FUNC_NAME
 
@@ -366,12 +363,12 @@ client_set_size(Client *c, uint32_t width, uint32_t height)
 {
 #ifdef XWAYLAND
 	if (client_is_x11(c)) {
-		wlr_xwayland_surface_configure(c->surface.xwayland,
+		wlr_xwayland_surface_configure(wlr_xwayland_surface_from_wlr_surface(c->surface),
 				c->geom.x, c->geom.y, width, height);
 		return 0;
 	}
 #endif
-	return wlr_xdg_toplevel_set_size(c->surface.xdg, width, height);
+	return wlr_xdg_toplevel_set_size(wlr_xdg_surface_from_wlr_surface(c->surface), width, height);
 }
 
 static inline void
@@ -385,10 +382,10 @@ client_surface_at(Client *c, double cx, double cy, double *sx, double *sy)
 {
 #ifdef XWAYLAND
 	if (client_is_x11(c))
-		return wlr_surface_surface_at(c->surface.xwayland->surface,
+		return wlr_surface_surface_at(c->surface,
 				cx, cy, sx, sy);
 #endif
-	return wlr_xdg_surface_surface_at(c->surface.xdg, cx, cy, sx, sy);
+	return wlr_xdg_surface_surface_at(wlr_xdg_surface_from_wlr_surface(c->surface), cx, cy, sx, sy);
 }
 
 static inline void
@@ -396,7 +393,7 @@ client_restack_surface(Client *c)
 {
 #ifdef XWAYLAND
 	if (client_is_x11(c))
-		wlr_xwayland_surface_restack(c->surface.xwayland, NULL,
+		wlr_xwayland_surface_restack(wlr_xwayland_surface_from_wlr_surface(c->surface), NULL,
 				XCB_STACK_MODE_ABOVE);
 #endif
 	return;

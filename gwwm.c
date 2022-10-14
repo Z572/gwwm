@@ -104,10 +104,7 @@ typedef struct {
 	struct wlr_scene_rect *fullscreen_bg; /* See setfullscreen() for info */
 	struct wl_list link;
 	struct wl_list flink;
-	union {
-		struct wlr_xdg_surface *xdg;
-		struct wlr_xwayland_surface *xwayland;
-	} surface;
+  struct wlr_surface *surface;
 	struct wl_listener commit;
 	struct wl_listener map;
 	struct wl_listener unmap;
@@ -960,9 +957,9 @@ commitnotify(struct wl_listener *listener, void *data)
 		arrange(c->mon);
 
 	/* mark a pending resize as completed */
-	if (c->resize && (c->resize <= c->surface.xdg->current.configure_serial
-			|| (c->surface.xdg->current.geometry.width == c->surface.xdg->pending.geometry.width
-			&& c->surface.xdg->current.geometry.height == c->surface.xdg->pending.geometry.height)))
+	if (c->resize && (c->resize <= wlr_xdg_surface_from_wlr_surface(c->surface)->current.configure_serial
+			|| (wlr_xdg_surface_from_wlr_surface(c->surface)->current.geometry.width == wlr_xdg_surface_from_wlr_surface(c->surface)->pending.geometry.width
+			&& wlr_xdg_surface_from_wlr_surface(c->surface)->current.geometry.height == wlr_xdg_surface_from_wlr_surface(c->surface)->pending.geometry.height)))
 		c->resize = 0;
 }
 
@@ -1168,7 +1165,7 @@ createnotify(struct wl_listener *listener, void *data)
 	c = xdg_surface->data = ecalloc(1, sizeof(*c));
     register_client(c,"<gwwm-client>");
     CLIENT_SET_TYPE(c ,"XDGShell");
-	c->surface.xdg = xdg_surface;
+	c->surface = xdg_surface->surface;
     CLIENT_SET_BW(c,GWWM_BORDERPX());
 	LISTEN(&xdg_surface->events.map, &c->map, mapnotify);
 	LISTEN(&xdg_surface->events.unmap, &c->unmap, unmapnotify);
@@ -1654,7 +1651,7 @@ mapnotify(struct wl_listener *listener, void *data)
 	/* Create scene tree for this client and its border */
 	CLIENT_SET_SCENE(c,&wlr_scene_tree_create(layers[LyrTile])->node);
 	CLIENT_SCENE_SURFACE(c) = CLIENT_TYPE(c) == "XDGShell"
-			? wlr_scene_xdg_surface_create(CLIENT_SCENE(c), c->surface.xdg)
+			? wlr_scene_xdg_surface_create(CLIENT_SCENE(c), wlr_xdg_surface_from_wlr_surface(c->surface))
 			: wlr_scene_subsurface_tree_create(CLIENT_SCENE(c), client_surface(c));
 	if (client_surface(c)) {
 		client_surface(c)->data = CLIENT_SCENE(c);
@@ -2015,10 +2012,10 @@ rendermon(struct wl_listener *listener, void *data)
 	/* Checking m->un_map for every client is not optimal but works */
 	wl_list_for_each(c, &clients, link) {
 		if ((c->resize && m->un_map) || (CLIENT_TYPE(c) == "XDGShell"
-				&& (c->surface.xdg->pending.geometry.width !=
-				c->surface.xdg->current.geometry.width
-				|| c->surface.xdg->pending.geometry.height !=
-				c->surface.xdg->current.geometry.height))) {
+				&& (wlr_xdg_surface_from_wlr_surface(c->surface)->pending.geometry.width !=
+				wlr_xdg_surface_from_wlr_surface(c->surface)->current.geometry.width
+				|| wlr_xdg_surface_from_wlr_surface(c->surface)->pending.geometry.height !=
+				wlr_xdg_surface_from_wlr_surface(c->surface)->current.geometry.height))) {
 			/* Lie */
 			wlr_surface_send_frame_done(client_surface(c), &now);
 			skip = 1;
@@ -2885,7 +2882,7 @@ activatex11(struct wl_listener *listener, void *data)
 
 	/* Only "managed" windows can be activated */
 	if (CLIENT_TYPE(c) == "X11Managed")
-		wlr_xwayland_surface_activate(c->surface.xwayland, 1);
+		wlr_xwayland_surface_activate(wlr_xwayland_surface_from_wlr_surface(c->surface), 1);
 }
 
 void
@@ -2894,7 +2891,7 @@ configurex11(struct wl_listener *listener, void *data)
   PRINT_FUNCTION
 	Client *c = wl_container_of(listener, c, configure);
 	struct wlr_xwayland_surface_configure_event *event = data;
-	wlr_xwayland_surface_configure(c->surface.xwayland,
+	wlr_xwayland_surface_configure(wlr_xwayland_surface_from_wlr_surface(c->surface),
 			event->x, event->y, event->width, event->height);
 }
 
@@ -2911,7 +2908,7 @@ createnotifyx11(struct wl_listener *listener, void *data)
 	/* Allocate a Client for this surface */
 	c = xwayland_surface->data = ecalloc(1, sizeof(*c));
     register_client(c,"<gwwm-x-client>");
-    c->surface.xwayland = xwayland_surface;
+    c->surface = xwayland_surface->surface;
     CLIENT_SET_TYPE(c ,xwayland_surface->override_redirect ? "X11Unmanaged" : "X11Managed");
 	CLIENT_SET_BW(c,GWWM_BORDERPX());
 	/* Listen to the various events it can emit */
@@ -2947,7 +2944,7 @@ sethints(struct wl_listener *listener, void *data)
   PRINT_FUNCTION
 	Client *c = wl_container_of(listener, c, set_hints);
 	if (c != current_client()) {
-      CLIENT_SET_URGENT(c, c->surface.xwayland->hints_urgency);
+      CLIENT_SET_URGENT(c, (wlr_xwayland_surface_from_wlr_surface(c->surface))->hints_urgency);
 		printstatus();
 	}
 }
