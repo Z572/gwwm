@@ -128,6 +128,13 @@
 (define-method (client-do-set-fullscreen (client <gwwm-x-client>) fullscreen?)
   (wlr-xwayland-surface-set-fullscreen (client-xwayland-surface client)
                                        fullscreen?))
+;; (define-method (set-fullscreen (c <gwwm-client>) fullscreen?)
+;;   (let ((fullscreen? (->bool fullscreen?)))
+;;     (set! (client-fullscreen? c) fullscreen?)
+;;     (set! (client-border-width c) 1)
+;;     (client-do-set-fullscreen c )
+;;     (if fullscreen?
+;;         (begin (set! client-p)))))
 (define client-set-fullscreen! (setter client-fullscreen?))
 (define client-is-floating? client-floating?)
 (define client-set-floating! (setter client-floating?))

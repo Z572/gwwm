@@ -38,8 +38,11 @@
     (list-set! (monitor-layouts m) (monitor-sellt m) layout)
     (arrange m)))
 
-(define (togglefloating)
-  ((@@ (gwwm) togglefloating)))
+(define* (togglefloating #:optional (client (current-client)))
+  (when (and client (not (client-fullscreen? client)))
+    ((@@ (gwwm) %setfloating)
+     client
+     (not (client-floating? client)))))
 
 (define (focusclient client lift)
   ((@@ (gwwm) focusclient) client lift))

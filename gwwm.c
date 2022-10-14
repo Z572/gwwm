@@ -283,7 +283,7 @@ static void requeststartdrag(struct wl_listener *listener, void *data);
 static void resize(Client *c, struct wlr_box geo, int interact);
 static Client *current_client(void);
 static void setcursor(struct wl_listener *listener, void *data);
-static void setfloating(Client *c, int floating);
+SCM gwwm_setfloating(SCM c, SCM floating);
 static void setfullscreen(Client *c, int fullscreen);
 static void setlayout(const Arg *arg);
 static void setmfact(const Arg *arg);
@@ -1801,7 +1801,7 @@ moveresize(const Arg *arg)
 		return;
 
 	/* Float the window and tell motionnotify to grab it */
-	setfloating(grabc, 1);
+	gwwm_setfloating(WRAP_CLIENT(grabc), scm_from_bool(1));
 	switch (cursor_mode = arg->ui) {
 	case CurMove:
 		grabcx = cursor->x - grabc->geom.x;
@@ -2148,18 +2148,24 @@ setcursor(struct wl_listener *listener, void *data)
 				event->hotspot_x, event->hotspot_y);
 }
 
-void
-setfloating(Client *c, int floating)
+SCM_DEFINE (gwwm_setfloating ,"%setfloating" ,2,0,0,(SCM c,SCM floating),"")
+#define FUNC_NAME s_gwwm_setfloating
 {
-  PRINT_FUNCTION
-  if (CLIENT_IS_FULLSCREEN(c)){
-    setfullscreen(c, 0);
+  PRINT_FUNCTION;
+  SCM_ASSERT((SCM_IS_A_P(c,REFP("gwwm client","<gwwm-base-client>")))
+           ,c,1, FUNC_NAME);
+
+  if (scm_to_bool(REF_CALL_1("gwwm client" ,"client-fullscreen?",c ))){
+    setfullscreen(UNWRAP_CLIENT(c), 0);
   };
-  CLIENT_SET_FLOATING(c,floating);
-	wlr_scene_node_reparent(CLIENT_SCENE(c), layers[CLIENT_IS_FLOATING(c) ? LyrFloat : LyrTile]);
-	arrange(c->mon);
-	printstatus();
+  (REF_CALL_2("gwwm client","client-set-floating!",c, floating));
+  wlr_scene_node_reparent((UNWRAP_WLR_SCENE_NODE(REF_CALL_1("gwwm client" ,"client-scene",c))), layers[scm_to_bool(REF_CALL_1("gwwm client" ,"client-floating?",c)) ? LyrFloat : LyrTile]);
+  arrange(UNWRAP_CLIENT(c)->mon);
+  printstatus();
+
+  return SCM_UNSPECIFIED;
 }
+#undef FUNC_NAME
 
 void
 setfullscreen(Client *c, int fullscreen)
@@ -2572,22 +2578,9 @@ SCM_DEFINE (gwwm_tile, "%tile",1, 0,0,
 void
 togglefloating(const Arg *arg)
 {
-  PRINT_FUNCTION
-	Client *sel = current_client();
-	/* return if fullscreen */
-	if (sel && !CLIENT_IS_FULLSCREEN(sel))
-      setfloating(sel, !(CLIENT_IS_FLOATING(sel)));
+  PRINT_FUNCTION;
+  REF_CALL_0("gwwm commands" ,"togglefloating");
 }
-
-SCM_DEFINE (gwwm_togglefloating, "togglefloating",0, 0,0,
-            () ,
-            "c")
-#define FUNC_NAME s_gwwm_togglefloating
-{
-  togglefloating(NULL);
-  return SCM_UNSPECIFIED;
-}
-#undef FUNC_NAME
 
 void
 toggletag(const Arg *arg)
