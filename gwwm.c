@@ -1153,7 +1153,7 @@ createnotify(struct wl_listener *listener, void *data)
 			wlr_scene_node_reparent(xdg_surface->surface->data, layers[LyrTop]);
 		if (!l || !l->mon)
 			return;
-		box = CLIENT_TYPE(l) == "LayerShell" ? MONITOR_AREA(l->mon) : (MONITOR_WINDOW_AREA((l->mon)));
+		box = CLIENT_IS_LAYER_SHELL(WRAP_CLIENT(l)) ? MONITOR_AREA(l->mon) : (MONITOR_WINDOW_AREA((l->mon)));
 		box->x -= l->geom.x;
 		box->y -= l->geom.y;
 		wlr_xdg_popup_unconstrain_from_box(xdg_surface->popup, box);
@@ -1333,12 +1333,10 @@ focusclient(Client *c, int lift)
 	if (c && lift)
 		wlr_scene_node_raise_to_top(CLIENT_SCENE(c));
 
-	if (c && client_surface(c) == old)
-	if (c && CLIENT_SURFACE(c) == old)
+    if (c && CLIENT_SURFACE(c) == old)
 		return;
-
 	/* Put the new client atop the focus stack and select its monitor */
-	if (c) {
+    if (c && !(CLIENT_IS_LAYER_SHELL(WRAP_CLIENT(c)))) {
 		wl_list_remove(&c->flink);
 		wl_list_insert(&fstack, &c->flink);
 	    set_current_monitor(c->mon);
@@ -1651,7 +1649,7 @@ mapnotify(struct wl_listener *listener, void *data)
 
 	/* Create scene tree for this client and its border */
 	CLIENT_SET_SCENE(c,&wlr_scene_tree_create(layers[LyrTile])->node);
-	CLIENT_SCENE_SURFACE(c) = CLIENT_TYPE(c) == "XDGShell"
+	CLIENT_SCENE_SURFACE(c) = CLIENT_IS_XDG_SHELL(WRAP_CLIENT(c))
 			? wlr_scene_xdg_surface_create(CLIENT_SCENE(c), wlr_xdg_surface_from_wlr_surface(CLIENT_SURFACE(c)))
 			: wlr_scene_subsurface_tree_create(CLIENT_SCENE(c), CLIENT_SURFACE(c));
 	if (CLIENT_SURFACE(c)) {
@@ -2012,7 +2010,7 @@ rendermon(struct wl_listener *listener, void *data)
 	 * this monitor. */
 	/* Checking m->un_map for every client is not optimal but works */
 	wl_list_for_each(c, &clients, link) {
-		if ((c->resize && m->un_map) || (CLIENT_TYPE(c) == "XDGShell"
+      if ((c->resize && m->un_map) || (CLIENT_IS_XDG_SHELL(WRAP_CLIENT(c))
 				&& (wlr_xdg_surface_from_wlr_surface(CLIENT_SURFACE(c))->pending.geometry.width !=
 				wlr_xdg_surface_from_wlr_surface(CLIENT_SURFACE(c))->current.geometry.width
 				|| wlr_xdg_surface_from_wlr_surface(CLIENT_SURFACE(c))->pending.geometry.height !=
@@ -2816,7 +2814,7 @@ xytonode(double x, double y, struct wlr_surface **psurface,
 			/* Walk the tree to find a node that knows the client */
 			for (pnode = node; pnode && !c; pnode = pnode->parent)
 				c = pnode->data;
-			if (c && CLIENT_TYPE(c) == "LayerShell") {
+			if (c && CLIENT_IS_LAYER_SHELL(WRAP_CLIENT(c))) {
 				c = NULL;
 				l = pnode->data;
 			}
@@ -2882,7 +2880,7 @@ activatex11(struct wl_listener *listener, void *data)
 	Client *c = wl_container_of(listener, c, activate);
 
 	/* Only "managed" windows can be activated */
-	if (CLIENT_TYPE(c) == "X11Managed")
+  if (CLIENT_IS_MANAGED(c))
 		wlr_xwayland_surface_activate(wlr_xwayland_surface_from_wlr_surface(CLIENT_SURFACE(c)), 1);
 }
 
