@@ -79,6 +79,11 @@
   (REF_CALL_1("wlroots util box", "wrap-wlr-box", FROM_P(p)))
 #define UNWRAP_WLR_BOX(p)                                                  \
   (TO_P(REF_CALL_1("wlroots util box", "unwrap-wlr-box", p)))
+#define WRAP_WLR_SURFACE(p)                                             \
+  (REF_CALL_1("wlroots types surface", "wrap-wlr-surface", FROM_P(p)))
+#define UNWRAP_WLR_SURFACE(p)                                           \
+  (TO_P(REF_CALL_1("wlroots types surface", "unwrap-wlr-surface", p)))
+
 #define WRAP_WLR_IDLE(p)                                                    \
   (REF_CALL_1("wlroots types idle", "wrap-wlr-idle", FROM_P(p)))
 #define UNWRAP_WLR_IDLE(p)                                                  \

@@ -45,6 +45,7 @@
             client-border-width
             client-set-border-width!
             client-get-size-hints
+            client-surface
             <gwwm-client>
             <gwwm-x-client>
             <gwwm-layer-client>))
@@ -66,6 +67,7 @@
         #:class <hidden-slot>)
   (type #:init-keyword #:type #:getter client-type
         #:setter client-set-type!)
+  (surface #:accessor client-surface)
   (scene #:init-value #f
          #:accessor client-scene
          #:setter client-set-scene!))
