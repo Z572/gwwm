@@ -97,14 +97,14 @@ typedef struct Monitor Monitor;
 typedef struct {
 	/* Must keep these three elements in this order */
 	struct wlr_box geom;  /* layout-relative, includes border */
-	Monitor *mon;
+  Monitor *mon;
+  struct wlr_surface *surface;
 	/* struct wlr_scene_node *scene; */
 	/* struct wlr_scene_rect *border[4]; /\* top, bottom, left, right *\/ */
 	struct wlr_scene_node *scene_surface;
 	struct wlr_scene_rect *fullscreen_bg; /* See setfullscreen() for info */
 	struct wl_list link;
 	struct wl_list flink;
-  struct wlr_surface *surface;
 	struct wl_listener commit;
 	struct wl_listener map;
 	struct wl_listener unmap;
@@ -144,10 +144,11 @@ typedef struct {
 	/* Must keep these three elements in this order */
 	struct wlr_box geom;
 	Monitor *mon;
+	struct wlr_surface *surface;
 	/* struct wlr_scene_node *scene; */
 	struct wl_list link;
 	int mapped;
-	struct wlr_layer_surface_v1 *layer_surface;
+
 
 	struct wl_listener destroy;
 	struct wl_listener map;
@@ -639,7 +640,7 @@ arrangelayer(Monitor *m, struct wl_list *list, struct wlr_box *usable_area, int 
 	struct wlr_box *full_area = MONITOR_AREA(m);
 
 	wl_list_for_each(layersurface, list, link) {
-		struct wlr_layer_surface_v1 *wlr_layer_surface = layersurface->layer_surface;
+		struct wlr_layer_surface_v1 *wlr_layer_surface = wlr_layer_surface_v1_from_wlr_surface(layersurface->surface);
 		struct wlr_layer_surface_v1_state *state = &wlr_layer_surface->current;
 		struct wlr_box bounds;
 		struct wlr_box box = {
@@ -739,11 +740,11 @@ arrangelayers(Monitor *m)
 	for (size_t i = 0; i < LENGTH(layers_above_shell); i++) {
 		wl_list_for_each_reverse(layersurface,
 				&m->layers[layers_above_shell[i]], link) {
-			if (layersurface->layer_surface->current.keyboard_interactive &&
-					layersurface->layer_surface->mapped) {
+			if ((wlr_layer_surface_v1_from_wlr_surface(layersurface->surface))->current.keyboard_interactive &&
+					(wlr_layer_surface_v1_from_wlr_surface(layersurface->surface))->mapped) {
 				/* Deactivate the focused client. */
 				focusclient(NULL, 0);
-				exclusive_focus = layersurface->layer_surface->surface;
+				exclusive_focus = layersurface->surface;
 				client_notify_enter(exclusive_focus, wlr_seat_get_keyboard(seat));
 				return;
 			}
@@ -922,7 +923,7 @@ commitlayersurfacenotify(struct wl_listener *listener, void *data)
 {
   PRINT_FUNCTION
 	LayerSurface *layersurface = wl_container_of(listener, layersurface, surface_commit);
-	struct wlr_layer_surface_v1 *wlr_layer_surface = layersurface->layer_surface;
+	struct wlr_layer_surface_v1 *wlr_layer_surface = wlr_layer_surface_v1_from_wlr_surface(layersurface->surface);
 
 	if (!layersurface->mon)
 		return;
@@ -1035,7 +1036,7 @@ createlayersurface(struct wl_listener *listener, void *data)
 	LISTEN(&wlr_layer_surface->events.unmap, &layersurface->unmap,
 			unmaplayersurfacenotify);
 
-	layersurface->layer_surface = wlr_layer_surface;
+	layersurface->surface = wlr_layer_surface->surface;
 	layersurface->mon = wlr_layer_surface->output->data;
 	wlr_layer_surface->data = layersurface;
 
@@ -1149,7 +1150,7 @@ createnotify(struct wl_listener *listener, void *data)
 		xdg_surface->surface->data = wlr_scene_xdg_surface_create(
 				xdg_surface->popup->parent->data, xdg_surface);
 		if (wlr_surface_is_layer_surface(xdg_surface->popup->parent) && l
-				&& l->layer_surface->current.layer < ZWLR_LAYER_SHELL_V1_LAYER_TOP)
+				&& wlr_layer_surface_v1_from_wlr_surface(l->surface)->current.layer < ZWLR_LAYER_SHELL_V1_LAYER_TOP)
 			wlr_scene_node_reparent(xdg_surface->surface->data, layers[LyrTop]);
 		if (!l || !l->mon)
 			return;
@@ -1636,7 +1637,7 @@ maplayersurfacenotify(struct wl_listener *listener, void *data)
 {
   PRINT_FUNCTION
 	LayerSurface *l = wl_container_of(listener, l, map);
-	wlr_surface_send_enter(l->layer_surface->surface, MONITOR_WLR_OUTPUT(l->mon));
+	wlr_surface_send_enter(l->surface, MONITOR_WLR_OUTPUT(l->mon));
 	motionnotify(0);
 }
 
@@ -2631,11 +2632,11 @@ unmaplayersurfacenotify(struct wl_listener *listener, void *data)
   PRINT_FUNCTION
 	LayerSurface *layersurface = wl_container_of(listener, layersurface, unmap);
 
-	layersurface->layer_surface->mapped = (layersurface->mapped = 0);
+	wlr_layer_surface_v1_from_wlr_surface(layersurface->surface)->mapped = (layersurface->mapped = 0);
 	wlr_scene_node_set_enabled(CLIENT_SCENE(layersurface), 0);
-	if (layersurface->layer_surface->surface == exclusive_focus)
+	if (layersurface->surface == exclusive_focus)
 		exclusive_focus = NULL;
-	if (layersurface->layer_surface->surface ==
+	if (layersurface->surface ==
 			seat->keyboard_state.focused_surface)
 		focusclient(current_client(), 1);
 	motionnotify(0);
