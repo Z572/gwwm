@@ -27,6 +27,7 @@
   #:use-module (ice-9 q)
   #:use-module (srfi srfi-35)
   #:use-module (scheme base)
+  #:use-module (oop goops)
   #:use-module (scheme write)
   #:export
   (send-log
@@ -61,6 +62,7 @@
                        (v^ (cond ((string? v) v)
                                  ((and (integer? v) (exact? v)) v)
                                  ((bytevector? v) v)
+                                 ((instance? v) v)
                                  ((condition? v) v)
                                  ((error-object? v) v) ;R7RS
                                  (else
