@@ -74,7 +74,7 @@
 #define WRAP_WLR_XWAYLAND_SURFACE(p)                                                    \
   (REF_CALL_1("wlroots xwayland", "wrap-wlr-xwayland-surface", FROM_P(p)))
 #define UNWRAP_WLR_XWAYLAND_SURFACE(p)                                                  \
-  (TO_P(REF_CALL_1("wlroots xwayland", "wrap-wlr-xwayland-surface", p)))
+  (TO_P(REF_CALL_1("wlroots xwayland", "unwrap-wlr-xwayland-surface", p)))
 #define WRAP_WLR_BOX(p)                                                    \
   (REF_CALL_1("wlroots util box", "wrap-wlr-box", FROM_P(p)))
 #define UNWRAP_WLR_BOX(p)                                                  \
