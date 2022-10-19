@@ -46,7 +46,7 @@
                                             (WRAP_WLR_SURFACE(b))))
 
 #define CLIENT_IS_LAYER_SHELL(cl) SCM_IS_A_P(cl,REFP("gwwm client","<gwwm-layer-client>"))
-#define CLIENT_IS_XDG_SHELL(cl) SCM_IS_A_P(cl,REFP("gwwm client","<gwwm-client>"))
+#define CLIENT_IS_XDG_SHELL(cl) (scm_string_equal_p((REF_CALL_1("gwwm client" ,"client-type",WRAP_CLIENT(c))), scm_from_utf8_string("XDGShell")))
 #define CLIENT_IS_MANAGED(c) (scm_string_equal_p((REF_CALL_1("gwwm client" ,"client-type",WRAP_CLIENT(c))) , scm_from_utf8_string("X11Managed")))
 #define CLIENT_SCENE_SURFACE(c) c->scene_surface
 SCM gwwm_client_type(SCM c);
@@ -239,13 +239,18 @@ client_get_title(Client *c)
 static inline Client *
 client_get_parent(Client *c)
 {
+  PRINT_FUNCTION;
 	Client *p;
 #ifdef XWAYLAND
-	if (client_is_x11(c) && wlr_xwayland_surface_from_wlr_surface(CLIENT_SURFACE(c))->parent)
-		return client_from_wlr_surface(wlr_xwayland_surface_from_wlr_surface(CLIENT_SURFACE(c))->parent->surface);
+	if (client_is_x11(c) && wlr_xwayland_surface_from_wlr_surface(CLIENT_SURFACE(c))->parent){
+      return client_from_wlr_surface(wlr_xwayland_surface_from_wlr_surface(CLIENT_SURFACE(c))->parent->surface);
+    }
 #endif
-	if (wlr_xdg_surface_from_wlr_surface(CLIENT_SURFACE(c))->toplevel->parent)
-		return client_from_wlr_surface(wlr_xdg_surface_from_wlr_surface(CLIENT_SURFACE(c))->toplevel->parent->surface);
+    PRINT_FUNCTION;
+	if (wlr_surface_is_xdg_surface(CLIENT_SURFACE(c)) && wlr_xdg_surface_from_wlr_surface(CLIENT_SURFACE(c))->toplevel->parent){
+      PRINT_FUNCTION;
+      return client_from_wlr_surface(wlr_xdg_surface_from_wlr_surface(CLIENT_SURFACE(c))->toplevel->parent->surface);
+    }
 
 	return NULL;
 }

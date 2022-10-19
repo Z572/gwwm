@@ -67,7 +67,8 @@
         #:class <hidden-slot>)
   (type #:init-keyword #:type #:getter client-type
         #:setter client-set-type!)
-  (surface #:accessor client-surface)
+  (surface #:init-value #f
+           #:accessor client-surface)
   (scene #:init-value #f
          #:accessor client-scene
          #:setter client-set-scene!))

@@ -1642,16 +1642,24 @@ maplayersurfacenotify(struct wl_listener *listener, void *data)
 void
 mapnotify(struct wl_listener *listener, void *data)
 {
-  PRINT_FUNCTION
-	/* Called when the surface is mapped, or ready to display on-screen. */
-	Client *p, *c = wl_container_of(listener, c, map);
-	int i;
-
+  PRINT_FUNCTION;
+  /* Called when the surface is mapped, or ready to display on-screen. */
+  Client *p, *c = wl_container_of(listener, c, map);
+  /* struct wlr_xdg_surface *surface = data; */
+  int i;
+  scm_c_run_hook(REF("gwwm hooks", "client-map-event-hook"),
+                 scm_list_2(WRAP_CLIENT(c) , client_is_x11(c)
+                            ? WRAP_WLR_XWAYLAND_SURFACE(data)
+                            : WRAP_WLR_XDG_SURFACE(data)));
 	/* Create scene tree for this client and its border */
-	CLIENT_SET_SCENE(c,&wlr_scene_tree_create(layers[LyrTile])->node);
-	CLIENT_SCENE_SURFACE(c) = CLIENT_IS_XDG_SHELL(WRAP_CLIENT(c))
-			? wlr_scene_xdg_surface_create(CLIENT_SCENE(c), wlr_xdg_surface_from_wlr_surface(CLIENT_SURFACE(c)))
-			: wlr_scene_subsurface_tree_create(CLIENT_SCENE(c), CLIENT_SURFACE(c));
+  PRINT_FUNCTION;
+  CLIENT_SET_SCENE(c,&wlr_scene_tree_create(layers[LyrTile])->node);
+  PRINT_FUNCTION;
+  if ( wlr_surface_is_xdg_surface(CLIENT_SURFACE(c)))
+    { CLIENT_SCENE_SURFACE(c)=wlr_scene_xdg_surface_create(CLIENT_SCENE(c), wlr_xdg_surface_from_wlr_surface(CLIENT_SURFACE(c)));
+    } else  {
+    CLIENT_SCENE_SURFACE(c)=wlr_scene_subsurface_tree_create(CLIENT_SCENE(c), CLIENT_SURFACE(c));
+  }
 	if (CLIENT_SURFACE(c)) {
 		(CLIENT_SURFACE(c))->data = CLIENT_SCENE(c);
 		/* Ideally we should do this in createnotify{,x11} but at that moment
@@ -1671,7 +1679,7 @@ mapnotify(struct wl_listener *listener, void *data)
 		return;
 	}
     client_init_border(c);
-
+PRINT_FUNCTION
 	/* Initialize client geometry with room for border */
 	client_set_tiled(c, WLR_EDGE_TOP | WLR_EDGE_BOTTOM | WLR_EDGE_LEFT | WLR_EDGE_RIGHT);
 	client_get_geometry(c, &c->geom);
@@ -1692,6 +1700,7 @@ mapnotify(struct wl_listener *listener, void *data)
 	} else {
 		applyrules(c);
 	}
+
 	printstatus();
 
 	if (CLIENT_IS_FULLSCREEN(c))
@@ -2010,7 +2019,7 @@ rendermon(struct wl_listener *listener, void *data)
 	 * this monitor. */
 	/* Checking m->un_map for every client is not optimal but works */
 	wl_list_for_each(c, &clients, link) {
-      if ((c->resize && m->un_map) || (CLIENT_IS_XDG_SHELL(WRAP_CLIENT(c))
+      if ((c->resize && m->un_map) || ((wlr_surface_is_xdg_surface( CLIENT_SURFACE(c)))
 				&& (wlr_xdg_surface_from_wlr_surface(CLIENT_SURFACE(c))->pending.geometry.width !=
 				wlr_xdg_surface_from_wlr_surface(CLIENT_SURFACE(c))->current.geometry.width
 				|| wlr_xdg_surface_from_wlr_surface(CLIENT_SURFACE(c))->pending.geometry.height !=
@@ -2887,11 +2896,13 @@ activatex11(struct wl_listener *listener, void *data)
 void
 configurex11(struct wl_listener *listener, void *data)
 {
-  PRINT_FUNCTION
-	Client *c = wl_container_of(listener, c, configure);
-	struct wlr_xwayland_surface_configure_event *event = data;
-	wlr_xwayland_surface_configure(wlr_xwayland_surface_from_wlr_surface(CLIENT_SURFACE(c)),
-			event->x, event->y, event->width, event->height);
+  PRINT_FUNCTION;
+  Client *c = wl_container_of(listener, c, configure);
+  /* struct wlr_xwayland_surface *xsurface = data; */
+  struct wlr_xwayland_surface_configure_event *event = data;
+  wlr_xwayland_surface_configure(event->surface,
+                                 event->x, event->y, event->width, event->height);
+  /* CLIENT_SET_SURFACE(c,event->surface->surface); */
 }
 
 void
@@ -2907,7 +2918,7 @@ createnotifyx11(struct wl_listener *listener, void *data)
 	/* Allocate a Client for this surface */
 	c = xwayland_surface->data = ecalloc(1, sizeof(*c));
     register_client(c,"<gwwm-x-client>");
-    CLIENT_SET_SURFACE(c,xwayland_surface->surface);
+    /* CLIENT_SET_SURFACE(c,xwayland_surface->surface); */
     CLIENT_SET_TYPE(c ,xwayland_surface->override_redirect ? "X11Unmanaged" : "X11Managed");
 	CLIENT_SET_BW(c,GWWM_BORDERPX());
 	/* Listen to the various events it can emit */
@@ -2940,9 +2951,9 @@ getatom(xcb_connection_t *xc, const char *name)
 void
 sethints(struct wl_listener *listener, void *data)
 {
-  PRINT_FUNCTION
-	Client *c = wl_container_of(listener, c, set_hints);
-	if (c != current_client()) {
+  PRINT_FUNCTION;
+  Client *c = wl_container_of(listener, c, set_hints);
+  if (c != current_client() && CLIENT_SURFACE(c)) {
       CLIENT_SET_URGENT(c, (wlr_xwayland_surface_from_wlr_surface(CLIENT_SURFACE(c)))->hints_urgency);
 		printstatus();
 	}
