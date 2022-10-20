@@ -904,18 +904,8 @@ cleanupmon(struct wl_listener *listener, void *data)
 void
 closemon(Monitor *m)
 {
-  PRINT_FUNCTION
-	/* move closed monitor's clients to the focused one */
-	Client *c;
-
-	wl_list_for_each(c, &clients, link) {
-      if (CLIENT_IS_FLOATING(c) && c->geom.x > (MONITOR_AREA(m))->width)
-          resize(c, (struct wlr_box){.x = c->geom.x - (MONITOR_WINDOW_AREA(m))->width, .y = c->geom.y,
-				.width = c->geom.width, .height = c->geom.height}, 0);
-		if (c->mon == m)
-          setmon(c, current_monitor(), c->tags);
-	}
-	printstatus();
+  PRINT_FUNCTION;
+  scm_call_1(REFP("gwwm", "closemon"),WRAP_MONITOR(m));
 }
 
 void
