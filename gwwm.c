@@ -2796,6 +2796,16 @@ SCM_DEFINE (gwwm_monitor_seltags, "%monitor-seltags",1, 0,0,
 }
 #undef FUNC_NAME
 
+SCM_DEFINE (gwwm_client_tags, "%client-tags",1, 0,0,
+            (SCM c) ,
+            "return C's tags.")
+#define FUNC_NAME s_gwwm_client_tags
+{
+  return (scm_from_unsigned_integer((UNWRAP_CLIENT(c))->tags));
+}
+#undef FUNC_NAME
+
+
 Monitor *
 xytomon(double x, double y)
 {
