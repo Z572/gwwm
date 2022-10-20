@@ -45,9 +45,9 @@
                                             (WRAP_CLIENT(c)), \
                                             (WRAP_WLR_SURFACE(b))))
 
-#define CLIENT_IS_LAYER_SHELL(cl) SCM_IS_A_P(cl,REFP("gwwm client","<gwwm-layer-client>"))
-#define CLIENT_IS_XDG_SHELL(cl) (scm_string_equal_p((REF_CALL_1("gwwm client" ,"client-type",WRAP_CLIENT(c))), scm_from_utf8_string("XDGShell")))
-#define CLIENT_IS_MANAGED(c) (scm_string_equal_p((REF_CALL_1("gwwm client" ,"client-type",WRAP_CLIENT(c))) , scm_from_utf8_string("X11Managed")))
+#define CLIENT_IS_LAYER_SHELL(cl) (SCM_IS_A_P(cl,REFP("gwwm client","<gwwm-layer-client>")))
+#define CLIENT_IS_XDG_SHELL(cl) (scm_to_bool(scm_string_equal_p((REF_CALL_1("gwwm client" ,"client-type",WRAP_CLIENT(c))), scm_from_utf8_string("XDGShell"))))
+#define CLIENT_IS_MANAGED(c) (scm_to_bool (scm_string_equal_p((REF_CALL_1("gwwm client" ,"client-type",WRAP_CLIENT(c))) , scm_from_utf8_string("X11Managed"))))
 #define CLIENT_SCENE_SURFACE(c) c->scene_surface
 SCM gwwm_client_type(SCM c);
 static inline SCM
