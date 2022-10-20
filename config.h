@@ -16,13 +16,6 @@ static const Rule rules[] = {
 	/* { "firefox",  NULL,       1 << 8,       0,           -1 }, */
 };
 
-/* layout(s) */
-static const Layout layouts[] = {
-	/* symbol     arrange function */
-	{ "[]=",      tile },
-	{ "><>",      NULL },    /* no layout function means floating behavior */
-};
-
 /* monitors */
 static const MonitorRule monrules[] = {
 	/* name       mfact nmaster scale layout       rotate/reflect */
@@ -30,7 +23,7 @@ static const MonitorRule monrules[] = {
 	{ "eDP-1",    0.5,  1,      2,    &layouts[0], WL_OUTPUT_TRANSFORM_NORMAL },
 	*/
 	/* defaults */
-	{ NULL,       0.55, 1,      1,    &layouts[0], WL_OUTPUT_TRANSFORM_NORMAL },
+	{ NULL,       0.55, 1,      1,    WL_OUTPUT_TRANSFORM_NORMAL },
 };
 
 /* keyboard */

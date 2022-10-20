@@ -156,10 +156,6 @@ typedef struct {
 	struct wl_listener surface_commit;
 } LayerSurface;
 
-typedef struct {
-	const char *symbol;
-	void (*arrange)(Monitor *);
-} Layout;
 #define MONITOR_WLR_OUTPUT(m)                                       \
   (struct wlr_output *)(UNWRAP_WLR_OUTPUT(scm_call_1(REFP("gwwm monitor","monitor-wlr-output"),  \
                                (WRAP_MONITOR(m)))))
@@ -200,12 +196,11 @@ struct Monitor {
 };
 
 typedef struct {
-	const char *name;
-	float mfact;
-	int nmaster;
-	float scale;
-	const Layout *lt;
-	enum wl_output_transform rr;
+  const char *name;
+  float mfact;
+  int nmaster;
+  float scale;
+  enum wl_output_transform rr;
 } MonitorRule;
 
 typedef struct {
@@ -1088,7 +1083,6 @@ createmon(struct wl_listener *listener, void *data)
 			m->nmaster = r->nmaster;
 			wlr_output_set_scale(wlr_output, r->scale);
 			wlr_xcursor_manager_load(cursor_mgr, r->scale);
-			/* m->lt[0] = m->lt[1] = r->lt; */
 			wlr_output_set_transform(wlr_output, r->rr);
 			break;
 		}
