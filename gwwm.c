@@ -60,7 +60,7 @@
 #define MAX(A, B)               ((A) > (B) ? (A) : (B))
 #define MIN(A, B)               ((A) < (B) ? (A) : (B))
 #define CLEANMASK(mask)         (mask & ~WLR_MODIFIER_CAPS)
-#define VISIBLEON(C, M)         ((M) && (C)->mon == (M) && ((C)->tags & (M)->tagset[(M)->seltags]))
+#define VISIBLEON(C, M)         ((M) && client_monitor(C,NULL) == (M) && ((C)->tags & (M)->tagset[(M)->seltags]))
 #define LENGTH(X)               (sizeof X / sizeof X[0])
 #define END(A)                  ((A) + LENGTH(A))
 #define TAGMASK                 ((1 << LENGTH(tags)) - 1)
@@ -97,10 +97,6 @@ typedef struct Monitor Monitor;
 typedef struct {
 	/* Must keep these three elements in this order */
 	struct wlr_box geom;  /* layout-relative, includes border */
-  Monitor *mon;
-  /* struct wlr_surface *surface; */
-	/* struct wlr_scene_node *scene; */
-	/* struct wlr_scene_rect *border[4]; /\* top, bottom, left, right *\/ */
 	struct wlr_scene_node *scene_surface;
 	struct wlr_scene_rect *fullscreen_bg; /* See setfullscreen() for info */
 	struct wl_list link;
@@ -143,7 +139,6 @@ typedef struct {
 typedef struct {
 	/* Must keep these three elements in this order */
 	struct wlr_box geom;
-	Monitor *mon;
 	/* struct wlr_surface *surface; */
 	/* struct wlr_scene_node *scene; */
 	struct wl_list link;
@@ -213,6 +208,7 @@ typedef struct {
 
 /* function declarations */
 Monitor *current_monitor();
+Monitor *client_monitor(void *c ,Monitor *change);
 static void applybounds(Client *c, struct wlr_box *bbox);
 static void applyexclusive(struct wlr_box *usable_area, uint32_t anchor,
 		int32_t exclusive, int32_t margin_top, int32_t margin_right,
@@ -589,16 +585,6 @@ arrange(Monitor *m)
   REF_CALL_1("gwwm commands","arrange",(WRAP_MONITOR(m)));
 }
 
-SCM_DEFINE (gwwm_client_monitor, "client-monitor" , 1,0,0,
-            (SCM c), "")
-#define FUNC_NAME s_gwwm_client_monitor
-{
-  GWWM_ASSERT_CLIENT_OR_FALSE(c ,1);
-  Client *cl = UNWRAP_CLIENT(c);
-  return (cl->mon) ? (WRAP_MONITOR(cl->mon)) : SCM_BOOL_F;
-}
-#undef FUNC_NAME
-
 SCM_DEFINE (gwwm_keyboard_list , "keyboard-list",0,0,0,(),"")
 #define FUNC_NAME s_gwwm_keyboard_list
 {
@@ -827,13 +813,28 @@ checkidleinhibitor(struct wlr_surface *exclude)
 		c = client_from_wlr_surface(inhibitor->surface);
 		if (exclude && (!(w = client_from_wlr_surface(exclude)) || w == c))
 			continue;
-		if (!c || VISIBLEON(c, c->mon)) {
+		if (!c || VISIBLEON(c, client_monitor(c ,NULL))) {
 			inhibited = 1;
 			break;
 		}
 	}
 
 	wlr_idle_set_enabled(idle, NULL, !inhibited);
+}
+
+Monitor *
+client_monitor(void *c ,Monitor *change) {
+  PRINT_FUNCTION;
+  SCM m;
+  SCM sc=WRAP_CLIENT(c);
+  if (change) {
+    m=WRAP_MONITOR(change);
+    scm_slot_set_x(sc,scm_from_utf8_symbol("monitor"),m);
+    return change;
+  } else {
+    m=scm_slot_ref(sc, scm_from_utf8_symbol("monitor"));
+    return scm_is_false(m)? NULL : UNWRAP_MONITOR(m);
+  }
 }
 
 SCM_DEFINE (gwwm_cleanup, "%gwwm-cleanup",0,0,0, () ,"")
@@ -910,14 +911,14 @@ commitlayersurfacenotify(struct wl_listener *listener, void *data)
 	LayerSurface *layersurface = wl_container_of(listener, layersurface, surface_commit);
 	struct wlr_layer_surface_v1 *wlr_layer_surface = wlr_layer_surface_v1_from_wlr_surface(CLIENT_SURFACE(layersurface));
 
-	if (!layersurface->mon)
+	if (!client_monitor(layersurface,NULL))
 		return;
 
 	if (layers[wlr_layer_surface->current.layer] != CLIENT_SCENE(layersurface)) {
 		wlr_scene_node_reparent(CLIENT_SCENE(layersurface),
 				layers[wlr_layer_surface->current.layer]);
 		wl_list_remove(&layersurface->link);
-		wl_list_insert(&layersurface->mon->layers[wlr_layer_surface->current.layer],
+		wl_list_insert(&client_monitor(layersurface,NULL)->layers[wlr_layer_surface->current.layer],
 				&layersurface->link);
 	}
 
@@ -926,7 +927,7 @@ commitlayersurfacenotify(struct wl_listener *listener, void *data)
 		return;
 	layersurface->mapped = wlr_layer_surface->mapped;
 
-	arrangelayers(layersurface->mon);
+	arrangelayers(client_monitor(layersurface,NULL));
 }
 
 void
@@ -938,9 +939,9 @@ commitnotify(struct wl_listener *listener, void *data)
 	struct wlr_box box = {0};
 	client_get_geometry(c, &box);
 
-	if (c->mon && !wlr_box_empty(&box) && (box.width != c->geom.width - 2 * CLIENT_BW(c)
+	if (client_monitor(c,NULL) && !wlr_box_empty(&box) && (box.width != c->geom.width - 2 * CLIENT_BW(c)
 			|| box.height != c->geom.height - 2 * CLIENT_BW(c)))
-		arrange(c->mon);
+		arrange(client_monitor(c,NULL));
 
 	/* mark a pending resize as completed */
 	if (c->resize && (c->resize <= wlr_xdg_surface_from_wlr_surface(CLIENT_SURFACE(c))->current.configure_serial
@@ -1022,14 +1023,14 @@ createlayersurface(struct wl_listener *listener, void *data)
 	LISTEN(&wlr_layer_surface->events.unmap, &layersurface->unmap,
 			unmaplayersurfacenotify);
 
-	layersurface->mon = wlr_layer_surface->output->data;
+    client_monitor(layersurface,wlr_layer_surface->output->data);
 	wlr_layer_surface->data = layersurface;
 
 	CLIENT_SET_SCENE(layersurface,(wlr_layer_surface->surface->data =
 			wlr_scene_subsurface_tree_create(layers[wlr_layer_surface->pending.layer],
 			wlr_layer_surface->surface)));
 	CLIENT_SCENE(layersurface)->data = layersurface;
-	wl_list_insert(&layersurface->mon->layers[wlr_layer_surface->pending.layer],
+	wl_list_insert(&(client_monitor(layersurface,NULL))->layers[wlr_layer_surface->pending.layer],
 			&layersurface->link);
 
 	/* Temporarily set the layer's current state to pending
@@ -1037,7 +1038,7 @@ createlayersurface(struct wl_listener *listener, void *data)
 	 */
 	old_state = wlr_layer_surface->current;
 	wlr_layer_surface->current = wlr_layer_surface->pending;
-	arrangelayers(layersurface->mon);
+	arrangelayers(client_monitor(layersurface,NULL));
 	wlr_layer_surface->current = old_state;
 }
 
@@ -1135,9 +1136,11 @@ createnotify(struct wl_listener *listener, void *data)
 		if (wlr_surface_is_layer_surface(xdg_surface->popup->parent) && l
 				&& wlr_layer_surface_v1_from_wlr_surface(CLIENT_SURFACE(l))->current.layer < ZWLR_LAYER_SHELL_V1_LAYER_TOP)
 			wlr_scene_node_reparent(xdg_surface->surface->data, layers[LyrTop]);
-		if (!l || !l->mon)
+		if (!l || !(client_monitor(l,NULL)))
 			return;
-		box = CLIENT_IS_LAYER_SHELL(WRAP_CLIENT(l)) ? MONITOR_AREA(l->mon) : (MONITOR_WINDOW_AREA((l->mon)));
+		box = CLIENT_IS_LAYER_SHELL(WRAP_CLIENT(l))
+          ? MONITOR_AREA((client_monitor(l,NULL)))
+          : (MONITOR_WINDOW_AREA(((client_monitor(l,NULL)))));
 		box->x -= l->geom.x;
 		box->y -= l->geom.y;
 		wlr_xdg_popup_unconstrain_from_box(xdg_surface->popup, box);
@@ -1238,8 +1241,8 @@ destroylayersurfacenotify(struct wl_listener *listener, void *data)
 	wl_list_remove(&layersurface->unmap.link);
 	wl_list_remove(&layersurface->surface_commit.link);
 	wlr_scene_node_destroy(CLIENT_SCENE(layersurface));
-	if (layersurface->mon)
-		arrangelayers(layersurface->mon);
+	if (client_monitor(layersurface,NULL))
+		arrangelayers(client_monitor(layersurface,NULL));
     logout_client(layersurface);
 }
 
@@ -1323,7 +1326,7 @@ focusclient(Client *c, int lift)
     if (c && !(CLIENT_IS_LAYER_SHELL(WRAP_CLIENT(c)))) {
 		wl_list_remove(&c->flink);
 		wl_list_insert(&fstack, &c->flink);
-	    set_current_monitor(c->mon);
+	    set_current_monitor(client_monitor(c,NULL));
         CLIENT_SET_URGENT(c ,0);
 		client_restack_surface(c);
 
@@ -1613,7 +1616,7 @@ maplayersurfacenotify(struct wl_listener *listener, void *data)
 {
   PRINT_FUNCTION
 	LayerSurface *l = wl_container_of(listener, l, map);
-	wlr_surface_send_enter(CLIENT_SURFACE(l), MONITOR_WLR_OUTPUT(l->mon));
+	wlr_surface_send_enter(CLIENT_SURFACE(l), MONITOR_WLR_OUTPUT((client_monitor(l,NULL))));
 	motionnotify(0);
 }
 
@@ -1674,7 +1677,7 @@ PRINT_FUNCTION
       CLIENT_SET_FLOATING(c,1);
 		wlr_scene_node_reparent(CLIENT_SCENE(c), layers[LyrFloat]);
 		/* TODO recheck if !p->mon is possible with wlroots 0.16.0 */
-		setmon(c, p->mon ? p->mon : current_monitor(), p->tags);
+		setmon(c, (client_monitor(p,NULL)) ? client_monitor(p,NULL) : current_monitor(), p->tags);
 	} else {
 		applyrules(c);
 	}
@@ -1684,7 +1687,7 @@ PRINT_FUNCTION
 	if (CLIENT_IS_FULLSCREEN(c))
 		setfullscreen(c, 1);
 
-	c->mon->un_map = 1;
+	client_monitor(c,NULL)->un_map = 1;
 }
 
 void
@@ -1939,7 +1942,7 @@ printstatus(void)
 	wl_list_for_each(m, &mons, link) {
 		occ = urg = 0;
 		wl_list_for_each(c, &clients, link) {
-			if (c->mon != m)
+			if (client_monitor(c,NULL) != m)
 				continue;
 			occ |= c->tags;
 			if (CLIENT_IS_URGENT_P(c))
@@ -2031,7 +2034,7 @@ void
 resize(Client *c, struct wlr_box geo, int interact)
 {
   PRINT_FUNCTION
-	struct wlr_box *bbox = interact ? &sgeom : (MONITOR_WINDOW_AREA(c->mon));
+	struct wlr_box *bbox = interact ? &sgeom : (MONITOR_WINDOW_AREA(client_monitor(c,NULL)));
 	c->geom = geo;
 	applybounds(c, bbox);
 
@@ -2142,8 +2145,11 @@ SCM_DEFINE (gwwm_setfloating ,"%setfloating" ,2,0,0,(SCM c,SCM floating),"")
     setfullscreen(UNWRAP_CLIENT(c), 0);
   };
   (REF_CALL_2("gwwm client","client-set-floating!",c, floating));
-  wlr_scene_node_reparent((UNWRAP_WLR_SCENE_NODE(REF_CALL_1("gwwm client" ,"client-scene",c))), layers[scm_to_bool(REF_CALL_1("gwwm client" ,"client-floating?",c)) ? LyrFloat : LyrTile]);
-  arrange(UNWRAP_CLIENT(c)->mon);
+  wlr_scene_node_reparent((UNWRAP_WLR_SCENE_NODE(REF_CALL_1("gwwm client" ,"client-scene",c))),
+                          layers[scm_to_bool(REF_CALL_1("gwwm client" ,"client-floating?",c))
+                                 ? LyrFloat
+                                 : LyrTile]);
+  arrange(UNWRAP_MONITOR(REF_CALL_1("gwwm client","client-monitor",c)));
   printstatus();
 
   return SCM_UNSPECIFIED;
@@ -2160,7 +2166,7 @@ setfullscreen(Client *c, int fullscreen)
 
 	if (fullscreen) {
 		c->prev = c->geom;
-		resize(c, *MONITOR_AREA(c->mon), 0);
+		resize(c, *MONITOR_AREA(client_monitor(c,NULL)), 0);
 		/* The xdg-protocol specifies:
 		 *
 		 * If the fullscreened surface is not opaque, the compositor must make
@@ -2185,7 +2191,7 @@ setfullscreen(Client *c, int fullscreen)
 			c->fullscreen_bg = NULL;
 		}
 	}
-	arrange(c->mon);
+	arrange(client_monitor(c,NULL));
 	printstatus();
 }
 
@@ -2220,11 +2226,11 @@ void
 setmon(Client *c, Monitor *m, unsigned int newtags)
 {
   PRINT_FUNCTION
-	Monitor *oldmon = c->mon;
+	Monitor *oldmon = client_monitor(c,NULL);
 
 	if (oldmon == m)
 		return;
-	c->mon = m;
+	client_monitor(c,m);
 
 	/* TODO leave/enter is not optimal but works */
 	if (oldmon) {
@@ -2638,8 +2644,8 @@ unmapnotify(struct wl_listener *listener, void *data)
 		grabc = NULL;
 	}
 
-	if (c->mon)
-		c->mon->un_map = 1;
+	if (client_monitor(c,NULL))
+		client_monitor(c,NULL)->un_map = 1;
 
 	if (client_is_unmanaged(c)) {
 		wlr_scene_node_destroy(CLIENT_SCENE(c));
@@ -2694,7 +2700,7 @@ updatemons(struct wl_listener *listener, void *data)
 
 	if (current_monitor() && MONITOR_WLR_OUTPUT(current_monitor())->enabled)
 		wl_list_for_each(c, &clients, link)
-			if (!c->mon && client_is_mapped(c))
+			if (!client_monitor(c,NULL) && client_is_mapped(c))
               setmon(c, current_monitor(), c->tags);
 
 	wlr_output_manager_v1_set_configuration(output_mgr, config);
@@ -2706,7 +2712,7 @@ updatetitle(struct wl_listener *listener, void *data)
   PRINT_FUNCTION
 	Client *c = wl_container_of(listener, c, set_title);
     scm_c_run_hook(REF("gwwm hooks", "update-title-hook"), scm_list_1(WRAP_CLIENT(c)));
-	if (c == focustop(c->mon))
+	if (c == focustop(client_monitor(c,NULL)))
 		printstatus();
 }
 
@@ -2900,7 +2906,7 @@ createnotifyx11(struct wl_listener *listener, void *data)
 	struct wlr_xwayland_surface *xwayland_surface = data;
 	Client *c;
 	wl_list_for_each(c, &clients, link)
-		if (CLIENT_IS_FULLSCREEN(c) && VISIBLEON(c, c->mon))
+		if (CLIENT_IS_FULLSCREEN(c) && VISIBLEON(c, client_monitor(c,NULL)))
 			setfullscreen(c, 0);
 
 	/* Allocate a Client for this surface */

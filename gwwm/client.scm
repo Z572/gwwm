@@ -67,6 +67,8 @@
         #:class <hidden-slot>)
   (type #:init-keyword #:type #:getter client-type
         #:setter client-set-type!)
+  (monitor #:init-value #f
+           #:accessor client-monitor)
   (surface #:init-value #f
            #:accessor client-surface)
   (scene #:init-value #f
@@ -96,7 +98,8 @@
          #:getter client-title)
 
   (borders #:init-value (list))
-  (border-width #:init-value 1 #:accessor client-border-width))
+  (border-width #:init-value 1 #:accessor client-border-width)
+  (prev-geom #:accessor client-prev-geom #:init-value #f))
 
 (define-method (client-set-border-color (c <gwwm-client>) (color <rgba-color>))
   (for-each (lambda (b) (wlr-scene-rect-set-color b color))
@@ -176,9 +179,6 @@
   (wlr-xdg-toplevel-send-close (client-xdg-surface c)))
 (define-method (client-send-close (c <gwwm-x-client>))
   (wlr-xwayland-surface-close (client-xwayland-surface c)))
-
-(define (client-monitor client)
-  ((@@ (gwwm) client-monitor) client))
 
 (define (client-get-parent client)
   "return CLIENT's parent or #f not found."
