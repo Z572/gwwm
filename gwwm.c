@@ -1464,18 +1464,12 @@ SCM_DEFINE (gwwm_focustop ,"focustop",1,0,0,(SCM monitor),"")
 void
 fullscreennotify(struct wl_listener *listener, void *data)
 {
-  PRINT_FUNCTION
-	Client *c = wl_container_of(listener, c, fullscreen);
-	int fullscreen = client_wants_fullscreen(c);
-    scm_c_run_hook(REF("gwwm hooks", "fullscreen-event-hook"),
-                   scm_list_2(WRAP_CLIENT(c),
-                              scm_from_bool(fullscreen)));
-	if (!c->mon) {
-		/* if the client is not mapped yet, let mapnotify() call setfullscreen() */
-      CLIENT_SET_FULLSCREEN(c ,fullscreen);
-		return;
-	}
-	setfullscreen(c, fullscreen);
+  PRINT_FUNCTION;
+  Client *c = wl_container_of(listener, c, fullscreen);
+  int fullscreen = client_wants_fullscreen(c);
+  scm_c_run_hook(REF("gwwm hooks", "fullscreen-event-hook"),
+                 scm_list_2(WRAP_CLIENT(c),
+                            scm_from_bool(fullscreen)));
 }
 
 void
