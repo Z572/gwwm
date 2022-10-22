@@ -8,6 +8,7 @@
   #:use-module ((system foreign) #:select (pointer-address))
   #:use-module (wlroots types xdg-shell)
   #:use-module (gwwm i18n)
+  #:use-module (srfi srfi-26)
   #:use-module (srfi srfi-17)
   #:use-module (oop goops)
   #:use-module (oop goops describe)
@@ -35,7 +36,6 @@
             client-is-float-type?
             client-send-close
             client-set-tiled
-            client-xwayland-surface
             client-xdg-surface
             client-resize
             client-set-resizing!
@@ -129,6 +129,11 @@
   (client-do-set-fullscreen c (client-fullscreen? c)))
 (define-method (client-do-set-fullscreen (client <gwwm-client>) fullscreen?)
   (wlr-xdg-toplevel-set-fullscreen (client-xdg-surface client) fullscreen?))
+
+(define (client-xwayland-surface c)
+  (and=> (client-surface c)
+         (cut wlr-xwayland-surface-from-wlr-surface <>)))
+
 (define-method (client-do-set-fullscreen (client <gwwm-x-client>) fullscreen?)
   (wlr-xwayland-surface-set-fullscreen (client-xwayland-surface client)
                                        fullscreen?))
@@ -153,8 +158,9 @@
               "*deaded*")))
 
 (define-method (client-get-appid (c <gwwm-x-client>))
-  (wlr-xwayland-surface-class
-   (client-xwayland-surface c)))
+  (or (and=> (client-xwayland-surface c)
+             wlr-xwayland-surface-class)
+      "*unknow*"))
 
 (define-method (client-get-title (c <gwwm-client>))
   (wlr-xdg-toplevel-title
