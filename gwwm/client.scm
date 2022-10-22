@@ -11,6 +11,7 @@
   #:use-module (srfi srfi-17)
   #:use-module (oop goops)
   #:use-module (oop goops describe)
+
   #:export (visibleon
             current-client
             client-floating?
@@ -50,16 +51,13 @@
             <gwwm-x-client>
             <gwwm-layer-client>))
 
+(eval-when (expand load eval)
+  (load-extension "libgwwm" "scm_init_gwwm_client"))
+
 (define-method (client-set-border-color c (color <rgba-color>))
   #t)
 (define (visibleon c m)
   ((@@ (gwwm) visibleon) c m))
-
-(define (client-get-size-hints c)
-  ((@@ (gwwm) client-get-size-hints) c))
-
-(define (client-is-float-type? client)
-  ((@@ (gwwm) client-is-float-type?) client))
 
 (define-class <gwwm-base-client> ()
   (data #:init-keyword #:data
@@ -165,8 +163,6 @@
 (define-method (client-get-title (c <gwwm-x-client>))
   (wlr-xwayland-surface-title
    (client-xwayland-surface c)))
-(define (client-xwayland-surface client)
-  ((@@ (gwwm) client-xwayland-surface) client))
 
 (define-method (logout-client (c <gwwm-client>))
   (hashq-remove! %clients (.data c))
@@ -180,20 +176,12 @@
 (define-method (client-send-close (c <gwwm-x-client>))
   (wlr-xwayland-surface-close (client-xwayland-surface c)))
 
-(define (client-get-parent client)
-  "return CLIENT's parent or #f not found."
-  ((@@ (gwwm) client-get-parent) client))
-
 (define-method (equal? (o1 <gwwm-client>)
                        (o2 <gwwm-client>))
   (client=? o1 o2))
 
 (define-method (client=? (c1 <gwwm-client>) (c2 <gwwm-client>))
   (equal? (.data c1) (.data c2)))
-
-(define (client-xdg-surface client)
-  ((@@ (gwwm) client-xdg-surface) client))
-
 
 (define (client-is-x11? client)
   (->bool (member (client-type client) '("X11Managed" "X11Unmanaged"))))
@@ -235,7 +223,7 @@
   *unspecified*)
 
 (define-method (client-resize (c <gwwm-client>) geo (interact? <boolean>))
-  ((@@ (gwwm) %resize) c geo interact?))
+  (%resize c geo interact?))
 
 (define-method (client-resize (c <gwwm-client>) geo)
   (client-resize c geo #f))

@@ -50,345 +50,86 @@
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/util/log.h>
 #include <xkbcommon/xkbcommon.h>
+#include "util.h"
+
+
 #ifdef XWAYLAND
 #include <X11/Xlib.h>
 #include <wlr/xwayland.h>
 #endif
-
-#include "util.h"
-/* macros */
-#define MAX(A, B)               ((A) > (B) ? (A) : (B))
-#define MIN(A, B)               ((A) < (B) ? (A) : (B))
-#define CLEANMASK(mask)         (mask & ~WLR_MODIFIER_CAPS)
-#define VISIBLEON(C, M)         ((M) && client_monitor(C,NULL) == (M) && ((C)->tags & (M)->tagset[(M)->seltags]))
-#define LENGTH(X)               (sizeof X / sizeof X[0])
-#define END(A)                  ((A) + LENGTH(A))
-#define TAGMASK                 ((1 << LENGTH(tags)) - 1)
-#define LISTEN(E, L, H)         wl_signal_add((E), ((L)->notify = (H), (L)))
-#define GWWM_BORDERCOLOR() (TO_P(REF_CALL_1("gwwm color","color->pointer",REF_CALL_1("gwwm config", "config-bordercolor", gwwm_config))))
-
-#define GWWM_FOCUSCOLOR() (TO_P(REF_CALL_1("gwwm color","color->pointer",REF_CALL_1("gwwm config", "config-focuscolor", gwwm_config))))
-
-#define GWWM_FULLSCREEN_BG() (TO_P(REF_CALL_1("gwwm color","color->pointer",REF_CALL_1("gwwm config", "config-fullscreenbg", gwwm_config))))
-
-/* enums */
-enum { CurNormal, CurMove, CurResize }; /* cursor */
-enum { LyrBg, LyrBottom, LyrTop, LyrOverlay, LyrTile, LyrFloat, LyrNoFocus, NUM_LAYERS }; /* scene layers */
-#ifdef XWAYLAND
-enum { NetWMWindowTypeDialog, NetWMWindowTypeSplash, NetWMWindowTypeToolbar,
-	NetWMWindowTypeUtility, NetLast }; /* EWMH atoms */
-#endif
-
-typedef union {
-	int i;
-	unsigned int ui;
-	float f;
-	const void *v;
-} Arg;
-
-typedef struct {
-	unsigned int mod;
-	unsigned int button;
-	void (*func)(const Arg *);
-	const Arg arg;
-} Button;
-
-typedef struct Monitor Monitor;
-typedef struct {
-	/* Must keep these three elements in this order */
-	struct wlr_box geom;  /* layout-relative, includes border */
-	struct wlr_scene_node *scene_surface;
-	struct wlr_scene_rect *fullscreen_bg; /* See setfullscreen() for info */
-	struct wl_list link;
-	struct wl_list flink;
-	struct wl_listener commit;
-	struct wl_listener map;
-	struct wl_listener unmap;
-	struct wl_listener destroy;
-	struct wl_listener set_title;
-	struct wl_listener fullscreen;
-	struct wlr_box prev;  /* layout-relative, includes border */
-#ifdef XWAYLAND
-	struct wl_listener activate;
-	struct wl_listener configure;
-	struct wl_listener set_hints;
-#endif
-	/* unsigned int bw; */
-	unsigned int tags;
-  /* int isfloating; */
-	uint32_t resize; /* configure serial of a pending resize */
-} Client;
-
-typedef struct {
-	uint32_t singular_anchor;
-	uint32_t anchor_triplet;
-	int *positive_axis;
-	int *negative_axis;
-	int margin;
-} Edge;
-
-typedef struct {
-	struct wl_list link;
-	struct wlr_input_device *device;
-
-	struct wl_listener modifiers;
-	struct wl_listener key;
-	struct wl_listener destroy;
-} Keyboard;
-
-typedef struct {
-	/* Must keep these three elements in this order */
-	struct wlr_box geom;
-	/* struct wlr_surface *surface; */
-	/* struct wlr_scene_node *scene; */
-	struct wl_list link;
-	int mapped;
-
-
-	struct wl_listener destroy;
-	struct wl_listener map;
-	struct wl_listener unmap;
-	struct wl_listener surface_commit;
-} LayerSurface;
-
-#define MONITOR_WLR_OUTPUT(m)                                       \
-  (struct wlr_output *)(UNWRAP_WLR_OUTPUT(scm_call_1(REFP("gwwm monitor","monitor-wlr-output"),  \
-                               (WRAP_MONITOR(m)))))
-#define MONITOR_LAYOUTS(m) (REF_CALL_1("gwwm monitor", "monitor-layouts", (WRAP_MONITOR(m))))
-#define MONITOR_SELLT(m)                                       \
-  scm_to_int(((scm_call_1(REFP("gwwm monitor","monitor-sellt"),  \
-                               (WRAP_MONITOR(m))))))
-#define SET_MONITOR_WLR_OUTPUT(m,o)                     \
-  scm_call_2(REFP("gwwm monitor","set-.wlr-output!"),   \
-             (WRAP_MONITOR(m)), WRAP_WLR_OUTPUT(o))
-#define SET_MONITOR_SELLT(m,o)                     \
-  scm_call_2(REFP("gwwm monitor","set-.monitor-sellt!"),   \
-             (WRAP_MONITOR(m)), scm_from_int(o))
-#define MONITOR_WINDOW_AREA(m)                                       \
-  (struct wlr_box *)(UNWRAP_WLR_BOX(REF_CALL_1("gwwm monitor","monitor-window-area",(WRAP_MONITOR(m)))))
-#define SET_MONITOR_WINDOW_AREA(m,o)                     \
-  scm_call_2(REFP("gwwm monitor","set-.window-area!"),   \
-             (WRAP_MONITOR(m)), WRAP_WLR_BOX(o))
-#define MONITOR_AREA(m)                                       \
-  ((struct wlr_box *)(UNWRAP_WLR_BOX(REF_CALL_1("gwwm monitor","monitor-area",(WRAP_MONITOR(m))))))
-#define SET_MONITOR_AREA(m,o)                     \
-  scm_call_2(REFP("gwwm monitor","set-.area!"),   \
-             (WRAP_MONITOR(m)), WRAP_WLR_BOX(o))
-struct Monitor {
-	struct wl_list link;
-  //	struct wlr_output *wlr_output;
-	struct wlr_scene_output *scene_output;
-	struct wl_listener frame;
-	struct wl_listener destroy;
-	struct wl_list layers[4]; /* LayerSurface::link */
-	/* const Layout *lt[2]; */
-	unsigned int seltags;
-	/* unsigned int sellt; */
-	unsigned int tagset[2];
-	double mfact;
-	int nmaster;
-	int un_map; /* If a map/unmap happened on this monitor, then this should be true */
-};
-
-typedef struct {
-  const char *name;
-  float mfact;
-  int nmaster;
-  float scale;
-  enum wl_output_transform rr;
-} MonitorRule;
-
-typedef struct {
-	const char *id;
-	const char *title;
-	unsigned int tags;
-	int isfloating;
-	int monitor;
-} Rule;
-
-/* function declarations */
-Monitor *current_monitor();
-Monitor *client_monitor(void *c ,Monitor *change);
-static void applybounds(Client *c, struct wlr_box *bbox);
-static void applyexclusive(struct wlr_box *usable_area, uint32_t anchor,
-		int32_t exclusive, int32_t margin_top, int32_t margin_right,
-		int32_t margin_bottom, int32_t margin_left);
-static void applyrules(Client *c);
-static void arrange(Monitor *m);
-static void arrangelayer(Monitor *m, struct wl_list *list,
-		struct wlr_box *usable_area, int exclusive);
-static void arrangelayers(Monitor *m);
-static void axisnotify(struct wl_listener *listener, void *data);
-static void buttonpress(struct wl_listener *listener, void *data);
-static void checkidleinhibitor(struct wlr_surface *exclude);
-static void cleanupkeyboard(struct wl_listener *listener, void *data);
-static void cleanupmon(struct wl_listener *listener, void *data);
-static void closemon(Monitor *m);
-static void commitlayersurfacenotify(struct wl_listener *listener, void *data);
-static void commitnotify(struct wl_listener *listener, void *data);
-static void createidleinhibitor(struct wl_listener *listener, void *data);
-static inline SCM find_monitor(Monitor *m);
-static void createkeyboard(struct wlr_input_device *device);
-static void createlayersurface(struct wl_listener *listener, void *data);
-static void createmon(struct wl_listener *listener, void *data);
-static void createnotify(struct wl_listener *listener, void *data);
-static void createpointer(struct wlr_input_device *device);
-static void create_touch(struct wlr_input_device *device);
-static void create_tablet_tool(struct wlr_input_device *device);
-static void create_tablet_pad(struct wlr_input_device *device);
-static void create_switch(struct wlr_input_device *device);
-static void cursorframe(struct wl_listener *listener, void *data);
-static void destroyidleinhibitor(struct wl_listener *listener, void *data);
-static void destroylayersurfacenotify(struct wl_listener *listener, void *data);
-static void destroynotify(struct wl_listener *listener, void *data);
-static Monitor *dirtomon(enum wlr_direction dir);
-static void dragicondestroy(struct wl_listener *listener, void *data);
-static void focusclient(Client *c, int lift);
-static void focusmon(const Arg *arg);
-static void focusstack(const Arg *arg);
-static Client *focustop(Monitor *m);
-static void fullscreennotify(struct wl_listener *listener, void *data);
-static void incnmaster(const Arg *arg);
-static void inputdevice(struct wl_listener *listener, void *data);
-static int keybinding(uint32_t mods, xkb_keycode_t keycode);
-static void keypress(struct wl_listener *listener, void *data);
-static void keypressmod(struct wl_listener *listener, void *data);
-static void maplayersurfacenotify(struct wl_listener *listener, void *data);
-static void mapnotify(struct wl_listener *listener, void *data);
-static void motionabsolute(struct wl_listener *listener, void *data);
-static void motionnotify(uint32_t time);
-static void motionrelative(struct wl_listener *listener, void *data);
-static void moveresize(const Arg *arg);
-static void outputmgrapply(struct wl_listener *listener, void *data);
-static void outputmgrapplyortest(struct wlr_output_configuration_v1 *config, int test);
-static void outputmgrtest(struct wl_listener *listener, void *data);
-static void pointerfocus(Client *c, struct wlr_surface *surface,
-		double sx, double sy, uint32_t time);
-static void printstatus(void);
-static void quit(const Arg *arg);
-static void quitsignal(int signo);
-static void rendermon(struct wl_listener *listener, void *data);
-static void requeststartdrag(struct wl_listener *listener, void *data);
-static void resize(Client *c, struct wlr_box geo, int interact);
-static Client *current_client(void);
-static void setcursor(struct wl_listener *listener, void *data);
-SCM gwwm_setfloating(SCM c, SCM floating);
-static void setfullscreen(Client *c, int fullscreen);
-static void setlayout(const Arg *arg);
-static void setmfact(const Arg *arg);
-static void setmon(Client *c, Monitor *m, unsigned int newtags);
-static void setpsel(struct wl_listener *listener, void *data);
-static void setsel(struct wl_listener *listener, void *data);
-static void sigchld(int unused);
-static void spawn(const Arg *arg);
-static void startdrag(struct wl_listener *listener, void *data);
-static void tag(const Arg *arg);
-static void tagmon(const Arg *arg);
-static void tile(Monitor *m);
-static inline void logout_monitor(Monitor *m);
-static void togglefloating(const Arg *arg);
-
-static void toggletag(const Arg *arg);
-static void toggleview(const Arg *arg);
-static void unmaplayersurfacenotify(struct wl_listener *listener, void *data);
-static void unmapnotify(struct wl_listener *listener, void *data);
-static void updatemons(struct wl_listener *listener, void *data);
-static void updatetitle(struct wl_listener *listener, void *data);
-static void urgent(struct wl_listener *listener, void *data);
-static void view(const Arg *arg);
-static void virtualkeyboard(struct wl_listener *listener, void *data);
-static Monitor *xytomon(double x, double y);
-static struct wlr_scene_node *xytonode(double x, double y, struct wlr_surface **psurface,
-		Client **pc, LayerSurface **pl, double *nx, double *ny);
-
-/* variables */
-static const char broken[] = "broken";
-static struct wlr_surface *exclusive_focus;
-static struct wl_display *dpy;
-static struct wlr_backend *backend;
-static struct wlr_scene *scene;
-static struct wlr_scene_node *layers[NUM_LAYERS];
-static struct wlr_renderer *drw;
-static struct wlr_allocator *alloc;
-static struct wlr_compositor *compositor;
-
-static struct wlr_xdg_shell *xdg_shell;
-static struct wlr_xdg_activation_v1 *activation;
-static struct wl_list clients; /* tiling order */
-static struct wl_list fstack;  /* focus order */
-static struct wlr_idle *idle;
-static struct wlr_idle_inhibit_manager_v1 *idle_inhibit_mgr;
-static struct wlr_input_inhibit_manager *input_inhibit_mgr;
-static struct wlr_layer_shell_v1 *layer_shell;
-static struct wlr_output_manager_v1 *output_mgr;
-static struct wlr_virtual_keyboard_manager_v1 *virtual_keyboard_mgr;
-
-static struct wlr_cursor *cursor;
-static struct wlr_xcursor_manager *cursor_mgr;
-
-static struct wlr_seat *seat;
-static struct wl_list keyboards;
-static unsigned int cursor_mode;
-static Client *grabc;
-static int grabcx, grabcy; /* client-relative */
-
-static struct wlr_output_layout *output_layout;
-static struct wlr_box sgeom;
-static struct wl_list mons;
-
-/* global event handlers */
-static struct wl_listener cursor_axis = {.notify = axisnotify};
-static struct wl_listener cursor_button = {.notify = buttonpress};
-static struct wl_listener cursor_frame = {.notify = cursorframe};
-static struct wl_listener cursor_motion = {.notify = motionrelative};
-static struct wl_listener cursor_motion_absolute = {.notify = motionabsolute};
-static struct wl_listener idle_inhibitor_create = {.notify = createidleinhibitor};
-static struct wl_listener idle_inhibitor_destroy = {.notify = destroyidleinhibitor};
-static struct wl_listener layout_change = {.notify = updatemons};
-static struct wl_listener new_input = {.notify = inputdevice};
-static struct wl_listener new_virtual_keyboard = {.notify = virtualkeyboard};
-static struct wl_listener new_output = {.notify = createmon};
-static struct wl_listener new_xdg_surface = {.notify = createnotify};
-static struct wl_listener new_layer_shell_surface = {.notify = createlayersurface};
-static struct wl_listener output_mgr_apply = {.notify = outputmgrapply};
-static struct wl_listener output_mgr_test = {.notify = outputmgrtest};
-static struct wl_listener request_activate = {.notify = urgent};
-static struct wl_listener request_cursor = {.notify = setcursor};
-static struct wl_listener request_set_psel = {.notify = setpsel};
-static struct wl_listener request_set_sel = {.notify = setsel};
-static struct wl_listener request_start_drag = {.notify = requeststartdrag};
-static struct wl_listener start_drag = {.notify = startdrag};
-static struct wl_listener drag_icon_destroy = {.notify = dragicondestroy};
-
-static SCM gwwm_config;
-#define GWWM_BORDERPX()  \
-  (scm_to_unsigned_integer(REF_CALL_1("gwwm config", "config-borderpx", gwwm_config), 0 ,1000))
-#define GWWM_SLOPPYFOCUS_P() \
-  (scm_to_bool(REF_CALL_1("gwwm config", "config-sloppyfocus?", gwwm_config)))
-
-#define GWWM_LOCKFULLSCREEN_P() \
-  (scm_to_bool(REF_CALL_1("gwwm config", "config-lockfullscreen?", gwwm_config)))
-#define GWWM_CURSOR_NORMAL_IMAGE() \
-  (scm_to_utf8_string(REF_CALL_1("gwwm config", "config-cursor-normal-image", gwwm_config)))
-#ifdef XWAYLAND
-static void activatex11(struct wl_listener *listener, void *data);
-static void configurex11(struct wl_listener *listener, void *data);
-static void createnotifyx11(struct wl_listener *listener, void *data);
-static Atom getatom(xcb_connection_t *xc, const char *name);
-static void sethints(struct wl_listener *listener, void *data);
-static void xwaylandready(struct wl_listener *listener, void *data);
-static struct wl_listener new_xwayland_surface = {.notify = createnotifyx11};
-static struct wl_listener xwayland_ready = {.notify = xwaylandready};
-static struct wlr_xwayland *xwayland;
-static Atom netatom[NetLast];
-#endif
-
+#include "gwwm.h"
+#include "client.h"
 /* configuration, allows nested code to access above variables */
 #include "config.h"
 
 /* attempt to encapsulate suck into one file */
-#include "guile.h"
-#include "client.h"
+
+ const char broken[] = "broken";
+ struct wlr_surface *exclusive_focus;
+ struct wl_display *dpy;
+ struct wlr_backend *backend;
+ struct wlr_scene *scene;
+ struct wlr_scene_node *layers[NUM_LAYERS];
+ struct wlr_renderer *drw;
+ struct wlr_allocator *alloc;
+ struct wlr_compositor *compositor;
+
+ struct wlr_xdg_shell *xdg_shell;
+ struct wlr_xdg_activation_v1 *activation;
+ struct wl_list clients; /* tiling order */
+ struct wl_list fstack;  /* focus order */
+ struct wlr_idle *idle;
+ struct wlr_idle_inhibit_manager_v1 *idle_inhibit_mgr;
+ struct wlr_input_inhibit_manager *input_inhibit_mgr;
+ struct wlr_layer_shell_v1 *layer_shell;
+ struct wlr_output_manager_v1 *output_mgr;
+ struct wlr_virtual_keyboard_manager_v1 *virtual_keyboard_mgr;
+
+ struct wlr_cursor *cursor;
+ struct wlr_xcursor_manager *cursor_mgr;
+ struct wl_listener new_xwayland_surface = {.notify = createnotifyx11};
+ struct wl_listener xwayland_ready = {.notify = xwaylandready};
+ struct wlr_xwayland *xwayland;
+ Atom netatom[NetLast];
+ Atom get_netatom_n(int n){
+   return netatom[n];
+ };
+ struct wlr_seat *seat;
+ struct wl_list keyboards;
+ unsigned int cursor_mode;
+ Client *grabc;
+ int grabcx, grabcy; /* client-relative */
+
+SCM gwwm_config;
+SCM get_gwwm_config(void) {
+  return gwwm_config;
+}
+struct wlr_output_layout *output_layout;
+struct wlr_box sgeom;
+struct wl_list mons;
+
+struct wl_listener cursor_axis = {.notify = axisnotify};
+struct wl_listener cursor_button = {.notify = buttonpress};
+struct wl_listener cursor_frame = {.notify = cursorframe};
+struct wl_listener cursor_motion = {.notify = motionrelative};
+struct wl_listener cursor_motion_absolute = {.notify = motionabsolute};
+struct wl_listener idle_inhibitor_create = {.notify = createidleinhibitor};
+struct wl_listener idle_inhibitor_destroy = {.notify = destroyidleinhibitor};
+struct wl_listener layout_change = {.notify = updatemons};
+struct wl_listener new_input = {.notify = inputdevice};
+struct wl_listener new_virtual_keyboard = {.notify = virtualkeyboard};
+struct wl_listener new_output = {.notify = createmon};
+struct wl_listener new_xdg_surface = {.notify = createnotify};
+struct wl_listener new_layer_shell_surface = {.notify = createlayersurface};
+struct wl_listener output_mgr_apply = {.notify = outputmgrapply};
+struct wl_listener output_mgr_test = {.notify = outputmgrtest};
+struct wl_listener request_activate = {.notify = urgent};
+struct wl_listener request_cursor = {.notify = setcursor};
+struct wl_listener request_set_psel = {.notify = setpsel};
+struct wl_listener request_set_sel = {.notify = setsel};
+struct wl_listener request_start_drag = {.notify = requeststartdrag};
+struct wl_listener start_drag = {.notify = startdrag};
+struct wl_listener drag_icon_destroy = {.notify = dragicondestroy};
 
 SCM_DEFINE(client_geom ,"client-geom",1,0,0,(SCM c),"")
 #define FUNC_NAME s_client_geom
@@ -417,7 +158,9 @@ SCM_DEFINE (gwwm_backend, "gwwm-backend",0,0,0,(),"") {
 SCM_DEFINE (gwwm_seat, "gwwm-seat",0,0,0,(),"") {
   return WRAP_WLR_SEAT(seat);
 }
-
+struct wlr_seat *get_gloabl_seat(void) {
+  return seat;
+}
 SCM_DEFINE (gwwm_scene, "gwwm-scene",0,0,0,(),"") {
   return WRAP_WLR_SCENE(scene);
 }
@@ -1041,18 +784,18 @@ createlayersurface(struct wl_listener *listener, void *data)
 	wlr_layer_surface->current = old_state;
 }
 
-static inline void
+void
 register_monitor(Monitor *m) {
   PRINT_FUNCTION
   scm_hashq_set_x(INNER_MONITOR_HASH_TABLE, (scm_pointer_address(scm_from_pointer(m ,NULL))),MAKE_MONITOR(m));
 }
 
-static inline SCM
+SCM
 find_monitor(Monitor *m) {
   return scm_hashq_ref(INNER_MONITOR_HASH_TABLE, (scm_pointer_address(scm_from_pointer(m ,NULL))) ,NULL);
 }
 
-static inline void
+void
 logout_monitor(Monitor *m){
   scm_hashq_remove_x(INNER_MONITOR_HASH_TABLE, scm_pointer_address(scm_from_pointer(m ,NULL)));
   free(m);
@@ -1632,9 +1375,7 @@ mapnotify(struct wl_listener *listener, void *data)
                             ? WRAP_WLR_XWAYLAND_SURFACE(data)
                             : WRAP_WLR_XDG_SURFACE(data)));
 	/* Create scene tree for this client and its border */
-  PRINT_FUNCTION;
   CLIENT_SET_SCENE(c,&wlr_scene_tree_create(layers[LyrTile])->node);
-  PRINT_FUNCTION;
   if ( wlr_surface_is_xdg_surface(CLIENT_SURFACE(c)))
     { CLIENT_SCENE_SURFACE(c)=wlr_scene_xdg_surface_create(CLIENT_SCENE(c), wlr_xdg_surface_from_wlr_surface(CLIENT_SURFACE(c)));
     } else  {
@@ -1659,9 +1400,10 @@ mapnotify(struct wl_listener *listener, void *data)
 		return;
 	}
     client_init_border(c);
-PRINT_FUNCTION
+    PRINT_FUNCTION;
 	/* Initialize client geometry with room for border */
 	client_set_tiled(c, WLR_EDGE_TOP | WLR_EDGE_BOTTOM | WLR_EDGE_LEFT | WLR_EDGE_RIGHT);
+    PRINT_FUNCTION;
  c->geom=*client_get_geometry(c);
 	c->geom.width += 2 * CLIENT_BW(c);
 	c->geom.height += 2 * CLIENT_BW(c);

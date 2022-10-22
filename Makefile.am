@@ -6,7 +6,7 @@ protocols=  $(top_builddir)/protocols/wlr-layer-shell-unstable-v1.xml \
 
 lib_LTLIBRARIES= libgwwm.la
 # bin_PROGRAMS= gwwm
-libgwwm_la_SOURCES=%D%/gwwm.c %D%/client.h %D%/config.h %D%/util.h %D%/util.c %D%/config.h %D%/guile.h
+libgwwm_la_SOURCES=%D%/gwwm.c %D%/gwwm.h %D%/client.h %D%/client.c %D%/config.h %D%/util.h %D%/util.c %D%/config.h
 nodist_libgwwm_la_SOURCES = $(protocols_h)
 libgwwm_la_CFLAGS= $(WAYLAND_SERVER_CFLAGS) $(WLROOTS_CFLAGS) $(GUILE_CFLAGS) \
 			 $(XCB_CFLAGS) $(XKBCOMMON_CFLAGS) $(LIBINPUT_CFLAGS)       \
@@ -23,7 +23,7 @@ $(SOURCES): $(lib_LTLIBRARIES)
 	guile-snarf -o $@ $< $(snarfcppopts)
 CLEANFILES = %D%/*.x $(protocols_h)
 
-BUILT_SOURCES = %D%/gwwm.x $(protocols_h) \
+BUILT_SOURCES = %D%/gwwm.x %D%/client.x $(protocols_h) \
  $(c_sources)
 xdg-shell-protocol.h:
 	$(AM_V_GEN) $(WAYLAND_SCANNER) server-header \
