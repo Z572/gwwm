@@ -140,7 +140,8 @@
                                        (assoc-ref inputs a ))
                                      '("guile-wayland"
                                        "guile-wlroots"
-                                       "guile-bytestructures")))
+                                       "guile-bytestructures"
+                                       "util572")))
                           (effective (target-guile-effective-version))
                           (mods (map (lambda (o)
                                        (string-append
