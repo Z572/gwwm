@@ -99,7 +99,7 @@ GUILE_WARNINGS =                                          \
 run: all
 	exec $(top_builddir)/pre-inst-env $(top_srcdir)/bin/gwwm
 
-TESTS = tests/keymap.scm tests/utils.scm tests/color.scm tests/utils/ref.scm
+TESTS = tests/keymap.scm tests/utils.scm tests/utils/ref.scm
 TEST_EXTENSIONS = .scm
 SCM_LOG_DRIVER =                                \
   $(top_builddir)/pre-inst-env                  \
