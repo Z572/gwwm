@@ -177,19 +177,21 @@ client_get_appid(Client *c)
   return scm_to_utf8_string(REF_CALL_1("gwwm client", "client-get-appid",(WRAP_CLIENT(c))));
 }
 
-static inline void
-client_get_geometry(Client *c, struct wlr_box *geom)
+struct wlr_box*
+client_get_geometry(Client *c)
 {
+  struct wlr_box *geom=ecalloc(1,sizeof(*geom));
 #ifdef XWAYLAND
 	if (client_is_x11(c)) {
       geom->x = wlr_xwayland_surface_from_wlr_surface(CLIENT_SURFACE(c))->x;
 		geom->y = wlr_xwayland_surface_from_wlr_surface(CLIENT_SURFACE(c))->y;
 		geom->width = wlr_xwayland_surface_from_wlr_surface(CLIENT_SURFACE(c))->width;
 		geom->height = wlr_xwayland_surface_from_wlr_surface(CLIENT_SURFACE(c))->height;
-		return;
+		return geom;
 	}
 #endif
 	wlr_xdg_surface_get_geometry(wlr_xdg_surface_from_wlr_surface(CLIENT_SURFACE(c)), geom);
+    return geom;
 }
 
 static inline void

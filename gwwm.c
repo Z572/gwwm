@@ -936,8 +936,7 @@ commitnotify(struct wl_listener *listener, void *data)
   PRINT_FUNCTION
 	Client *c = wl_container_of(listener, c, commit);
     scm_c_run_hook(REF("gwwm hooks", "surface-commit-event-hook"), scm_list_1(WRAP_CLIENT(c)));
-	struct wlr_box box = {0};
-	client_get_geometry(c, &box);
+	struct wlr_box box = *client_get_geometry(c);
 
 	if (client_monitor(c,NULL) && !wlr_box_empty(&box) && (box.width != c->geom.width - 2 * CLIENT_BW(c)
 			|| box.height != c->geom.height - 2 * CLIENT_BW(c)))
@@ -1652,7 +1651,7 @@ mapnotify(struct wl_listener *listener, void *data)
 	(CLIENT_SCENE(c))->data = c->scene_surface->data = c;
 
 	if (client_is_unmanaged(c)) {
-		client_get_geometry(c, &c->geom);
+		c->geom=*client_get_geometry(c);
 		/* Floating */
 		wlr_scene_node_reparent(CLIENT_SCENE(c), layers[LyrFloat]);
 		wlr_scene_node_set_position(CLIENT_SCENE(c), c->geom.x + GWWM_BORDERPX(),
@@ -1663,7 +1662,7 @@ mapnotify(struct wl_listener *listener, void *data)
 PRINT_FUNCTION
 	/* Initialize client geometry with room for border */
 	client_set_tiled(c, WLR_EDGE_TOP | WLR_EDGE_BOTTOM | WLR_EDGE_LEFT | WLR_EDGE_RIGHT);
-	client_get_geometry(c, &c->geom);
+ c->geom=*client_get_geometry(c);
 	c->geom.width += 2 * CLIENT_BW(c);
 	c->geom.height += 2 * CLIENT_BW(c);
 
