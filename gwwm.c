@@ -16,6 +16,8 @@
 #include <wayland-server-core.h>
 #include <wlr/backend.h>
 #include <wlr/backend/libinput.h>
+#include <wlr/backend/wayland.h>
+#include <wlr/backend/x11.h>
 #include <wlr/render/allocator.h>
 #include <wlr/render/wlr_renderer.h>
 #include <wlr/types/wlr_compositor.h>
@@ -856,8 +858,13 @@ createmon(struct wl_listener *listener, void *data)
 	LISTEN(&wlr_output->events.destroy, &m->destroy, cleanupmon);
 
 	wlr_output_enable(wlr_output, 1);
-	if (!wlr_output_commit(wlr_output))
-		return;
+    if (wlr_output_is_wl(wlr_output)) {
+      wlr_wl_output_set_title(wlr_output, "gwwm");
+    } else if (wlr_output_is_x11(wlr_output)) {
+      wlr_x11_output_set_title(wlr_output, "gwwm");
+    }
+    if (!wlr_output_commit(wlr_output))
+      return;
 
 	wl_list_insert(&mons, &m->link);
 	printstatus();
