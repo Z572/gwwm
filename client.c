@@ -296,15 +296,6 @@ client_set_fullscreen(Client *c, int fullscreen)
              scm_from_bool(fullscreen));
 }
 
-SCM_DEFINE (gwwm_client_xdg_surface ,"client-xdg-surface",1,0,0,(SCM c),"")
-#define FUNC_NAME s_gwwm_client_xdg_surface
-{
-  GWWM_ASSERT_CLIENT_OR_FALSE(c ,1);
-  Client *cl= (UNWRAP_CLIENT(c));
-  return WRAP_WLR_XDG_SURFACE(wlr_xdg_surface_from_wlr_surface(CLIENT_SURFACE(cl) ));
-}
-#undef FUNC_NAME
-
 uint32_t
 client_set_size(Client *c, uint32_t width, uint32_t height)
 {

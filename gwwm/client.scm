@@ -36,7 +36,6 @@
             client-is-float-type?
             client-send-close
             client-set-tiled
-            client-xdg-surface
             client-resize
             client-set-resizing!
             client-title
@@ -133,6 +132,10 @@
 (define (client-xwayland-surface c)
   (and=> (client-surface c)
          (cut wlr-xwayland-surface-from-wlr-surface <>)))
+
+(define (client-xdg-surface c)
+  (and=> (client-surface c)
+         (cut wlr-xdg-surface-from-wlr-surface <>)))
 
 (define-method (client-do-set-fullscreen (client <gwwm-x-client>) fullscreen?)
   (wlr-xwayland-surface-set-fullscreen (client-xwayland-surface client)
