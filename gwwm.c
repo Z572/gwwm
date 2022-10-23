@@ -63,7 +63,19 @@
 #include "client.h"
 /* configuration, allows nested code to access above variables */
 #include "config.h"
-
+typedef struct Monitor {
+  struct wl_list link;
+  struct wlr_scene_output *scene_output;
+  struct wl_listener frame;
+  struct wl_listener destroy;
+  struct wl_list layers[4]; /* LayerSurface::link */
+  unsigned int seltags;
+  unsigned int tagset[2];
+  double mfact;
+  int nmaster;
+  int un_map; /* If a map/unmap happened on this monitor, then this should be
+                 true */
+} Monitor;
 /* attempt to encapsulate suck into one file */
 
  const char broken[] = "broken";

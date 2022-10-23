@@ -20,22 +20,7 @@
 #define TAGMASK ((1 << LENGTH(tags)) - 1)
 #define LISTEN(E, L, H) wl_signal_add((E), ((L)->notify = (H), (L)))
 typedef struct Client Client;
-typedef struct Monitor {
-  struct wl_list link;
-  //	struct wlr_output *wlr_output;
-  struct wlr_scene_output *scene_output;
-  struct wl_listener frame;
-  struct wl_listener destroy;
-  struct wl_list layers[4]; /* LayerSurface::link */
-  /* const Layout *lt[2]; */
-  unsigned int seltags;
-  /* unsigned int sellt; */
-  unsigned int tagset[2];
-  double mfact;
-  int nmaster;
-  int un_map; /* If a map/unmap happened on this monitor, then this should be
-                 true */
-} Monitor;
+typedef struct Monitor Monitor;
 /* enums */
 enum { CurNormal, CurMove, CurResize }; /* cursor */
 enum {
