@@ -66,7 +66,6 @@
 
  const char broken[] = "broken";
  struct wlr_surface *exclusive_focus;
- struct wlr_backend *backend;
  struct wlr_scene *scene;
  struct wlr_scene_node *layers[NUM_LAYERS];
  struct wlr_renderer *drw;
@@ -150,8 +149,16 @@ SCM_DEFINE_PUBLIC(gwwm_visibleon, "visibleon", 2, 0, 0, (SCM c, SCM m), "")
 #undef FUNC_NAME
 
 
-SCM_DEFINE (gwwm_backend, "gwwm-backend",0,0,0,(),"") {
-  return WRAP_WLR_BACKEND(backend);
+struct wlr_backend* gwwm_backend(struct wlr_backend* backend)
+{
+  SCM b;
+  if (backend) {
+    b=REF_CALL_1("gwwm", "gwwm-backend",WRAP_WLR_BACKEND(backend));
+    return backend;
+  } else {
+    b=REF_CALL_0("gwwm", "gwwm-backend");
+    return scm_is_false(b) ? NULL : UNWRAP_WLR_BACKEND(b);
+  }
 }
 
 SCM_DEFINE (gwwm_seat, "gwwm-seat",0,0,0,(),"") {
@@ -164,18 +171,18 @@ SCM_DEFINE (gwwm_scene, "gwwm-scene",0,0,0,(),"") {
   return WRAP_WLR_SCENE(scene);
 }
 
-
-struct wl_display* gwwm_display(struct wl_display* display) {
-
+struct wl_display *gwwm_display(struct wl_display *display) {
   SCM d;
   if (display) {
-    d=REF_CALL_1("gwwm", "gwwm-display",WRAP_WL_DISPLAY(display));
+    d = REF_CALL_1("gwwm", "gwwm-display", WRAP_WL_DISPLAY(display));
     return display;
   } else {
-    d=REF_CALL_0("gwwm", "gwwm-display");
+    d = REF_CALL_0("gwwm", "gwwm-display");
     return scm_is_false(d) ? NULL : UNWRAP_WL_DISPLAY(d);
   }
 }
+
+
 
 SCM_DEFINE (gwwm_output_layout, "gwwm-output-layout",0,0,0,(),"") {
   return WRAP_WLR_OUTPUT_LAYOUT(output_layout);
@@ -596,7 +603,7 @@ SCM_DEFINE (gwwm_cleanup, "%gwwm-cleanup",0,0,0, () ,"")
 	wlr_xwayland_destroy(xwayland);
 #endif
 	wl_display_destroy_clients(gwwm_display(NULL));
-	wlr_backend_destroy(backend);
+	wlr_backend_destroy(gwwm_backend(NULL));
     wlr_renderer_destroy(drw);
 	wlr_allocator_destroy(alloc);
 	wlr_xcursor_manager_destroy(cursor_mgr);
@@ -2050,8 +2057,6 @@ SCM_DEFINE (gwwm_setup,"%gwwm-setup" ,0,0,0,(),"")
 	 * backend uses the renderer, for example, to fall back to software cursors
 	 * if the backend does not support hardware cursors (some older GPUs
 	 * don't). */
-	if (!(backend = wlr_backend_autocreate(gwwm_display(NULL))))
-		die("couldn't create backend");
 
 	/* Initialize the scene graph used to lay out windows */
 	scene = wlr_scene_create();
@@ -2064,12 +2069,12 @@ SCM_DEFINE (gwwm_setup,"%gwwm-setup" ,0,0,0,(),"")
 	layers[LyrNoFocus] = &wlr_scene_tree_create(&scene->node)->node;
 
 	/* Create a renderer with the default implementation */
-	if (!(drw = wlr_renderer_autocreate(backend)))
+	if (!(drw = wlr_renderer_autocreate(gwwm_backend(NULL))))
 		die("couldn't create renderer");
 	wlr_renderer_init_wl_display(drw, gwwm_display(NULL));
 
 	/* Create a default allocator */
-	if (!(alloc = wlr_allocator_autocreate(backend, drw)))
+	if (!(alloc = wlr_allocator_autocreate(gwwm_backend(NULL), drw)))
 		die("couldn't create allocator");
 
 	/* This creates some hands-off wlroots interfaces. The compositor is
@@ -2100,7 +2105,7 @@ SCM_DEFINE (gwwm_setup,"%gwwm-setup" ,0,0,0,(),"")
 	/* Configure a listener to be notified when new outputs are available on the
 	 * backend. */
 	wl_list_init(&mons);
-	wl_signal_add(&backend->events.new_output, &new_output);
+	wl_signal_add(&(gwwm_backend(NULL)->events.new_output), &new_output);
 
 	/* Set up our client lists and the xdg-shell. The xdg-shell is a
 	 * Wayland protocol which is used for application windows. For more
@@ -2168,7 +2173,7 @@ SCM_DEFINE (gwwm_setup,"%gwwm-setup" ,0,0,0,(),"")
 	 * let us know when new input devices are available on the backend.
 	 */
 	wl_list_init(&keyboards);
-	wl_signal_add(&backend->events.new_input, &new_input);
+	wl_signal_add(&gwwm_backend(NULL)->events.new_input, &new_input);
 	virtual_keyboard_mgr = wlr_virtual_keyboard_manager_v1_create(gwwm_display(NULL));
 	wl_signal_add(&virtual_keyboard_mgr->events.new_virtual_keyboard,
 			&new_virtual_keyboard);
@@ -2183,7 +2188,7 @@ SCM_DEFINE (gwwm_setup,"%gwwm-setup" ,0,0,0,(),"")
 	wl_signal_add(&output_mgr->events.apply, &output_mgr_apply);
 	wl_signal_add(&output_mgr->events.test, &output_mgr_test);
 
-	wlr_scene_set_presentation(scene, wlr_presentation_create(gwwm_display(NULL), backend));
+	wlr_scene_set_presentation(scene, wlr_presentation_create(gwwm_display(NULL), gwwm_backend(NULL)));
 
 #ifdef XWAYLAND
 	/*

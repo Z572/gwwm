@@ -39,6 +39,14 @@
       (if display
           (set! %display display)
           %display))))
+(define-public gwwm-backend
+  (let ((%backend #f))
+    (lambda* (#:optional backend)
+      (if backend
+          (begin
+            (set! %backend backend)
+            %backend)
+          %backend))))
 
 (define (init-global-keybind)
   (keymap-global-set (kbd (s S space))
@@ -138,7 +146,10 @@ gwwm [options]
                            (%client-tags c)))))
             (client-list)))
 (define (gwwm-setup)
-  (gwwm-display (wl-display-create)))
+  (gwwm-display (wl-display-create))
+  (or (and=> (wlr-backend-autocreate(gwwm-display)) gwwm-backend)
+      (begin (send-log ERROR (G_ "gwwm Couldn't create backend"))
+             (exit 1))))
 (define (main)
   (setlocale LC_ALL "")
   (textdomain %gettext-domain)
