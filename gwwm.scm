@@ -32,6 +32,14 @@
 
 (define-public (keymap-global-set key command)
   (keymap-set (global-keymap) key command))
+
+(define-public gwwm-display
+  (let ((%display #f))
+    (lambda* (#:optional display)
+      (if display
+          (set! %display display)
+          %display))))
+
 (define (init-global-keybind)
   (keymap-global-set (kbd (s S space))
 
@@ -129,6 +137,8 @@ gwwm [options]
                   (%setmon c (current-monitor)
                            (%client-tags c)))))
             (client-list)))
+(define (gwwm-setup)
+  (gwwm-display (wl-display-create)))
 (define (main)
   (setlocale LC_ALL "")
   (textdomain %gettext-domain)
@@ -192,7 +202,7 @@ gwwm [options]
     (exit 1))
   (setvbuf (current-output-port) 'line)
   (setvbuf (current-error-port) 'line)
-
+  (gwwm-setup)
   (%gwwm-setup)
 
   (config-setup)

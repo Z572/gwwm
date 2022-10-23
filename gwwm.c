@@ -66,7 +66,6 @@
 
  const char broken[] = "broken";
  struct wlr_surface *exclusive_focus;
- struct wl_display *dpy;
  struct wlr_backend *backend;
  struct wlr_scene *scene;
  struct wlr_scene_node *layers[NUM_LAYERS];
@@ -166,8 +165,16 @@ SCM_DEFINE (gwwm_scene, "gwwm-scene",0,0,0,(),"") {
 }
 
 
-SCM_DEFINE (gwwm_display, "gwwm-display",0,0,0,(),"") {
-  return WRAP_WL_DISPLAY(dpy);
+struct wl_display* gwwm_display(struct wl_display* display) {
+
+  SCM d;
+  if (display) {
+    d=REF_CALL_1("gwwm", "gwwm-display",WRAP_WL_DISPLAY(display));
+    return display;
+  } else {
+    d=REF_CALL_0("gwwm", "gwwm-display");
+    return scm_is_false(d) ? NULL : UNWRAP_WL_DISPLAY(d);
+  }
 }
 
 SCM_DEFINE (gwwm_output_layout, "gwwm-output-layout",0,0,0,(),"") {
@@ -588,7 +595,7 @@ SCM_DEFINE (gwwm_cleanup, "%gwwm-cleanup",0,0,0, () ,"")
 #ifdef XWAYLAND
 	wlr_xwayland_destroy(xwayland);
 #endif
-	wl_display_destroy_clients(dpy);
+	wl_display_destroy_clients(gwwm_display(NULL));
 	wlr_backend_destroy(backend);
     wlr_renderer_destroy(drw);
 	wlr_allocator_destroy(alloc);
@@ -596,7 +603,7 @@ SCM_DEFINE (gwwm_cleanup, "%gwwm-cleanup",0,0,0, () ,"")
 	wlr_cursor_destroy(cursor);
 	wlr_output_layout_destroy(output_layout);
 	wlr_seat_destroy(seat);
-	wl_display_destroy(dpy);
+	wl_display_destroy(gwwm_display(NULL));
     return SCM_UNSPECIFIED;
 }
 
@@ -1828,7 +1835,7 @@ SCM_DEFINE (gwwm_run,"%gwwm-run",0,0,0,(),"")
 	 * compositor. Starting the backend rigged up all of the necessary event
 	 * loop configuration to listen to libinput events, DRM events, generate
 	 * frame events at the refresh rate, and so on. */
-	wl_display_run(dpy);
+	wl_display_run(gwwm_display(NULL));
     return SCM_UNSPECIFIED;
 }
 
@@ -2029,7 +2036,6 @@ SCM_DEFINE (gwwm_setup,"%gwwm-setup" ,0,0,0,(),"")
 {
     /* The Wayland display is managed by libwayland. It handles accepting
 	 * clients from the Unix socket, manging Wayland globals, and so on. */
-	dpy = wl_display_create();
 
 	/* Set up signal handlers */
 	sigchld(0);
@@ -2044,7 +2050,7 @@ SCM_DEFINE (gwwm_setup,"%gwwm-setup" ,0,0,0,(),"")
 	 * backend uses the renderer, for example, to fall back to software cursors
 	 * if the backend does not support hardware cursors (some older GPUs
 	 * don't). */
-	if (!(backend = wlr_backend_autocreate(dpy)))
+	if (!(backend = wlr_backend_autocreate(gwwm_display(NULL))))
 		die("couldn't create backend");
 
 	/* Initialize the scene graph used to lay out windows */
@@ -2060,7 +2066,7 @@ SCM_DEFINE (gwwm_setup,"%gwwm-setup" ,0,0,0,(),"")
 	/* Create a renderer with the default implementation */
 	if (!(drw = wlr_renderer_autocreate(backend)))
 		die("couldn't create renderer");
-	wlr_renderer_init_wl_display(drw, dpy);
+	wlr_renderer_init_wl_display(drw, gwwm_display(NULL));
 
 	/* Create a default allocator */
 	if (!(alloc = wlr_allocator_autocreate(backend, drw)))
@@ -2072,24 +2078,24 @@ SCM_DEFINE (gwwm_setup,"%gwwm-setup" ,0,0,0,(),"")
 	 * to dig your fingers in and play with their behavior if you want. Note that
 	 * the clients cannot set the selection directly without compositor approval,
 	 * see the setsel() function. */
-	compositor = wlr_compositor_create(dpy, drw);
-	wlr_export_dmabuf_manager_v1_create(dpy);
-	wlr_screencopy_manager_v1_create(dpy);
-	wlr_data_control_manager_v1_create(dpy);
-	wlr_data_device_manager_create(dpy);
-	wlr_gamma_control_manager_v1_create(dpy);
-	wlr_primary_selection_v1_device_manager_create(dpy);
-	wlr_viewporter_create(dpy);
+	compositor = wlr_compositor_create(gwwm_display(NULL), drw);
+	wlr_export_dmabuf_manager_v1_create(gwwm_display(NULL));
+	wlr_screencopy_manager_v1_create(gwwm_display(NULL));
+	wlr_data_control_manager_v1_create(gwwm_display(NULL));
+	wlr_data_device_manager_create(gwwm_display(NULL));
+	wlr_gamma_control_manager_v1_create(gwwm_display(NULL));
+	wlr_primary_selection_v1_device_manager_create(gwwm_display(NULL));
+	wlr_viewporter_create(gwwm_display(NULL));
 
 	/* Initializes the interface used to implement urgency hints */
-	activation = wlr_xdg_activation_v1_create(dpy);
+	activation = wlr_xdg_activation_v1_create(gwwm_display(NULL));
 	wl_signal_add(&activation->events.request_activate, &request_activate);
 
 	/* Creates an output layout, which a wlroots utility for working with an
 	 * arrangement of screens in a physical layout. */
 	output_layout = wlr_output_layout_create();
 	wl_signal_add(&output_layout->events.change, &layout_change);
-	wlr_xdg_output_manager_v1_create(dpy, output_layout);
+	wlr_xdg_output_manager_v1_create(gwwm_display(NULL), output_layout);
 
 	/* Configure a listener to be notified when new outputs are available on the
 	 * backend. */
@@ -2105,24 +2111,24 @@ SCM_DEFINE (gwwm_setup,"%gwwm-setup" ,0,0,0,(),"")
 	wl_list_init(&clients);
 	wl_list_init(&fstack);
 
-	idle = wlr_idle_create(dpy);
+	idle = wlr_idle_create(gwwm_display(NULL));
 
-	idle_inhibit_mgr = wlr_idle_inhibit_v1_create(dpy);
+	idle_inhibit_mgr = wlr_idle_inhibit_v1_create(gwwm_display(NULL));
 	wl_signal_add(&idle_inhibit_mgr->events.new_inhibitor, &idle_inhibitor_create);
 
-	layer_shell = wlr_layer_shell_v1_create(dpy);
+	layer_shell = wlr_layer_shell_v1_create(gwwm_display(NULL));
 	wl_signal_add(&layer_shell->events.new_surface, &new_layer_shell_surface);
 
-	xdg_shell = wlr_xdg_shell_create(dpy);
+	xdg_shell = wlr_xdg_shell_create(gwwm_display(NULL));
 	wl_signal_add(&xdg_shell->events.new_surface, &new_xdg_surface);
 
-	input_inhibit_mgr = wlr_input_inhibit_manager_create(dpy);
+	input_inhibit_mgr = wlr_input_inhibit_manager_create(gwwm_display(NULL));
 
 	/* Use decoration protocols to negotiate server-side decorations */
 	wlr_server_decoration_manager_set_default_mode(
-			wlr_server_decoration_manager_create(dpy),
+			wlr_server_decoration_manager_create(gwwm_display(NULL)),
 			WLR_SERVER_DECORATION_MANAGER_MODE_SERVER);
-	wlr_xdg_decoration_manager_v1_create(dpy);
+	wlr_xdg_decoration_manager_v1_create(gwwm_display(NULL));
 
 	/*
 	 * Creates a cursor, which is a wlroots utility for tracking the cursor
@@ -2163,28 +2169,28 @@ SCM_DEFINE (gwwm_setup,"%gwwm-setup" ,0,0,0,(),"")
 	 */
 	wl_list_init(&keyboards);
 	wl_signal_add(&backend->events.new_input, &new_input);
-	virtual_keyboard_mgr = wlr_virtual_keyboard_manager_v1_create(dpy);
+	virtual_keyboard_mgr = wlr_virtual_keyboard_manager_v1_create(gwwm_display(NULL));
 	wl_signal_add(&virtual_keyboard_mgr->events.new_virtual_keyboard,
 			&new_virtual_keyboard);
-	seat = wlr_seat_create(dpy, "seat0");
+	seat = wlr_seat_create(gwwm_display(NULL), "seat0");
 	wl_signal_add(&seat->events.request_set_cursor, &request_cursor);
 	wl_signal_add(&seat->events.request_set_selection, &request_set_sel);
 	wl_signal_add(&seat->events.request_set_primary_selection, &request_set_psel);
 	wl_signal_add(&seat->events.request_start_drag, &request_start_drag);
 	wl_signal_add(&seat->events.start_drag, &start_drag);
 
-	output_mgr = wlr_output_manager_v1_create(dpy);
+	output_mgr = wlr_output_manager_v1_create(gwwm_display(NULL));
 	wl_signal_add(&output_mgr->events.apply, &output_mgr_apply);
 	wl_signal_add(&output_mgr->events.test, &output_mgr_test);
 
-	wlr_scene_set_presentation(scene, wlr_presentation_create(dpy, backend));
+	wlr_scene_set_presentation(scene, wlr_presentation_create(gwwm_display(NULL), backend));
 
 #ifdef XWAYLAND
 	/*
 	 * Initialise the XWayland X server.
 	 * It will be started when the first X client is started.
 	 */
-	xwayland = wlr_xwayland_create(dpy, compositor, 1);
+	xwayland = wlr_xwayland_create(gwwm_display(NULL), compositor, 1);
 	if (xwayland) {
 		wl_signal_add(&xwayland->events.ready, &xwayland_ready);
 		wl_signal_add(&xwayland->events.new_surface, &new_xwayland_surface);
