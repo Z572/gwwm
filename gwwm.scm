@@ -214,6 +214,7 @@ gwwm [options]
   (setvbuf (current-output-port) 'line)
   (setvbuf (current-error-port) 'line)
   (gwwm-setup)
+  (%gwwm-setup-scene)
   (%gwwm-setup)
 
   (config-setup)

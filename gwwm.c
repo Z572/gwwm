@@ -2057,7 +2057,19 @@ setsel(struct wl_listener *listener, void *data)
 	wlr_seat_set_selection(seat, event->source, event->serial);
 }
 
-
+SCM_DEFINE (gwwm_setup_scene ,"%gwwm-setup-scene",0,0,0, (),"") {
+  	scene = wlr_scene_create();
+	layers[LyrBg] = &wlr_scene_tree_create(&scene->node)->node;
+	layers[LyrBottom] = &wlr_scene_tree_create(&scene->node)->node;
+	layers[LyrTile] = &wlr_scene_tree_create(&scene->node)->node;
+	layers[LyrFloat] = &wlr_scene_tree_create(&scene->node)->node;
+	layers[LyrTop] = &wlr_scene_tree_create(&scene->node)->node;
+	layers[LyrOverlay] = &wlr_scene_tree_create(&scene->node)->node;
+	layers[LyrNoFocus] = &wlr_scene_tree_create(&scene->node)->node;
+    wlr_scene_set_presentation(scene, wlr_presentation_create(gwwm_display(NULL),
+                                                              gwwm_backend(NULL)));
+    return SCM_UNSPECIFIED;
+}
 SCM_DEFINE (gwwm_setup,"%gwwm-setup" ,0,0,0,(),"")
 {
     /* The Wayland display is managed by libwayland. It handles accepting
@@ -2077,17 +2089,6 @@ SCM_DEFINE (gwwm_setup,"%gwwm-setup" ,0,0,0,(),"")
 	 * if the backend does not support hardware cursors (some older GPUs
 	 * don't). */
 
-	/* Initialize the scene graph used to lay out windows */
-	scene = wlr_scene_create();
-	layers[LyrBg] = &wlr_scene_tree_create(&scene->node)->node;
-	layers[LyrBottom] = &wlr_scene_tree_create(&scene->node)->node;
-	layers[LyrTile] = &wlr_scene_tree_create(&scene->node)->node;
-	layers[LyrFloat] = &wlr_scene_tree_create(&scene->node)->node;
-	layers[LyrTop] = &wlr_scene_tree_create(&scene->node)->node;
-	layers[LyrOverlay] = &wlr_scene_tree_create(&scene->node)->node;
-	layers[LyrNoFocus] = &wlr_scene_tree_create(&scene->node)->node;
-
-	/* Create a renderer with the default implementation */
 	if (!(drw = wlr_renderer_autocreate(gwwm_backend(NULL))))
 		die("couldn't create renderer");
 	wlr_renderer_init_wl_display(drw, gwwm_display(NULL));
@@ -2207,7 +2208,7 @@ SCM_DEFINE (gwwm_setup,"%gwwm-setup" ,0,0,0,(),"")
 	wl_signal_add(&output_mgr->events.apply, &output_mgr_apply);
 	wl_signal_add(&output_mgr->events.test, &output_mgr_test);
 
-	wlr_scene_set_presentation(scene, wlr_presentation_create(gwwm_display(NULL), gwwm_backend(NULL)));
+
 
 #ifdef XWAYLAND
 	/*
