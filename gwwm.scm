@@ -33,20 +33,19 @@
 (define-public (keymap-global-set key command)
   (keymap-set (global-keymap) key command))
 
-(define-public gwwm-display
-  (let ((%display #f))
-    (lambda* (#:optional display)
-      (if display
-          (set! %display display)
-          %display))))
-(define-public gwwm-backend
-  (let ((%backend #f))
-    (lambda* (#:optional backend)
-      (if backend
-          (begin
-            (set! %backend backend)
-            %backend)
-          %backend))))
+(define-syntax-rule (define-dy name objname)
+  (define-public name
+    (let ((%o #f))
+      (lambda* (#:optional objname)
+        (if objname
+            (begin
+              (set! %o objname)
+              %o)
+            %o)))))
+
+(define-dy gwwm-display display)
+(define-dy gwwm-backend backend)
+(define-dy gwwm-output-layout output-layout)
 
 (define (init-global-keybind)
   (keymap-global-set (kbd (s S space))

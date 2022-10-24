@@ -116,7 +116,7 @@ SCM gwwm_config;
 SCM get_gwwm_config(void) {
   return gwwm_config;
 }
-struct wlr_output_layout *output_layout;
+
 struct wlr_box sgeom;
 struct wl_list mons;
 
@@ -196,10 +196,16 @@ struct wl_display *gwwm_display(struct wl_display *display) {
   }
 }
 
-
-
-SCM_DEFINE (gwwm_output_layout, "gwwm-output-layout",0,0,0,(),"") {
-  return WRAP_WLR_OUTPUT_LAYOUT(output_layout);
+struct wlr_output_layout*
+gwwm_output_layout(struct wlr_output_layout *o) {
+  SCM d;
+  if (o) {
+    d = REF_CALL_1("gwwm", "gwwm-output-layout", WRAP_WLR_OUTPUT_LAYOUT(o));
+    return o;
+  } else {
+    d = REF_CALL_0("gwwm", "gwwm-output-layout");
+    return scm_is_false(d) ? NULL : UNWRAP_WLR_OUTPUT_LAYOUT(d);
+  }
 }
 
 SCM_DEFINE (gwwm_c_config, "gwwm-config",0, 0,0,
@@ -622,7 +628,7 @@ SCM_DEFINE (gwwm_cleanup, "%gwwm-cleanup",0,0,0, () ,"")
 	wlr_allocator_destroy(alloc);
 	wlr_xcursor_manager_destroy(cursor_mgr);
 	wlr_cursor_destroy(cursor);
-	wlr_output_layout_destroy(output_layout);
+	wlr_output_layout_destroy(gwwm_output_layout(NULL));
 	wlr_seat_destroy(seat);
 	wl_display_destroy(gwwm_display(NULL));
     return SCM_UNSPECIFIED;
@@ -655,7 +661,7 @@ cleanupmon(struct wl_listener *listener, void *data)
 	wl_list_remove(&m->destroy.link);
 	wl_list_remove(&m->frame.link);
 	wl_list_remove(&m->link);
-	wlr_output_layout_remove(output_layout, MONITOR_WLR_OUTPUT(m));
+	wlr_output_layout_remove(gwwm_output_layout(NULL), MONITOR_WLR_OUTPUT(m));
 	wlr_scene_output_destroy(m->scene_output);
 
 	if ((nmons = wl_list_length(&mons)))
@@ -888,7 +894,7 @@ createmon(struct wl_listener *listener, void *data)
 	 * output (such as DPI, scale factor, manufacturer, etc).
 	 */
 	m->scene_output = wlr_scene_output_create(scene, wlr_output);
-	wlr_output_layout_add_auto(output_layout, wlr_output);
+	wlr_output_layout_add_auto(gwwm_output_layout(NULL), wlr_output);
 }
 
 void
@@ -1048,13 +1054,13 @@ dirtomon(enum wlr_direction dir)
   PRINT_FUNCTION
 	struct wlr_output *next;
 	if ((next = wlr_output_layout_adjacent_output
-         (output_layout,
+         (gwwm_output_layout(NULL),
           dir, MONITOR_WLR_OUTPUT(current_monitor()),
           MONITOR_AREA((current_monitor()))->x,
           MONITOR_AREA((current_monitor()))->y)))
 		return next->data;
 	if ((next = wlr_output_layout_farthest_output
-         (output_layout,
+         (gwwm_output_layout(NULL),
           dir ^ (WLR_DIRECTION_LEFT|WLR_DIRECTION_RIGHT),
           MONITOR_WLR_OUTPUT(current_monitor()),
           MONITOR_AREA((current_monitor()))->x,
@@ -1597,7 +1603,7 @@ outputmgrapplyortest(struct wlr_output_configuration_v1 *config, int test)
 	 * Called when a client such as wlr-randr requests a change in output
 	 * configuration.  This is only one way that the layout can be changed,
 	 * so any Monitor information should be updated by updatemons() after an
-	 * output_layout.change event, not here.
+	 * gwwm_output_layout(NULL).change event, not here.
 	 */
 	struct wlr_output_configuration_head_v1 *config_head;
 	int ok = 1;
@@ -1631,7 +1637,7 @@ outputmgrapplyortest(struct wlr_output_configuration_v1 *config, int test)
 					config_head->state.custom_mode.height,
 					config_head->state.custom_mode.refresh);
 
-		wlr_output_layout_move(output_layout, wlr_output,
+		wlr_output_layout_move(gwwm_output_layout(NULL), wlr_output,
 				config_head->state.x, config_head->state.y);
 		wlr_output_set_transform(wlr_output, config_head->state.transform);
 		wlr_output_set_scale(wlr_output, config_head->state.scale);
@@ -2118,9 +2124,9 @@ SCM_DEFINE (gwwm_setup,"%gwwm-setup" ,0,0,0,(),"")
 
 	/* Creates an output layout, which a wlroots utility for working with an
 	 * arrangement of screens in a physical layout. */
-	output_layout = wlr_output_layout_create();
-	wl_signal_add(&output_layout->events.change, &layout_change);
-	wlr_xdg_output_manager_v1_create(gwwm_display(NULL), output_layout);
+	gwwm_output_layout(wlr_output_layout_create()) ;
+	wl_signal_add(&gwwm_output_layout(NULL)->events.change, &layout_change);
+	wlr_xdg_output_manager_v1_create(gwwm_display(NULL), gwwm_output_layout(NULL));
 
 	/* Configure a listener to be notified when new outputs are available on the
 	 * backend. */
@@ -2160,7 +2166,7 @@ SCM_DEFINE (gwwm_setup,"%gwwm-setup" ,0,0,0,(),"")
 	 * image shown on screen.
 	 */
 	cursor = wlr_cursor_create();
-	wlr_cursor_attach_output_layout(cursor, output_layout);
+	wlr_cursor_attach_output_layout(cursor, gwwm_output_layout(NULL));
 
 	/* Creates an xcursor manager, another wlroots utility which loads up
 	 * Xcursor themes to source cursor images from and makes sure that cursor
@@ -2447,7 +2453,7 @@ updatemons(struct wl_listener *listener, void *data)
 		wlr_output_configuration_v1_create();
 	Client *c;
 	Monitor *m;
-	sgeom = *wlr_output_layout_get_box(output_layout, NULL);
+	sgeom = *wlr_output_layout_get_box(gwwm_output_layout(NULL), NULL);
 	wl_list_for_each(m, &mons, link) {
 		struct wlr_output_configuration_head_v1 *config_head =
 			wlr_output_configuration_head_v1_create(config, MONITOR_WLR_OUTPUT(m));
@@ -2456,7 +2462,7 @@ updatemons(struct wl_listener *listener, void *data)
 		/* TODO: move focus if current_monitor is disabled */
 
 		/* Get the effective monitor geometry to use for surfaces */
-		SET_MONITOR_AREA(m,wlr_output_layout_get_box(output_layout, MONITOR_WLR_OUTPUT(m)));
+		SET_MONITOR_AREA(m,wlr_output_layout_get_box(gwwm_output_layout(NULL), MONITOR_WLR_OUTPUT(m)));
         (SET_MONITOR_WINDOW_AREA(m ,MONITOR_AREA(m)));
 		wlr_scene_output_set_position(m->scene_output, (MONITOR_AREA(m))->x, (MONITOR_AREA(m))->y);
 		/* Calculate the effective monitor geometry to use for clients */
