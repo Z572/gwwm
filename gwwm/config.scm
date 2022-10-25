@@ -27,13 +27,12 @@
 
 (define (load-init-file)
   (let ((init-file (init-file)))
-
     (if (file-exists? init-file)
         (save-module-excursion
          (lambda ()
-           (primitive-load
-            init-file)))
-        (warn (string-append (G_ "initfile not found:") init-file )))))
+           (primitive-load init-file)))
+        (begin (warn (string-append (G_ "initfile not found:") init-file ))
+               (make <gwwm-config>)))))
 
 (define-class <xkb-rules> ()
   (rules #:init-keyword #:rules #:getter xkb-rults-names-rules #:init-value "")
@@ -68,7 +67,7 @@
   (fullscreenbg #:init-value (make-color 0 0 0 1)
                 #:init-keyword #:fullscreenbg
                 #:accessor config-fullscreenbg)
-  (xkb-rules #:init-value (make <xkb-rules>) #:init-keyword #:xkb-rules #:accessor config-xkb-rules )
+  (xkb-rules #:init-value (make-xkb-rules) #:init-keyword #:xkb-rules #:accessor config-xkb-rules )
   (lockfullscreen? #:init-value #t #:init-keyword #:lockfullscreen? #:accessor config-lockfullscreen? )
   (bordercolor #:init-value gwwm-default-bordercolor #:init-keyword
                #:bordercolor #:accessor config-bordercolor )
