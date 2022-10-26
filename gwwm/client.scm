@@ -96,7 +96,8 @@
 
   (borders #:init-value (list))
   (border-width #:init-value 1 #:accessor client-border-width)
-  (prev-geom #:accessor client-prev-geom #:init-value #f))
+  (prev-geom #:accessor client-prev-geom #:init-value #f)
+  (scene-surface #:accessor client-scene-surface #:init-value #f))
 
 (define-method (client-set-border-color (c <gwwm-client>) (color <rgba-color>))
   (for-each (lambda (b) (wlr-scene-rect-set-color b color))

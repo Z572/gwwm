@@ -127,6 +127,20 @@ client_get_appid(Client *c)
   return scm_to_utf8_string(REF_CALL_1("gwwm client", "client-get-appid",(WRAP_CLIENT(c))));
 }
 
+struct wlr_scene_node *
+client_scene_surface(Client *c, struct wlr_scene_node *surface) {
+  SCM s;
+  SCM scm_c= WRAP_CLIENT(c);
+  if (surface) {
+    s=WRAP_WLR_SCENE_NODE(surface);
+    scm_slot_set_x(scm_c,scm_from_utf8_symbol("scene-surface"),s);
+    return surface;
+  } else {
+    s=scm_slot_ref(scm_c,scm_from_utf8_symbol("scene-surface"));
+    return scm_is_false(s) ? NULL : UNWRAP_WLR_SCENE_NODE(s);
+}
+}
+
 struct wlr_box*
 client_get_geometry(Client *c)
 {

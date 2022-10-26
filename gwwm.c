@@ -1416,9 +1416,9 @@ mapnotify(struct wl_listener *listener, void *data)
 	/* Create scene tree for this client and its border */
   CLIENT_SET_SCENE(c,&wlr_scene_tree_create(layers[LyrTile])->node);
   if ( wlr_surface_is_xdg_surface(CLIENT_SURFACE(c)))
-    { CLIENT_SCENE_SURFACE(c)=wlr_scene_xdg_surface_create(CLIENT_SCENE(c), wlr_xdg_surface_from_wlr_surface(CLIENT_SURFACE(c)));
+    { client_scene_surface(c,wlr_scene_xdg_surface_create(CLIENT_SCENE(c), wlr_xdg_surface_from_wlr_surface(CLIENT_SURFACE(c))));
     } else  {
-    CLIENT_SCENE_SURFACE(c)=wlr_scene_subsurface_tree_create(CLIENT_SCENE(c), CLIENT_SURFACE(c));
+    client_scene_surface(c,wlr_scene_subsurface_tree_create(CLIENT_SCENE(c), CLIENT_SURFACE(c)));
   }
 	if (CLIENT_SURFACE(c)) {
 		(CLIENT_SURFACE(c))->data = CLIENT_SCENE(c);
@@ -1428,7 +1428,7 @@ mapnotify(struct wl_listener *listener, void *data)
 		LISTEN(&CLIENT_SURFACE(c)->events.commit, &c->commit, commitnotify);
 
 	}
-	(CLIENT_SCENE(c))->data = c->scene_surface->data = c;
+	(CLIENT_SCENE(c))->data = client_scene_surface(c, NULL)->data = c;
 
 	if (client_is_unmanaged(c)) {
 		c->geom=*client_get_geometry(c);
@@ -1820,7 +1820,7 @@ resize(Client *c, struct wlr_box geo, int interact)
 
 	/* Update scene-graph, including borders */
 	wlr_scene_node_set_position(CLIENT_SCENE(c), c->geom.x, c->geom.y);
-	wlr_scene_node_set_position(CLIENT_SCENE_SURFACE(c), CLIENT_BW(c), CLIENT_BW(c));
+	wlr_scene_node_set_position(client_scene_surface(c,NULL), CLIENT_BW(c), CLIENT_BW(c));
 	wlr_scene_rect_set_size(client_border_n(c,0), c->geom.width, CLIENT_BW(c));
 	wlr_scene_rect_set_size(client_border_n(c,1), c->geom.width, CLIENT_BW(c));
 	wlr_scene_rect_set_size(client_border_n(c,2), CLIENT_BW(c), c->geom.height - 2 * CLIENT_BW(c));

@@ -91,7 +91,6 @@
   (scm_to_bool(scm_string_equal_p(                                             \
       (REF_CALL_1("gwwm client", "client-type", WRAP_CLIENT(c))),              \
       scm_from_utf8_string("X11Managed"))))
-#define CLIENT_SCENE_SURFACE(c) c->scene_surface
 #define CLIENT_SET_BORDER_COLOR(c, color)                                      \
   scm_call_2(REFP("gwwm client", "client-set-border-color"), WRAP_CLIENT(c),   \
              color)
@@ -99,7 +98,6 @@ typedef struct Monitor Monitor;
 typedef struct Client {
   /* Must keep these three elements in this order */
   struct wlr_box geom; /* layout-relative, includes border */
-  struct wlr_scene_node *scene_surface;
   struct wlr_scene_rect *fullscreen_bg; /* See setfullscreen() for info */
   struct wl_list link;
   struct wl_list flink;
@@ -151,4 +149,6 @@ struct wlr_surface *client_surface_at(Client *c, double cx, double cy,
 void client_restack_surface(Client *c);
 void client_set_resizing(Client *c, int resizing);
 void *toplevel_from_popup(struct wlr_xdg_popup *popup);
+struct wlr_scene_node *client_scene_surface(Client *c, struct wlr_scene_node *surface);
+
 #endif
