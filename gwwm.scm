@@ -34,14 +34,15 @@
   (keymap-set (global-keymap) key command))
 
 (define-syntax-rule (define-dy name objname)
-  (define-public name
-    (let ((%o #f))
-      (lambda* (#:optional objname)
-        (if objname
-            (begin
-              (set! %o objname)
-              %o)
-            %o)))))
+  (begin (define-once name
+           (let ((%o #f))
+             (lambda* (#:optional objname)
+               (if objname
+                   (begin
+                     (set! %o objname)
+                     %o)
+                   %o))))
+         (export name)))
 
 (define-dy gwwm-display display)
 (define-dy gwwm-backend backend)
