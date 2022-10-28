@@ -117,7 +117,6 @@ SCM get_gwwm_config(void) {
   return gwwm_config;
 }
 
-struct wlr_box sgeom;
 struct wl_list mons;
 
 struct wl_listener cursor_axis = {.notify = axisnotify};
@@ -1814,7 +1813,7 @@ void
 resize(Client *c, struct wlr_box geo, int interact)
 {
   PRINT_FUNCTION
-	struct wlr_box *bbox = interact ? &sgeom : (MONITOR_WINDOW_AREA(client_monitor(c,NULL)));
+	struct wlr_box *bbox = interact ? (UNWRAP_WLR_BOX(scm_call_0(REFP("gwwm", "entire-layout-box")))) : (MONITOR_WINDOW_AREA(client_monitor(c,NULL)));
 	c->geom = geo;
 	applybounds(c, bbox);
 
@@ -2453,8 +2452,10 @@ updatemons(struct wl_listener *listener, void *data)
 		wlr_output_configuration_v1_create();
 	Client *c;
 	Monitor *m;
-	sgeom = *wlr_output_layout_get_box(gwwm_output_layout(NULL), NULL);
-	wl_list_for_each(m, &mons, link) {
+    (scm_call_1(REFP("gwwm", "entire-layout-box"),
+                WRAP_WLR_BOX(wlr_output_layout_get_box(
+                                                       gwwm_output_layout(NULL), NULL))));
+        wl_list_for_each(m, &mons, link) {
 		struct wlr_output_configuration_head_v1 *config_head =
 			wlr_output_configuration_head_v1_create(config, MONITOR_WLR_OUTPUT(m));
 

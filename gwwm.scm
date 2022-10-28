@@ -47,6 +47,7 @@
 (define-dy gwwm-display display)
 (define-dy gwwm-backend backend)
 (define-dy gwwm-output-layout output-layout)
+(define-dy entire-layout-box box)
 
 (define (init-global-keybind)
   (keymap-global-set (kbd (s S space))
