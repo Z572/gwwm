@@ -109,3 +109,6 @@ AM_SCM_LOG_DRIVER_FLAGS = --brief=no
 AM_SCM_LOG_FLAGS = --no-auto-compile -L "$(top_srcdir)"
 AM_TESTS_ENVIRONMENT = abs_top_srcdir="$(abs_top_srcdir)"
 CLEANFILES += $(TESTS:tests/%.scm=%.log)
+
+gdb: all
+	exec $(top_builddir)/pre-inst-env gdb guile -ex "run $(top_builddir)/bin/gwwm"
