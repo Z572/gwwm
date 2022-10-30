@@ -35,7 +35,7 @@ static const MonitorRule monrules[] = {
 /* 	.options = NULL, */
 /* }; */
 
-static const int repeat_rate = 25;
+/* static const int repeat_rate = 25; */
 static const int repeat_delay = 600;
 
 /* Trackpad */

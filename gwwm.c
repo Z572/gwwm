@@ -761,7 +761,7 @@ createkeyboard(struct wlr_input_device *device)
 	wlr_keyboard_set_keymap(device->keyboard, keymap);
 	xkb_keymap_unref(keymap);
 	xkb_context_unref(context);
-	wlr_keyboard_set_repeat_info(device->keyboard, repeat_rate, repeat_delay);
+	wlr_keyboard_set_repeat_info(device->keyboard, (scm_to_int32(REF_CALL_1("gwwm config","config-repeat-rate", gwwm_config))), repeat_delay);
 
 	/* Here we set up listeners for keyboard events. */
 	LISTEN(&device->keyboard->events.modifiers, &kb->modifiers, keypressmod);

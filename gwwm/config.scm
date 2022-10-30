@@ -13,6 +13,7 @@
             config-focuscolor
             config-fullscreenbg
             config-cursor-normal-image
+            config-repeat-rate
             load-init-file
             init-file
             make-xkb-rules
@@ -72,7 +73,10 @@
   (bordercolor #:init-value gwwm-default-bordercolor #:init-keyword
                #:bordercolor #:accessor config-bordercolor )
   (focuscolor #:init-value gwwm-default-focuscolor #:init-keyword
-              #:focuscolor #:accessor config-focuscolor))
+              #:focuscolor #:accessor config-focuscolor)
+  (repeat-rate #:init-value 25
+               #:init-keyword #:repeat-rate
+               #:accessor config-repeat-rate))
 
 (define-syntax-rule (gwwm (init value) ...)
   (let ((init-keywords
