@@ -14,7 +14,7 @@
 #define CLEANMASK(mask) (mask & ~WLR_MODIFIER_CAPS)
 #define VISIBLEON(C, M)                                                        \
   ((M) && client_monitor(C, NULL) == (M) &&                                    \
-   ((C)->tags & (M)->tagset[(M)->seltags]))
+   (client_tags(C) & (M)->tagset[(M)->seltags]))
 #define LENGTH(X) (sizeof X / sizeof X[0])
 #define END(A) ((A) + LENGTH(A))
 #define TAGMASK ((1 << LENGTH(tags)) - 1)

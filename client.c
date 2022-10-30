@@ -140,6 +140,14 @@ client_scene_surface(Client *c, struct wlr_scene_node *surface) {
     return scm_is_false(s) ? NULL : UNWRAP_WLR_SCENE_NODE(s);
 }
 }
+unsigned int
+client_tags(Client *c) {
+  return scm_to_unsigned_integer(scm_slot_ref(WRAP_CLIENT(c),scm_from_utf8_symbol("tags")),0,100);
+}
+void set_client_tags(Client *c,unsigned int tags) {
+  scm_slot_set_x(WRAP_CLIENT(c), scm_from_utf8_symbol("tags"), scm_from_unsigned_integer(tags));
+  /* c->tags=tags; */
+}
 
 struct wlr_box*
 client_get_geometry(Client *c)

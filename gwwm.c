@@ -1456,7 +1456,7 @@ mapnotify(struct wl_listener *listener, void *data)
       CLIENT_SET_FLOATING(c,1);
 		wlr_scene_node_reparent(CLIENT_SCENE(c), layers[LyrFloat]);
 		/* TODO recheck if !p->mon is possible with wlroots 0.16.0 */
-		setmon(c, (client_monitor(p,NULL)) ? client_monitor(p,NULL) : current_monitor(), p->tags);
+		setmon(c, (client_monitor(p,NULL)) ? client_monitor(p,NULL) : current_monitor(), client_tags(p));
 	} else {
 		applyrules(c);
 	}
@@ -1723,9 +1723,9 @@ printstatus(void)
 		wl_list_for_each(c, &clients, link) {
 			if (client_monitor(c,NULL) != m)
 				continue;
-			occ |= c->tags;
+			occ |= client_tags(c);
 			if (CLIENT_IS_URGENT_P(c))
-				urg |= c->tags;
+				urg |= client_tags(c);
 		}
 		if ((c = focustop(m))) {
           send_log(INFO,"MONITOR and TITLE",
@@ -1736,7 +1736,7 @@ printstatus(void)
           send_log(INFO,"is FLOATING",
                    "MONITOR",MONITOR_WLR_OUTPUT(m)->name,
                    "FLOATING", ((CLIENT_IS_FLOATING(c))? "#t": "#f"));
-			sel = c->tags;
+			sel = client_tags(c);
 		} else {
           send_log(INFO, "title" ,"MONITOR", MONITOR_WLR_OUTPUT(m)->name);
           send_log(INFO,"MONITOR","MONITOR",MONITOR_WLR_OUTPUT(m)->name);
@@ -2020,7 +2020,7 @@ setmon(Client *c, Monitor *m, unsigned int newtags)
 		/* Make sure window actually overlaps with the monitor */
 		resize(c, c->geom, 0);
 		wlr_surface_send_enter(CLIENT_SURFACE(c), MONITOR_WLR_OUTPUT(m));
-		c->tags = newtags ? newtags : m->tagset[m->seltags]; /* assign tags of target monitor */
+set_client_tags(c,newtags ? newtags : m->tagset[m->seltags]); /* assign tags of target monitor */
 		arrange(m);
 	}
 	focusclient(focustop(current_monitor()), 1);
@@ -2276,7 +2276,7 @@ tag(const Arg *arg)
   PRINT_FUNCTION
 	Client *sel = current_client();
 	if (sel && arg->ui & TAGMASK) {
-		sel->tags = arg->ui & TAGMASK;
+set_client_tags(sel, arg->ui & TAGMASK);
 		focusclient(focustop(current_monitor()), 1);
 		arrange(current_monitor());
 	}
@@ -2356,9 +2356,9 @@ toggletag(const Arg *arg)
 	Client *sel = current_client();
 	if (!sel)
 		return;
-	newtags = sel->tags ^ (arg->ui & TAGMASK);
+	newtags = client_tags(sel) ^ (arg->ui & TAGMASK);
 	if (newtags) {
-		sel->tags = newtags;
+      set_client_tags(sel, newtags);
 		focusclient(focustop(current_monitor()), 1);
 		arrange(current_monitor());
 	}
@@ -2480,7 +2480,7 @@ updatemons(struct wl_listener *listener, void *data)
 	if (current_monitor() && MONITOR_WLR_OUTPUT(current_monitor())->enabled)
 		wl_list_for_each(c, &clients, link)
 			if (!client_monitor(c,NULL) && client_is_mapped(c))
-              setmon(c, current_monitor(), c->tags);
+              setmon(c, current_monitor(), client_tags(c));
 
 	wlr_output_manager_v1_set_configuration(output_mgr, config);
 }
@@ -2558,16 +2558,6 @@ SCM_DEFINE (gwwm_monitor_seltags, "%monitor-seltags",1, 0,0,
   return (scm_from_unsigned_integer((UNWRAP_MONITOR(m))->seltags));
 }
 #undef FUNC_NAME
-
-SCM_DEFINE (gwwm_client_tags, "%client-tags",1, 0,0,
-            (SCM c) ,
-            "return C's tags.")
-#define FUNC_NAME s_gwwm_client_tags
-{
-  return (scm_from_unsigned_integer((UNWRAP_CLIENT(c))->tags));
-}
-#undef FUNC_NAME
-
 
 Monitor *
 xytomon(double x, double y)

@@ -144,7 +144,7 @@ gwwm [options]
                                  #t))
                 (when (equal? (client-monitor c) m)
                   (%setmon c (current-monitor)
-                           (%client-tags c)))))
+                           (client-tags c)))))
             (client-list)))
 (define (gwwm-setup)
   (gwwm-display (wl-display-create))
