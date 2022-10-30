@@ -1,3 +1,4 @@
+#include "string.h"
 #include <wlr/types/wlr_scene.h>
 #include "util.h"
 #include "client.h"
@@ -21,14 +22,23 @@ unwrap_client_1(SCM o)
   return (TO_P(MAKE_P(a)));
 }
 
-void
-register_client(void *c, char *type) {
-  scm_hashq_set_x((type=="<gwwm-layer-client>"
-                   ? REFP("gwwm client", "%layer-clients")
-                   : INNER_CLIENTS_HASH_TABLE),
-                  (scm_pointer_address(FROM_P(c))),
-                  (scm_call_3(REF("oop goops","make"),
-                              REF("gwwm client",type),
+void register_client(void *c, enum gwwm_client_type type) {
+  char *tp = "<gwwm-client>";
+  SCM table = INNER_CLIENTS_HASH_TABLE;
+  switch (type) {
+  case GWWM_LAYER_CLIENT_TYPE:
+    table = REFP("gwwm client", "%layer-clients");
+    tp = "<gwwm-layer-client>";
+    break;
+  case GWWM_XDG_CLIENT_TYPE:
+    tp = "<gwwm-client>";
+    break;
+  case GWWM_X_CLIENT_TYPE:
+    tp = "<gwwm-x-client>";
+    break;
+  }
+  scm_hashq_set_x(table, (scm_pointer_address(FROM_P(c))),
+                  (scm_call_3(REF("oop goops", "make"), REF("gwwm client", tp),
                               scm_from_utf8_keyword("data"),
                               scm_pointer_address(FROM_P(c)))));
 }
@@ -73,7 +83,6 @@ Client *
 client_from_wlr_surface(struct wlr_surface *s)
 {
 	struct wlr_xdg_surface *surface;
-	struct wlr_surface *parent;
 
 #ifdef XWAYLAND
 	struct wlr_xwayland_surface *xsurface;
@@ -214,7 +223,6 @@ Client *
 client_get_parent(Client *c)
 {
   PRINT_FUNCTION;
-	Client *p;
 #ifdef XWAYLAND
 	if (client_is_x11(c) && wlr_xwayland_surface_from_wlr_surface(CLIENT_SURFACE(c))->parent){
       return client_from_wlr_surface(wlr_xwayland_surface_from_wlr_surface(CLIENT_SURFACE(c))->parent->surface);

@@ -15,7 +15,11 @@
  */
 
 /* Leave these functions first; they're used in the others */
-
+enum gwwm_client_type {
+  GWWM_XDG_CLIENT_TYPE,
+  GWWM_X_CLIENT_TYPE,
+  GWWM_LAYER_CLIENT_TYPE
+};
 #define GWWM_BORDERCOLOR()                                                     \
   (TO_P(REF_CALL_1(                                                            \
       "gwwm color", "color->pointer",                                          \
@@ -120,7 +124,7 @@ typedef struct Client {
 
 Client *unwrap_client_1(SCM o);
 SCM find_client(void *c);
-void register_client(void *c, char *type);
+void register_client(void *c, enum gwwm_client_type type);
 void logout_client(void *c);
 struct wlr_scene_rect *client_border_n(Client *c, int n);
 void client_init_border(Client *c);

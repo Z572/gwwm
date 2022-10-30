@@ -786,7 +786,7 @@ createlayersurface(struct wl_listener *listener, void *data)
 	}
 	layersurface = ecalloc(1, sizeof(LayerSurface));
 
-    register_client(layersurface,"<gwwm-layer-client>");
+    register_client(layersurface,GWWM_LAYER_CLIENT_TYPE);
     CLIENT_SET_TYPE(layersurface ,"LayerShell");
     CLIENT_SET_SURFACE(layersurface,wlr_layer_surface->surface);
 	LISTEN(&wlr_layer_surface->surface->events.commit,
@@ -930,7 +930,7 @@ createnotify(struct wl_listener *listener, void *data)
 
 	/* Allocate a Client for this surface */
 	c = xdg_surface->data = ecalloc(1, sizeof(*c));
-    register_client(c,"<gwwm-client>");
+    register_client(c,GWWM_XDG_CLIENT_TYPE);
     CLIENT_SET_TYPE(c ,"XDGShell");
     CLIENT_SET_SURFACE(c ,xdg_surface->surface);
     CLIENT_SET_BW(c,GWWM_BORDERPX());
@@ -2680,7 +2680,7 @@ createnotifyx11(struct wl_listener *listener, void *data)
 
 	/* Allocate a Client for this surface */
 	c = xwayland_surface->data = ecalloc(1, sizeof(*c));
-    register_client(c,"<gwwm-x-client>");
+    register_client(c,GWWM_X_CLIENT_TYPE);
     /* CLIENT_SET_SURFACE(c,xwayland_surface->surface); */
     CLIENT_SET_TYPE(c ,xwayland_surface->override_redirect ? "X11Unmanaged" : "X11Managed");
 	CLIENT_SET_BW(c,GWWM_BORDERPX());
