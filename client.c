@@ -149,12 +149,12 @@ client_scene_surface(Client *c, struct wlr_scene_node *surface) {
     return scm_is_false(s) ? NULL : UNWRAP_WLR_SCENE_NODE(s);
 }
 }
-unsigned int
+int
 client_tags(Client *c) {
-  return scm_to_unsigned_integer(scm_slot_ref(WRAP_CLIENT(c),scm_from_utf8_symbol("tags")),0,100);
+  return exp2(scm_to_int(scm_slot_ref(WRAP_CLIENT(c),scm_from_utf8_symbol("tags"))));
 }
-void set_client_tags(Client *c,unsigned int tags) {
-  scm_slot_set_x(WRAP_CLIENT(c), scm_from_utf8_symbol("tags"), scm_from_unsigned_integer(tags));
+void set_client_tags(Client *c,int tags) {
+  scm_slot_set_x(WRAP_CLIENT(c), scm_from_utf8_symbol("tags"), scm_from_int(log2(tags)));
   /* c->tags=tags; */
 }
 

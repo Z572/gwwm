@@ -150,8 +150,8 @@ void client_set_tiled(Client *c, uint32_t edges);
 struct wlr_surface *client_surface_at(Client *c, double cx, double cy,
                                       double *sx, double *sy);
 void client_restack_surface(Client *c);
-unsigned int client_tags(Client *c);
-void set_client_tags(Client *c,unsigned int tags);
+int client_tags(Client *c);
+void set_client_tags(Client *c,int tags);
 void client_set_resizing(Client *c, int resizing);
 void *toplevel_from_popup(struct wlr_xdg_popup *popup);
 struct wlr_scene_node *client_scene_surface(Client *c, struct wlr_scene_node *surface);
