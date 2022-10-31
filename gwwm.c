@@ -76,8 +76,31 @@ typedef struct Monitor {
   int un_map; /* If a map/unmap happened on this monitor, then this should be
                  true */
 } Monitor;
-/* attempt to encapsulate suck into one file */
+typedef struct Gwwm_listener {
+  SCM obj;
+  struct wl_listener listener;
+} Gwwm_listener;
+struct wl_listener* register_gwwm_listener(void* c) {
+  PRINT_FUNCTION;
+  Gwwm_listener *listener=ecalloc(1, sizeof(*listener));
+  PRINT_FUNCTION;
+  SCM sc=WRAP_CLIENT(c);
+  SCM listeners=scm_slot_ref(sc,scm_from_utf8_symbol("listeners"));
+  listener->obj=sc;
+  scm_slot_set_x(sc, scm_from_utf8_symbol("listeners"), scm_cons(WRAP_WL_LISTENER(listener)
+                                                                 ,listeners));
+  /* scm_hashq_set_x(scm_slot_ref(sc,scm_from_utf8_symbol("listeners")), */
+  /*                 scm_pointer_address(FROM_P(listener)), WRAP_WL_LISTENER(listener)); */
 
+  return &listener->listener;
+
+}
+void *client_from_listener(struct wl_listener *listener) {
+  PRINT_FUNCTION;
+  Gwwm_listener *l=wl_container_of(listener, l, listener);
+
+  return scm_is_false (l->obj)? NULL: UNWRAP_CLIENT(l->obj);
+}
  const char broken[] = "broken";
  struct wlr_surface *exclusive_focus;
  struct wlr_scene *scene;
@@ -614,24 +637,27 @@ client_monitor(void *c ,Monitor *change) {
 }
 
 SCM_DEFINE (gwwm_cleanup, "%gwwm-cleanup",0,0,0, () ,"")
+#define D(funcname,args , ...) (funcname(args ,##__VA_ARGS__));; send_log(DEBUG,#funcname " done");
 {
+
   PRINT_FUNCTION;
   scm_c_run_hook(REF("gwwm hooks", "gwwm-cleanup-hook"),
                  scm_make_list(scm_from_int(0), SCM_UNSPECIFIED));
 #ifdef XWAYLAND
-	wlr_xwayland_destroy(xwayland);
+    D(wlr_xwayland_destroy,xwayland);
 #endif
-	wl_display_destroy_clients(gwwm_display(NULL));
-	wlr_backend_destroy(gwwm_backend(NULL));
-    wlr_renderer_destroy(drw);
-	wlr_allocator_destroy(alloc);
-	wlr_xcursor_manager_destroy(cursor_mgr);
-	wlr_cursor_destroy(cursor);
-	wlr_output_layout_destroy(gwwm_output_layout(NULL));
-	wlr_seat_destroy(seat);
-	wl_display_destroy(gwwm_display(NULL));
+	D(wl_display_destroy_clients,(gwwm_display(NULL)));
+	D(wlr_backend_destroy,(gwwm_backend(NULL)));
+    D(wlr_renderer_destroy,(drw));
+	D(wlr_allocator_destroy,(alloc));
+	D(wlr_xcursor_manager_destroy,(cursor_mgr));
+    D(wlr_cursor_destroy,(cursor));
+    D(wlr_output_layout_destroy,(gwwm_output_layout(NULL)));
+	D(wlr_seat_destroy,(seat));
+	D(wl_display_destroy,(gwwm_display(NULL)));
     return SCM_UNSPECIFIED;
 }
+#undef D
 
 void
 cleanupkeyboard(struct wl_listener *listener, void *data)
@@ -671,6 +697,7 @@ cleanupmon(struct wl_listener *listener, void *data)
 	focusclient(focustop(current_monitor()), 1);
 	closemon(m);
     logout_monitor(m);
+    PRINT_FUNCTION;
 }
 
 void
@@ -678,6 +705,7 @@ closemon(Monitor *m)
 {
   PRINT_FUNCTION;
   scm_call_1(REFP("gwwm", "closemon"),WRAP_MONITOR(m));
+  PRINT_FUNCTION;
 }
 
 void
@@ -896,6 +924,13 @@ createmon(struct wl_listener *listener, void *data)
 	wlr_output_layout_add_auto(gwwm_output_layout(NULL), wlr_output);
 }
 
+void add_listen(void *c ,struct wl_signal *signal, wl_notify_func_t func){
+    struct wl_listener* listener=(register_gwwm_listener(c));
+    listener->notify=func;
+    wl_signal_add(signal, listener);
+
+}
+
 void
 createnotify(struct wl_listener *listener, void *data)
 {
@@ -938,8 +973,7 @@ createnotify(struct wl_listener *listener, void *data)
 	LISTEN(&xdg_surface->events.unmap, &c->unmap, unmapnotify);
 	LISTEN(&xdg_surface->events.destroy, &c->destroy, destroynotify);
 	LISTEN(&xdg_surface->toplevel->events.set_title, &c->set_title, updatetitle);
-	LISTEN(&xdg_surface->toplevel->events.request_fullscreen, &c->fullscreen,
-			fullscreennotify);
+    add_listen(c,&xdg_surface->toplevel->events.request_fullscreen,fullscreennotify);
 }
 
 void
@@ -1026,6 +1060,15 @@ destroylayersurfacenotify(struct wl_listener *listener, void *data)
     logout_client(layersurface);
 }
 
+SCM_DEFINE_PUBLIC(gwwm_logout_listeners, "logout-listeners", 2, 0, 0, (SCM _ignored,SCM listener),
+                  "") {
+  PRINT_FUNCTION;
+  struct wl_listener *l=UNWRAP_WL_LISTENER(listener);
+  wl_list_remove(&l->link);
+  PRINT_FUNCTION;
+  return SCM_UNSPECIFIED;
+}
+
 void
 destroynotify(struct wl_listener *listener, void *data)
 {
@@ -1036,7 +1079,9 @@ destroynotify(struct wl_listener *listener, void *data)
 	wl_list_remove(&c->unmap.link);
 	wl_list_remove(&c->destroy.link);
 	wl_list_remove(&c->set_title.link);
-	wl_list_remove(&c->fullscreen.link);
+    /* scm_hash_for_each(REFP("gwwm", "logout-listeners"), scm_slot_ref(WRAP_CLIENT(c), scm_from_utf8_symbol("listeners"))); */
+	/* wl_list_remove(&c->fullscreen.link); */
+    /* scm_call_1(REFP("gwwm client","remove-all-listener"),WRAP_CLIENT(c)); */
 #ifdef XWAYLAND
 	if (client_is_x11(c)) {
 		wl_list_remove(&c->configure.link);
@@ -1248,7 +1293,7 @@ void
 fullscreennotify(struct wl_listener *listener, void *data)
 {
   PRINT_FUNCTION;
-  Client *c = wl_container_of(listener, c, fullscreen);
+  Client *c = client_from_listener(listener); /* wl_container_of(listener, c, fullscreen); */
   int fullscreen = client_wants_fullscreen(c);
   scm_c_run_hook(REF("gwwm hooks", "fullscreen-event-hook"),
                  scm_list_2(WRAP_CLIENT(c),
@@ -2009,8 +2054,9 @@ setmon(Client *c, Monitor *m, unsigned int newtags)
 
 	if (oldmon == m)
 		return;
+    PRINT_FUNCTION;
 	client_monitor(c,m);
-
+    PRINT_FUNCTION;
 	/* TODO leave/enter is not optimal but works */
 	if (oldmon) {
 		wlr_surface_send_leave(CLIENT_SURFACE(c), MONITOR_WLR_OUTPUT(oldmon));
@@ -2020,7 +2066,7 @@ setmon(Client *c, Monitor *m, unsigned int newtags)
 		/* Make sure window actually overlaps with the monitor */
 		resize(c, c->geom, 0);
 		wlr_surface_send_enter(CLIENT_SURFACE(c), MONITOR_WLR_OUTPUT(m));
-set_client_tags(c,newtags ? newtags : m->tagset[m->seltags]); /* assign tags of target monitor */
+        set_client_tags(c,newtags ? newtags : m->tagset[m->seltags]); /* assign tags of target monitor */
 		arrange(m);
 	}
 	focusclient(focustop(current_monitor()), 1);
@@ -2029,6 +2075,7 @@ set_client_tags(c,newtags ? newtags : m->tagset[m->seltags]); /* assign tags of 
 SCM_DEFINE_PUBLIC(gwwm_setmon, "%setmon", 3, 0, 0, (SCM c ,SCM m, SCM newtags), "")
 #define FUNC_NAME s_gwwm_setmon
 {
+  PRINT_FUNCTION;
   GWWM_ASSERT_CLIENT_OR_FALSE(c ,1);
   setmon(UNWRAP_CLIENT(c),
          UNWRAP_MONITOR(m),
@@ -2276,7 +2323,7 @@ tag(const Arg *arg)
   PRINT_FUNCTION
 	Client *sel = current_client();
 	if (sel && arg->ui & TAGMASK) {
-set_client_tags(sel, arg->ui & TAGMASK);
+      set_client_tags(sel, arg->ui & TAGMASK);
 		focusclient(focustop(current_monitor()), 1);
 		arrange(current_monitor());
 	}
@@ -2481,7 +2528,6 @@ updatemons(struct wl_listener *listener, void *data)
 		wl_list_for_each(c, &clients, link)
 			if (!client_monitor(c,NULL) && client_is_mapped(c))
               setmon(c, current_monitor(), client_tags(c));
-
 	wlr_output_manager_v1_set_configuration(output_mgr, config);
 }
 
@@ -2668,6 +2714,7 @@ configurex11(struct wl_listener *listener, void *data)
   /* CLIENT_SET_SURFACE(c,event->surface->surface); */
 }
 
+
 void
 createnotifyx11(struct wl_listener *listener, void *data)
 {
@@ -2693,9 +2740,11 @@ createnotifyx11(struct wl_listener *listener, void *data)
 	LISTEN(&xwayland_surface->events.set_hints, &c->set_hints, sethints);
 	LISTEN(&xwayland_surface->events.set_title, &c->set_title, updatetitle);
 	LISTEN(&xwayland_surface->events.destroy, &c->destroy, destroynotify);
-	LISTEN(&xwayland_surface->events.request_fullscreen, &c->fullscreen,
-			fullscreennotify);
+    add_listen(c,&xwayland_surface->events.request_fullscreen,fullscreennotify);
+	/* LISTEN(&xwayland_surface->events.request_fullscreen, (register_gwwm_listener(c)), */
+	/* 		fullscreennotify); */
 }
+
 
 Atom
 getatom(xcb_connection_t *xc, const char *name)

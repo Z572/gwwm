@@ -4,6 +4,8 @@
   #:use-module (ice-9 control)
   #:use-module (util572 color)
   #:use-module (wlroots xwayland)
+  #:use-module (wayland listener)
+  #:use-module (wayland list)
   #:use-module (wlroots util box)
   #:use-module ((system foreign) #:select (pointer-address))
   #:use-module (wlroots types xdg-shell)
@@ -71,7 +73,15 @@
            #:accessor client-surface)
   (scene #:init-value #f
          #:accessor client-scene
-         #:setter client-set-scene!))
+         #:setter client-set-scene!)
+  (listeners #:init-value (list)))
+
+(define-method (remove-all-listener (c <gwwm-base-client>))
+  (hash-for-each (lambda (_ b)
+
+                   (pk 'bb(wl-list-remove (pk 'link(wl-listener-link b)))))
+                 (slot-ref c 'listeners))
+  (slot-set! c 'listeners (make-hash-table 10)))
 
 (define-class <gwwm-client> (<gwwm-base-client>)
   (appid #:allocation #:virtual
@@ -94,7 +104,6 @@
                           "*deaded*"))
          #:slot-set! (lambda _ #t)
          #:getter client-title)
-
   (tags #:init-value 0 #:getter client-tags)
   (borders #:init-value (list))
   (border-width #:init-value 1 #:accessor client-border-width)
@@ -176,11 +185,20 @@
   (wlr-xwayland-surface-title
    (client-xwayland-surface c)))
 
+(define-method (logout-client (c <gwwm-base-client>))
+  (client-remove-listeners c))
 (define-method (logout-client (c <gwwm-client>))
+
+  (pk 'bb2)
   (hashq-remove! %clients (.data c))
-  (set! (.data c) 0))
+  (next-method)
+  (pk 'bb3)
+  (set! (.data c) 0)
+  (pk 'bb4))
 (define-method (logout-client (c <gwwm-layer-client>))
+
   (hashq-remove! %layer-clients (.data c))
+  (next-method)
   (set! (.data c) 0))
 
 (define-method (client-send-close (c <gwwm-client>))

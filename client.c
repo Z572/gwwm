@@ -23,6 +23,7 @@ unwrap_client_1(SCM o)
 }
 
 void register_client(void *c, enum gwwm_client_type type) {
+  PRINT_FUNCTION;
   char *tp = "<gwwm-client>";
   SCM table = INNER_CLIENTS_HASH_TABLE;
   switch (type) {
@@ -37,21 +38,33 @@ void register_client(void *c, enum gwwm_client_type type) {
     tp = "<gwwm-x-client>";
     break;
   }
+  PRINT_FUNCTION;
   scm_hashq_set_x(table, (scm_pointer_address(FROM_P(c))),
                   (scm_call_3(REF("oop goops", "make"), REF("gwwm client", tp),
                               scm_from_utf8_keyword("data"),
                               scm_pointer_address(FROM_P(c)))));
+  PRINT_FUNCTION;
 }
+SCM_DEFINE(gwwm_client_remove_listeners, "client-remove-listeners", 1, 0, 0, (SCM c),
+           "") {
+  SCM listeners=(scm_slot_ref(c, scm_from_utf8_symbol("listeners")));
+  int length=scm_to_int(REF_CALL_1("guile","length",listeners));
+  for (int i = 0; i < length; i++) {
+    struct wl_listener *listener=UNWRAP_WL_LISTENER(scm_list_ref(listeners, scm_from_int(i)));
+    wl_list_remove(&listener->link);
 
+}
+  scm_slot_set_x(c, scm_from_utf8_symbol("listeners"), scm_make_list(scm_from_int(0), SCM_UNSPECIFIED));
+  return SCM_UNSPECIFIED;
+}
 void
 logout_client(void *c){
-  scm_call_1(REFP("gwwm client","logout-client") ,WRAP_CLIENT(c));
-  /* scm_hashq_remove_x(((scm_to_utf8_string(gwwm_client_type(WRAP_CLIENT(c)))== "LayerShell") */
-  /*                     ? REFP("gwwm client", "%layer-clients") */
-  /*                     : INNER_CLIENTS_HASH_TABLE), */
-  /*                    scm_pointer_address(scm_from_pointer(c ,NULL))); */
-    /* scm_slot_set_x(WRAP_CLIENT(c),scm_from_utf8_symbol("data"),SCM_BOOL_F); */
-    free(c);
+  PRINT_FUNCTION;
+  SCM sc=WRAP_CLIENT(c);
+  scm_call_1(REFP("gwwm client","logout-client") ,sc);
+  gwwm_client_remove_listeners(sc);
+  /* scm_call_1(REFP("remove-all-listener")) */
+  free(c);
 }
 struct wlr_scene_rect *
 client_border_n(Client *c, int n)

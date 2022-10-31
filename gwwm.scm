@@ -133,6 +133,7 @@ gwwm [options]
 (define (closemon m)
   (for-each (lambda (c)
               (let ((geom (client-geom c)))
+                (pk 1)
                 (when (and (client-is-floating? c)
                            (> (box-x geom)
                               (box-width (monitor-area m))))
@@ -142,9 +143,14 @@ gwwm [options]
                                          (box-width geom)
                                          (box-height geom ))
                                  #t))
+                (pk 'bb)
                 (when (equal? (client-monitor c) m)
-                  (%setmon c (current-monitor)
-                           (client-tags c)))))
+                  (
+                   %setmon
+                   c
+                   (current-monitor)
+                   (client-tags c)))
+                (pk '3)))
             (client-list)))
 (define (gwwm-setup)
   (gwwm-display (wl-display-create))
@@ -229,4 +235,5 @@ gwwm [options]
       (begin (send-log ERROR (G_ "gwwm cannot start backend!"))
              (exit 1)))
   (%gwwm-run)
+  (pk 'bs)
   (%gwwm-cleanup))
