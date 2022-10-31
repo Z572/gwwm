@@ -2318,24 +2318,6 @@ startdrag(struct wl_listener *listener, void *data)
 }
 
 void
-tag(const Arg *arg)
-{
-  PRINT_FUNCTION
-	Client *sel = current_client();
-	if (sel && arg->ui & TAGMASK) {
-      set_client_tags(sel, arg->ui & TAGMASK);
-		focusclient(focustop(current_monitor()), 1);
-		arrange(current_monitor());
-	}
-	printstatus();
-}
-
-SCM_DEFINE (gwwm_tag, "tag",1,0,0,(SCM ui),""){
-  tag(&((Arg){.ui= 1 << (scm_to_int(ui))}));
-  return SCM_UNSPECIFIED;
-}
-
-void
 tagmon(const Arg *arg)
 {
   PRINT_FUNCTION

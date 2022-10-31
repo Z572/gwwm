@@ -15,7 +15,8 @@
             focustop
             gwwm-quit
             setlayout
-            arrange))
+            arrange
+            tag))
 
 (define (arrange m)
   (for-each
@@ -27,6 +28,12 @@
   (and=> (layout-procedure
           (list-ref (monitor-layouts m) (monitor-sellt m))) (cut <> m))
   ((@@ (gwwm) %motionnotify) 0))
+
+(define* (tag int #:optional (client (current-client)))
+  (when client
+    (set! (client-tags client) int)
+    (focusclient (focustop (current-monitor)) #t)
+    (arrange (current-monitor))))
 
 (define* (togglefullscreen #:optional (client (current-client)))
   (when client

@@ -104,7 +104,7 @@
                           "*deaded*"))
          #:slot-set! (lambda _ #t)
          #:getter client-title)
-  (tags #:init-value 0 #:getter client-tags)
+  (tags #:init-value 0 #:accessor client-tags)
   (borders #:init-value (list))
   (border-width #:init-value 1 #:accessor client-border-width)
   (prev-geom #:accessor client-prev-geom #:init-value #f)
