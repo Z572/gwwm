@@ -188,7 +188,7 @@ gwwm [options]
   (add-hook! fullscreen-event-hook
              (lambda (c fullscreen?)
                (if (client-monitor c)
-                   (%setfullscreen c fullscreen?)
+                   ((@@ (gwwm client)%setfullscreen) c fullscreen?)
                    (set! (client-fullscreen? c) fullscreen?))))
   (current-log-callback
    (let ((p (current-error-port)))
