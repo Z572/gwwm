@@ -75,17 +75,9 @@ typedef struct {
 } Keyboard;
 
 typedef struct {
-  /* Must keep these three elements in this order */
   struct wlr_box geom;
-  /* struct wlr_surface *surface; */
-  /* struct wlr_scene_node *scene; */
   struct wl_list link;
   int mapped;
-
-  struct wl_listener destroy;
-  struct wl_listener map;
-  struct wl_listener unmap;
-  struct wl_listener surface_commit;
 } LayerSurface;
 #define WRAP_MONITOR(o) find_monitor(o)
 #define UNWRAP_MONITOR(o)                                                      \
@@ -137,6 +129,7 @@ typedef struct {
 Monitor *current_monitor();
 Monitor *client_monitor(void *c, Monitor *change);
 void applybounds(Client *c, struct wlr_box *bbox);
+void add_listen(void *c ,struct wl_signal *signal, wl_notify_func_t func);
 void applyexclusive(struct wlr_box *usable_area, uint32_t anchor,
                     int32_t exclusive, int32_t margin_top, int32_t margin_right,
                     int32_t margin_bottom, int32_t margin_left);

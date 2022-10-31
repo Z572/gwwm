@@ -711,8 +711,8 @@ closemon(Monitor *m)
 void
 commitlayersurfacenotify(struct wl_listener *listener, void *data)
 {
-  PRINT_FUNCTION
-	LayerSurface *layersurface = wl_container_of(listener, layersurface, surface_commit);
+  PRINT_FUNCTION;
+	LayerSurface *layersurface = client_from_listener(listener);
 	struct wlr_layer_surface_v1 *wlr_layer_surface = wlr_layer_surface_v1_from_wlr_surface(CLIENT_SURFACE(layersurface));
 
 	if (!client_monitor(layersurface,NULL))
@@ -737,7 +737,7 @@ commitlayersurfacenotify(struct wl_listener *listener, void *data)
 void
 commitnotify(struct wl_listener *listener, void *data)
 {
-  PRINT_FUNCTION
+  PRINT_FUNCTION;
 	Client *c = wl_container_of(listener, c, commit);
     scm_c_run_hook(REF("gwwm hooks", "surface-commit-event-hook"), scm_list_1(WRAP_CLIENT(c)));
 	struct wlr_box box = *client_get_geometry(c);
@@ -756,7 +756,7 @@ commitnotify(struct wl_listener *listener, void *data)
 void
 createidleinhibitor(struct wl_listener *listener, void *data)
 {
-  PRINT_FUNCTION
+  PRINT_FUNCTION;
 	struct wlr_idle_inhibitor_v1 *idle_inhibitor = data;
 	wl_signal_add(&idle_inhibitor->events.destroy, &idle_inhibitor_destroy);
 
@@ -766,7 +766,7 @@ createidleinhibitor(struct wl_listener *listener, void *data)
 void
 createkeyboard(struct wlr_input_device *device)
 {
-  PRINT_FUNCTION
+  PRINT_FUNCTION;
 	struct xkb_context *context;
 	struct xkb_keymap *keymap;
 	Keyboard *kb = device->data = ecalloc(1, sizeof(*kb));
@@ -817,14 +817,10 @@ createlayersurface(struct wl_listener *listener, void *data)
     register_client(layersurface,GWWM_LAYER_CLIENT_TYPE);
     CLIENT_SET_TYPE(layersurface ,"LayerShell");
     CLIENT_SET_SURFACE(layersurface,wlr_layer_surface->surface);
-	LISTEN(&wlr_layer_surface->surface->events.commit,
-			&layersurface->surface_commit, commitlayersurfacenotify);
-	LISTEN(&wlr_layer_surface->events.destroy, &layersurface->destroy,
-			destroylayersurfacenotify);
-	LISTEN(&wlr_layer_surface->events.map, &layersurface->map,
-			maplayersurfacenotify);
-	LISTEN(&wlr_layer_surface->events.unmap, &layersurface->unmap,
-			unmaplayersurfacenotify);
+	add_listen(layersurface,&wlr_layer_surface->surface->events.commit, commitlayersurfacenotify);
+	add_listen(layersurface,&wlr_layer_surface->events.destroy,destroylayersurfacenotify);
+	add_listen(layersurface,&wlr_layer_surface->events.map,maplayersurfacenotify);
+	add_listen(layersurface,&wlr_layer_surface->events.unmap,unmaplayersurfacenotify);
 
     client_monitor(layersurface,wlr_layer_surface->output->data);
 	wlr_layer_surface->data = layersurface;
@@ -847,7 +843,7 @@ createlayersurface(struct wl_listener *listener, void *data)
 
 void
 register_monitor(Monitor *m) {
-  PRINT_FUNCTION
+  PRINT_FUNCTION;
   scm_hashq_set_x(INNER_MONITOR_HASH_TABLE, (scm_pointer_address(scm_from_pointer(m ,NULL))),MAKE_MONITOR(m));
 }
 
@@ -865,7 +861,7 @@ logout_monitor(Monitor *m){
 void
 createmon(struct wl_listener *listener, void *data)
 {
-  PRINT_FUNCTION
+  PRINT_FUNCTION;
 	/* This event is raised by the backend when a new output (aka a display or
 	 * monitor) becomes available. */
 	struct wlr_output *wlr_output = data;
@@ -934,7 +930,7 @@ void add_listen(void *c ,struct wl_signal *signal, wl_notify_func_t func){
 void
 createnotify(struct wl_listener *listener, void *data)
 {
-  PRINT_FUNCTION
+  PRINT_FUNCTION;
 	/* This event is raised when wlr_xdg_shell receives a new xdg surface from a
 	 * client, either a toplevel (application window) or popup,
 	 * or when wlr_layer_shell receives a new popup from a layer.
@@ -969,17 +965,17 @@ createnotify(struct wl_listener *listener, void *data)
     CLIENT_SET_TYPE(c ,"XDGShell");
     CLIENT_SET_SURFACE(c ,xdg_surface->surface);
     CLIENT_SET_BW(c,GWWM_BORDERPX());
-	LISTEN(&xdg_surface->events.map, &c->map, mapnotify);
-	LISTEN(&xdg_surface->events.unmap, &c->unmap, unmapnotify);
-	LISTEN(&xdg_surface->events.destroy, &c->destroy, destroynotify);
-	LISTEN(&xdg_surface->toplevel->events.set_title, &c->set_title, updatetitle);
+	add_listen(c,&xdg_surface->events.map, mapnotify);
+	add_listen(c,&xdg_surface->events.unmap, unmapnotify);
+    add_listen(c,&xdg_surface->events.destroy ,destroynotify);
+	add_listen(c,&xdg_surface->toplevel->events.set_title, updatetitle);
     add_listen(c,&xdg_surface->toplevel->events.request_fullscreen,fullscreennotify);
 }
 
 void
 createpointer(struct wlr_input_device *device)
 {
-  PRINT_FUNCTION
+  PRINT_FUNCTION;
   scm_c_run_hook(REF("gwwm hooks", "create-pointer-hook"),
                  scm_list_1(WRAP_WLR_INPUT_DEVICE(device)));
 	if (wlr_input_device_is_libinput(device)) {
@@ -1025,7 +1021,7 @@ createpointer(struct wlr_input_device *device)
 void
 cursorframe(struct wl_listener *listener, void *data)
 {
-  PRINT_FUNCTION
+  PRINT_FUNCTION;
 	/* This event is forwarded by the cursor when a pointer emits an frame
 	 * event. Frame events are sent after regular pointer events to group
 	 * multiple events together. For instance, two axis events may happen at the
@@ -1037,7 +1033,7 @@ cursorframe(struct wl_listener *listener, void *data)
 void
 destroyidleinhibitor(struct wl_listener *listener, void *data)
 {
-  PRINT_FUNCTION
+  PRINT_FUNCTION;
 	/* `data` is the wlr_surface of the idle inhibitor being destroyed,
 	 * at this point the idle inhibitor is still in the list of the manager */
 	checkidleinhibitor(data);
@@ -1046,14 +1042,14 @@ destroyidleinhibitor(struct wl_listener *listener, void *data)
 void
 destroylayersurfacenotify(struct wl_listener *listener, void *data)
 {
-  PRINT_FUNCTION
-	LayerSurface *layersurface = wl_container_of(listener, layersurface, destroy);
+  PRINT_FUNCTION;
+	LayerSurface *layersurface = client_from_listener(listener) /* wl_container_of(listener, layersurface, destroy) */;
 
 	wl_list_remove(&layersurface->link);
-	wl_list_remove(&layersurface->destroy.link);
-	wl_list_remove(&layersurface->map.link);
-	wl_list_remove(&layersurface->unmap.link);
-	wl_list_remove(&layersurface->surface_commit.link);
+	/* wl_list_remove(&layersurface->destroy.link); */
+	/* wl_list_remove(&layersurface->map.link); */
+	/* wl_list_remove(&layersurface->unmap.link); */
+	/* wl_list_remove(&layersurface->surface_commit.link); */
 	wlr_scene_node_destroy(CLIENT_SCENE(layersurface));
 	if (client_monitor(layersurface,NULL))
 		arrangelayers(client_monitor(layersurface,NULL));
@@ -1074,21 +1070,11 @@ destroynotify(struct wl_listener *listener, void *data)
 {
   PRINT_FUNCTION
 	/* Called when the surface is destroyed and should never be shown again. */
-	Client *c = wl_container_of(listener, c, destroy);
-	wl_list_remove(&c->map.link);
-	wl_list_remove(&c->unmap.link);
-	wl_list_remove(&c->destroy.link);
-	wl_list_remove(&c->set_title.link);
-    /* scm_hash_for_each(REFP("gwwm", "logout-listeners"), scm_slot_ref(WRAP_CLIENT(c), scm_from_utf8_symbol("listeners"))); */
-	/* wl_list_remove(&c->fullscreen.link); */
-    /* scm_call_1(REFP("gwwm client","remove-all-listener"),WRAP_CLIENT(c)); */
-#ifdef XWAYLAND
-	if (client_is_x11(c)) {
-		wl_list_remove(&c->configure.link);
-		wl_list_remove(&c->set_hints.link);
-		wl_list_remove(&c->activate.link);
-	}
-#endif
+	Client *c = client_from_listener(listener);
+	/* wl_list_remove(&c->map.link); */
+	/* wl_list_remove(&c->unmap.link); */
+	/* wl_list_remove(&c->destroy.link); */
+	/* wl_list_remove(&c->set_title.link); */
     logout_client(c);
 }
 
@@ -1440,7 +1426,7 @@ void
 maplayersurfacenotify(struct wl_listener *listener, void *data)
 {
   PRINT_FUNCTION
-	LayerSurface *l = wl_container_of(listener, l, map);
+	LayerSurface *l = client_from_listener(listener);
 	wlr_surface_send_enter(CLIENT_SURFACE(l), MONITOR_WLR_OUTPUT((client_monitor(l,NULL))));
 	motionnotify(0);
 }
@@ -1450,7 +1436,7 @@ mapnotify(struct wl_listener *listener, void *data)
 {
   PRINT_FUNCTION;
   /* Called when the surface is mapped, or ready to display on-screen. */
-  Client *p, *c = wl_container_of(listener, c, map);
+  Client *p, *c = client_from_listener(listener);
   /* struct wlr_xdg_surface *surface = data; */
   int i;
   scm_c_run_hook(REF("gwwm hooks", "client-map-event-hook"),
@@ -2427,7 +2413,7 @@ void
 unmaplayersurfacenotify(struct wl_listener *listener, void *data)
 {
   PRINT_FUNCTION
-	LayerSurface *layersurface = wl_container_of(listener, layersurface, unmap);
+	LayerSurface *layersurface = client_from_listener(listener);
 
 	wlr_layer_surface_v1_from_wlr_surface(CLIENT_SURFACE(layersurface))->mapped = (layersurface->mapped = 0);
 	wlr_scene_node_set_enabled(CLIENT_SCENE(layersurface), 0);
@@ -2444,7 +2430,7 @@ unmapnotify(struct wl_listener *listener, void *data)
 {
   PRINT_FUNCTION
 	/* Called when the surface is unmapped, and should no longer be shown. */
-	Client *c = wl_container_of(listener, c, unmap);
+	Client *c = client_from_listener(listener);
 	if (c == grabc) {
 		cursor_mode = CurNormal;
 		grabc = NULL;
@@ -2517,7 +2503,7 @@ void
 updatetitle(struct wl_listener *listener, void *data)
 {
   PRINT_FUNCTION
-	Client *c = wl_container_of(listener, c, set_title);
+	Client *c = client_from_listener(listener);
     scm_c_run_hook(REF("gwwm hooks", "update-title-hook"), scm_list_1(WRAP_CLIENT(c)));
 	if (c == focustop(client_monitor(c,NULL)))
 		printstatus();
@@ -2677,7 +2663,7 @@ void
 activatex11(struct wl_listener *listener, void *data)
 {
   PRINT_FUNCTION
-	Client *c = wl_container_of(listener, c, activate);
+	Client *c =client_from_listener(listener);
 
 	/* Only "managed" windows can be activated */
   if (CLIENT_IS_MANAGED(c))
@@ -2688,7 +2674,7 @@ void
 configurex11(struct wl_listener *listener, void *data)
 {
   PRINT_FUNCTION;
-  Client *c = wl_container_of(listener, c, configure);
+  Client *c = client_from_listener(listener);/* wl_container_of(listener, c, configure); */
   /* struct wlr_xwayland_surface *xsurface = data; */
   struct wlr_xwayland_surface_configure_event *event = data;
   wlr_xwayland_surface_configure(event->surface,
@@ -2714,14 +2700,15 @@ createnotifyx11(struct wl_listener *listener, void *data)
     CLIENT_SET_TYPE(c ,xwayland_surface->override_redirect ? "X11Unmanaged" : "X11Managed");
 	CLIENT_SET_BW(c,GWWM_BORDERPX());
 	/* Listen to the various events it can emit */
-	LISTEN(&xwayland_surface->events.map, &c->map, mapnotify);
-	LISTEN(&xwayland_surface->events.unmap, &c->unmap, unmapnotify);
-	LISTEN(&xwayland_surface->events.request_activate, &c->activate, activatex11);
-	LISTEN(&xwayland_surface->events.request_configure, &c->configure,
-			configurex11);
-	LISTEN(&xwayland_surface->events.set_hints, &c->set_hints, sethints);
-	LISTEN(&xwayland_surface->events.set_title, &c->set_title, updatetitle);
-	LISTEN(&xwayland_surface->events.destroy, &c->destroy, destroynotify);
+	add_listen(c,&xwayland_surface->events.map, mapnotify);
+	add_listen(c,&xwayland_surface->events.unmap, unmapnotify);
+    add_listen(c, &xwayland_surface->events.request_activate, activatex11);
+	/* LISTEN(&xwayland_surface->events.request_activate, &c->activate, activatex11); */
+    add_listen(c, &xwayland_surface->events.request_configure, configurex11);
+
+    add_listen(c,&xwayland_surface->events.set_hints, sethints);
+    add_listen(c,&xwayland_surface->events.set_title,updatetitle);
+    add_listen(c,&xwayland_surface->events.destroy,destroynotify);
     add_listen(c,&xwayland_surface->events.request_fullscreen,fullscreennotify);
 	/* LISTEN(&xwayland_surface->events.request_fullscreen, (register_gwwm_listener(c)), */
 	/* 		fullscreennotify); */
@@ -2746,7 +2733,7 @@ void
 sethints(struct wl_listener *listener, void *data)
 {
   PRINT_FUNCTION;
-  Client *c = wl_container_of(listener, c, set_hints);
+  Client *c = client_from_listener(listener);
   if (c != current_client() && CLIENT_SURFACE(c)) {
       CLIENT_SET_URGENT(c, (wlr_xwayland_surface_from_wlr_surface(CLIENT_SURFACE(c)))->hints_urgency);
 		printstatus();

@@ -106,19 +106,7 @@ typedef struct Client {
   struct wl_list link;
   struct wl_list flink;
   struct wl_listener commit;
-  struct wl_listener map;
-  struct wl_listener unmap;
-  struct wl_listener destroy;
-  struct wl_listener set_title;
-  /* struct wl_listener fullscreen; */
   struct wlr_box prev; /* layout-relative, includes border */
-#ifdef XWAYLAND
-  struct wl_listener activate;
-  struct wl_listener configure;
-  struct wl_listener set_hints;
-#endif
-  /* unsigned int bw; */
-  /* int isfloating; */
   uint32_t resize; /* configure serial of a pending resize */
 } Client;
 
