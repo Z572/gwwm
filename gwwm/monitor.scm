@@ -37,7 +37,7 @@
                          get-current-monitor
                          set-current-monitor))
 (define-class <gwwm-monitor> ()
-  (data #:init-keyword #:data #:accessor .data)
+  (data #:init-keyword #:data #:accessor .data #:class <hidden-slot>)
   (name #:allocation #:virtual
         #:slot-ref (lambda (m) (wlr-output-name (monitor-wlr-output m)))
         #:slot-set! (lambda _ #f)

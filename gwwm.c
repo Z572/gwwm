@@ -844,12 +844,14 @@ createlayersurface(struct wl_listener *listener, void *data)
 void
 register_monitor(Monitor *m) {
   PRINT_FUNCTION;
-  scm_hashq_set_x(INNER_MONITOR_HASH_TABLE, (scm_pointer_address(scm_from_pointer(m ,NULL))),MAKE_MONITOR(m));
+  scm_hashq_set_x(INNER_MONITOR_HASH_TABLE, (scm_pointer_address(scm_from_pointer(m ,NULL))),
+                  (scm_call_3(REF("oop goops", "make"), REF("gwwm monitor", "<gwwm-monitor>"),
+              scm_from_utf8_keyword("data"), scm_pointer_address(FROM_P(m)))));
 }
 
 SCM
 find_monitor(Monitor *m) {
-  return scm_hashq_ref(INNER_MONITOR_HASH_TABLE, (scm_pointer_address(scm_from_pointer(m ,NULL))) ,NULL);
+  return scm_hashq_ref(INNER_MONITOR_HASH_TABLE, (scm_pointer_address(scm_from_pointer(m ,NULL))) ,SCM_BOOL_F);
 }
 
 void

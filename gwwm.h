@@ -81,7 +81,7 @@ typedef struct {
 } LayerSurface;
 #define WRAP_MONITOR(o) find_monitor(o)
 #define UNWRAP_MONITOR(o)                                                      \
-  (struct Monitor *)(TO_P(scm_call_1(REFP("gwwm monitor", ".data"), o)))
+  (struct Monitor *)(TO_P(MAKE_P(scm_call_1(REFP("gwwm monitor", ".data"), o))))
 #define MONITOR_WLR_OUTPUT(m)                                                  \
   (struct wlr_output *)(UNWRAP_WLR_OUTPUT(scm_call_1(                          \
       REFP("gwwm monitor", "monitor-wlr-output"), (WRAP_MONITOR(m)))))
