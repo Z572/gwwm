@@ -62,8 +62,6 @@ logout_client(void *c){
   PRINT_FUNCTION;
   SCM sc=WRAP_CLIENT(c);
   scm_call_1(REFP("gwwm client","logout-client") ,sc);
-  gwwm_client_remove_listeners(sc);
-  /* scm_call_1(REFP("remove-all-listener")) */
   free(c);
 }
 struct wlr_scene_rect *
