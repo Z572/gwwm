@@ -738,7 +738,7 @@ void
 commitnotify(struct wl_listener *listener, void *data)
 {
   PRINT_FUNCTION;
-	Client *c = wl_container_of(listener, c, commit);
+	Client *c = client_from_listener(listener);
     scm_c_run_hook(REF("gwwm hooks", "surface-commit-event-hook"), scm_list_1(WRAP_CLIENT(c)));
 	struct wlr_box box = *client_get_geometry(c);
 
@@ -818,6 +818,7 @@ createlayersurface(struct wl_listener *listener, void *data)
     CLIENT_SET_TYPE(layersurface ,"LayerShell");
     CLIENT_SET_SURFACE(layersurface,wlr_layer_surface->surface);
 	add_listen(layersurface,&wlr_layer_surface->surface->events.commit, commitlayersurfacenotify);
+	add_listen(layersurface,&wlr_layer_surface->surface->events.destroy, destroy_surface_notify);
 	add_listen(layersurface,&wlr_layer_surface->events.destroy,destroylayersurfacenotify);
 	add_listen(layersurface,&wlr_layer_surface->events.map,maplayersurfacenotify);
 	add_listen(layersurface,&wlr_layer_surface->events.unmap,unmaplayersurfacenotify);
@@ -967,10 +968,9 @@ createnotify(struct wl_listener *listener, void *data)
     CLIENT_SET_TYPE(c ,"XDGShell");
     CLIENT_SET_SURFACE(c ,xdg_surface->surface);
     CLIENT_SET_BW(c,GWWM_BORDERPX());
-	add_listen(c,&xdg_surface->events.map, mapnotify);
-	add_listen(c,&xdg_surface->events.unmap, unmapnotify);
-    add_listen(c,&xdg_surface->events.destroy ,destroynotify);
-	add_listen(c,&xdg_surface->toplevel->events.set_title, updatetitle);
+    add_listen(c,&xdg_surface->events.map, mapnotify);
+    add_listen(c,&xdg_surface->events.unmap, unmapnotify);
+    add_listen(c,&xdg_surface->toplevel->events.set_title, updatetitle);
     add_listen(c,&xdg_surface->toplevel->events.request_fullscreen,fullscreennotify);
 }
 
@@ -1045,17 +1045,12 @@ void
 destroylayersurfacenotify(struct wl_listener *listener, void *data)
 {
   PRINT_FUNCTION;
-	LayerSurface *layersurface = client_from_listener(listener) /* wl_container_of(listener, layersurface, destroy) */;
+  LayerSurface *layersurface = client_from_listener(listener);
 
-	wl_list_remove(&layersurface->link);
-	/* wl_list_remove(&layersurface->destroy.link); */
-	/* wl_list_remove(&layersurface->map.link); */
-	/* wl_list_remove(&layersurface->unmap.link); */
-	/* wl_list_remove(&layersurface->surface_commit.link); */
-	wlr_scene_node_destroy(CLIENT_SCENE(layersurface));
-	if (client_monitor(layersurface,NULL))
-		arrangelayers(client_monitor(layersurface,NULL));
-    logout_client(layersurface);
+  wl_list_remove(&layersurface->link);
+  wlr_scene_node_destroy(CLIENT_SCENE(layersurface));
+  if (client_monitor(layersurface,NULL))
+    arrangelayers(client_monitor(layersurface,NULL));
 }
 
 SCM_DEFINE_PUBLIC(gwwm_logout_listeners, "logout-listeners", 2, 0, 0, (SCM _ignored,SCM listener),
@@ -1065,19 +1060,6 @@ SCM_DEFINE_PUBLIC(gwwm_logout_listeners, "logout-listeners", 2, 0, 0, (SCM _igno
   wl_list_remove(&l->link);
   PRINT_FUNCTION;
   return SCM_UNSPECIFIED;
-}
-
-void
-destroynotify(struct wl_listener *listener, void *data)
-{
-  PRINT_FUNCTION
-	/* Called when the surface is destroyed and should never be shown again. */
-	Client *c = client_from_listener(listener);
-	/* wl_list_remove(&c->map.link); */
-	/* wl_list_remove(&c->unmap.link); */
-	/* wl_list_remove(&c->destroy.link); */
-	/* wl_list_remove(&c->set_title.link); */
-    logout_client(c);
 }
 
 Monitor *
@@ -1433,6 +1415,11 @@ maplayersurfacenotify(struct wl_listener *listener, void *data)
 	motionnotify(0);
 }
 
+void destroy_surface_notify(struct wl_listener *listener, void *data) {
+  PRINT_FUNCTION;
+  logout_client((client_from_listener(listener)));
+}
+
 void
 mapnotify(struct wl_listener *listener, void *data)
 {
@@ -1457,7 +1444,8 @@ mapnotify(struct wl_listener *listener, void *data)
 		/* Ideally we should do this in createnotify{,x11} but at that moment
 		* wlr_xwayland_surface doesn't have wlr_surface yet
 		*/
-		LISTEN(&CLIENT_SURFACE(c)->events.commit, &c->commit, commitnotify);
+		add_listen(c,&CLIENT_SURFACE(c)->events.commit,commitnotify);
+        add_listen(c,&CLIENT_SURFACE(c)->events.destroy, destroy_surface_notify);
 
 	}
 	(CLIENT_SCENE(c))->data = client_scene_surface(c, NULL)->data = c;
@@ -2449,7 +2437,6 @@ unmapnotify(struct wl_listener *listener, void *data)
 	wl_list_remove(&c->link);
 	setmon(c, NULL, 0);
 	wl_list_remove(&c->flink);
-	wl_list_remove(&c->commit.link);
 	wlr_scene_node_destroy(CLIENT_SCENE(c));
 	printstatus();
 }
@@ -2710,7 +2697,6 @@ createnotifyx11(struct wl_listener *listener, void *data)
 
     add_listen(c,&xwayland_surface->events.set_hints, sethints);
     add_listen(c,&xwayland_surface->events.set_title,updatetitle);
-    add_listen(c,&xwayland_surface->events.destroy,destroynotify);
     add_listen(c,&xwayland_surface->events.request_fullscreen,fullscreennotify);
 	/* LISTEN(&xwayland_surface->events.request_fullscreen, (register_gwwm_listener(c)), */
 	/* 		fullscreennotify); */
