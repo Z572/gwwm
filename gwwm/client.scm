@@ -76,13 +76,6 @@
          #:setter client-set-scene!)
   (listeners #:init-value (list)))
 
-(define-method (remove-all-listener (c <gwwm-base-client>))
-  (hash-for-each (lambda (_ b)
-
-                   (pk 'bb(wl-list-remove (pk 'link(wl-listener-link b)))))
-                 (slot-ref c 'listeners))
-  (slot-set! c 'listeners (make-hash-table 10)))
-
 (define-class <gwwm-client> (<gwwm-base-client>)
   (appid #:allocation #:virtual
          #:slot-ref (lambda (c)
