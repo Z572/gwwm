@@ -491,17 +491,35 @@ arrangelayer(Monitor *m, struct wl_list *list, struct wlr_box *usable_area, int 
 	}
 }
 
+void arrange_interactive_layer(Monitor *m) {
+  LayerSurface *layersurface;
+  uint32_t layers_above_shell[] = {
+    ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY,
+    ZWLR_LAYER_SHELL_V1_LAYER_TOP,
+  };
+  for (size_t i = 0; i < LENGTH(layers_above_shell); i++) {
+    wl_list_for_each_reverse(layersurface, &m->layers[layers_above_shell[i]],
+                             link) {
+      struct wlr_surface *surface = CLIENT_SURFACE(layersurface);
+      struct wlr_layer_surface_v1 *lsurface =
+        wlr_layer_surface_v1_from_wlr_surface(surface);
+      if (lsurface->current.keyboard_interactive && lsurface->mapped) {
+        /* Deactivate the focused client. */
+        focusclient(NULL, 0);
+        exclusive_focus = surface;
+        client_notify_enter(exclusive_focus, wlr_seat_get_keyboard(seat));
+        return;
+      }
+    }
+  }
+}
+
 void
 arrangelayers(Monitor *m)
 {
   PRINT_FUNCTION
 	int i;
 	struct wlr_box usable_area = *MONITOR_AREA(m);
-	uint32_t layers_above_shell[] = {
-		ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY,
-		ZWLR_LAYER_SHELL_V1_LAYER_TOP,
-	};
-	LayerSurface *layersurface;
 
 	/* Arrange exclusive surfaces from top->bottom */
 	for (i = 3; i >= 0; i--)
@@ -517,19 +535,7 @@ arrangelayers(Monitor *m)
 		arrangelayer(m, &m->layers[i], &usable_area, 0);
 
 	/* Find topmost keyboard interactive layer, if such a layer exists */
-	for (size_t i = 0; i < LENGTH(layers_above_shell); i++) {
-		wl_list_for_each_reverse(layersurface,
-				&m->layers[layers_above_shell[i]], link) {
-			if ((wlr_layer_surface_v1_from_wlr_surface(CLIENT_SURFACE(layersurface)))->current.keyboard_interactive &&
-					(wlr_layer_surface_v1_from_wlr_surface(CLIENT_SURFACE(layersurface)))->mapped) {
-				/* Deactivate the focused client. */
-				focusclient(NULL, 0);
-				exclusive_focus = CLIENT_SURFACE(layersurface);
-				client_notify_enter(exclusive_focus, wlr_seat_get_keyboard(seat));
-				return;
-			}
-		}
-	}
+    arrange_interactive_layer(m);
 }
 
 void
