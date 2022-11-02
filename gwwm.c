@@ -2220,16 +2220,6 @@ sigchld(int unused)
 }
 
 void
-spawn(const Arg *arg)
-{
-  SCM a=scm_make_list(scm_from_int(0), SCM_UNSPECIFIED);
-  for (size_t i=0; i <LENGTH(((char **)arg->v)); i++) {
-    a=scm_cons(scm_from_utf8_string((((char **)arg->v)[i])), a);
-  }
-  scm_apply_0(REF("gwwm commands", "spawn"), a) ;
-}
-
-void
 startdrag(struct wl_listener *listener, void *data)
 {
   PRINT_FUNCTION
