@@ -66,8 +66,6 @@
 typedef struct Monitor {
   struct wl_list link;
   struct wlr_scene_output *scene_output;
-  struct wl_listener frame;
-  struct wl_listener destroy;
   struct wl_list layers[4]; /* LayerSurface::link */
   unsigned int seltags;
   unsigned int tagset[2];
@@ -77,7 +75,7 @@ typedef struct Monitor {
                  true */
 } Monitor;
 
-void* monitor_from_listener(struct wl_listener *listener) {
+Monitor* monitor_from_listener(struct wl_listener *listener) {
   PRINT_FUNCTION;
   SCM scm = scm_from_listener(WRAP_WL_LISTENER(listener));
   return scm_is_false(scm) ? NULL : UNWRAP_MONITOR(scm);
@@ -662,29 +660,35 @@ cleanupkeyboard(struct wl_listener *listener, void *data)
 	free(kb);
 }
 
-void
-cleanupmon(struct wl_listener *listener, void *data)
-{
+void monitor_add_listen(Monitor *m, struct wl_signal *signal,
+                       wl_notify_func_t func) {
+  struct wl_listener *listener =
+      UNWRAP_WL_LISTENER((scm_register_gwwm_listener(WRAP_MONITOR(m))));
+  listener->notify = func;
+  wl_signal_add(signal, listener);
+}
+
+void cleanupmon(struct wl_listener *listener, void *data) {
   PRINT_FUNCTION
-	struct wlr_output *wlr_output = data;
-	Monitor *m = wlr_output->data;
-	int nmons, i = 0;
+    struct wlr_output *wlr_output = data;
+  Monitor *m = wlr_output->data;
+  int nmons, i = 0;
 
-	wl_list_remove(&m->destroy.link);
-	wl_list_remove(&m->frame.link);
-	wl_list_remove(&m->link);
-	wlr_output_layout_remove(gwwm_output_layout(NULL), MONITOR_WLR_OUTPUT(m));
-	wlr_scene_output_destroy(m->scene_output);
+  wl_list_remove(&m->link);
+  wlr_output_layout_remove(gwwm_output_layout(NULL), MONITOR_WLR_OUTPUT(m));
+  wlr_scene_output_destroy(m->scene_output);
 
-	if ((nmons = wl_list_length(&mons)))
-		do /* don't switch to disabled mons */
-          set_current_monitor(wl_container_of(mons.prev, (current_monitor()), link));
-		while (!(MONITOR_WLR_OUTPUT(current_monitor()))->enabled && i++ < nmons);
+  if ((nmons = wl_list_length(&mons)))
+    do /* don't switch to disabled mons */
+      set_current_monitor(
+                          wl_container_of(mons.prev, (current_monitor()), link));
+    while (!(MONITOR_WLR_OUTPUT(current_monitor()))->enabled && i++ < nmons);
 
-	focusclient(focustop(current_monitor()), 1);
-	closemon(m);
-    logout_monitor(m);
-    PRINT_FUNCTION;
+  focusclient(focustop(current_monitor()), 1);
+  closemon(m);
+  logout_monitor(m);
+
+  PRINT_FUNCTION;
 }
 
 void
@@ -844,6 +848,7 @@ find_monitor(Monitor *m) {
 
 void
 logout_monitor(Monitor *m){
+  remove_listeners(WRAP_MONITOR(m));
   scm_hashq_remove_x(INNER_MONITOR_HASH_TABLE, scm_pointer_address(scm_from_pointer(m ,NULL)));
   free(m);
 }
@@ -885,8 +890,8 @@ createmon(struct wl_listener *listener, void *data)
 	wlr_output_enable_adaptive_sync(wlr_output, 1);
 
 	/* Set up event listeners */
-	LISTEN(&wlr_output->events.frame, &m->frame, rendermon);
-	LISTEN(&wlr_output->events.destroy, &m->destroy, cleanupmon);
+    monitor_add_listen(m,&wlr_output->events.frame,rendermon);
+    monitor_add_listen(m,&wlr_output->events.destroy,cleanupmon);
 
 	wlr_output_enable(wlr_output, 1);
     if (wlr_output_is_wl(wlr_output)) {
@@ -1769,7 +1774,7 @@ rendermon(struct wl_listener *listener, void *data)
   PRINT_FUNCTION
 	/* This function is called every time an output is ready to display a frame,
 	 * generally at the output's refresh rate (e.g. 60Hz). */
-	Monitor *m = wl_container_of(listener, m, frame);
+	Monitor *m = monitor_from_listener(listener);;
 	Client *c;
 	int skip = 0;
 	struct timespec now;

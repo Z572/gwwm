@@ -194,7 +194,7 @@ void setcursor(struct wl_listener *listener, void *data);
 SCM gwwm_setfloating(SCM c, SCM floating);
 void setfullscreen(Client *c, int fullscreen);
 void setlayout(const Arg *arg);
-void* monitor_from_listener(struct wl_listener *listener);
+Monitor* monitor_from_listener(struct wl_listener *listener);
 void setmfact(const Arg *arg);
 void setmon(Client *c, Monitor *m, unsigned int newtags);
 void setpsel(struct wl_listener *listener, void *data);
