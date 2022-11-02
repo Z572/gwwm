@@ -137,11 +137,8 @@ gwwm [options]
                 (when (and (client-is-floating? c)
                            (> (box-x geom)
                               (box-width (monitor-area m))))
-                  (client-resize c (list (- (box-x geom)
-                                            (box-width (monitor-window-area m)))
-                                         (box-y geom)
-                                         (box-width geom)
-                                         (box-height geom ))
+                  (client-resize c (modify-instance geom
+                                     (x (- x (box-width (monitor-window-area m)))))
                                  #t))
                 (pk 'bb)
                 (when (equal? (client-monitor c) m)

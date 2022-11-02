@@ -9,7 +9,58 @@
             get-xdg-config-home
             string-split-length)
   #:export-syntax (save-environment-excursion
-                   with-env))
+                   with-env
+                   let-slots
+                   modify-instance
+                   modify-instance*))
+
+(define-syntax let-slots
+  (lambda (x)
+    (syntax-case x ()
+      ((_ obj ((slot-name changed-name)) body body* ...)
+       #'(let ((changed-name (slot-ref obj 'slot-name )))
+           body body* ...))
+      ((_ obj (slot-name) body body* ...)
+       #'(let ((slot-name (slot-ref obj 'slot-name )))
+           body body* ...))
+      ((_ obj () body body* ...)
+       #'(let () body body* ...))
+      ((_ obj (var var* ...) body body* ...)
+       #'(let ((obj* obj))
+           (let-slots obj* (var)
+             (let-slots obj* (var* ...)
+               body body* ...)))))))
+
+(define-syntax modify-instance
+  (lambda (x)
+    (syntax-case x ()
+      ((_ obj ((slot-name changed-name) sexp ...) ...)
+       #'(let ((obj* obj))
+           (let-slots obj* ((slot-name changed-name) ...)
+             (slot-set! obj* 'slot-name
+                        (begin sexp ...)) ...)))
+      ((_ obj (slot-name sexp ...) ...)
+       #'(let ((obj* obj))
+           (let-slots obj* (slot-name ...)
+             (slot-set! obj* 'slot-name
+                        (begin sexp ...)) ...))))))
+
+(define-syntax modify-instance*
+  (lambda (x)
+    (syntax-case x ()
+      ((_ obj ((slot-name changed-name) sexp ...) ...)
+       #'(let ((obj* obj))
+           (let-slots obj* ((slot-name changed-name) ...)
+             (let ((out (begin sexp ...)))
+               (slot-set! obj* 'slot-name out)
+               (set! changed-name out)) ...)))
+      ((_ obj (slot-name sexp ...) ...)
+       #'(let ((obj* obj))
+           (let-slots obj* (slot-name ...)
+             (let ((out (begin sexp ...)))
+               (slot-set! obj* 'slot-name out)
+               (set! slot-name out)) ...))))))
+;; (define-syntax-rule (modify-slots))
 
 (define* (string-split-length s length)
   (let loop ((s s))
