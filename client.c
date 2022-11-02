@@ -1,3 +1,5 @@
+#include "libguile/numbers.h"
+#include "libguile/scm.h"
 #include "string.h"
 #include <wlr/types/wlr_scene.h>
 #include "util.h"
@@ -191,6 +193,38 @@ client_get_geometry(Client *c)
     return geom;
 }
 
+SCM_DEFINE(client_geom ,"client-geom",1,0,0,(SCM c),"")
+#define FUNC_NAME s_client_geom
+{
+  GWWM_ASSERT_CLIENT_OR_FALSE(c,1);
+  return WRAP_WLR_BOX (&(UNWRAP_CLIENT(c))->geom);
+}
+SCM_DEFINE(client_resize ,"%client-resize-configure-serial",1,0,0,(SCM c),"")
+#define FUNC_NAME s_client_geom
+{
+  GWWM_ASSERT_CLIENT_OR_FALSE(c,1);
+  return scm_from_uint32((UNWRAP_CLIENT(c))->resize);
+}
+SCM_DEFINE(client_set_resize ,"%client-set-resize-configure-serial!",2,0,0,(SCM c,SCM i),"")
+#define FUNC_NAME s_client_geom
+{
+  GWWM_ASSERT_CLIENT_OR_FALSE(c,1);
+  (UNWRAP_CLIENT(c))->resize=(scm_to_uint32(i));
+  return SCM_UNSPECIFIED;
+}
+
+#undef FUNC_NAME
+SCM_DEFINE(client_set_geom ,"client-set-geom!",2,0,0,(SCM c ,SCM box),"")
+#define FUNC_NAME s_client_geom
+{
+  GWWM_ASSERT_CLIENT_OR_FALSE(c,1);
+  struct wlr_box *b=UNWRAP_WLR_BOX(box);
+  UNWRAP_CLIENT(c)->geom=*b;
+  return SCM_UNSPECIFIED;
+}
+#undef FUNC_NAME
+
+
 void
 client_get_size_hints(Client *c, struct wlr_box *max, struct wlr_box *min)
 {
@@ -353,6 +387,12 @@ client_set_size(Client *c, uint32_t width, uint32_t height)
 	}
 #endif
 	return wlr_xdg_toplevel_set_size(wlr_xdg_surface_from_wlr_surface(CLIENT_SURFACE(c)), width, height);
+}
+
+SCM_DEFINE(gwwm_client_set_size, "client-set-size", 3, 0, 0,
+           (SCM c, SCM width, SCM height), "") {
+  return scm_from_uint32(client_set_size(UNWRAP_CLIENT(c), scm_to_uint32(width),
+                                         scm_to_uint32(height)));
 }
 
 void

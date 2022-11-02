@@ -4,9 +4,11 @@
   #:use-module (ice-9 control)
   #:use-module (util572 color)
   #:use-module (wlroots xwayland)
+  #:use-module (gwwm monitor)
   #:use-module (wayland listener)
   #:use-module (wayland list)
   #:use-module (wlroots util box)
+  #:use-module (util572 box)
   #:use-module ((system foreign) #:select (pointer-address))
   #:use-module (wlroots types xdg-shell)
   #:use-module (gwwm listener)
@@ -246,7 +248,29 @@
   *unspecified*)
 
 (define-method (client-resize (c <gwwm-client>) geo (interact? <boolean>))
-  (%resize c geo interact?))
+  (client-set-geom! c geo)
+  ((@@ (gwwm) %applybounds) c
+   (if interact?
+       ((@ (gwwm) entire-layout-box))
+       (monitor-window-area (client-monitor c))))
+  (let* ((bw (client-border-width c))
+         (geom (client-geom c))
+         (heigh (box-height geom))
+         (width (box-width geom))
+         (borders (slot-ref c 'borders)))
+    (wlr-scene-node-set-position (client-scene c) (box-x geo) (box-y geo))
+    (wlr-scene-node-set-position (client-scene-surface c) bw bw)
+    (wlr-scene-rect-set-size (list-ref borders 0) width bw)
+    (wlr-scene-rect-set-size (list-ref borders 1) width bw)
+    (wlr-scene-rect-set-size (list-ref borders 2) bw (- heigh (* 2 bw)))
+    (wlr-scene-rect-set-size (list-ref borders 3) bw (- heigh (* 2 bw)))
+    (wlr-scene-node-set-position (.node (list-ref borders 1)) 0 (- heigh bw ) )
+    (wlr-scene-node-set-position (.node (list-ref borders 2)) 0 bw )
+    (wlr-scene-node-set-position (.node (list-ref borders 3)) (- width bw) bw )
+    (%client-set-resize-configure-serial!
+     c (client-set-size c
+                        (- width (* 2 bw))
+                        (- heigh (* 2 bw))))))
 
 (define-method (client-resize (c <gwwm-client>) geo)
   (client-resize c geo #f))

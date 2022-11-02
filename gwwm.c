@@ -1,6 +1,7 @@
 /*
  * See LICENSE file for copyright and license details.
  */
+#include "libguile/boolean.h"
 #define _POSIX_C_SOURCE 200809L
 #include <getopt.h>
 #include <libinput.h>
@@ -143,14 +144,6 @@ struct wl_listener request_set_sel = {.notify = setsel};
 struct wl_listener request_start_drag = {.notify = requeststartdrag};
 struct wl_listener start_drag = {.notify = startdrag};
 struct wl_listener drag_icon_destroy = {.notify = dragicondestroy};
-
-SCM_DEFINE(client_geom ,"client-geom",1,0,0,(SCM c),"")
-#define FUNC_NAME s_client_geom
-{
-  GWWM_ASSERT_CLIENT_OR_FALSE(c,1);
-  return WRAP_WLR_BOX (&(UNWRAP_CLIENT(c))->geom);
-}
-#undef FUNC_NAME
 
 SCM_DEFINE_PUBLIC(gwwm_visibleon, "visibleon", 2, 0, 0, (SCM c, SCM m), "")
 #define FUNC_NAME s_gwwm_visibleon
@@ -1815,39 +1808,11 @@ requeststartdrag(struct wl_listener *listener, void *data)
 		wlr_data_source_destroy(event->drag->source);
 }
 
-void
-resize(Client *c, struct wlr_box geo, int interact)
-{
+void resize(Client *c, struct wlr_box geo, int interact) {
   PRINT_FUNCTION
-	struct wlr_box *bbox = interact ? (UNWRAP_WLR_BOX(scm_call_0(REFP("gwwm", "entire-layout-box")))) : (MONITOR_WINDOW_AREA(client_monitor(c,NULL)));
-	c->geom = geo;
-	applybounds(c, bbox);
-
-	/* Update scene-graph, including borders */
-	wlr_scene_node_set_position(CLIENT_SCENE(c), c->geom.x, c->geom.y);
-	wlr_scene_node_set_position(client_scene_surface(c,NULL), CLIENT_BW(c), CLIENT_BW(c));
-	wlr_scene_rect_set_size(client_border_n(c,0), c->geom.width, CLIENT_BW(c));
-	wlr_scene_rect_set_size(client_border_n(c,1), c->geom.width, CLIENT_BW(c));
-	wlr_scene_rect_set_size(client_border_n(c,2), CLIENT_BW(c), c->geom.height - 2 * CLIENT_BW(c));
-	wlr_scene_rect_set_size(client_border_n(c,3), CLIENT_BW(c), c->geom.height - 2 * CLIENT_BW(c));
-	wlr_scene_node_set_position(&client_border_n(c,1)->node, 0, c->geom.height - CLIENT_BW(c));
-	wlr_scene_node_set_position(&client_border_n(c,2)->node, 0, CLIENT_BW(c));
-	wlr_scene_node_set_position(&client_border_n(c,3)->node, c->geom.width - CLIENT_BW(c), CLIENT_BW(c));
-
-	/* wlroots makes this a no-op if size hasn't changed */
-	c->resize = client_set_size(c, c->geom.width - 2 * CLIENT_BW(c),
-			c->geom.height - 2 * CLIENT_BW(c));
+  REF_CALL_3("gwwm client", "client-resize", WRAP_CLIENT(c), WRAP_WLR_BOX(&geo),
+             scm_from_bool(interact));
 }
-
-SCM_DEFINE(gwwm_resize ,"%resize",3,0,0,(SCM c,SCM geo,SCM interact),"")
-#define FUNC_NAME s_gwwm_resize
-{
-  GWWM_ASSERT_CLIENT_OR_FALSE(c ,1);
-  struct wlr_box *box=UNWRAP_WLR_BOX(geo);
-  resize(UNWRAP_CLIENT(c),*box, scm_to_bool(interact));
-  return SCM_UNSPECIFIED;
-}
-#undef FUNC_NAME
 
 SCM_DEFINE (gwwm_run,"%gwwm-run",0,0,0,(),"")
 {
