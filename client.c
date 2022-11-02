@@ -2,6 +2,7 @@
 #include <wlr/types/wlr_scene.h>
 #include "util.h"
 #include "client.h"
+#include "listener.h"
 #include <wlr/types/wlr_layer_shell_v1.h>
 SCM
 find_client(void *c) {
@@ -20,6 +21,14 @@ unwrap_client_1(SCM o)
     return NULL;
   }
   return (TO_P(MAKE_P(a)));
+}
+
+void client_add_listen(void *c, struct wl_signal *signal,
+                       wl_notify_func_t func) {
+  struct wl_listener *listener =
+      UNWRAP_WL_LISTENER((scm_register_gwwm_listener(WRAP_CLIENT(c))));
+  listener->notify = func;
+  wl_signal_add(signal, listener);
 }
 
 void register_client(void *c, enum gwwm_client_type type) {
@@ -45,18 +54,13 @@ void register_client(void *c, enum gwwm_client_type type) {
                               scm_pointer_address(FROM_P(c)))));
   PRINT_FUNCTION;
 }
-SCM_DEFINE(gwwm_client_remove_listeners, "client-remove-listeners", 1, 0, 0, (SCM c),
-           "") {
-  SCM listeners=(scm_slot_ref(c, scm_from_utf8_symbol("listeners")));
-  int length=scm_to_int(REF_CALL_1("guile","length",listeners));
-  for (int i = 0; i < length; i++) {
-    struct wl_listener *listener=UNWRAP_WL_LISTENER(scm_list_ref(listeners, scm_from_int(i)));
-    wl_list_remove(&listener->link);
 
+void *client_from_listener(struct wl_listener *listener) {
+  PRINT_FUNCTION;
+  SCM scm = scm_from_listener(WRAP_WL_LISTENER(listener));
+  return scm_is_false(scm) ? NULL : UNWRAP_CLIENT(scm);
 }
-  scm_slot_set_x(c, scm_from_utf8_symbol("listeners"), scm_make_list(scm_from_int(0), SCM_UNSPECIFIED));
-  return SCM_UNSPECIFIED;
-}
+
 void
 logout_client(void *c){
   PRINT_FUNCTION;

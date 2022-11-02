@@ -1,5 +1,6 @@
 (define-module (gwwm monitor)
   #:use-module (oop goops)
+  #:use-module (gwwm listener)
   #:use-module (wlroots types output)
   #:use-module (wlroots types output-layout)
   #:autoload (system foreign) (pointer-address)
@@ -36,7 +37,7 @@
 (define current-monitor (make-procedure-with-setter
                          get-current-monitor
                          set-current-monitor))
-(define-class <gwwm-monitor> ()
+(define-class <gwwm-monitor> (<listener-manager>)
   (data #:init-keyword #:data #:accessor .data #:class <hidden-slot>)
   (name #:allocation #:virtual
         #:slot-ref (lambda (m) (wlr-output-name (monitor-wlr-output m)))

@@ -53,7 +53,7 @@
 #include <wlr/util/log.h>
 #include <xkbcommon/xkbcommon.h>
 #include "util.h"
-
+#include "listener.h"
 
 #ifdef XWAYLAND
 #include <X11/Xlib.h>
@@ -76,30 +76,11 @@ typedef struct Monitor {
   int un_map; /* If a map/unmap happened on this monitor, then this should be
                  true */
 } Monitor;
-typedef struct Gwwm_listener {
-  SCM obj;
-  struct wl_listener listener;
-} Gwwm_listener;
-struct wl_listener* register_gwwm_listener(void* c) {
-  PRINT_FUNCTION;
-  Gwwm_listener *listener=ecalloc(1, sizeof(*listener));
-  PRINT_FUNCTION;
-  SCM sc=WRAP_CLIENT(c);
-  SCM listeners=scm_slot_ref(sc,scm_from_utf8_symbol("listeners"));
-  listener->obj=sc;
-  scm_slot_set_x(sc, scm_from_utf8_symbol("listeners"), scm_cons(WRAP_WL_LISTENER(listener)
-                                                                 ,listeners));
-  /* scm_hashq_set_x(scm_slot_ref(sc,scm_from_utf8_symbol("listeners")), */
-  /*                 scm_pointer_address(FROM_P(listener)), WRAP_WL_LISTENER(listener)); */
 
-  return &listener->listener;
-
-}
-void *client_from_listener(struct wl_listener *listener) {
+void* monitor_from_listener(struct wl_listener *listener) {
   PRINT_FUNCTION;
-  Gwwm_listener *l=wl_container_of(listener, l, listener);
-
-  return scm_is_false (l->obj)? NULL: UNWRAP_CLIENT(l->obj);
+  SCM scm = scm_from_listener(WRAP_WL_LISTENER(listener));
+  return scm_is_false(scm) ? NULL : UNWRAP_MONITOR(scm);
 }
  const char broken[] = "broken";
  struct wlr_surface *exclusive_focus;
@@ -823,11 +804,11 @@ createlayersurface(struct wl_listener *listener, void *data)
     register_client(layersurface,GWWM_LAYER_CLIENT_TYPE);
     CLIENT_SET_TYPE(layersurface ,"LayerShell");
     CLIENT_SET_SURFACE(layersurface,wlr_layer_surface->surface);
-	add_listen(layersurface,&wlr_layer_surface->surface->events.commit, commitlayersurfacenotify);
-	add_listen(layersurface,&wlr_layer_surface->surface->events.destroy, destroy_surface_notify);
-	add_listen(layersurface,&wlr_layer_surface->events.destroy,destroylayersurfacenotify);
-	add_listen(layersurface,&wlr_layer_surface->events.map,maplayersurfacenotify);
-	add_listen(layersurface,&wlr_layer_surface->events.unmap,unmaplayersurfacenotify);
+	client_add_listen(layersurface,&wlr_layer_surface->surface->events.commit, commitlayersurfacenotify);
+	client_add_listen(layersurface,&wlr_layer_surface->surface->events.destroy, destroy_surface_notify);
+	client_add_listen(layersurface,&wlr_layer_surface->events.destroy,destroylayersurfacenotify);
+	client_add_listen(layersurface,&wlr_layer_surface->events.map,maplayersurfacenotify);
+	client_add_listen(layersurface,&wlr_layer_surface->events.unmap,unmaplayersurfacenotify);
 
     client_monitor(layersurface,wlr_layer_surface->output->data);
 	wlr_layer_surface->data = layersurface;
@@ -929,13 +910,6 @@ createmon(struct wl_listener *listener, void *data)
 	wlr_output_layout_add_auto(gwwm_output_layout(NULL), wlr_output);
 }
 
-void add_listen(void *c ,struct wl_signal *signal, wl_notify_func_t func){
-    struct wl_listener* listener=(register_gwwm_listener(c));
-    listener->notify=func;
-    wl_signal_add(signal, listener);
-
-}
-
 void
 createnotify(struct wl_listener *listener, void *data)
 {
@@ -974,10 +948,10 @@ createnotify(struct wl_listener *listener, void *data)
     CLIENT_SET_TYPE(c ,"XDGShell");
     CLIENT_SET_SURFACE(c ,xdg_surface->surface);
     CLIENT_SET_BW(c,GWWM_BORDERPX());
-    add_listen(c,&xdg_surface->events.map, mapnotify);
-    add_listen(c,&xdg_surface->events.unmap, unmapnotify);
-    add_listen(c,&xdg_surface->toplevel->events.set_title, updatetitle);
-    add_listen(c,&xdg_surface->toplevel->events.request_fullscreen,fullscreennotify);
+    client_add_listen(c,&xdg_surface->events.map, mapnotify);
+    client_add_listen(c,&xdg_surface->events.unmap, unmapnotify);
+    client_add_listen(c,&xdg_surface->toplevel->events.set_title, updatetitle);
+    client_add_listen(c,&xdg_surface->toplevel->events.request_fullscreen,fullscreennotify);
 }
 
 void
@@ -1450,8 +1424,8 @@ mapnotify(struct wl_listener *listener, void *data)
 		/* Ideally we should do this in createnotify{,x11} but at that moment
 		* wlr_xwayland_surface doesn't have wlr_surface yet
 		*/
-		add_listen(c,&CLIENT_SURFACE(c)->events.commit,commitnotify);
-        add_listen(c,&CLIENT_SURFACE(c)->events.destroy, destroy_surface_notify);
+		client_add_listen(c,&CLIENT_SURFACE(c)->events.commit,commitnotify);
+        client_add_listen(c,&CLIENT_SURFACE(c)->events.destroy, destroy_surface_notify);
 
 	}
 	(CLIENT_SCENE(c))->data = client_scene_surface(c, NULL)->data = c;
@@ -2695,17 +2669,14 @@ createnotifyx11(struct wl_listener *listener, void *data)
     CLIENT_SET_TYPE(c ,xwayland_surface->override_redirect ? "X11Unmanaged" : "X11Managed");
 	CLIENT_SET_BW(c,GWWM_BORDERPX());
 	/* Listen to the various events it can emit */
-	add_listen(c,&xwayland_surface->events.map, mapnotify);
-	add_listen(c,&xwayland_surface->events.unmap, unmapnotify);
-    add_listen(c, &xwayland_surface->events.request_activate, activatex11);
-	/* LISTEN(&xwayland_surface->events.request_activate, &c->activate, activatex11); */
-    add_listen(c, &xwayland_surface->events.request_configure, configurex11);
+	client_add_listen(c,&xwayland_surface->events.map, mapnotify);
+	client_add_listen(c,&xwayland_surface->events.unmap, unmapnotify);
+    client_add_listen(c, &xwayland_surface->events.request_activate, activatex11);
+    client_add_listen(c, &xwayland_surface->events.request_configure, configurex11);
 
-    add_listen(c,&xwayland_surface->events.set_hints, sethints);
-    add_listen(c,&xwayland_surface->events.set_title,updatetitle);
-    add_listen(c,&xwayland_surface->events.request_fullscreen,fullscreennotify);
-	/* LISTEN(&xwayland_surface->events.request_fullscreen, (register_gwwm_listener(c)), */
-	/* 		fullscreennotify); */
+    client_add_listen(c,&xwayland_surface->events.set_hints, sethints);
+    client_add_listen(c,&xwayland_surface->events.set_title,updatetitle);
+    client_add_listen(c,&xwayland_surface->events.request_fullscreen,fullscreennotify);
 }
 
 

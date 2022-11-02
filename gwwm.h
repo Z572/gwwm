@@ -129,7 +129,6 @@ typedef struct {
 Monitor *current_monitor();
 Monitor *client_monitor(void *c, Monitor *change);
 void applybounds(Client *c, struct wlr_box *bbox);
-void add_listen(void *c ,struct wl_signal *signal, wl_notify_func_t func);
 void applyexclusive(struct wlr_box *usable_area, uint32_t anchor,
                     int32_t exclusive, int32_t margin_top, int32_t margin_right,
                     int32_t margin_bottom, int32_t margin_left);
@@ -195,6 +194,7 @@ void setcursor(struct wl_listener *listener, void *data);
 SCM gwwm_setfloating(SCM c, SCM floating);
 void setfullscreen(Client *c, int fullscreen);
 void setlayout(const Arg *arg);
+void* monitor_from_listener(struct wl_listener *listener);
 void setmfact(const Arg *arg);
 void setmon(Client *c, Monitor *m, unsigned int newtags);
 void setpsel(struct wl_listener *listener, void *data);

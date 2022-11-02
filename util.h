@@ -35,6 +35,10 @@ void *ecalloc(size_t nmemb, size_t size);
   (TO_P(REF_CALL_1("wayland listener", "unwrap-wl-listener", p)))
 #define WRAP_WL_LISTENER(p)                                       \
   (REF_CALL_1("wayland listener", "wrap-wl-listener", FROM_P(p)))
+#define UNWRAP_WL_SIGNAL(p)                                       \
+  (TO_P(REF_CALL_1("wayland signal", "unwrap-wl-signal", p)))
+#define WRAP_WL_SIGNAL(p)                                       \
+  (REF_CALL_1("wayland signal", "wrap-wl-signal", FROM_P(p)))
 #define WRAP_WLR_OUTPUT_LAYOUT(p)                                              \
   (REF_CALL_1("wlroots types output-layout", "wrap-wlr-output-layout",         \
               FROM_P(p)))

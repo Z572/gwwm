@@ -9,6 +9,7 @@
   #:use-module (wlroots util box)
   #:use-module ((system foreign) #:select (pointer-address))
   #:use-module (wlroots types xdg-shell)
+  #:use-module (gwwm listener)
   #:use-module (gwwm i18n)
   #:use-module (srfi srfi-26)
   #:use-module (srfi srfi-17)
@@ -61,7 +62,7 @@
 (define (visibleon c m)
   ((@@ (gwwm) visibleon) c m))
 
-(define-class <gwwm-base-client> ()
+(define-class <gwwm-base-client> (<listener-manager>)
   (data #:init-keyword #:data
         #:accessor .data
         #:class <hidden-slot>)
@@ -73,8 +74,7 @@
            #:accessor client-surface)
   (scene #:init-value #f
          #:accessor client-scene
-         #:setter client-set-scene!)
-  (listeners #:init-value (list)))
+         #:setter client-set-scene!))
 
 (define-class <gwwm-client> (<gwwm-base-client>)
   (appid #:allocation #:virtual
@@ -179,7 +179,7 @@
    (client-xwayland-surface c)))
 
 (define-method (logout-client (c <gwwm-base-client>))
-  (client-remove-listeners c))
+  (remove-listeners c))
 (define-method (logout-client (c <gwwm-client>))
 
   (pk 'bb2)
