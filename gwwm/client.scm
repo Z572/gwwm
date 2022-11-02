@@ -52,6 +52,7 @@
             client-get-size-hints
             client-tags
             client-surface
+            client-geom
             <gwwm-client>
             <gwwm-x-client>
             <gwwm-layer-client>))
