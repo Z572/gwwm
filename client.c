@@ -2,6 +2,7 @@
 #include <wlr/types/wlr_scene.h>
 #include "util.h"
 #include "client.h"
+#include "gwwm.h"
 #include "listener.h"
 #include <wlr/types/wlr_layer_shell_v1.h>
 SCM

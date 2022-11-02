@@ -1,6 +1,5 @@
 #ifndef GWWM_CLIENT_H
 #define GWWM_CLIENT_H
-#include "gwwm.h"
 #include "util.h"
 #include <libguile.h>
 #include <wlr/types/wlr_keyboard.h>
