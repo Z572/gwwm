@@ -92,7 +92,6 @@ Monitor* monitor_from_listener(struct wl_listener *listener) {
  struct wlr_xdg_shell *xdg_shell;
  struct wlr_xdg_activation_v1 *activation;
  struct wl_list clients; /* tiling order */
- struct wl_list fstack;  /* focus order */
  struct wlr_idle *idle;
  struct wlr_idle_inhibit_manager_v1 *idle_inhibit_mgr;
  struct wlr_input_inhibit_manager *input_inhibit_mgr;
@@ -1097,9 +1096,9 @@ focusclient(Client *c, int lift)
 		return;
 	/* Put the new client atop the focus stack and select its monitor */
     if (c && !(CLIENT_IS_LAYER_SHELL(WRAP_CLIENT(c)))) {
-		wl_list_remove(&c->flink);
-		wl_list_insert(&fstack, &c->flink);
-	    set_current_monitor(client_monitor(c,NULL));
+      REF_CALL_2("ice-9 q", "q-remove!", REF_CALL_0("gwwm client", "%fstack"), WRAP_CLIENT(c));
+      REF_CALL_2("ice-9 q", "q-push!", REF_CALL_0("gwwm client", "%fstack"), WRAP_CLIENT(c));
+      set_current_monitor(client_monitor(c,NULL));
         CLIENT_SET_URGENT(c ,0);
 		client_restack_surface(c);
 
@@ -1220,21 +1219,9 @@ SCM_DEFINE (gwwm_focusstack, "focusstack" ,1,0,0,
 Client *
 focustop(Monitor *m)
 {
-  PRINT_FUNCTION
-	Client *c;
-	wl_list_for_each(c, &fstack, flink)
-		if (VISIBLEON(c, m))
-			return c;
-	return NULL;
-}
-
-SCM_DEFINE (gwwm_focustop ,"focustop",1,0,0,(SCM monitor),"")
-{
-  Client *c= focustop(UNWRAP_MONITOR(monitor));
-  if (c) {
-    return WRAP_CLIENT(c);
-  }
-  return SCM_BOOL_F;
+  PRINT_FUNCTION;
+  SCM c=REF_CALL_1("gwwm commands", "focustop", WRAP_MONITOR(m));
+  return scm_is_false(c)?  NULL: UNWRAP_CLIENT(c);
 }
 
 void
@@ -1447,7 +1434,7 @@ mapnotify(struct wl_listener *listener, void *data)
 
 	/* Insert this client into client lists. */
 	wl_list_insert(&clients, &c->link);
-	wl_list_insert(&fstack, &c->flink);
+    REF_CALL_2("ice-9 q", "q-push!", REF_CALL_0("gwwm client", "%fstack"), WRAP_CLIENT(c));
 
 	/* Set initial monitor, tags, floating status, and focus */
 	if ((p = client_get_parent(c))) {
@@ -1844,25 +1831,23 @@ SCM_DEFINE (gwwm_run,"%gwwm-run",0,0,0,(),"")
 Client *
 current_client(void)
 {
-  PRINT_FUNCTION
-	Client *c = wl_container_of(fstack.next, c, flink);
-	if (wl_list_empty(&fstack) || !VISIBLEON(c, current_monitor()))
-		return NULL;
-	return c;
+  PRINT_FUNCTION;
+  SCM c=REF_CALL_0("gwwm client", "current-client");
+  return scm_is_false(c) ? NULL : (UNWRAP_CLIENT(c));
 }
 
-SCM_DEFINE (gwwm_current_client, "current-client",0, 0,0,
-            () ,
-            "c")
-#define FUNC_NAME s_gwwm_current_client
-{
-  Client *c=current_client();
-  if (c) {
-    return WRAP_CLIENT(c) ;
-  }
-  return SCM_BOOL_F ;
-}
-#undef FUNC_NAME
+/* SCM_DEFINE (gwwm_current_client, "current-client",0, 0,0, */
+/*             () , */
+/*             "c") */
+/* #define FUNC_NAME s_gwwm_current_client */
+/* { */
+/*   Client *c=current_client(); */
+/*   if (c) { */
+/*     return WRAP_CLIENT(c) ; */
+/*   } */
+/*   return SCM_BOOL_F ; */
+/* } */
+/* #undef FUNC_NAME */
 
 void
 setcursor(struct wl_listener *listener, void *data)
@@ -2112,8 +2097,6 @@ SCM_DEFINE (gwwm_setup,"%gwwm-setup" ,0,0,0,(),"")
 	 * https://drewdevault.com/2018/07/29/Wayland-shells.html
 	 */
 	wl_list_init(&clients);
-	wl_list_init(&fstack);
-
 	idle = wlr_idle_create(gwwm_display(NULL));
 
 	idle_inhibit_mgr = wlr_idle_inhibit_v1_create(gwwm_display(NULL));
@@ -2376,7 +2359,7 @@ unmapnotify(struct wl_listener *listener, void *data)
 
 	wl_list_remove(&c->link);
 	setmon(c, NULL, 0);
-	wl_list_remove(&c->flink);
+    REF_CALL_2("ice-9 q", "q-remove!", REF_CALL_0("gwwm client", "%fstack"), WRAP_CLIENT(c));
 	wlr_scene_node_destroy(CLIENT_SCENE(c));
 	printstatus();
 }
@@ -2431,11 +2414,10 @@ updatemons(struct wl_listener *listener, void *data)
 void
 updatetitle(struct wl_listener *listener, void *data)
 {
-  PRINT_FUNCTION
-	Client *c = client_from_listener(listener);
-    scm_c_run_hook(REF("gwwm hooks", "update-title-hook"), scm_list_1(WRAP_CLIENT(c)));
-	if (c == focustop(client_monitor(c,NULL)))
-		printstatus();
+  PRINT_FUNCTION;
+  Client *c = client_from_listener(listener);
+  scm_c_run_hook(REF("gwwm hooks", "update-title-hook"),
+                 scm_list_1(WRAP_CLIENT(c)));
 }
 
 void

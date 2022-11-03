@@ -3,6 +3,7 @@
   #:use-module (wlroots types scene)
   #:use-module (wayland display)
   #:use-module (srfi srfi-26)
+  #:use-module (ice-9 control)
   #:use-module (gwwm monitor)
   #:use-module (gwwm layout)
   #:use-module (gwwm client)
@@ -55,7 +56,12 @@
   ((@@ (gwwm) focusclient) client lift))
 
 (define (focustop monitor)
-  ((@@ (gwwm) focustop) monitor))
+  (let/ec return
+    (for-each (lambda (c)
+                (when (visibleon c monitor)
+                  (return c)))
+              (car (%fstack)))
+    #f))
 
 (define (spawn program . args)
   (when (= (primitive-fork) 0)

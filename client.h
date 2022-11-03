@@ -103,7 +103,6 @@ typedef struct Client {
   struct wlr_box geom; /* layout-relative, includes border */
   struct wlr_scene_rect *fullscreen_bg; /* See setfullscreen() for info */
   struct wl_list link;
-  struct wl_list flink;
   struct wlr_box prev; /* layout-relative, includes border */
   uint32_t resize; /* configure serial of a pending resize */
 } Client;

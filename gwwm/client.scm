@@ -1,6 +1,7 @@
 (define-module (gwwm client)
   #:use-module (srfi srfi-1)
   #:use-module (wlroots types scene)
+  #:use-module (ice-9 q)
   #:use-module (ice-9 control)
   #:use-module (util572 color)
   #:use-module (wlroots xwayland)
@@ -53,10 +54,17 @@
             client-tags
             client-surface
             client-geom
+            %fstack
             <gwwm-client>
             <gwwm-x-client>
             <gwwm-layer-client>))
 
+(define %fstack
+  (make-parameter
+   (make-q)
+   (lambda (o)
+     (if (q? o) o
+         (error "not a q! ~A" o)))))
 (eval-when (expand load eval)
   (load-extension "libgwwm" "scm_init_gwwm_client"))
 
@@ -221,7 +229,12 @@
 
 (define (current-client)
   "return current client or #f."
-  ((@@ (gwwm) current-client)))
+  (if (q-empty? (%fstack))
+      #f
+      (let ((c (q-front (%fstack))))
+        (if (visibleon c (current-monitor))
+            c
+            #f))))
 
 (define-method (client-set-resizing! (c <gwwm-client>) resizing?)
   (wlr-xdg-toplevel-set-resizing (client-xdg-surface c) resizing?))
