@@ -2,6 +2,9 @@
  * See LICENSE file for copyright and license details.
  */
 #include "libguile/boolean.h"
+#include "libguile/goops.h"
+#include "libguile/symbols.h"
+#include "wlr/util/box.h"
 #define _POSIX_C_SOURCE 200809L
 #include <getopt.h>
 #include <libinput.h>
@@ -1894,13 +1897,18 @@ SCM_DEFINE (gwwm_setfloating ,"%setfloating" ,2,0,0,(SCM c,SCM floating),"")
 void
 setfullscreen(Client *c, int fullscreen)
 {
-  PRINT_FUNCTION
+  PRINT_FUNCTION;
+  SCM sc=WRAP_CLIENT(c);
   CLIENT_SET_FULLSCREEN(c,fullscreen);
   CLIENT_SET_BW(c,(fullscreen ? 0 : GWWM_BORDERPX())) ;
 	client_set_fullscreen(c, fullscreen);
 
 	if (fullscreen) {
-		c->prev = c->geom;
+      scm_slot_set_x(sc, scm_from_utf8_symbol("prev-geom"),
+                     REF_CALL_1("oop goops","shallow-clone",client_geom(sc)));
+		/* c->prev = c->geom; */
+      /* REF_CALL_3("gwwm client", "client-resize", sc, scm_slot_ref(sc, scm_from_utf8_symbol("prev-geom")), */
+      /*            scm_from_bool(0)); */
 		resize(c, *MONITOR_AREA(client_monitor(c,NULL)), 0);
 		/* The xdg-protocol specifies:
 		 *
@@ -1920,7 +1928,9 @@ setfullscreen(Client *c, int fullscreen)
 	} else {
 		/* restore previous size instead of arrange for floating windows since
 		 * client positions are set by the user and cannot be recalculated */
-		resize(c, c->prev, 0);
+      REF_CALL_3("gwwm client", "client-resize", sc, scm_slot_ref(sc, scm_from_utf8_symbol("prev-geom")),
+             scm_from_bool(0));
+      /* resize(c, *((struct wlr_box*)(scm_slot_ref(sc, scm_from_utf8_symbol("prev-geom")))), 0); */
 		if (c->fullscreen_bg) {
 			wlr_scene_node_destroy(&c->fullscreen_bg->node);
 			c->fullscreen_bg = NULL;

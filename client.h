@@ -103,7 +103,6 @@ typedef struct Client {
   struct wlr_box geom; /* layout-relative, includes border */
   struct wlr_scene_rect *fullscreen_bg; /* See setfullscreen() for info */
   struct wl_list link;
-  struct wlr_box prev; /* layout-relative, includes border */
   uint32_t resize; /* configure serial of a pending resize */
 } Client;
 
@@ -141,6 +140,7 @@ int client_tags(Client *c);
 void set_client_tags(Client *c,int tags);
 void client_set_resizing(Client *c, int resizing);
 void *toplevel_from_popup(struct wlr_xdg_popup *popup);
+SCM client_geom(SCM c);
 struct wlr_scene_node *client_scene_surface(Client *c, struct wlr_scene_node *surface);
 
 #endif
