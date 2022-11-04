@@ -12,6 +12,7 @@
             killclient
             togglefullscreen
             togglefloating
+            toggletag
             focusclient
             focustop
             gwwm-quit
@@ -45,6 +46,12 @@
     (set! (monitor-sellt m) (logxor (monitor-sellt m)))
     (list-set! (monitor-layouts m) (monitor-sellt m) layout)
     (arrange m)))
+
+(define* (toggletag tag #:optional (client (current-client)))
+  (when client
+    (set! (client-tags client) tag)
+    (focusclient (focustop (current-monitor)) #t)
+    (arrange (current-monitor))))
 
 (define* (togglefloating #:optional (client (current-client)))
   (when (and client (not (client-fullscreen? client)))

@@ -214,7 +214,6 @@ void tile(Monitor *m);
 void logout_monitor(Monitor *m);
 void togglefloating(const Arg *arg);
 
-void toggletag(const Arg *arg);
 void toggleview(const Arg *arg);
 void unmaplayersurfacenotify(struct wl_listener *listener, void *data);
 void unmapnotify(struct wl_listener *listener, void *data);

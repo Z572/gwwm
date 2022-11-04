@@ -2277,33 +2277,6 @@ togglefloating(const Arg *arg)
 }
 
 void
-toggletag(const Arg *arg)
-{
-  PRINT_FUNCTION
-	unsigned int newtags;
-	Client *sel = current_client();
-	if (!sel)
-		return;
-	newtags = client_tags(sel) ^ (arg->ui & TAGMASK);
-	if (newtags) {
-      set_client_tags(sel, newtags);
-		focusclient(focustop(current_monitor()), 1);
-		arrange(current_monitor());
-	}
-	printstatus();
-}
-
-SCM_DEFINE (gwwm_toggletag, "toggletag",1, 0,0,
-            (SCM ui) ,
-            "c")
-#define FUNC_NAME s_gwwm_toggletag
-{
-  toggletag(&((Arg){.ui=1 << (scm_to_int(ui))}));
-  return SCM_UNSPECIFIED;
-}
-#undef FUNC_NAME
-
-void
 toggleview(const Arg *arg)
 {
   PRINT_FUNCTION
