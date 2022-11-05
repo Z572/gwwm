@@ -4,6 +4,7 @@
 #include "util.h"
 #include <X11/Xlib.h>
 #include <libguile.h>
+#include <stdbool.h>
 #include <wlr/types/wlr_output_layout.h>
 #include <wlr/types/wlr_output_management_v1.h>
 #include <wlr/xwayland.h>
@@ -174,7 +175,7 @@ Client *focustop(Monitor *m);
 void fullscreennotify(struct wl_listener *listener, void *data);
 void incnmaster(const Arg *arg);
 void inputdevice(struct wl_listener *listener, void *data);
-int keybinding(uint32_t mods, xkb_keycode_t keycode);
+bool keybinding(uint32_t mods, xkb_keycode_t keycode);
 void keypress(struct wl_listener *listener, void *data);
 void keypressmod(struct wl_listener *listener, void *data);
 void maplayersurfacenotify(struct wl_listener *listener, void *data);

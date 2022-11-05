@@ -1,6 +1,7 @@
 #include "libguile/numbers.h"
 #include "libguile/scm.h"
 #include "string.h"
+#include <stdbool.h>
 #include <wlr/types/wlr_scene.h>
 #include "util.h"
 #include "client.h"
@@ -91,7 +92,7 @@ client_init_border(Client *c)
   scm_slot_set_x(WRAP_CLIENT(c), scm_from_utf8_symbol("borders"), list);
 }
 
-int
+bool
 client_is_x11(Client *c)
 {
   return (scm_to_bool(REF_CALL_1("gwwm client","client-is-x11?", WRAP_CLIENT(c))));
@@ -288,7 +289,7 @@ client_get_parent(Client *c)
 	return NULL;
 }
 
-int
+bool
 client_is_float_type(Client *c)
 {
 	struct wlr_box min = {0}, max = {0};
@@ -327,7 +328,7 @@ SCM_DEFINE (gwwm_client_is_float_type_p,"client-is-float-type?",1,0,0,
 }
 #undef FUNC_NAME
 
-int
+bool
 client_is_mapped(Client *c)
 {
 #ifdef XWAYLAND
@@ -337,7 +338,7 @@ client_is_mapped(Client *c)
 	return wlr_xdg_surface_from_wlr_surface(CLIENT_SURFACE(c))->mapped;
 }
 
-int
+bool
 client_wants_fullscreen(Client *c)
 {
 #ifdef XWAYLAND
@@ -347,7 +348,7 @@ client_wants_fullscreen(Client *c)
 	return wlr_xdg_surface_from_wlr_surface(CLIENT_SURFACE(c))->toplevel->requested.fullscreen;
 }
 
-int
+bool
 client_is_unmanaged(Client *c)
 {
   return (scm_to_bool(REF_CALL_1("gwwm client","client-is-unmanaged?", WRAP_CLIENT(c))));
@@ -370,7 +371,7 @@ client_send_close(Client *c)
 }
 
 void
-client_set_fullscreen(Client *c, int fullscreen)
+client_set_fullscreen(Client *c, bool fullscreen)
 {
   scm_call_2(REFP("gwwm client","client-do-set-fullscreen"),
              WRAP_CLIENT(c),
@@ -425,7 +426,7 @@ client_restack_surface(Client *c)
 	return;
 }
 void
-client_set_resizing(Client *c,int resizing)
+client_set_resizing(Client *c,bool resizing)
 {
   REF_CALL_2("gwwm client","client-set-resizing!" ,WRAP_CLIENT(c), scm_from_bool(resizing));
 }

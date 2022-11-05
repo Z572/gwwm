@@ -2,6 +2,7 @@
 #define GWWM_CLIENT_H
 #include "util.h"
 #include <libguile.h>
+#include <stdbool.h>
 #include <wlr/types/wlr_keyboard.h>
 #include <wlr/types/wlr_surface.h>
 #include <wlr/types/wlr_xdg_shell.h>
@@ -112,7 +113,7 @@ void register_client(void *c, enum gwwm_client_type type);
 void logout_client(void *c);
 struct wlr_scene_rect *client_border_n(Client *c, int n);
 void client_init_border(Client *c);
-int client_is_x11(Client *c);
+bool client_is_x11(Client *c);
 Client *client_from_wlr_surface(struct wlr_surface *s);
 void client_activate_surface(struct wlr_surface *s, int activated);
 void client_for_each_surface(Client *c, wlr_surface_iterator_func_t fn,
@@ -122,13 +123,13 @@ struct wlr_box *client_get_geometry(Client *c);
 void client_get_size_hints(Client *c, struct wlr_box *max, struct wlr_box *min);
 const char *client_get_title(Client *c);
 Client *client_get_parent(Client *c);
-int client_is_float_type(Client *c);
-int client_is_mapped(Client *c);
-int client_wants_fullscreen(Client *c);
-int client_is_unmanaged(Client *c);
+bool client_is_float_type(Client *c);
+bool client_is_mapped(Client *c);
+bool client_wants_fullscreen(Client *c);
+bool client_is_unmanaged(Client *c);
 void client_notify_enter(struct wlr_surface *s, struct wlr_keyboard *kb);
 void client_send_close(Client *c);
-void client_set_fullscreen(Client *c, int fullscreen);
+void client_set_fullscreen(Client *c, bool fullscreen);
 uint32_t client_set_size(Client *c, uint32_t width, uint32_t height);
 void client_set_tiled(Client *c, uint32_t edges);
 struct wlr_surface *client_surface_at(Client *c, double cx, double cy,
@@ -138,7 +139,7 @@ void *client_from_listener(struct wl_listener *listener);
 void client_add_listen(void *c ,struct wl_signal *signal, wl_notify_func_t func);
 int client_tags(Client *c);
 void set_client_tags(Client *c,int tags);
-void client_set_resizing(Client *c, int resizing);
+void client_set_resizing(Client *c, bool resizing);
 void *toplevel_from_popup(struct wlr_xdg_popup *popup);
 SCM client_geom(SCM c);
 struct wlr_scene_node *client_scene_surface(Client *c, struct wlr_scene_node *surface);

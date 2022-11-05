@@ -5,6 +5,7 @@
 #include "libguile/goops.h"
 #include "libguile/symbols.h"
 #include "wlr/util/box.h"
+#include <stdbool.h>
 #define _POSIX_C_SOURCE 200809L
 #include <getopt.h>
 #include <libinput.h>
@@ -1288,7 +1289,7 @@ inputdevice(struct wl_listener *listener, void *data)
 	wlr_seat_set_capabilities(seat, caps);
 }
 
-int
+bool
 keybinding(uint32_t mods, xkb_keycode_t keycode)
 {
   PRINT_FUNCTION
