@@ -234,18 +234,6 @@ void
 applybounds(Client *c, struct wlr_box *bbox)
 {
   PRINT_FUNCTION
-  if (!CLIENT_IS_FULLSCREEN(c)) {
-		struct wlr_box min = {0}, max = {0};
-		client_get_size_hints(c, &max, &min);
-		/* try to set size hints */
-		c->geom.width = MAX(min.width + (2 * CLIENT_BW(c)), c->geom.width);
-		c->geom.height = MAX(min.height + (2 * CLIENT_BW(c)), c->geom.height);
-		if (max.width > 0 && !(2 * CLIENT_BW(c) > INT_MAX - max.width)) // Checks for overflow
-			c->geom.width = MIN(max.width + (2 * CLIENT_BW(c)), c->geom.width);
-		if (max.height > 0 && !(2 * CLIENT_BW(c) > INT_MAX - max.height)) // Checks for overflow
-			c->geom.height = MIN(max.height + (2 * CLIENT_BW(c)), c->geom.height);
-	}
-
 	if (c->geom.x >= bbox->x + bbox->width)
 		c->geom.x = bbox->x + bbox->width - c->geom.width;
 	if (c->geom.y >= bbox->y + bbox->height)

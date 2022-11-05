@@ -3,6 +3,8 @@
   #:use-module (wlroots types scene)
   #:use-module (ice-9 q)
   #:use-module (ice-9 control)
+  #:use-module (srfi srfi-71)
+  #:use-module (gwwm utils)
   #:use-module (util572 color)
   #:use-module (wlroots xwayland)
   #:use-module (gwwm monitor)
@@ -261,9 +263,20 @@
 (define-method (client-set-tiled (c <gwwm-x-client>) edges)
   *unspecified*)
 
+(define-method (applybounds (c <gwwm-client>) geom)
+  (unless (client-is-fullscreen? c)
+    (let ((_ min* (client-get-size-hints c))
+          (bw (client-border-width c))
+          (box (client-geom c)))
+      (modify-instance* box
+        (width (max width (+ (box-width min*) (* 2 bw)) ))
+        (height (max height (+ (box-height min*) (* 2 bw)) )))))
+  ((@@ (gwwm) %applybounds) c geom))
+
 (define-method (client-resize (c <gwwm-client>) geo (interact? <boolean>))
   (client-set-geom! c geo)
-  ((@@ (gwwm) %applybounds) c
+  (applybounds
+   c
    (if interact?
        ((@ (gwwm) entire-layout-box))
        (monitor-window-area (client-monitor c))))
