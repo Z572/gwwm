@@ -1021,15 +1021,6 @@ destroylayersurfacenotify(struct wl_listener *listener, void *data)
     arrangelayers(client_monitor(layersurface,NULL));
 }
 
-SCM_DEFINE_PUBLIC(gwwm_logout_listeners, "logout-listeners", 2, 0, 0, (SCM _ignored,SCM listener),
-                  "") {
-  PRINT_FUNCTION;
-  struct wl_listener *l=UNWRAP_WL_LISTENER(listener);
-  wl_list_remove(&l->link);
-  PRINT_FUNCTION;
-  return SCM_UNSPECIFIED;
-}
-
 Monitor *
 dirtomon(enum wlr_direction dir)
 {
