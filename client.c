@@ -256,10 +256,11 @@ SCM_DEFINE (gwwm_client_get_size_hints,"client-get-size-hints",1,0,0,
 #define FUNC_NAME s_gwwm_client_get_size_hints
 {
   GWWM_ASSERT_CLIENT_OR_FALSE(c ,1);
-  struct wlr_box min = {0}, max = {0};
+  struct wlr_box *min = ecalloc(1, sizeof(struct wlr_box *));
+  struct wlr_box *max = ecalloc(1, sizeof(struct wlr_box *));
   Client *cl =UNWRAP_CLIENT(c);
-  client_get_size_hints(cl, &max, &min);
-  return scm_cons(WRAP_WLR_BOX(&max),WRAP_WLR_BOX(&min));
+  client_get_size_hints(cl, max, min);
+  return scm_values_2(WRAP_WLR_BOX(max),WRAP_WLR_BOX(min));
 }
 #undef FUNC_NAME
 
