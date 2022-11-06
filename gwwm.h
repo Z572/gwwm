@@ -105,7 +105,7 @@ typedef struct {
       REF_CALL_1("gwwm monitor", "monitor-window-area", (WRAP_MONITOR(m)))))
 #define SET_MONITOR_WINDOW_AREA(m, o)                                          \
   scm_call_2(REFP("gwwm monitor", "set-.window-area!"), (WRAP_MONITOR(m)),     \
-             WRAP_WLR_BOX(o))
+             REF_CALL_1("oop goops","shallow-clone",WRAP_WLR_BOX(o)))
 #define MONITOR_AREA(m)                                                        \
   ((struct wlr_box *)(UNWRAP_WLR_BOX(                                          \
       REF_CALL_1("gwwm monitor", "monitor-area", (WRAP_MONITOR(m))))))
