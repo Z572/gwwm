@@ -19,9 +19,6 @@
        __typeof__ (b) _b = (b); \
      _a < _b ? _a : _b; })
 #define CLEANMASK(mask) (mask & ~WLR_MODIFIER_CAPS)
-#define VISIBLEON(C, M)                                                        \
-  ((M) && client_monitor(C, NULL) == (M) &&                                    \
-   (client_tags(C) & (M)->tagset[(M)->seltags]))
 #define LENGTH(X) (sizeof X / sizeof X[0])
 #define END(A) ((A) + LENGTH(A))
 #define TAGMASK ((1 << LENGTH(tags)) - 1)

@@ -148,13 +148,18 @@ struct wl_listener request_start_drag = {.notify = requeststartdrag};
 struct wl_listener start_drag = {.notify = startdrag};
 struct wl_listener drag_icon_destroy = {.notify = dragicondestroy};
 
+bool visibleon(Client *c, Monitor *m) {
+  return ((m) && (client_monitor(c, NULL) == (m)) &&
+          (client_tags(c) & (m)->tagset[(m)->seltags]));
+}
+
 SCM_DEFINE_PUBLIC(gwwm_visibleon, "visibleon", 2, 0, 0, (SCM c, SCM m), "")
 #define FUNC_NAME s_gwwm_visibleon
 {
   GWWM_ASSERT_CLIENT_OR_FALSE(c ,1);
   PRINT_FUNCTION
   Client *s =(UNWRAP_CLIENT(c));
-  int a = (VISIBLEON(s,(struct Monitor*)(UNWRAP_MONITOR(m))));
+  bool a = (visibleon(s,(struct Monitor*)(UNWRAP_MONITOR(m))));
   return scm_from_bool(a);
 }
 #undef FUNC_NAME
@@ -581,7 +586,7 @@ checkidleinhibitor(struct wlr_surface *exclude)
 		c = client_from_wlr_surface(inhibitor->surface);
 		if (exclude && (!(w = client_from_wlr_surface(exclude)) || w == c))
 			continue;
-		if (!c || VISIBLEON(c, client_monitor(c ,NULL))) {
+		if (!c || visibleon(c, client_monitor(c ,NULL))) {
 			inhibited = 1;
 			break;
 		}
@@ -1172,14 +1177,14 @@ focusstack(const Arg *arg)
 		wl_list_for_each(c, &sel->link, link) {
 			if (&c->link == &clients)
 				continue;  /* wrap past the sentinel node */
-			if (VISIBLEON(c, current_monitor()))
+			if (visibleon(c, current_monitor()))
 				break;  /* found it */
 		}
 	} else {
 		wl_list_for_each_reverse(c, &sel->link, link) {
 			if (&c->link == &clients)
 				continue;  /* wrap past the sentinel node */
-			if (VISIBLEON(c, current_monitor()))
+			if (visibleon(c, current_monitor()))
 				break;  /* found it */
 		}
 	}
@@ -2223,7 +2228,7 @@ tile(Monitor *m)
 	Client *c;
 
 	wl_list_for_each(c, &clients, link)
-      if (VISIBLEON(c, m) && !(CLIENT_IS_FLOATING(c)) && !CLIENT_IS_FULLSCREEN(c))
+      if (visibleon(c, m) && !(CLIENT_IS_FLOATING(c)) && !CLIENT_IS_FULLSCREEN(c))
 			n++;
 	if (n == 0)
 		return;
@@ -2234,7 +2239,7 @@ tile(Monitor *m)
 		mw = (MONITOR_WINDOW_AREA(m))->width;
 	i = my = ty = 0;
 	wl_list_for_each(c, &clients, link) {
-      if (!VISIBLEON(c, m) || CLIENT_IS_FLOATING(c) || CLIENT_IS_FULLSCREEN(c))
+      if (!visibleon(c, m) || CLIENT_IS_FLOATING(c) || CLIENT_IS_FULLSCREEN(c))
 			continue;
 		if (i < m->nmaster) {
 			resize(c, (struct wlr_box){.x = (MONITOR_WINDOW_AREA(m))->x, .y = (MONITOR_WINDOW_AREA(m))->y + my, .width = mw,
@@ -2509,7 +2514,7 @@ SCM_DEFINE (gwwm_zoom, "zoom",0, 0,0,
 	/* Search for the first tiled window that is not sel, marking sel as
 	 * NULL if we pass it along the way */
 	wl_list_for_each(c, &clients, link)
-      if (VISIBLEON(c, current_monitor()) && !CLIENT_IS_FLOATING(c)) {
+      if (visibleon(c, current_monitor()) && !CLIENT_IS_FLOATING(c)) {
 			if (c != sel)
 				break;
 			sel = NULL;
@@ -2564,7 +2569,7 @@ createnotifyx11(struct wl_listener *listener, void *data)
 	struct wlr_xwayland_surface *xwayland_surface = data;
 	Client *c;
 	wl_list_for_each(c, &clients, link)
-		if (CLIENT_IS_FULLSCREEN(c) && VISIBLEON(c, client_monitor(c,NULL)))
+		if (CLIENT_IS_FULLSCREEN(c) && visibleon(c, client_monitor(c,NULL)))
 			setfullscreen(c, 0);
 
 	/* Allocate a Client for this surface */
