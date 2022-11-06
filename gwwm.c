@@ -2356,6 +2356,29 @@ unmapnotify(struct wl_listener *listener, void *data)
 	printstatus();
 }
 
+void updatemon(Monitor *m, struct wlr_output_configuration_v1 *config) {
+  struct wlr_output_configuration_head_v1 *config_head =
+    wlr_output_configuration_head_v1_create(config, MONITOR_WLR_OUTPUT(m));
+
+  /* TODO: move clients off disabled monitors */
+  /* TODO: move focus if current_monitor is disabled */
+
+  /* Get the effective monitor geometry to use for surfaces */
+  SET_MONITOR_AREA(m, wlr_output_layout_get_box(gwwm_output_layout(NULL),
+                                                MONITOR_WLR_OUTPUT(m)));
+  (SET_MONITOR_WINDOW_AREA(m, MONITOR_AREA(m)));
+  wlr_scene_output_set_position(m->scene_output, (MONITOR_AREA(m))->x,
+                                (MONITOR_AREA(m))->y);
+  /* Calculate the effective monitor geometry to use for clients */
+  arrangelayers(m);
+  /* Don't move clients to the left output when plugging monitors */
+  arrange(m);
+
+  config_head->state.enabled = MONITOR_WLR_OUTPUT(m)->enabled;
+  config_head->state.mode = ((MONITOR_WLR_OUTPUT(m))->current_mode);
+  config_head->state.x = MONITOR_AREA(m)->x;
+  config_head->state.y = MONITOR_AREA(m)->y;
+}
 void
 updatemons(struct wl_listener *listener, void *data)
 {
@@ -2375,25 +2398,7 @@ updatemons(struct wl_listener *listener, void *data)
                 WRAP_WLR_BOX(wlr_output_layout_get_box(
                                                        gwwm_output_layout(NULL), NULL))));
         wl_list_for_each(m, &mons, link) {
-		struct wlr_output_configuration_head_v1 *config_head =
-			wlr_output_configuration_head_v1_create(config, MONITOR_WLR_OUTPUT(m));
-
-		/* TODO: move clients off disabled monitors */
-		/* TODO: move focus if current_monitor is disabled */
-
-		/* Get the effective monitor geometry to use for surfaces */
-		SET_MONITOR_AREA(m,wlr_output_layout_get_box(gwwm_output_layout(NULL), MONITOR_WLR_OUTPUT(m)));
-        (SET_MONITOR_WINDOW_AREA(m ,MONITOR_AREA(m)));
-		wlr_scene_output_set_position(m->scene_output, (MONITOR_AREA(m))->x, (MONITOR_AREA(m))->y);
-		/* Calculate the effective monitor geometry to use for clients */
-		arrangelayers(m);
-		/* Don't move clients to the left output when plugging monitors */
-		arrange(m);
-
-		config_head->state.enabled = MONITOR_WLR_OUTPUT(m)->enabled;
-		config_head->state.mode = ((MONITOR_WLR_OUTPUT(m))->current_mode);
-		config_head->state.x = MONITOR_AREA(m)->x;
-		config_head->state.y = MONITOR_AREA(m)->y;
+          updatemon(m,config);
 	}
 
 	if (current_monitor() && MONITOR_WLR_OUTPUT(current_monitor())->enabled)
