@@ -1912,11 +1912,12 @@ setfullscreen(Client *c, int fullscreen)
 		 *
 		 * For brevity we set a black background for all clients
 		 */
-		if (!c->fullscreen_bg) {
-			c->fullscreen_bg = wlr_scene_rect_create
+		if (!client_fullscreen_bg(c,NULL)) {
+          client_fullscreen_bg(c,wlr_scene_rect_create
               (CLIENT_SCENE(c),
-               c->geom.width, c->geom.height, GWWM_FULLSCREEN_BG());
-			wlr_scene_node_lower_to_bottom(&c->fullscreen_bg->node);
+               c->geom.width, c->geom.height, GWWM_FULLSCREEN_BG()));
+
+          wlr_scene_node_lower_to_bottom(&client_fullscreen_bg(c,NULL)->node);
 		}
 	} else {
 		/* restore previous size instead of arrange for floating windows since
@@ -1924,9 +1925,9 @@ setfullscreen(Client *c, int fullscreen)
       REF_CALL_3("gwwm client", "client-resize", sc, scm_slot_ref(sc, scm_from_utf8_symbol("prev-geom")),
              scm_from_bool(0));
       /* resize(c, *((struct wlr_box*)(scm_slot_ref(sc, scm_from_utf8_symbol("prev-geom")))), 0); */
-		if (c->fullscreen_bg) {
-			wlr_scene_node_destroy(&c->fullscreen_bg->node);
-			c->fullscreen_bg = NULL;
+		if (client_fullscreen_bg(c,NULL)) {
+			wlr_scene_node_destroy(&client_fullscreen_bg(c,NULL)->node);
+            scm_slot_set_x(WRAP_CLIENT(c),scm_from_utf8_symbol("fullscreen-bg"),SCM_BOOL_F);
 		}
 	}
 	arrange(client_monitor(c,NULL));

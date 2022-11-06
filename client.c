@@ -477,6 +477,21 @@ SCM_DEFINE (gwwm_client_wants_fullscreen_p , "client-wants-fullscreen?",1,0,0,
 }
 #undef FUNC_NAME
 
+struct wlr_scene_rect *
+client_fullscreen_bg(void *c , struct wlr_scene_rect *change) {
+  PRINT_FUNCTION;
+  SCM o;
+  SCM sc=WRAP_CLIENT(c);
+  if (change) {
+    o=WRAP_WLR_SCENE_RECT(change);
+    scm_slot_set_x(sc,scm_from_utf8_symbol("fullscreen-bg"),o);
+    return change;
+  } else {
+    o=scm_slot_ref(sc, scm_from_utf8_symbol("fullscreen-bg"));
+    return scm_is_false(o)? NULL : UNWRAP_WLR_SCENE_RECT(o);
+  }
+}
+
 SCM_DEFINE (gwwm_setfullscreen, "%setfullscreen",2,0,0,(SCM c,SCM yes),"")
 #define FUNC_NAME s_gwwm_setfullscreen
 {

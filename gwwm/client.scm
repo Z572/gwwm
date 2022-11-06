@@ -101,6 +101,8 @@
              #:accessor client-floating?)
   (fullscreen? #:init-value #f
                #:accessor client-fullscreen?)
+  (fullscreen-bg #:init-value #f
+                 #:accessor client-fullscreen-bg)
   (urgent? #:init-value #f
            #:accessor client-urgent?)
   (title #:allocation #:virtual
