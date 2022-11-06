@@ -273,7 +273,7 @@
       (modify-instance* box
         (width (max width (+ (box-width min*) (* 2 bw)) ))
         (height (max height (+ (box-height min*) (* 2 bw)) )))))
-  ((@@ (gwwm) %applybounds) c geom))
+  (%applybounds c geom))
 
 (define-method (client-resize (c <gwwm-client>) geo (interact? <boolean>))
   (client-set-geom! c geo)

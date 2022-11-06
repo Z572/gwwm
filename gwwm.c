@@ -259,28 +259,6 @@ set_current_monitor(Monitor *m){
   /* _current_monitor=m; */
   scm_call_1(REFP("gwwm monitor","set-current-monitor"),WRAP_MONITOR(m));
 }
-void
-applybounds(Client *c, struct wlr_box *bbox)
-{
-  PRINT_FUNCTION;
-  if (client_geom(c)->x >= bbox->x + bbox->width)
-    client_geom(c)->x = bbox->x + bbox->width - client_geom(c)->width;
-  if (client_geom(c)->y >= bbox->y + bbox->height)
-    client_geom(c)->y = bbox->y + bbox->height - client_geom(c)->height;
-  if (client_geom(c)->x + client_geom(c)->width + 2 * CLIENT_BW(c) <= bbox->x)
-    client_geom(c)->x = bbox->x;
-  if (client_geom(c)->y + client_geom(c)->height + 2 * CLIENT_BW(c) <= bbox->y)
-    client_geom(c)->y = bbox->y;
-}
-
-SCM_DEFINE(gwwm_applybounds ,"%applybounds",2,0,0,(SCM c,SCM bbox),"")
-#define FUNC_NAME s_gwwm_applybounds
-{
-  GWWM_ASSERT_CLIENT_OR_FALSE(c ,1);
-  applybounds(UNWRAP_CLIENT(c),UNWRAP_WLR_BOX(bbox));
-  return SCM_UNSPECIFIED;
-}
-#undef FUNC_NAME
 
 void
 applyexclusive(struct wlr_box *usable_area,

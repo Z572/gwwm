@@ -203,6 +203,28 @@ struct wlr_box* client_geom(Client *c)
   /* return (scm_slot_ref(c, scm_from_utf8_symbol("geom"))); */
 }
 
+SCM_DEFINE(gwwm_applybounds ,"%applybounds",2,0,0,(SCM sc,SCM sbbox),"")
+#define FUNC_NAME s_gwwm_applybounds
+{
+  GWWM_ASSERT_CLIENT_OR_FALSE(sc ,1);
+  Client *c=UNWRAP_CLIENT(sc);
+  struct wlr_box *bbox=UNWRAP_WLR_BOX(sbbox);
+  struct wlr_box *new_box=UNWRAP_WLR_BOX(SHALLOW_CLONE(WRAP_WLR_BOX(client_geom(c))));
+  if (new_box->x >= bbox->x + bbox->width)
+    new_box->x = bbox->x + bbox->width - new_box->width;
+  if (new_box->y >= bbox->y + bbox->height)
+    new_box->y = bbox->y + bbox->height - new_box->height;
+  if (new_box->x + new_box->width + 2 * CLIENT_BW(c) <= bbox->x)
+    new_box->x = bbox->x;
+  if (new_box->y + new_box->height + 2 * CLIENT_BW(c) <= bbox->y)
+    new_box->y = bbox->y;
+
+  c->geom=*new_box;
+  return SCM_UNSPECIFIED;
+}
+#undef FUNC_NAME
+
+
 SCM_DEFINE(client_resize ,"%client-resize-configure-serial",1,0,0,(SCM c),"")
 #define FUNC_NAME s_client_resize
 {
