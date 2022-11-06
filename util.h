@@ -143,5 +143,6 @@ void *ecalloc(size_t nmemb, size_t size);
   SCM_ASSERT((SCM_IS_A_P(client, REFP("gwwm client", "<gwwm-base-client>")) || \
               scm_is_false(client)),                                           \
              client, position, FUNC_NAME)
+#define SHALLOW_CLONE(o) (REF_CALL_1("oop goops","shallow-clone",o))
 void _send_log(const char *arg, ...);
 #endif

@@ -142,7 +142,7 @@ int client_tags(Client *c);
 void set_client_tags(Client *c,int tags);
 void client_set_resizing(Client *c, bool resizing);
 void *toplevel_from_popup(struct wlr_xdg_popup *popup);
-SCM client_geom(SCM c);
+struct wlr_box* client_geom(Client *c);
 struct wlr_scene_node *client_scene_surface(Client *c, struct wlr_scene_node *surface);
 
 #endif

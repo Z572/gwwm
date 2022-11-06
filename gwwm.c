@@ -262,15 +262,15 @@ set_current_monitor(Monitor *m){
 void
 applybounds(Client *c, struct wlr_box *bbox)
 {
-  PRINT_FUNCTION
-	if (c->geom.x >= bbox->x + bbox->width)
-		c->geom.x = bbox->x + bbox->width - c->geom.width;
-	if (c->geom.y >= bbox->y + bbox->height)
-		c->geom.y = bbox->y + bbox->height - c->geom.height;
-	if (c->geom.x + c->geom.width + 2 * CLIENT_BW(c) <= bbox->x)
-		c->geom.x = bbox->x;
-	if (c->geom.y + c->geom.height + 2 * CLIENT_BW(c) <= bbox->y)
-		c->geom.y = bbox->y;
+  PRINT_FUNCTION;
+  if (client_geom(c)->x >= bbox->x + bbox->width)
+    client_geom(c)->x = bbox->x + bbox->width - client_geom(c)->width;
+  if (client_geom(c)->y >= bbox->y + bbox->height)
+    client_geom(c)->y = bbox->y + bbox->height - client_geom(c)->height;
+  if (client_geom(c)->x + client_geom(c)->width + 2 * CLIENT_BW(c) <= bbox->x)
+    client_geom(c)->x = bbox->x;
+  if (client_geom(c)->y + client_geom(c)->height + 2 * CLIENT_BW(c) <= bbox->y)
+    client_geom(c)->y = bbox->y;
 }
 
 SCM_DEFINE(gwwm_applybounds ,"%applybounds",2,0,0,(SCM c,SCM bbox),"")
@@ -742,11 +742,12 @@ commitnotify(struct wl_listener *listener, void *data)
 {
   PRINT_FUNCTION;
 	Client *c = client_from_listener(listener);
-    scm_c_run_hook(REF("gwwm hooks", "surface-commit-event-hook"), scm_list_1(WRAP_CLIENT(c)));
+    SCM sc=WRAP_CLIENT(c);
+    scm_c_run_hook(REF("gwwm hooks", "surface-commit-event-hook"), scm_list_1(sc));
 	struct wlr_box box = *client_get_geometry(c);
 
-	if (client_monitor(c,NULL) && !wlr_box_empty(&box) && (box.width != c->geom.width - 2 * CLIENT_BW(c)
-			|| box.height != c->geom.height - 2 * CLIENT_BW(c)))
+	if (client_monitor(c,NULL) && !wlr_box_empty(&box) && (box.width != client_geom(c)->width - 2 * CLIENT_BW(c)
+			|| box.height != client_geom(c)->height - 2 * CLIENT_BW(c)))
 		arrange(client_monitor(c,NULL));
 
 	/* mark a pending resize as completed */
@@ -873,7 +874,6 @@ createmon(struct wl_listener *listener, void *data)
 	 * monitor) becomes available. */
 	struct wlr_output *wlr_output = data;
 	const MonitorRule *r;
-	Client *c;
 	Monitor *m = wlr_output->data = ecalloc(1, sizeof(*m));
     register_monitor(m);
 	SET_MONITOR_WLR_OUTPUT(m,wlr_output);
@@ -1000,10 +1000,12 @@ createpointer(struct wlr_input_device *device)
 		if (libinput_device_config_middle_emulation_is_available(libinput_device))
 			libinput_device_config_middle_emulation_set_enabled(libinput_device, middle_button_emulation);
 
-		if (libinput_device_config_scroll_get_methods(libinput_device) != LIBINPUT_CONFIG_SCROLL_NO_SCROLL)
-			libinput_device_config_scroll_set_method (libinput_device, scroll_method);
+		if (libinput_device_config_scroll_get_methods(libinput_device)
+            != LIBINPUT_CONFIG_SCROLL_NO_SCROLL)
+          libinput_device_config_scroll_set_method (libinput_device, scroll_method);
 		
-		 if (libinput_device_config_click_get_methods(libinput_device) != LIBINPUT_CONFIG_CLICK_METHOD_NONE)
+		 if (libinput_device_config_click_get_methods(libinput_device)
+             != LIBINPUT_CONFIG_CLICK_METHOD_NONE)
                         libinput_device_config_click_set_method (libinput_device, click_method);
 
 		if (libinput_device_config_send_events_get_modes(libinput_device))
@@ -1096,7 +1098,6 @@ focusclient(Client *c, int lift)
   PRINT_FUNCTION;
   struct wlr_surface *old = seat->keyboard_state.focused_surface;
   SCM sc=WRAP_CLIENT(c);
-  int i;
 	/* Do not focus clients if a layer surface is focused */
 	if (exclusive_focus)
 		return;
@@ -1404,7 +1405,6 @@ void mapnotify(struct wl_listener *listener, void *data) {
   Client *p, *c = client_from_listener(listener);
   SCM sc = WRAP_CLIENT(c);
   /* struct wlr_xdg_surface *surface = data; */
-  int i;
   scm_c_run_hook(REF("gwwm hooks", "client-map-event-hook"),
                  scm_list_2(sc, client_is_x11(c)
                                     ? WRAP_WLR_XWAYLAND_SURFACE(data)
@@ -1433,20 +1433,20 @@ void mapnotify(struct wl_listener *listener, void *data) {
   scene_node->data = client_scene_surface(c, NULL)->data = c;
 
   if (client_is_unmanaged(c)) {
-    c->geom = *client_get_geometry(c);
+    c->geom= *(client_get_geometry(c)) ;
     /* Floating */
     wlr_scene_node_reparent(scene_node, layers[LyrFloat]);
-    wlr_scene_node_set_position(scene_node, c->geom.x + GWWM_BORDERPX(),
-                                c->geom.y + GWWM_BORDERPX());
+    wlr_scene_node_set_position(scene_node, client_geom(c)->x + GWWM_BORDERPX(),
+                                client_geom(c)->y + GWWM_BORDERPX());
     return;
   }
   client_init_border(c);
   /* Initialize client geometry with room for border */
   client_set_tiled(c, WLR_EDGE_TOP | WLR_EDGE_BOTTOM | WLR_EDGE_LEFT |
                           WLR_EDGE_RIGHT);
-  c->geom = *client_get_geometry(c);
-  c->geom.width += 2 * CLIENT_BW(c);
-  c->geom.height += 2 * CLIENT_BW(c);
+  c->geom=*(client_get_geometry(c));
+  client_geom(c)->width += 2 * CLIENT_BW(c);
+  client_geom(c)->height += 2 * CLIENT_BW(c);
 
   /* Insert this client into client lists. */
   wl_list_insert(&clients, &c->link);
@@ -1511,14 +1511,25 @@ motionnotify(uint32_t time)
 		wlr_scene_node_set_position(icon->data, cursor->x + icon->surface->sx,
 				cursor->y + icon->surface->sy);
 	/* If we are currently grabbing the mouse, handle and return */
+
 	if (cursor_mode == CurMove) {
+
 		/* Move the grabbed client to the new position. */
-		resize(grabc, (struct wlr_box){.x = cursor->x - grabcx, .y = cursor->y - grabcy,
-			.width = grabc->geom.width, .height = grabc->geom.height}, 1);
+		resize(grabc, (struct wlr_box){
+            .x = cursor->x - grabcx,
+            .y = cursor->y - grabcy,
+			.width = (client_geom(grabc))->width,
+            .height = (client_geom(grabc))->height
+          },
+          1);
 		return;
 	} else if (cursor_mode == CurResize) {
-		resize(grabc, (struct wlr_box){.x = grabc->geom.x, .y = grabc->geom.y,
-			.width = cursor->x - grabc->geom.x, .height = cursor->y - grabc->geom.y}, 1);
+      resize(grabc, (struct wlr_box){
+          .x = (client_geom(grabc))->x,
+          .y = (client_geom(grabc))->y,
+          .width = cursor->x - client_geom(grabc)->x,
+          .height = cursor->y - client_geom(grabc)->y
+        }, 1);
 		return;
 	}
 
@@ -1564,6 +1575,7 @@ void
 moveresize(const Arg *arg)
 {
   PRINT_FUNCTION
+    SCM sgrabc= WRAP_CLIENT(grabc);
 	if (cursor_mode != CurNormal)
 		return;
 	xytonode(cursor->x, cursor->y, NULL, &grabc, NULL, NULL, NULL);
@@ -1571,11 +1583,11 @@ moveresize(const Arg *arg)
 		return;
 
 	/* Float the window and tell motionnotify to grab it */
-	gwwm_setfloating(WRAP_CLIENT(grabc), scm_from_bool(1));
+	gwwm_setfloating(sgrabc, scm_from_bool(1));
 	switch (cursor_mode = arg->ui) {
 	case CurMove:
-		grabcx = cursor->x - grabc->geom.x;
-		grabcy = cursor->y - grabc->geom.y;
+		grabcx = cursor->x - client_geom(grabc)->x;
+		grabcy = cursor->y - client_geom(grabc)->y;
 		wlr_xcursor_manager_set_cursor_image(cursor_mgr, "fleur", cursor);
 		break;
 	case CurResize:
@@ -1583,8 +1595,10 @@ moveresize(const Arg *arg)
 		/* Doesn't work for X11 output - the next absolute motion event
 		 * returns the cursor to where it started */
 		wlr_cursor_warp_closest(cursor, NULL,
-				grabc->geom.x + grabc->geom.width,
-				grabc->geom.y + grabc->geom.height);
+                                client_geom(grabc)->x +
+                                client_geom(grabc)->width,
+                                client_geom(grabc)->y
+                                + client_geom(grabc)->height);
 		wlr_xcursor_manager_set_cursor_image(cursor_mgr,
 				"bottom_right_corner", cursor);
 		break;
@@ -1721,7 +1735,7 @@ printstatus(void)
 
 	Monitor *m = NULL;
 	Client *c;
-	unsigned int occ, urg, sel;
+	unsigned int occ, urg;
 
 	wl_list_for_each(m, &mons, link) {
 		occ = urg = 0;
@@ -1741,13 +1755,11 @@ printstatus(void)
           send_log(INFO,"is FLOATING",
                    "MONITOR",MONITOR_WLR_OUTPUT(m)->name,
                    "FLOATING", ((CLIENT_IS_FLOATING(c))? "#t": "#f"));
-			sel = client_tags(c);
 		} else {
           send_log(INFO, "title" ,"MONITOR", MONITOR_WLR_OUTPUT(m)->name);
           send_log(INFO,"MONITOR","MONITOR",MONITOR_WLR_OUTPUT(m)->name);
           send_log(INFO,"fullscreen","MONITOR", MONITOR_WLR_OUTPUT(m)->name);
           send_log(INFO,"floating","MONITOR", MONITOR_WLR_OUTPUT(m)->name);
-          sel = 0;
 		}
         send_log(INFO ,"current-monitor" ,
                  "MONITOR", MONITOR_WLR_OUTPUT(m)->name,
@@ -1921,10 +1933,7 @@ setfullscreen(Client *c, int fullscreen)
 
 	if (fullscreen) {
       scm_slot_set_x(sc, scm_from_utf8_symbol("prev-geom"),
-                     REF_CALL_1("oop goops","shallow-clone",client_geom(sc)));
-		/* c->prev = c->geom; */
-      /* REF_CALL_3("gwwm client", "client-resize", sc, scm_slot_ref(sc, scm_from_utf8_symbol("prev-geom")), */
-      /*            scm_from_bool(0)); */
+                     REF_CALL_1("oop goops","shallow-clone",WRAP_WLR_BOX(client_geom(c))));
 		resize(c, *MONITOR_AREA(client_monitor(c,NULL)), 0);
 		/* The xdg-protocol specifies:
 		 *
@@ -1938,7 +1947,9 @@ setfullscreen(Client *c, int fullscreen)
 		if (!client_fullscreen_bg(c,NULL)) {
           client_fullscreen_bg(c,wlr_scene_rect_create
               (CLIENT_SCENE(c),
-               c->geom.width, c->geom.height, GWWM_FULLSCREEN_BG()));
+               client_geom(c)->width,
+               client_geom(c)->height,
+               GWWM_FULLSCREEN_BG()));
 
           wlr_scene_node_lower_to_bottom(&client_fullscreen_bg(c,NULL)->node);
 		}
@@ -1989,7 +2000,6 @@ setmon(Client *c, Monitor *m, unsigned int newtags)
 {
   PRINT_FUNCTION
 	Monitor *oldmon = client_monitor(c,NULL);
-
 	if (oldmon == m)
 		return;
     PRINT_FUNCTION;
@@ -2002,7 +2012,7 @@ setmon(Client *c, Monitor *m, unsigned int newtags)
 	}
 	if (m) {
 		/* Make sure window actually overlaps with the monitor */
-		resize(c, c->geom, 0);
+      resize(c, *client_geom(c), 0);
 		wlr_surface_send_enter(CLIENT_SURFACE(c), MONITOR_WLR_OUTPUT(m));
         set_client_tags(c,newtags ? newtags : m->tagset[m->seltags]); /* assign tags of target monitor */
 		arrange(m);
@@ -2216,7 +2226,6 @@ sigchld(int unused)
 	 * but the Xwayland implementation in wlroots currently prevents us from
 	 * setting our own disposition for SIGCHLD.
 	 */
-	pid_t pid;
 	if (signal(SIGCHLD, sigchld) == SIG_ERR)
 		die("can't install SIGCHLD handler:");
 }
@@ -2263,16 +2272,22 @@ tile(Monitor *m)
 		mw = (MONITOR_WINDOW_AREA(m))->width;
 	i = my = ty = 0;
 	wl_list_for_each(c, &clients, link) {
+      /* SCM sc=WRAP_CLIENT(c); */
       if (!visibleon(c, m) || CLIENT_IS_FLOATING(c) || CLIENT_IS_FULLSCREEN(c))
 			continue;
 		if (i < m->nmaster) {
-			resize(c, (struct wlr_box){.x = (MONITOR_WINDOW_AREA(m))->x, .y = (MONITOR_WINDOW_AREA(m))->y + my, .width = mw,
-				.height = ((MONITOR_WINDOW_AREA(m))->height - my) / (MIN(n, m->nmaster) - i)}, 0);
-			my += c->geom.height;
+			resize(c, (struct wlr_box){
+                .x = (MONITOR_WINDOW_AREA(m))->x,
+                .y = (MONITOR_WINDOW_AREA(m))->y + my,
+                .width = mw,
+				.height = ((MONITOR_WINDOW_AREA(m))->height - my) / (MIN(n, m->nmaster) - i)
+              },
+              0);
+			my += client_geom(c)->height;
 		} else {
 			resize(c, (struct wlr_box){.x = (MONITOR_WINDOW_AREA(m))->x + mw, .y = (MONITOR_WINDOW_AREA(m))->y + ty,
 				.width = (MONITOR_WINDOW_AREA(m))->width - mw, .height = ((MONITOR_WINDOW_AREA(m))->height - ty) / (n - i)}, 0);
-			ty += c->geom.height;
+			ty += client_geom(c)->height;
 		}
 		i++;
 	}
@@ -2433,7 +2448,8 @@ void
 view(const Arg *arg)
 {
   PRINT_FUNCTION
-  if ((arg->ui & TAGMASK) == current_monitor()->tagset[(current_monitor())->seltags])
+  if ((arg->ui & TAGMASK) ==
+      current_monitor()->tagset[(current_monitor())->seltags])
 		return;
   (current_monitor())->seltags ^= 1; /* toggle sel tagset */
 	if (arg->ui & TAGMASK)
@@ -2582,8 +2598,6 @@ void
 configurex11(struct wl_listener *listener, void *data)
 {
   PRINT_FUNCTION;
-  Client *c = client_from_listener(listener);/* wl_container_of(listener, c, configure); */
-  /* struct wlr_xwayland_surface *xsurface = data; */
   struct wlr_xwayland_surface_configure_event *event = data;
   wlr_xwayland_surface_configure(event->surface,
                                  event->x, event->y, event->width, event->height);
