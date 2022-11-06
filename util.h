@@ -104,6 +104,12 @@ void *ecalloc(size_t nmemb, size_t size);
 #define UNWRAP_WLR_SURFACE(p)                                                  \
   (TO_P(REF_CALL_1("wlroots types surface", "unwrap-wlr-surface", p)))
 
+#define WRAP_WLR_RENDERER(p)                                             \
+  (REF_CALL_1("wlroots render renderer", "wrap-wlr-renderer", FROM_P(p)))
+#define UNWRAP_WLR_RENDERER(p)                                                  \
+  (TO_P(REF_CALL_1("wlroots render renderer", "unwrap-wlr-renderer", p)))
+
+
 #define WRAP_WLR_IDLE(p)                                                       \
   (REF_CALL_1("wlroots types idle", "wrap-wlr-idle", FROM_P(p)))
 #define UNWRAP_WLR_IDLE(p)                                                     \

@@ -89,7 +89,6 @@ Monitor* monitor_from_listener(struct wl_listener *listener) {
  struct wlr_surface *exclusive_focus;
  struct wlr_scene *scene;
  struct wlr_scene_node *layers[NUM_LAYERS];
- struct wlr_renderer *drw;
  struct wlr_allocator *alloc;
  struct wlr_compositor *compositor;
 
@@ -180,6 +179,19 @@ struct wlr_backend* gwwm_backend(struct wlr_backend* backend)
 SCM_DEFINE (gwwm_seat, "gwwm-seat",0,0,0,(),"") {
   return WRAP_WLR_SEAT(seat);
 }
+
+struct wlr_renderer* gwwm_renderer(struct wlr_renderer* renderer)
+{
+  SCM b;
+  if (renderer) {
+    b=REF_CALL_1("gwwm", "gwwm-renderer",WRAP_WLR_RENDERER(renderer));
+    return renderer;
+  } else {
+    b=REF_CALL_0("gwwm", "gwwm-renderer");
+    return scm_is_false(b) ? NULL : UNWRAP_WLR_RENDERER(b);
+  }
+}
+
 struct wlr_seat *get_gloabl_seat(void) {
   return seat;
 }
@@ -622,7 +634,7 @@ SCM_DEFINE (gwwm_cleanup, "%gwwm-cleanup",0,0,0, () ,"")
 #endif
 	D(wl_display_destroy_clients,(gwwm_display(NULL)));
 	D(wlr_backend_destroy,(gwwm_backend(NULL)));
-    D(wlr_renderer_destroy,(drw));
+    D(wlr_renderer_destroy,(gwwm_renderer(NULL)));
 	D(wlr_allocator_destroy,(alloc));
 	D(wlr_xcursor_manager_destroy,(cursor_mgr));
     D(wlr_cursor_destroy,(cursor));
@@ -855,7 +867,7 @@ createmon(struct wl_listener *listener, void *data)
     register_monitor(m);
 	SET_MONITOR_WLR_OUTPUT(m,wlr_output);
 
-	wlr_output_init_render(wlr_output, alloc, drw);
+	wlr_output_init_render(wlr_output, alloc, gwwm_renderer(NULL));
 
 	/* Initialize monitor state using configured rules */
 	for (size_t i = 0; i < LENGTH(m->layers); i++)
@@ -2056,12 +2068,10 @@ SCM_DEFINE (gwwm_setup,"%gwwm-setup" ,0,0,0,(),"")
 	 * if the backend does not support hardware cursors (some older GPUs
 	 * don't). */
 
-	if (!(drw = wlr_renderer_autocreate(gwwm_backend(NULL))))
-		die("couldn't create renderer");
-	wlr_renderer_init_wl_display(drw, gwwm_display(NULL));
+	wlr_renderer_init_wl_display(gwwm_renderer(NULL), gwwm_display(NULL));
 
 	/* Create a default allocator */
-	if (!(alloc = wlr_allocator_autocreate(gwwm_backend(NULL), drw)))
+	if (!(alloc = wlr_allocator_autocreate(gwwm_backend(NULL), gwwm_renderer(NULL))))
 		die("couldn't create allocator");
 
 	/* This creates some hands-off wlroots interfaces. The compositor is
@@ -2070,7 +2080,7 @@ SCM_DEFINE (gwwm_setup,"%gwwm-setup" ,0,0,0,(),"")
 	 * to dig your fingers in and play with their behavior if you want. Note that
 	 * the clients cannot set the selection directly without compositor approval,
 	 * see the setsel() function. */
-	compositor = wlr_compositor_create(gwwm_display(NULL), drw);
+	compositor = wlr_compositor_create(gwwm_display(NULL), gwwm_renderer(NULL));
 	wlr_export_dmabuf_manager_v1_create(gwwm_display(NULL));
 	wlr_screencopy_manager_v1_create(gwwm_display(NULL));
 	wlr_data_control_manager_v1_create(gwwm_display(NULL));
