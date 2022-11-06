@@ -109,6 +109,11 @@ void *ecalloc(size_t nmemb, size_t size);
 #define UNWRAP_WLR_RENDERER(p)                                                  \
   (TO_P(REF_CALL_1("wlroots render renderer", "unwrap-wlr-renderer", p)))
 
+#define WRAP_WLR_ALLOCATOR(p)                                             \
+  (REF_CALL_1("wlroots render allocator", "wrap-wlr-allocator", FROM_P(p)))
+#define UNWRAP_WLR_ALLOCATOR(p)                                                  \
+  (TO_P(REF_CALL_1("wlroots render allocator", "unwrap-wlr-allocator", p)))
+
 
 #define WRAP_WLR_IDLE(p)                                                       \
   (REF_CALL_1("wlroots types idle", "wrap-wlr-idle", FROM_P(p)))

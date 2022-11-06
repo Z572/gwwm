@@ -7,6 +7,7 @@
   #:use-module (util572 box )
   #:use-module (ice-9 format)
   #:use-module (wlroots render renderer)
+  #:use-module (wlroots render allocator)
   #:use-module (system repl server)
   #:use-module (gwwm keymap)
   #:use-module (gwwm i18n)
@@ -50,6 +51,7 @@
 (define-dy gwwm-output-layout output-layout)
 (define-dy entire-layout-box box)
 (define-dy gwwm-renderer renderer)
+(define-dy gwwm-allocator allocator)
 
 (define (init-global-keybind)
   (keymap-global-set (kbd (s S space))
@@ -158,6 +160,12 @@ gwwm [options]
              (exit 1)))
   (or (and=> (wlr-renderer-autocreate (gwwm-backend)) gwwm-renderer)
       (begin (send-log ERROR (G_ "gwwm Couldn't create renderer"))
+             (exit 1)))
+  (wlr-renderer-init-wl-display (gwwm-renderer) (gwwm-display))
+  (or (and=> (wlr-allocator-autocreate
+              (gwwm-backend)
+              (gwwm-renderer)) gwwm-allocator)
+      (begin (send-log ERROR (G_ "gwwm Couldn't create allocator"))
              (exit 1))))
 (define (main)
   (setlocale LC_ALL "")

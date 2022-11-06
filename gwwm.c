@@ -89,7 +89,6 @@ Monitor* monitor_from_listener(struct wl_listener *listener) {
  struct wlr_surface *exclusive_focus;
  struct wlr_scene *scene;
  struct wlr_scene_node *layers[NUM_LAYERS];
- struct wlr_allocator *alloc;
  struct wlr_compositor *compositor;
 
  struct wlr_xdg_shell *xdg_shell;
@@ -173,6 +172,18 @@ struct wlr_backend* gwwm_backend(struct wlr_backend* backend)
   } else {
     b=REF_CALL_0("gwwm", "gwwm-backend");
     return scm_is_false(b) ? NULL : UNWRAP_WLR_BACKEND(b);
+  }
+}
+
+struct wlr_allocator* gwwm_allocator (struct wlr_allocator* alloc)
+{
+  SCM b;
+  if (alloc) {
+    b=REF_CALL_1("gwwm", "gwwm-allocator",WRAP_WLR_ALLOCATOR(alloc));
+    return alloc;
+  } else {
+    b=REF_CALL_0("gwwm", "gwwm-allocator");
+    return scm_is_false(b) ? NULL : UNWRAP_WLR_ALLOCATOR(b);
   }
 }
 
@@ -635,7 +646,7 @@ SCM_DEFINE (gwwm_cleanup, "%gwwm-cleanup",0,0,0, () ,"")
 	D(wl_display_destroy_clients,(gwwm_display(NULL)));
 	D(wlr_backend_destroy,(gwwm_backend(NULL)));
     D(wlr_renderer_destroy,(gwwm_renderer(NULL)));
-	D(wlr_allocator_destroy,(alloc));
+	D(wlr_allocator_destroy,(gwwm_allocator(NULL)));
 	D(wlr_xcursor_manager_destroy,(cursor_mgr));
     D(wlr_cursor_destroy,(cursor));
     D(wlr_output_layout_destroy,(gwwm_output_layout(NULL)));
@@ -867,7 +878,7 @@ createmon(struct wl_listener *listener, void *data)
     register_monitor(m);
 	SET_MONITOR_WLR_OUTPUT(m,wlr_output);
 
-	wlr_output_init_render(wlr_output, alloc, gwwm_renderer(NULL));
+	wlr_output_init_render(wlr_output, gwwm_allocator(NULL), gwwm_renderer(NULL));
 
 	/* Initialize monitor state using configured rules */
 	for (size_t i = 0; i < LENGTH(m->layers); i++)
@@ -2067,12 +2078,6 @@ SCM_DEFINE (gwwm_setup,"%gwwm-setup" ,0,0,0,(),"")
 	 * backend uses the renderer, for example, to fall back to software cursors
 	 * if the backend does not support hardware cursors (some older GPUs
 	 * don't). */
-
-	wlr_renderer_init_wl_display(gwwm_renderer(NULL), gwwm_display(NULL));
-
-	/* Create a default allocator */
-	if (!(alloc = wlr_allocator_autocreate(gwwm_backend(NULL), gwwm_renderer(NULL))))
-		die("couldn't create allocator");
 
 	/* This creates some hands-off wlroots interfaces. The compositor is
 	 * necessary for clients to allocate surfaces and the data device manager
