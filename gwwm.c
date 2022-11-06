@@ -1375,75 +1375,80 @@ void destroy_surface_notify(struct wl_listener *listener, void *data) {
   logout_client((client_from_listener(listener)));
 }
 
-void
-mapnotify(struct wl_listener *listener, void *data)
-{
+void mapnotify(struct wl_listener *listener, void *data) {
   PRINT_FUNCTION;
   /* Called when the surface is mapped, or ready to display on-screen. */
   Client *p, *c = client_from_listener(listener);
-  SCM sc=WRAP_CLIENT(c);
+  SCM sc = WRAP_CLIENT(c);
   /* struct wlr_xdg_surface *surface = data; */
   int i;
   scm_c_run_hook(REF("gwwm hooks", "client-map-event-hook"),
-                 scm_list_2(sc , client_is_x11(c)
-                            ? WRAP_WLR_XWAYLAND_SURFACE(data)
-                            : WRAP_WLR_XDG_SURFACE(data)));
-	/* Create scene tree for this client and its border */
-  CLIENT_SET_SCENE(c,&wlr_scene_tree_create(layers[LyrTile])->node);
-  if ( wlr_surface_is_xdg_surface(CLIENT_SURFACE(c)))
-    { client_scene_surface(c,wlr_scene_xdg_surface_create(CLIENT_SCENE(c), wlr_xdg_surface_from_wlr_surface(CLIENT_SURFACE(c))));
-    } else  {
-    client_scene_surface(c,wlr_scene_subsurface_tree_create(CLIENT_SCENE(c), CLIENT_SURFACE(c)));
+                 scm_list_2(sc, client_is_x11(c)
+                                    ? WRAP_WLR_XWAYLAND_SURFACE(data)
+                                    : WRAP_WLR_XDG_SURFACE(data)));
+  /* Create scene tree for this client and its border */
+  CLIENT_SET_SCENE(c, &wlr_scene_tree_create(layers[LyrTile])->node);
+  struct wlr_surface *surface = (CLIENT_SURFACE(c));
+  struct wlr_scene_node *scene_node = CLIENT_SCENE(c);
+  /* struct wlr_scene */
+  if (wlr_surface_is_xdg_surface(surface)) {
+    client_scene_surface(
+        c, wlr_scene_xdg_surface_create(
+               scene_node, wlr_xdg_surface_from_wlr_surface(surface)));
+  } else {
+    client_scene_surface(c,
+                         wlr_scene_subsurface_tree_create(scene_node, surface));
   }
-	if (CLIENT_SURFACE(c)) {
-		(CLIENT_SURFACE(c))->data = CLIENT_SCENE(c);
-		/* Ideally we should do this in createnotify{,x11} but at that moment
-		* wlr_xwayland_surface doesn't have wlr_surface yet
-		*/
-		client_add_listen(c,&CLIENT_SURFACE(c)->events.commit,commitnotify);
-        client_add_listen(c,&CLIENT_SURFACE(c)->events.destroy, destroy_surface_notify);
+  if (surface) {
+    (surface)->data = scene_node;
+    /* Ideally we should do this in createnotify{,x11} but at that moment
+     * wlr_xwayland_surface doesn't have wlr_surface yet
+     */
+    client_add_listen(c, &surface->events.commit, commitnotify);
+    client_add_listen(c, &surface->events.destroy, destroy_surface_notify);
+  }
+  scene_node->data = client_scene_surface(c, NULL)->data = c;
 
-	}
-	(CLIENT_SCENE(c))->data = client_scene_surface(c, NULL)->data = c;
+  if (client_is_unmanaged(c)) {
+    c->geom = *client_get_geometry(c);
+    /* Floating */
+    wlr_scene_node_reparent(scene_node, layers[LyrFloat]);
+    wlr_scene_node_set_position(scene_node, c->geom.x + GWWM_BORDERPX(),
+                                c->geom.y + GWWM_BORDERPX());
+    return;
+  }
+  client_init_border(c);
+  /* Initialize client geometry with room for border */
+  client_set_tiled(c, WLR_EDGE_TOP | WLR_EDGE_BOTTOM | WLR_EDGE_LEFT |
+                          WLR_EDGE_RIGHT);
+  c->geom = *client_get_geometry(c);
+  c->geom.width += 2 * CLIENT_BW(c);
+  c->geom.height += 2 * CLIENT_BW(c);
 
-	if (client_is_unmanaged(c)) {
-		c->geom=*client_get_geometry(c);
-		/* Floating */
-		wlr_scene_node_reparent(CLIENT_SCENE(c), layers[LyrFloat]);
-		wlr_scene_node_set_position(CLIENT_SCENE(c), c->geom.x + GWWM_BORDERPX(),
-			c->geom.y + GWWM_BORDERPX());
-		return;
-	}
-    client_init_border(c);
-    PRINT_FUNCTION;
-	/* Initialize client geometry with room for border */
-	client_set_tiled(c, WLR_EDGE_TOP | WLR_EDGE_BOTTOM | WLR_EDGE_LEFT | WLR_EDGE_RIGHT);
-    PRINT_FUNCTION;
- c->geom=*client_get_geometry(c);
-	c->geom.width += 2 * CLIENT_BW(c);
-	c->geom.height += 2 * CLIENT_BW(c);
+  /* Insert this client into client lists. */
+  wl_list_insert(&clients, &c->link);
+  REF_CALL_2("ice-9 q", "q-push!", REF_CALL_0("gwwm client", "%fstack"), sc);
 
-	/* Insert this client into client lists. */
-	wl_list_insert(&clients, &c->link);
-    REF_CALL_2("ice-9 q", "q-push!", REF_CALL_0("gwwm client", "%fstack"), sc);
+  /* Set initial monitor, tags, floating status, and focus */
+  if ((p = client_get_parent(c))) {
+    /* Set the same monitor and tags than its parent */
+    CLIENT_SET_FLOATING(c, 1);
+    wlr_scene_node_reparent(scene_node, layers[LyrFloat]);
+    /* TODO recheck if !p->mon is possible with wlroots 0.16.0 */
+    setmon(c,
+           (client_monitor(p, NULL)) ? client_monitor(p, NULL)
+                                     : current_monitor(),
+           client_tags(p));
+  } else {
+    applyrules(c);
+  }
 
-	/* Set initial monitor, tags, floating status, and focus */
-	if ((p = client_get_parent(c))) {
-		/* Set the same monitor and tags than its parent */
-      CLIENT_SET_FLOATING(c,1);
-		wlr_scene_node_reparent(CLIENT_SCENE(c), layers[LyrFloat]);
-		/* TODO recheck if !p->mon is possible with wlroots 0.16.0 */
-		setmon(c, (client_monitor(p,NULL)) ? client_monitor(p,NULL) : current_monitor(), client_tags(p));
-	} else {
-		applyrules(c);
-	}
+  printstatus();
 
-	printstatus();
+  if (CLIENT_IS_FULLSCREEN(c))
+    setfullscreen(c, 1);
 
-	if (CLIENT_IS_FULLSCREEN(c))
-		setfullscreen(c, 1);
-
-	client_monitor(c,NULL)->un_map = 1;
+  client_monitor(c, NULL)->un_map = 1;
 }
 
 void
