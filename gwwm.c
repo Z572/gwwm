@@ -804,7 +804,7 @@ createlayersurface(struct wl_listener *listener, void *data)
 	client_add_listen(layersurface,&wlr_layer_surface->events.unmap,unmaplayersurfacenotify);
 
     client_monitor(layersurface,wlr_layer_surface->output->data);
-	wlr_layer_surface->data = layersurface;
+	wlr_layer_surface->data = WRAP_CLIENT(layersurface);
 
 	CLIENT_SET_SCENE(layersurface,(wlr_layer_surface->surface->data =
 			wlr_scene_subsurface_tree_create(layers[wlr_layer_surface->pending.layer],
@@ -937,8 +937,9 @@ createnotify(struct wl_listener *listener, void *data)
 		return;
 
 	/* Allocate a Client for this surface */
-	c = xdg_surface->data = ecalloc(1, sizeof(*c));
+	c = ecalloc(1, sizeof(*c));
     register_client(c,GWWM_XDG_CLIENT_TYPE);
+    xdg_surface->data = WRAP_CLIENT(c);
     CLIENT_SET_TYPE(c ,"XDGShell");
     CLIENT_SET_SURFACE(c ,xdg_surface->surface);
     CLIENT_SET_BW(c,GWWM_BORDERPX());
@@ -2575,8 +2576,9 @@ createnotifyx11(struct wl_listener *listener, void *data)
 			setfullscreen(c, 0);
 
 	/* Allocate a Client for this surface */
-	c = xwayland_surface->data = ecalloc(1, sizeof(*c));
+	c = ecalloc(1, sizeof(*c));
     register_client(c,GWWM_X_CLIENT_TYPE);
+    xwayland_surface->data = WRAP_CLIENT(c);
     /* CLIENT_SET_SURFACE(c,xwayland_surface->surface); */
     CLIENT_SET_TYPE(c ,xwayland_surface->override_redirect ? "X11Unmanaged" : "X11Managed");
 	CLIENT_SET_BW(c,GWWM_BORDERPX());

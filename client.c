@@ -107,12 +107,12 @@ client_from_wlr_surface(struct wlr_surface *s)
 	struct wlr_xwayland_surface *xsurface;
 	if (s && wlr_surface_is_xwayland_surface(s)
 			&& (xsurface = wlr_xwayland_surface_from_wlr_surface(s)))
-		return xsurface->data;
+		return UNWRAP_CLIENT(xsurface->data);
 #endif
 	if (s && wlr_surface_is_xdg_surface(s)
 			&& (surface = wlr_xdg_surface_from_wlr_surface(s))
 			&& surface->role == WLR_XDG_SURFACE_ROLE_TOPLEVEL)
-		return surface->data;
+		return UNWRAP_CLIENT(surface->data);
 
 	if (s && wlr_surface_is_subsurface(s))
 		return client_from_wlr_surface(wlr_surface_get_root_surface(s));
