@@ -1071,7 +1071,8 @@ focusclient(Client *c, int lift)
 {
   PRINT_FUNCTION;
   struct wlr_surface *old = seat->keyboard_state.focused_surface;
-	int i;
+  SCM sc=WRAP_CLIENT(c);
+  int i;
 	/* Do not focus clients if a layer surface is focused */
 	if (exclusive_focus)
 		return;
@@ -1083,9 +1084,9 @@ focusclient(Client *c, int lift)
     if (c && CLIENT_SURFACE(c) == old)
 		return;
 	/* Put the new client atop the focus stack and select its monitor */
-    if (c && !(CLIENT_IS_LAYER_SHELL(WRAP_CLIENT(c)))) {
-      REF_CALL_2("ice-9 q", "q-remove!", REF_CALL_0("gwwm client", "%fstack"), WRAP_CLIENT(c));
-      REF_CALL_2("ice-9 q", "q-push!", REF_CALL_0("gwwm client", "%fstack"), WRAP_CLIENT(c));
+    if (c && !(CLIENT_IS_LAYER_SHELL(sc))) {
+      REF_CALL_2("ice-9 q", "q-remove!", REF_CALL_0("gwwm client", "%fstack"), sc);
+      REF_CALL_2("ice-9 q", "q-push!", REF_CALL_0("gwwm client", "%fstack"), sc);
       set_current_monitor(client_monitor(c,NULL));
         CLIENT_SET_URGENT(c ,0);
 		client_restack_surface(c);
@@ -1379,10 +1380,11 @@ mapnotify(struct wl_listener *listener, void *data)
   PRINT_FUNCTION;
   /* Called when the surface is mapped, or ready to display on-screen. */
   Client *p, *c = client_from_listener(listener);
+  SCM sc=WRAP_CLIENT(c);
   /* struct wlr_xdg_surface *surface = data; */
   int i;
   scm_c_run_hook(REF("gwwm hooks", "client-map-event-hook"),
-                 scm_list_2(WRAP_CLIENT(c) , client_is_x11(c)
+                 scm_list_2(sc , client_is_x11(c)
                             ? WRAP_WLR_XWAYLAND_SURFACE(data)
                             : WRAP_WLR_XDG_SURFACE(data)));
 	/* Create scene tree for this client and its border */
@@ -1422,7 +1424,7 @@ mapnotify(struct wl_listener *listener, void *data)
 
 	/* Insert this client into client lists. */
 	wl_list_insert(&clients, &c->link);
-    REF_CALL_2("ice-9 q", "q-push!", REF_CALL_0("gwwm client", "%fstack"), WRAP_CLIENT(c));
+    REF_CALL_2("ice-9 q", "q-push!", REF_CALL_0("gwwm client", "%fstack"), sc);
 
 	/* Set initial monitor, tags, floating status, and focus */
 	if ((p = client_get_parent(c))) {
