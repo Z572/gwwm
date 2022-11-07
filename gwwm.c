@@ -1562,14 +1562,13 @@ motionrelative(struct wl_listener *listener, void *data)
 void
 moveresize(const Arg *arg)
 {
-  PRINT_FUNCTION
-    SCM sgrabc= WRAP_CLIENT(grabc);
-	if (cursor_mode != CurNormal)
+  PRINT_FUNCTION;
+  if (cursor_mode != CurNormal)
 		return;
 	xytonode(cursor->x, cursor->y, NULL, &grabc, NULL, NULL, NULL);
 	if (!grabc || client_is_unmanaged(grabc) || CLIENT_IS_FULLSCREEN(grabc))
 		return;
-
+    SCM sgrabc= WRAP_CLIENT(grabc);
 	/* Float the window and tell motionnotify to grab it */
 	gwwm_setfloating(sgrabc, scm_from_bool(1));
 	switch (cursor_mode = arg->ui) {
