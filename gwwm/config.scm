@@ -65,7 +65,7 @@
   (cursor-normal-image #:init-value "right_ptr"
                        #:init-keyword #:cursor-normal-image
                        #:accessor config-cursor-normal-image)
-  (fullscreenbg #:init-value (make-color 0 0 0 1)
+  (fullscreenbg #:init-value (make-color 0 0 0 255)
                 #:init-keyword #:fullscreenbg
                 #:accessor config-fullscreenbg)
   (xkb-rules #:init-value (make-xkb-rules) #:init-keyword #:xkb-rules #:accessor config-xkb-rules )
