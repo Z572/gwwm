@@ -79,7 +79,6 @@ typedef struct {
 } Keyboard;
 
 typedef struct {
-  struct wlr_box geom;
   struct wl_list link;
   int mapped;
 } LayerSurface;
@@ -218,6 +217,7 @@ void unmapnotify(struct wl_listener *listener, void *data);
 void updatemons(struct wl_listener *listener, void *data);
 void updatetitle(struct wl_listener *listener, void *data);
 void urgent(struct wl_listener *listener, void *data);
+void set_layersurface_geom(LayerSurface *c , struct wlr_box* box);
 void view(const Arg *arg);
 void virtualkeyboard(struct wl_listener *listener, void *data);
 Monitor *xytomon(double x, double y);

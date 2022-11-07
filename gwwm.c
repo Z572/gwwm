@@ -146,6 +146,16 @@ struct wl_listener request_start_drag = {.notify = requeststartdrag};
 struct wl_listener start_drag = {.notify = startdrag};
 struct wl_listener drag_icon_destroy = {.notify = dragicondestroy};
 
+void set_layersurface_geom(LayerSurface *c , struct wlr_box* box)
+{
+  /* PRINT_FUNCTION; */
+  /* c->geom=*box; */
+  PRINT_FUNCTION;
+  SCM sc=WRAP_CLIENT(c);
+  SCM sbox=scm_slot_set_x(sc,scm_from_utf8_symbol("geom"),
+                          (box) ? WRAP_WLR_BOX(box) : SCM_BOOL_F);
+}
+
 bool visibleon(Client *c, Monitor *m) {
   return ((m) && (client_monitor(c, NULL) == (m)) &&
           (client_tags(c) & (m)->tagset[(m)->seltags]));
@@ -449,7 +459,7 @@ arrangelayer(Monitor *m, struct wl_list *list, struct wlr_box *usable_area, int 
 			wlr_layer_surface_v1_destroy(wlr_layer_surface);
 			continue;
 		}
-		layersurface->geom = box;
+		set_layersurface_geom(layersurface,&box);
 
 		if (state->exclusive_zone > 0)
 			applyexclusive(usable_area, state->anchor, state->exclusive_zone,
@@ -930,8 +940,8 @@ createnotify(struct wl_listener *listener, void *data)
 		box = CLIENT_IS_LAYER_SHELL(WRAP_CLIENT(l))
           ? MONITOR_AREA((client_monitor(l,NULL)))
           : (MONITOR_WINDOW_AREA(((client_monitor(l,NULL)))));
-		box->x -= l->geom.x;
-		box->y -= l->geom.y;
+		box->x -= client_geom(l)->x;
+		box->y -= client_geom(l)->y;
 		wlr_xdg_popup_unconstrain_from_box(xdg_surface->popup, box);
 		return;
 	} else if (xdg_surface->role == WLR_XDG_SURFACE_ROLE_NONE)
@@ -1411,7 +1421,7 @@ void mapnotify(struct wl_listener *listener, void *data) {
   scene_node->data = client_scene_surface(c, NULL)->data = c;
 
   if (client_is_unmanaged(c)) {
-    c->geom= *(client_get_geometry(c)) ;
+    set_client_geom(c,(client_get_geometry(c)));
     /* Floating */
     wlr_scene_node_reparent(scene_node, layers[LyrFloat]);
     wlr_scene_node_set_position(scene_node, client_geom(c)->x + GWWM_BORDERPX(),
@@ -1422,7 +1432,7 @@ void mapnotify(struct wl_listener *listener, void *data) {
   /* Initialize client geometry with room for border */
   client_set_tiled(c, WLR_EDGE_TOP | WLR_EDGE_BOTTOM | WLR_EDGE_LEFT |
                           WLR_EDGE_RIGHT);
-  c->geom=*(client_get_geometry(c));
+  (set_client_geom (c,(client_get_geometry(c))));
   client_geom(c)->width += 2 * CLIENT_BW(c);
   client_geom(c)->height += 2 * CLIENT_BW(c);
 
@@ -1806,7 +1816,7 @@ requeststartdrag(struct wl_listener *listener, void *data)
 
 void resize(Client *c, struct wlr_box geo, int interact) {
   PRINT_FUNCTION
-  REF_CALL_3("gwwm client", "client-resize", WRAP_CLIENT(c), WRAP_WLR_BOX(&geo),
+  REF_CALL_3("gwwm client", "client-resize", WRAP_CLIENT(c), SHALLOW_CLONE(WRAP_WLR_BOX(&geo)),
              scm_from_bool(interact));
 }
 

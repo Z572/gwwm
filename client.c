@@ -1,3 +1,4 @@
+#include "libguile/boolean.h"
 #include "libguile/goops.h"
 #include "libguile/numbers.h"
 #include "libguile/scm.h"
@@ -195,13 +196,22 @@ client_get_geometry(Client *c)
     return geom;
 }
 
-struct wlr_box* client_geom(Client *c)
+struct wlr_box* client_geom(void *c)
 {
   PRINT_FUNCTION;
-  struct wlr_box *box=&c->geom;
-  return box;
-  /* return (scm_slot_ref(c, scm_from_utf8_symbol("geom"))); */
+  SCM sc=WRAP_CLIENT(c);
+  SCM sbox=scm_slot_ref(sc,scm_from_utf8_symbol("geom"));
+  return scm_is_false(sbox) ? NULL : UNWRAP_WLR_BOX(sbox);
 }
+
+void set_client_geom(Client *c , struct wlr_box* box)
+{
+  PRINT_FUNCTION;
+  SCM sc=WRAP_CLIENT(c);
+  scm_slot_set_x(sc,scm_from_utf8_symbol("geom"),
+                          (box) ? SHALLOW_CLONE(WRAP_WLR_BOX(box)) : SCM_BOOL_F);
+}
+
 
 SCM_DEFINE(client_resize ,"%client-resize-configure-serial",1,0,0,(SCM c),"")
 #define FUNC_NAME s_client_resize
@@ -215,22 +225,6 @@ SCM_DEFINE(client_set_resize ,"%client-set-resize-configure-serial!",2,0,0,(SCM 
 {
   GWWM_ASSERT_CLIENT_OR_FALSE(c,1);
   (UNWRAP_CLIENT(c))->resize=(scm_to_uint32(i));
-  return SCM_UNSPECIFIED;
-}
-#undef FUNC_NAME
-SCM_DEFINE(gwwm_client_geom ,"client-geom",1,0,0,(SCM c),"")
-#define FUNC_NAME s_gwwm_client_geom
-{
-  GWWM_ASSERT_CLIENT_OR_FALSE(c,1);
-  return WRAP_WLR_BOX (&(UNWRAP_CLIENT(c))->geom);
-}
-#undef FUNC_NAME
-SCM_DEFINE(gwwm_client_set_geom ,"client-set-geom!",2,0,0,(SCM c ,SCM box),"")
-#define FUNC_NAME s_gwwm_client_set_geom
-{
-  GWWM_ASSERT_CLIENT_OR_FALSE(c,1);
-  struct wlr_box *b=UNWRAP_WLR_BOX(box);
-  UNWRAP_CLIENT(c)->geom=*b;
   return SCM_UNSPECIFIED;
 }
 #undef FUNC_NAME

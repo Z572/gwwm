@@ -101,7 +101,6 @@ enum gwwm_client_type {
 typedef struct Monitor Monitor;
 typedef struct Client {
   /* Must keep these three elements in this order */
-  struct wlr_box geom; /* layout-relative, includes border */
   struct wl_list link;
   uint32_t resize; /* configure serial of a pending resize */
 } Client;
@@ -142,7 +141,8 @@ int client_tags(Client *c);
 void set_client_tags(Client *c,int tags);
 void client_set_resizing(Client *c, bool resizing);
 void *toplevel_from_popup(struct wlr_xdg_popup *popup);
-struct wlr_box* client_geom(Client *c);
+struct wlr_box* client_geom(void *c);
+void set_client_geom(Client *c , struct wlr_box* box);
 struct wlr_scene_node *client_scene_surface(Client *c, struct wlr_scene_node *surface);
 
 #endif

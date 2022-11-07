@@ -79,6 +79,7 @@
   (data #:init-keyword #:data
         #:accessor .data
         #:class <hidden-slot>)
+  (geom #:init-value #f #:accessor client-geom)
   (type #:init-keyword #:type #:getter client-type
         #:setter client-set-type!)
   (monitor #:init-value #f
@@ -300,7 +301,7 @@
     (wlr-scene-node-set-position (.node (list-ref borders 3)) (- width bw) bw )))
 
 (define-method (client-resize (c <gwwm-client>) geo (interact? <boolean>))
-  (client-set-geom! c geo)
+  (set! (client-geom c) geo)
   (applybounds
    c
    (if interact?
