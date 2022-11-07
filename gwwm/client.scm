@@ -272,8 +272,18 @@
           (box (client-geom c)))
       (modify-instance* box
         (width (max width (+ (box-width min*) (* 2 bw)) ))
-        (height (max height (+ (box-height min*) (* 2 bw)) )))))
-  (%applybounds c geom))
+        (height (max height (+ (box-height min*) (* 2 bw)) )))
+
+      (let-slots geom ((x xx) (y yy) (height hh) (width ww))
+        (let-slots box (x y height width)
+          (if (>= x (+ xx ww))
+              (set! (box-x box) (- (+ xx ww) width)))
+          (if (>= y (+ yy hh))
+              (set! (box-y box) (- (+ yy hh) height)))
+          (if (<= (+ x width (* 2 bw)) xx)
+              (set! (box-x box) xx))
+          (if (<= (+ y height (* 2 bw)) y)
+              (set! (box-x box) yy)))))))
 
 (define-method (client-resize (c <gwwm-client>) geo (interact? <boolean>))
   (client-set-geom! c geo)
