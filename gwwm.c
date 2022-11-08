@@ -402,6 +402,78 @@ SCM_DEFINE (gwwm_layer_list , "layer-list",0,0,0,(),"")
 }
 #undef FUNC_NAME
 
+void arrange_l(LayerSurface *layersurface,Monitor *m, struct wlr_box *usable_area, int exclusive) {
+
+  struct wlr_box *full_area = MONITOR_AREA(m);
+  struct wlr_layer_surface_v1 *wlr_layer_surface =
+      wlr_layer_surface_v1_from_wlr_surface(CLIENT_SURFACE(layersurface));
+  struct wlr_layer_surface_v1_state *state = &wlr_layer_surface->current;
+  struct wlr_box bounds;
+  struct wlr_box box = {.width = state->desired_width,
+                        .height = state->desired_height};
+  const uint32_t both_horiz =
+      ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT | ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT;
+  const uint32_t both_vert =
+      ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP | ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM;
+
+  if (!(exclusive != (state->exclusive_zone > 0))) {
+    bounds = state->exclusive_zone == -1 ? *full_area : *usable_area;
+
+    /* Horizontal axis */
+    if ((state->anchor & both_horiz) && box.width == 0) {
+      box.x = bounds.x;
+      box.width = bounds.width;
+    } else if ((state->anchor & ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT)) {
+      box.x = bounds.x;
+    } else if ((state->anchor & ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT)) {
+      box.x = bounds.x + (bounds.width - box.width);
+    } else {
+      box.x = bounds.x + ((bounds.width / 2) - (box.width / 2));
+    }
+    /* Vertical axis */
+    if ((state->anchor & both_vert) && box.height == 0) {
+      box.y = bounds.y;
+      box.height = bounds.height;
+    } else if ((state->anchor & ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP)) {
+      box.y = bounds.y;
+    } else if ((state->anchor & ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM)) {
+      box.y = bounds.y + (bounds.height - box.height);
+    } else {
+      box.y = bounds.y + ((bounds.height / 2) - (box.height / 2));
+    }
+    /* Margin */
+    if ((state->anchor & both_horiz) == both_horiz) {
+      box.x += state->margin.left;
+      box.width -= state->margin.left + state->margin.right;
+    } else if ((state->anchor & ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT)) {
+      box.x += state->margin.left;
+    } else if ((state->anchor & ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT)) {
+      box.x -= state->margin.right;
+    }
+    if ((state->anchor & both_vert) == both_vert) {
+      box.y += state->margin.top;
+      box.height -= state->margin.top + state->margin.bottom;
+    } else if ((state->anchor & ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP)) {
+      box.y += state->margin.top;
+    } else if ((state->anchor & ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM)) {
+      box.y -= state->margin.bottom;
+    }
+    if (box.width < 0 || box.height < 0) {
+      wlr_layer_surface_v1_destroy(wlr_layer_surface);
+      /* continue; */
+    } else {
+      set_layersurface_geom(layersurface, &box);
+
+      if (state->exclusive_zone > 0)
+        applyexclusive(usable_area, state->anchor, state->exclusive_zone,
+                       state->margin.top, state->margin.right,
+                       state->margin.bottom, state->margin.left);
+      wlr_scene_node_set_position(CLIENT_SCENE(layersurface), box.x, box.y);
+      wlr_layer_surface_v1_configure(wlr_layer_surface, box.width, box.height);
+    }
+  }
+}
+
 void
 arrangelayer(Monitor *m, struct wl_list *list, struct wlr_box *usable_area, int exclusive)
 {
@@ -410,75 +482,8 @@ arrangelayer(Monitor *m, struct wl_list *list, struct wlr_box *usable_area, int 
 	struct wlr_box *full_area = MONITOR_AREA(m);
 
 	wl_list_for_each(layersurface, list, link) {
-		struct wlr_layer_surface_v1 *wlr_layer_surface = wlr_layer_surface_v1_from_wlr_surface(CLIENT_SURFACE(layersurface));
-		struct wlr_layer_surface_v1_state *state = &wlr_layer_surface->current;
-		struct wlr_box bounds;
-		struct wlr_box box = {
-			.width = state->desired_width,
-			.height = state->desired_height
-		};
-		const uint32_t both_horiz = ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT
-			| ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT;
-		const uint32_t both_vert = ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP
-			| ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM;
-
-		if (exclusive != (state->exclusive_zone > 0))
-			continue;
-
-		bounds = state->exclusive_zone == -1 ? *full_area : *usable_area;
-
-		/* Horizontal axis */
-		if ((state->anchor & both_horiz) && box.width == 0) {
-			box.x = bounds.x;
-			box.width = bounds.width;
-		} else if ((state->anchor & ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT)) {
-			box.x = bounds.x;
-		} else if ((state->anchor & ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT)) {
-			box.x = bounds.x + (bounds.width - box.width);
-		} else {
-			box.x = bounds.x + ((bounds.width / 2) - (box.width / 2));
-		}
-		/* Vertical axis */
-		if ((state->anchor & both_vert) && box.height == 0) {
-			box.y = bounds.y;
-			box.height = bounds.height;
-		} else if ((state->anchor & ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP)) {
-			box.y = bounds.y;
-		} else if ((state->anchor & ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM)) {
-			box.y = bounds.y + (bounds.height - box.height);
-		} else {
-			box.y = bounds.y + ((bounds.height / 2) - (box.height / 2));
-		}
-		/* Margin */
-		if ((state->anchor & both_horiz) == both_horiz) {
-			box.x += state->margin.left;
-			box.width -= state->margin.left + state->margin.right;
-		} else if ((state->anchor & ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT)) {
-			box.x += state->margin.left;
-		} else if ((state->anchor & ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT)) {
-			box.x -= state->margin.right;
-		}
-		if ((state->anchor & both_vert) == both_vert) {
-			box.y += state->margin.top;
-			box.height -= state->margin.top + state->margin.bottom;
-		} else if ((state->anchor & ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP)) {
-			box.y += state->margin.top;
-		} else if ((state->anchor & ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM)) {
-			box.y -= state->margin.bottom;
-		}
-		if (box.width < 0 || box.height < 0) {
-			wlr_layer_surface_v1_destroy(wlr_layer_surface);
-			continue;
-		}
-		set_layersurface_geom(layersurface,&box);
-
-		if (state->exclusive_zone > 0)
-			applyexclusive(usable_area, state->anchor, state->exclusive_zone,
-					state->margin.top, state->margin.right,
-					state->margin.bottom, state->margin.left);
-		wlr_scene_node_set_position(CLIENT_SCENE(layersurface), box.x, box.y);
-		wlr_layer_surface_v1_configure(wlr_layer_surface, box.width, box.height);
-	}
+      arrange_l(layersurface, m, usable_area,exclusive);
+    }
 }
 
 void arrange_interactive_layer(Monitor *m) {
