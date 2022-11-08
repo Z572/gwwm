@@ -82,7 +82,7 @@ typedef struct Monitor {
 } Monitor;
 
 Monitor* monitor_from_listener(struct wl_listener *listener) {
-  PRINT_FUNCTION;
+  /* PRINT_FUNCTION; */
   SCM scm = scm_from_listener(WRAP_WL_LISTENER(listener));
   return scm_is_false(scm) ? NULL : UNWRAP_MONITOR(scm);
 }
@@ -609,7 +609,7 @@ checkidleinhibitor(struct wlr_surface *exclude)
 
 Monitor *
 client_monitor(void *c ,Monitor *change) {
-  PRINT_FUNCTION;
+  /* PRINT_FUNCTION; */
   SCM m;
   SCM sc=WRAP_CLIENT(c);
   if (change) {
@@ -729,7 +729,7 @@ commitlayersurfacenotify(struct wl_listener *listener, void *data)
 void
 commitnotify(struct wl_listener *listener, void *data)
 {
-  PRINT_FUNCTION;
+  /* PRINT_FUNCTION; */
 	Client *c = client_from_listener(listener);
     SCM sc=WRAP_CLIENT(c);
     scm_c_run_hook(REF("gwwm hooks", "surface-commit-event-hook"), scm_list_1(sc));
@@ -1770,7 +1770,7 @@ quitsignal(int signo)
 void
 rendermon(struct wl_listener *listener, void *data)
 {
-  PRINT_FUNCTION
+  /* PRINT_FUNCTION */
 	/* This function is called every time an output is ready to display a frame,
 	 * generally at the output's refresh rate (e.g. 60Hz). */
 	Monitor *m = monitor_from_listener(listener);;

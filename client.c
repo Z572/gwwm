@@ -66,7 +66,7 @@ void register_client(void *c, enum gwwm_client_type type) {
 }
 
 void *client_from_listener(struct wl_listener *listener) {
-  PRINT_FUNCTION;
+  /* PRINT_FUNCTION; */
   SCM scm = scm_from_listener(WRAP_WL_LISTENER(listener));
   return UNWRAP_CLIENT(scm);
 }
@@ -202,7 +202,7 @@ client_get_geometry(Client *c)
 
 struct wlr_box* client_geom(void *c)
 {
-  PRINT_FUNCTION;
+  /* PRINT_FUNCTION; */
   SCM sc=WRAP_CLIENT(c);
   SCM sbox=scm_slot_ref(sc,scm_from_utf8_symbol("geom"));
   return scm_is_false(sbox) ? NULL : UNWRAP_WLR_BOX(sbox);
