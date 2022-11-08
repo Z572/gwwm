@@ -617,7 +617,7 @@ client_monitor(void *c ,Monitor *change) {
     scm_slot_set_x(sc,scm_from_utf8_symbol("monitor"),m);
     return change;
   } else {
-    m=scm_slot_ref(sc, scm_from_utf8_symbol("monitor"));
+    m=REF_CALL_1("gwwm client", "client-monitor", sc);
     return scm_is_false(m)? NULL : UNWRAP_MONITOR(m);
   }
 }
