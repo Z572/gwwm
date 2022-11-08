@@ -102,11 +102,12 @@ typedef struct Monitor Monitor;
 typedef struct Client {
   /* Must keep these three elements in this order */
   struct wl_list link;
-  uint32_t resize; /* configure serial of a pending resize */
 } Client;
 
 Client *unwrap_client_1(SCM o);
 SCM find_client(void *c);
+void client_set_resize_configure_serial(Client *c, uint32_t i);
+uint32_t client_resize_configure_serial(Client *c);
 void register_client(void *c, enum gwwm_client_type type);
 void logout_client(void *c);
 struct wlr_scene_rect *client_border_n(Client *c, int n);

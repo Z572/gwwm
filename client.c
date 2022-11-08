@@ -4,6 +4,7 @@
 #include "libguile/scm.h"
 #include "string.h"
 #include <stdbool.h>
+#include <stdint.h>
 #include <wlr/types/wlr_scene.h>
 #include "util.h"
 #include "client.h"
@@ -213,21 +214,16 @@ void set_client_geom(Client *c , struct wlr_box* box)
 }
 
 
-SCM_DEFINE(client_resize ,"%client-resize-configure-serial",1,0,0,(SCM c),"")
-#define FUNC_NAME s_client_resize
+uint32_t client_resize_configure_serial(Client *c)
 {
-  GWWM_ASSERT_CLIENT_OR_FALSE(c,1);
-  return scm_from_uint32((UNWRAP_CLIENT(c))->resize);
+  return scm_to_uint32(scm_slot_ref(WRAP_CLIENT(c),scm_from_utf8_symbol("resize-configure-serial")));
 }
-#undef FUNC_NAME
-SCM_DEFINE(client_set_resize ,"%client-set-resize-configure-serial!",2,0,0,(SCM c,SCM i),"")
-#define FUNC_NAME s_client_set_resize
+
+void client_set_resize_configure_serial(Client *c, uint32_t i)
 {
-  GWWM_ASSERT_CLIENT_OR_FALSE(c,1);
-  (UNWRAP_CLIENT(c))->resize=(scm_to_uint32(i));
-  return SCM_UNSPECIFIED;
+  scm_slot_set_x(WRAP_CLIENT(c),
+                          scm_from_utf8_symbol("resize-configure-serial"),scm_from_uint32(i));
 }
-#undef FUNC_NAME
 
 
 void

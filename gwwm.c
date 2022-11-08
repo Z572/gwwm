@@ -3,6 +3,7 @@
  */
 #include "libguile/boolean.h"
 #include "libguile/goops.h"
+#include "libguile/numbers.h"
 #include "libguile/symbols.h"
 #include "wlr/util/box.h"
 #include <stdbool.h>
@@ -739,10 +740,10 @@ commitnotify(struct wl_listener *listener, void *data)
 		arrange(client_monitor(c,NULL));
 
 	/* mark a pending resize as completed */
-	if (c->resize && (c->resize <= wlr_xdg_surface_from_wlr_surface(CLIENT_SURFACE(c))->current.configure_serial
+	if (client_resize_configure_serial(c) && ((client_resize_configure_serial(c)) <= wlr_xdg_surface_from_wlr_surface(CLIENT_SURFACE(c))->current.configure_serial
 			|| (wlr_xdg_surface_from_wlr_surface(CLIENT_SURFACE(c))->current.geometry.width == wlr_xdg_surface_from_wlr_surface(CLIENT_SURFACE(c))->pending.geometry.width
 			&& wlr_xdg_surface_from_wlr_surface(CLIENT_SURFACE(c))->current.geometry.height == wlr_xdg_surface_from_wlr_surface(CLIENT_SURFACE(c))->pending.geometry.height)))
-		c->resize = 0;
+      client_set_resize_configure_serial(c,0);
 }
 
 void
@@ -1783,7 +1784,7 @@ rendermon(struct wl_listener *listener, void *data)
 	 * this monitor. */
 	/* Checking m->un_map for every client is not optimal but works */
 	wl_list_for_each(c, &clients, link) {
-      if ((c->resize && m->un_map) || ((wlr_surface_is_xdg_surface( CLIENT_SURFACE(c)))
+      if ((client_resize_configure_serial(c) && m->un_map) || ((wlr_surface_is_xdg_surface( CLIENT_SURFACE(c)))
 				&& (wlr_xdg_surface_from_wlr_surface(CLIENT_SURFACE(c))->pending.geometry.width !=
 				wlr_xdg_surface_from_wlr_surface(CLIENT_SURFACE(c))->current.geometry.width
 				|| wlr_xdg_surface_from_wlr_surface(CLIENT_SURFACE(c))->pending.geometry.height !=

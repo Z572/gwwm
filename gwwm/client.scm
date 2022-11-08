@@ -117,7 +117,8 @@
   (borders #:init-value (list))
   (border-width #:init-value 1 #:accessor client-border-width)
   (prev-geom #:accessor client-prev-geom #:init-value #f)
-  (scene-surface #:accessor client-scene-surface #:init-value #f))
+  (scene-surface #:accessor client-scene-surface #:init-value #f)
+  (resize-configure-serial #:accessor client-resize-configure-serial #:init-value #f))
 
 (define-method (client-set-border-color (c <gwwm-client>) (color <rgba-color>))
   (for-each (lambda (b) (wlr-scene-rect-set-color b color))
@@ -314,10 +315,10 @@
     (wlr-scene-node-set-position (client-scene c) (box-x geo) (box-y geo))
     (wlr-scene-node-set-position (client-scene-surface c) bw bw)
     (client-resize-border c)
-    (%client-set-resize-configure-serial!
-     c (client-set-size c
-                        (- width (* 2 bw))
-                        (- heigh (* 2 bw))))))
+    (set! (client-resize-configure-serial c)
+          (client-set-size c
+                           (- width (* 2 bw))
+                           (- heigh (* 2 bw))))))
 
 (define-method (client-resize (c <gwwm-client>) geo)
   (client-resize c geo #f))
