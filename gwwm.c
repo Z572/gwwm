@@ -1153,7 +1153,7 @@ SCM_DEFINE (gwwm_focusclient, "focusclient" ,2,0,0,(SCM client,SCM lift),"")
 #define FUNC_NAME s_gwwm_focusclient
 {
   GWWM_ASSERT_CLIENT_OR_FALSE(client ,1);
-  Client *c= scm_is_false(client)? NULL:  UNWRAP_CLIENT(client);
+  Client *c= UNWRAP_CLIENT(client);
   focusclient(c, scm_to_bool(lift));
   return SCM_UNSPECIFIED;
 }
@@ -1224,7 +1224,7 @@ focustop(Monitor *m)
 {
   PRINT_FUNCTION;
   SCM c=REF_CALL_1("gwwm commands", "focustop", WRAP_MONITOR(m));
-  return scm_is_false(c)?  NULL: UNWRAP_CLIENT(c);
+  return UNWRAP_CLIENT(c);
 }
 
 void
@@ -1852,7 +1852,7 @@ current_client(void)
 {
   PRINT_FUNCTION;
   SCM c=REF_CALL_0("gwwm client", "current-client");
-  return scm_is_false(c) ? NULL : (UNWRAP_CLIENT(c));
+  return (UNWRAP_CLIENT(c)) ;
 }
 
 /* SCM_DEFINE (gwwm_current_client, "current-client",0, 0,0, */

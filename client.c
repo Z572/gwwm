@@ -22,6 +22,9 @@ find_client(void *c) {
 Client*
 unwrap_client_1(SCM o)
 {
+  if (scm_is_false(o)) {
+    return NULL;
+  }
   SCM a=scm_call_1(REFP("gwwm client",".data"),o);
   if (scm_is_false(a)) {
     scm_error(scm_misc_error_key,"unwrap-client","client is delated" ,SCM_EOL,SCM_EOL);
@@ -65,7 +68,7 @@ void register_client(void *c, enum gwwm_client_type type) {
 void *client_from_listener(struct wl_listener *listener) {
   PRINT_FUNCTION;
   SCM scm = scm_from_listener(WRAP_WL_LISTENER(listener));
-  return scm_is_false(scm) ? NULL : UNWRAP_CLIENT(scm);
+  return UNWRAP_CLIENT(scm);
 }
 
 void
