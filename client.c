@@ -445,14 +445,14 @@ toplevel_from_popup(struct wlr_xdg_popup *popup)
 		switch (surface->role) {
 		case WLR_XDG_SURFACE_ROLE_POPUP:
 			if (wlr_surface_is_layer_surface(surface->popup->parent))
-				return wlr_layer_surface_v1_from_wlr_surface(surface->popup->parent)->data;
+				return UNWRAP_CLIENT(wlr_layer_surface_v1_from_wlr_surface(surface->popup->parent)->data);
 			else if (!wlr_surface_is_xdg_surface(surface->popup->parent))
 				return NULL;
 
 			surface = wlr_xdg_surface_from_wlr_surface(surface->popup->parent);
 			break;
 		case WLR_XDG_SURFACE_ROLE_TOPLEVEL:
-				return surface->data;
+				return UNWRAP_CLIENT(surface->data);
 		case WLR_XDG_SURFACE_ROLE_NONE:
 			return NULL;
 		}
