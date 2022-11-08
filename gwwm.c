@@ -947,7 +947,7 @@ createnotify(struct wl_listener *listener, void *data)
 		if (wlr_surface_is_layer_surface(xdg_surface->popup->parent) && l
 				&& wlr_layer_surface_v1_from_wlr_surface(CLIENT_SURFACE(l))->current.layer < ZWLR_LAYER_SHELL_V1_LAYER_TOP)
 			wlr_scene_node_reparent(xdg_surface->surface->data, layers[LyrTop]);
-		if (!l || !(client_monitor(l,NULL)))
+		if (!l || scm_is_false(WRAP_CLIENT(l)) || !client_monitor(l,NULL))
 			return;
 		box = CLIENT_IS_LAYER_SHELL(WRAP_CLIENT(l))
           ? MONITOR_AREA((client_monitor(l,NULL)))
