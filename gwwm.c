@@ -102,7 +102,6 @@ Monitor* monitor_from_listener(struct wl_listener *listener) {
  struct wlr_output_manager_v1 *output_mgr;
  struct wlr_virtual_keyboard_manager_v1 *virtual_keyboard_mgr;
 
- struct wlr_cursor *cursor;
  struct wlr_xcursor_manager *cursor_mgr;
  struct wl_listener new_xwayland_surface = {.notify = createnotifyx11};
  struct wl_listener xwayland_ready = {.notify = xwaylandready};
@@ -229,6 +228,17 @@ struct wl_display *gwwm_display(struct wl_display *display) {
   } else {
     d = REF_CALL_0("gwwm", "gwwm-display");
     return scm_is_false(d) ? NULL : UNWRAP_WL_DISPLAY(d);
+  }
+}
+
+struct wlr_cursor *gwwm_cursor(struct wlr_cursor *cursor) {
+  SCM d;
+  if (cursor) {
+    d = REF_CALL_1("gwwm", "gwwm-cursor", WRAP_WLR_CURSOR(cursor));
+    return d;
+  } else {
+    d = REF_CALL_0("gwwm", "gwwm-cursor");
+    return scm_is_false(d) ? NULL : UNWRAP_WLR_CURSOR(d);
   }
 }
 
@@ -535,6 +545,7 @@ buttonpress(struct wl_listener *listener, void *data)
 {
   PRINT_FUNCTION
 	struct wlr_event_pointer_button *event = data;
+    struct wlr_cursor *cursor=gwwm_cursor(NULL);
 	struct wlr_keyboard *keyboard;
 	uint32_t mods;
 	Client *c;
@@ -547,7 +558,7 @@ buttonpress(struct wl_listener *listener, void *data)
 	switch (event->state) {
 	case WLR_BUTTON_PRESSED:
 		/* Change focus if the button was _pressed_ over a client */
-		xytonode(cursor->x, cursor->y, NULL, &c, NULL, NULL, NULL);
+      xytonode(cursor->x, cursor->y, NULL, &c, NULL, NULL, NULL);
 		/* Don't focus unmanaged clients */
 		if (c && !client_is_unmanaged(c))
 			focusclient(c, 1);
@@ -637,7 +648,7 @@ SCM_DEFINE (gwwm_cleanup, "%gwwm-cleanup",0,0,0, () ,"")
     D(wlr_renderer_destroy,(gwwm_renderer(NULL)));
 	D(wlr_allocator_destroy,(gwwm_allocator(NULL)));
 	D(wlr_xcursor_manager_destroy,(cursor_mgr));
-    D(wlr_cursor_destroy,(cursor));
+    D(wlr_cursor_destroy,(gwwm_cursor(NULL)));
     D(wlr_output_layout_destroy,(gwwm_output_layout(NULL)));
 	D(wlr_seat_destroy,(seat));
 	D(wl_display_destroy,(gwwm_display(NULL)));
@@ -1006,7 +1017,7 @@ createpointer(struct wlr_input_device *device)
 		}
 	}
 
-	wlr_cursor_attach_input_device(cursor, device);
+	wlr_cursor_attach_input_device(gwwm_cursor(NULL), device);
 }
 
 void
@@ -1474,7 +1485,7 @@ motionabsolute(struct wl_listener *listener, void *data)
 	 * so we have to warp the mouse there. There is also some hardware which
 	 * emits these events. */
 	struct wlr_event_pointer_motion_absolute *event = data;
-	wlr_cursor_warp_absolute(cursor, event->device, event->x, event->y);
+  wlr_cursor_warp_absolute(gwwm_cursor(NULL), event->device, event->x, event->y);
 	motionnotify(event->time_msec);
 }
 
@@ -1486,6 +1497,7 @@ motionnotify(uint32_t time)
 	Client *c = NULL;
 	struct wlr_surface *surface = NULL;
 	struct wlr_drag_icon *icon;
+    struct wlr_cursor *cursor=gwwm_cursor(NULL);
 
 	/* time is 0 in internal calls meant to restore pointer focus. */
 	if (time) {
@@ -1547,10 +1559,11 @@ SCM_DEFINE (gwwm_motionnotify, "%motionnotify" , 1,0,0,
 void
 motionrelative(struct wl_listener *listener, void *data)
 {
-  PRINT_FUNCTION
-	/* This event is forwarded by the cursor when a pointer emits a _relative_
-	 * pointer motion event (i.e. a delta) */
-	struct wlr_event_pointer_motion *event = data;
+  PRINT_FUNCTION;
+  /* This event is forwarded by the cursor when a pointer emits a _relative_
+   * pointer motion event (i.e. a delta) */
+  struct wlr_event_pointer_motion *event = data;
+  struct wlr_cursor *cursor=gwwm_cursor(NULL);
 	/* The cursor doesn't move unless we tell it to. The cursor automatically
 	 * handles constraining the motion to the output layout, as well as any
 	 * special configuration applied for the specific input device which
@@ -1564,6 +1577,7 @@ void
 moveresize(const Arg *arg)
 {
   PRINT_FUNCTION;
+  struct wlr_cursor *cursor=gwwm_cursor(NULL);
   if (cursor_mode != CurNormal)
 		return;
 	xytonode(cursor->x, cursor->y, NULL, &grabc, NULL, NULL, NULL);
@@ -1822,8 +1836,10 @@ void resize(Client *c, struct wlr_box geo, int interact) {
 
 SCM_DEFINE (gwwm_run,"%gwwm-run",0,0,0,(),"")
 {
-	signal(SIGPIPE, SIG_IGN);
-	printstatus();
+  signal(SIGPIPE, SIG_IGN);
+  struct wlr_cursor *cursor=gwwm_cursor(NULL);
+
+	/* printstatus(); */
 
 	/* Start the backend. This will enumerate outputs and inputs, become the DRM
 	 * master, etc */
@@ -1871,9 +1887,10 @@ current_client(void)
 void
 setcursor(struct wl_listener *listener, void *data)
 {
-  PRINT_FUNCTION
-	/* This event is raised by the seat when a client provides a cursor image */
-	struct wlr_seat_pointer_request_set_cursor_event *event = data;
+  PRINT_FUNCTION;
+  /* This event is raised by the seat when a client provides a cursor image */
+  struct wlr_seat_pointer_request_set_cursor_event *event = data;
+  struct wlr_cursor *cursor=gwwm_cursor(NULL);
 	/* If we're "grabbing" the cursor, don't use the client's image */
 	/* TODO still need to save the provided surface to restore later */
 	if (cursor_mode != CurNormal)
@@ -2137,7 +2154,7 @@ SCM_DEFINE (gwwm_setup,"%gwwm-setup" ,0,0,0,(),"")
 	 * Creates a cursor, which is a wlroots utility for tracking the cursor
 	 * image shown on screen.
 	 */
-	cursor = wlr_cursor_create();
+    struct wlr_cursor *cursor=gwwm_cursor(NULL);
 	wlr_cursor_attach_output_layout(cursor, gwwm_output_layout(NULL));
 
 	/* Creates an xcursor manager, another wlroots utility which loads up
