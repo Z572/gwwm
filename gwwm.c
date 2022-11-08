@@ -729,11 +729,11 @@ commitlayersurfacenotify(struct wl_listener *listener, void *data)
 				&layersurface->link);
 	}
 
-	if (wlr_layer_surface->current.committed == 0
-			&& layersurface->mapped == wlr_layer_surface->mapped)
-		return;
-	layersurface->mapped = wlr_layer_surface->mapped;
-
+	/* if (wlr_layer_surface->current.committed == 0 */
+	/* 		&& layersurface->mapped == wlr_layer_surface->mapped) */
+	/* 	return; */
+	/* layersurface->mapped = wlr_layer_surface->mapped; */
+    if (wlr_layer_surface->current.committed == 0) return;
 	arrangelayers(client_monitor(layersurface,NULL));
 }
 
@@ -2340,7 +2340,7 @@ unmaplayersurfacenotify(struct wl_listener *listener, void *data)
   PRINT_FUNCTION
 	LayerSurface *layersurface = client_from_listener(listener);
 
-	wlr_layer_surface_v1_from_wlr_surface(CLIENT_SURFACE(layersurface))->mapped = (layersurface->mapped = 0);
+	/* wlr_layer_surface_v1_from_wlr_surface(CLIENT_SURFACE(layersurface))->mapped = (layersurface->mapped = 0); */
 	wlr_scene_node_set_enabled(CLIENT_SCENE(layersurface), 0);
 	if (CLIENT_SURFACE(layersurface) == exclusive_focus)
 		exclusive_focus = NULL;

@@ -78,10 +78,11 @@ typedef struct {
   struct wl_listener destroy;
 } Keyboard;
 
-typedef struct {
-  struct wl_list link;
-  int mapped;
-} LayerSurface;
+/* typedef struct { */
+/*   struct wl_list link; */
+/*   /\* int mapped; *\/ */
+/* } LayerSurface; */
+typedef Client LayerSurface;
 #define WRAP_MONITOR(o) find_monitor(o)
 #define UNWRAP_MONITOR(o)                                                      \
   (struct Monitor *)(TO_P(MAKE_P(scm_call_1(REFP("gwwm monitor", ".data"), o))))
