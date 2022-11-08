@@ -926,6 +926,26 @@ createmon(struct wl_listener *listener, void *data)
 	m->scene_output = wlr_scene_output_create(scene, wlr_output);
 	wlr_output_layout_add_auto(gwwm_output_layout(NULL), wlr_output);
 }
+void new_popup_notify(struct wl_listener *listener, void *data)
+{
+  PRINT_FUNCTION;
+  struct wlr_xdg_popup *popup = data;
+  struct wlr_box *box;
+  LayerSurface *l = toplevel_from_popup(popup);
+  popup->base->surface->data=wlr_scene_xdg_surface_create(popup->parent->data,
+                                                          popup->base);
+  if (wlr_surface_is_layer_surface(popup->parent) && l
+      && wlr_layer_surface_v1_from_wlr_surface(CLIENT_SURFACE(l))->current.layer < ZWLR_LAYER_SHELL_V1_LAYER_TOP)
+    wlr_scene_node_reparent(popup->base->surface->data, layers[LyrTop]);
+  if (!l || scm_is_false(WRAP_CLIENT(l)) || !client_monitor(l,NULL))
+    return;
+  box = CLIENT_IS_LAYER_SHELL(WRAP_CLIENT(l))
+    ? MONITOR_AREA((client_monitor(l,NULL)))
+    : (MONITOR_WINDOW_AREA(((client_monitor(l,NULL)))));
+  box->x -= client_geom(l)->x;
+  box->y -= client_geom(l)->y;
+  wlr_xdg_popup_unconstrain_from_box(popup, box);
+}
 
 void
 createnotify(struct wl_listener *listener, void *data)
@@ -940,22 +960,7 @@ createnotify(struct wl_listener *listener, void *data)
 	Client *c;
 
 	if (xdg_surface->role == WLR_XDG_SURFACE_ROLE_POPUP) {
-		struct wlr_box *box;
-		LayerSurface *l = toplevel_from_popup(xdg_surface->popup);
-		xdg_surface->surface->data = wlr_scene_xdg_surface_create(
-				xdg_surface->popup->parent->data, xdg_surface);
-		if (wlr_surface_is_layer_surface(xdg_surface->popup->parent) && l
-				&& wlr_layer_surface_v1_from_wlr_surface(CLIENT_SURFACE(l))->current.layer < ZWLR_LAYER_SHELL_V1_LAYER_TOP)
-			wlr_scene_node_reparent(xdg_surface->surface->data, layers[LyrTop]);
-		if (!l || scm_is_false(WRAP_CLIENT(l)) || !client_monitor(l,NULL))
-			return;
-		box = CLIENT_IS_LAYER_SHELL(WRAP_CLIENT(l))
-          ? MONITOR_AREA((client_monitor(l,NULL)))
-          : (MONITOR_WINDOW_AREA(((client_monitor(l,NULL)))));
-		box->x -= client_geom(l)->x;
-		box->y -= client_geom(l)->y;
-		wlr_xdg_popup_unconstrain_from_box(xdg_surface->popup, box);
-		return;
+      return;
 	} else if (xdg_surface->role == WLR_XDG_SURFACE_ROLE_NONE)
 		return;
 
@@ -968,6 +973,7 @@ createnotify(struct wl_listener *listener, void *data)
     CLIENT_SET_BW(c,GWWM_BORDERPX());
     client_add_listen(c,&xdg_surface->events.map, mapnotify);
     client_add_listen(c,&xdg_surface->events.unmap, unmapnotify);
+    client_add_listen(c,&xdg_surface->events.new_popup, new_popup_notify);
     client_add_listen(c,&xdg_surface->toplevel->events.set_title, updatetitle);
     client_add_listen(c,&xdg_surface->toplevel->events.request_fullscreen,fullscreennotify);
 }
