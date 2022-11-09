@@ -88,7 +88,6 @@ Monitor* monitor_from_listener(struct wl_listener *listener) {
 }
  const char broken[] = "broken";
  struct wlr_surface *exclusive_focus;
- struct wlr_scene *scene;
  struct wlr_scene_node *layers[NUM_LAYERS];
  struct wlr_compositor *compositor;
 
@@ -191,14 +190,12 @@ define_wlr_v("wlroots render allocator",allocator);
 define_wlr_v("wlroots render renderer",renderer);
 define_wlr_v("wlroots types cursor",cursor);
 define_wlr_v("wlroots types seat",seat);
+define_wlr_v("wlroots types scene",scene);
 
 #undef define_wlr_v
 
 struct wlr_seat *get_gloabl_seat(void) {
   return gwwm_seat(NULL);
-}
-SCM_DEFINE (gwwm_scene, "gwwm-scene",0,0,0,(),"") {
-  return WRAP_WLR_SCENE(scene);
 }
 
 struct wl_display *gwwm_display(struct wl_display *display) {
@@ -898,7 +895,7 @@ createmon(struct wl_listener *listener, void *data)
 	 * display, which Wayland clients can see to find out information about the
 	 * output (such as DPI, scale factor, manufacturer, etc).
 	 */
-	m->scene_output = wlr_scene_output_create(scene, wlr_output);
+	m->scene_output = wlr_scene_output_create(gwwm_scene(NULL), wlr_output);
 	wlr_output_layout_add_auto(gwwm_output_layout(NULL), wlr_output);
 }
 void new_popup_notify(struct wl_listener *listener, void *data)
@@ -2044,17 +2041,17 @@ setsel(struct wl_listener *listener, void *data)
 }
 
 SCM_DEFINE (gwwm_setup_scene ,"%gwwm-setup-scene",0,0,0, (),"") {
-  	scene = wlr_scene_create();
-	layers[LyrBg] = &wlr_scene_tree_create(&scene->node)->node;
-	layers[LyrBottom] = &wlr_scene_tree_create(&scene->node)->node;
-	layers[LyrTile] = &wlr_scene_tree_create(&scene->node)->node;
-	layers[LyrFloat] = &wlr_scene_tree_create(&scene->node)->node;
-	layers[LyrTop] = &wlr_scene_tree_create(&scene->node)->node;
-	layers[LyrOverlay] = &wlr_scene_tree_create(&scene->node)->node;
-	layers[LyrNoFocus] = &wlr_scene_tree_create(&scene->node)->node;
-    wlr_scene_set_presentation(scene, wlr_presentation_create(gwwm_display(NULL),
-                                                              gwwm_backend(NULL)));
-    return SCM_UNSPECIFIED;
+  struct wlr_scene *scene=gwwm_scene(NULL);
+  layers[LyrBg] = &wlr_scene_tree_create(&scene->node)->node;
+  layers[LyrBottom] = &wlr_scene_tree_create(&scene->node)->node;
+  layers[LyrTile] = &wlr_scene_tree_create(&scene->node)->node;
+  layers[LyrFloat] = &wlr_scene_tree_create(&scene->node)->node;
+  layers[LyrTop] = &wlr_scene_tree_create(&scene->node)->node;
+  layers[LyrOverlay] = &wlr_scene_tree_create(&scene->node)->node;
+  layers[LyrNoFocus] = &wlr_scene_tree_create(&scene->node)->node;
+  wlr_scene_set_presentation(scene, wlr_presentation_create(gwwm_display(NULL),
+                                                            gwwm_backend(NULL)));
+  return SCM_UNSPECIFIED;
 }
 SCM_DEFINE (gwwm_setup,"%gwwm-setup" ,0,0,0,(),"")
 {

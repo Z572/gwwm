@@ -22,6 +22,7 @@
   #:use-module (wlroots xwayland)
   #:use-module (wlroots backend)
   #:use-module (wlroots types pointer)
+  #:use-module (wlroots types scene)
   #:use-module (wlroots types cursor)
   #:use-module (wlroots types output)
   #:use-module (wlroots types seat)
@@ -56,6 +57,7 @@
 (define-dy gwwm-allocator allocator)
 (define-dy gwwm-cursor cursor)
 (define-dy gwwm-seat seat)
+(define-dy gwwm-scene scene)
 
 (define (init-global-keybind)
   (keymap-global-set (kbd (s S space))
@@ -237,6 +239,7 @@ gwwm [options]
   (setvbuf (current-output-port) 'line)
   (setvbuf (current-error-port) 'line)
   (gwwm-setup)
+  (gwwm-scene (wlr-scene-create))
   (%gwwm-setup-scene)
   (%gwwm-setup)
 
