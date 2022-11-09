@@ -78,11 +78,6 @@ typedef struct {
   struct wl_listener destroy;
 } Keyboard;
 
-/* typedef struct { */
-/*   struct wl_list link; */
-/*   /\* int mapped; *\/ */
-/* } LayerSurface; */
-typedef Client LayerSurface;
 #define WRAP_MONITOR(o) find_monitor(o)
 #define UNWRAP_MONITOR(o)                                                      \
   (struct Monitor *)(TO_P(MAKE_P(scm_call_1(REFP("gwwm monitor", ".data"), o))))
@@ -218,13 +213,13 @@ void unmapnotify(struct wl_listener *listener, void *data);
 void updatemons(struct wl_listener *listener, void *data);
 void updatetitle(struct wl_listener *listener, void *data);
 void urgent(struct wl_listener *listener, void *data);
-void set_layersurface_geom(LayerSurface *c , struct wlr_box* box);
+void set_layersurface_geom(Client *c , struct wlr_box* box);
 void view(const Arg *arg);
 void virtualkeyboard(struct wl_listener *listener, void *data);
 Monitor *xytomon(double x, double y);
 struct wlr_scene_node *xytonode(double x, double y,
                                 struct wlr_surface **psurface, Client **pc,
-                                LayerSurface **pl, double *nx, double *ny);
+                                Client **pl, double *nx, double *ny);
 struct wlr_seat *get_gloabl_seat(void);
 SCM get_gwwm_config(void);
 #define GWWM_BORDERPX()                                                        \

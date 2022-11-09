@@ -72,7 +72,7 @@
 typedef struct Monitor {
   struct wl_list link;
   struct wlr_scene_output *scene_output;
-  struct wl_list layers[4]; /* LayerSurface::link */
+  struct wl_list layers[4]; /* layer Client::link */
   unsigned int seltags;
   unsigned int tagset[2];
   double mfact;
@@ -146,7 +146,7 @@ struct wl_listener request_start_drag = {.notify = requeststartdrag};
 struct wl_listener start_drag = {.notify = startdrag};
 struct wl_listener drag_icon_destroy = {.notify = dragicondestroy};
 
-void set_layersurface_geom(LayerSurface *c , struct wlr_box* box)
+void set_layersurface_geom(Client *c , struct wlr_box* box)
 {
   /* PRINT_FUNCTION; */
   /* c->geom=*box; */
@@ -402,7 +402,7 @@ SCM_DEFINE (gwwm_layer_list , "layer-list",0,0,0,(),"")
 }
 #undef FUNC_NAME
 
-void arrange_l(LayerSurface *layersurface,Monitor *m, struct wlr_box *usable_area, int exclusive) {
+void arrange_l(Client *layersurface,Monitor *m, struct wlr_box *usable_area, int exclusive) {
 
   struct wlr_box *full_area = MONITOR_AREA(m);
   struct wlr_layer_surface_v1 *wlr_layer_surface =
@@ -478,7 +478,7 @@ void
 arrangelayer(Monitor *m, struct wl_list *list, struct wlr_box *usable_area, int exclusive)
 {
   PRINT_FUNCTION
-	LayerSurface *layersurface;
+	Client *layersurface;
 	struct wlr_box *full_area = MONITOR_AREA(m);
 
 	wl_list_for_each(layersurface, list, link) {
@@ -487,7 +487,7 @@ arrangelayer(Monitor *m, struct wl_list *list, struct wlr_box *usable_area, int 
 }
 
 void arrange_interactive_layer(Monitor *m) {
-  LayerSurface *layersurface;
+  Client *layersurface;
   uint32_t layers_above_shell[] = {
     ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY,
     ZWLR_LAYER_SHELL_V1_LAYER_TOP,
@@ -720,7 +720,7 @@ void
 commitlayersurfacenotify(struct wl_listener *listener, void *data)
 {
   PRINT_FUNCTION;
-	LayerSurface *layersurface = client_from_listener(listener);
+	Client *layersurface = client_from_listener(listener);
 	struct wlr_layer_surface_v1 *wlr_layer_surface = wlr_layer_surface_v1_from_wlr_surface(CLIENT_SURFACE(layersurface));
 
 	if (!client_monitor(layersurface,NULL))
@@ -816,12 +816,12 @@ createlayersurface(struct wl_listener *listener, void *data)
 {
   PRINT_FUNCTION;
 	struct wlr_layer_surface_v1 *wlr_layer_surface = data;
-	LayerSurface *layersurface;
+	Client *layersurface;
 	struct wlr_layer_surface_v1_state old_state;
 	if (!wlr_layer_surface->output) {
       wlr_layer_surface->output = MONITOR_WLR_OUTPUT(current_monitor());
 	}
-	layersurface = ecalloc(1, sizeof(LayerSurface));
+	layersurface = ecalloc(1, sizeof(Client));
 
     register_client(layersurface,GWWM_LAYER_CLIENT_TYPE);
     CLIENT_SET_TYPE(layersurface ,"LayerShell");
@@ -936,7 +936,7 @@ void new_popup_notify(struct wl_listener *listener, void *data)
   PRINT_FUNCTION;
   struct wlr_xdg_popup *popup = data;
   struct wlr_box *box;
-  LayerSurface *l = toplevel_from_popup(popup);
+  Client *l = toplevel_from_popup(popup);
   popup->base->surface->data=wlr_scene_xdg_surface_create(popup->parent->data,
                                                           popup->base);
   if (wlr_surface_is_layer_surface(popup->parent) && l
@@ -1056,7 +1056,7 @@ void
 destroylayersurfacenotify(struct wl_listener *listener, void *data)
 {
   PRINT_FUNCTION;
-  LayerSurface *layersurface = client_from_listener(listener);
+  Client *layersurface = client_from_listener(listener);
 
   wl_list_remove(&layersurface->link);
   wlr_scene_node_destroy(CLIENT_SCENE(layersurface));
@@ -1400,7 +1400,7 @@ void
 maplayersurfacenotify(struct wl_listener *listener, void *data)
 {
   PRINT_FUNCTION
-	LayerSurface *l = client_from_listener(listener);
+	Client *l = client_from_listener(listener);
 	wlr_surface_send_enter(CLIENT_SURFACE(l), MONITOR_WLR_OUTPUT((client_monitor(l,NULL))));
 	motionnotify(0);
 }
@@ -2349,7 +2349,7 @@ void
 unmaplayersurfacenotify(struct wl_listener *listener, void *data)
 {
   PRINT_FUNCTION
-	LayerSurface *layersurface = client_from_listener(listener);
+	Client *layersurface = client_from_listener(listener);
 
 	/* wlr_layer_surface_v1_from_wlr_surface(CLIENT_SURFACE(layersurface))->mapped = (layersurface->mapped = 0); */
 	wlr_scene_node_set_enabled(CLIENT_SCENE(layersurface), 0);
@@ -2523,13 +2523,13 @@ xytomon(double x, double y)
 
 struct wlr_scene_node *
 xytonode(double x, double y, struct wlr_surface **psurface,
-		Client **pc, LayerSurface **pl, double *nx, double *ny)
+		Client **pc, Client **pl, double *nx, double *ny)
 {
   PRINT_FUNCTION
 	struct wlr_scene_node *node, *pnode;
 	struct wlr_surface *surface = NULL;
 	Client *c = NULL;
-	LayerSurface *l = NULL;
+	Client *l = NULL;
 	const int *layer;
 	int focus_order[] = { LyrOverlay, LyrTop, LyrFloat, LyrTile, LyrBottom, LyrBg };
 
