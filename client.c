@@ -11,8 +11,7 @@
 #include "gwwm.h"
 #include "listener.h"
 #include <wlr/types/wlr_layer_shell_v1.h>
-SCM
-find_client(Client *c) {
+SCM find_client(Client *c) {
   return (c) ? c->scm : SCM_BOOL_F;
 }
 
@@ -41,10 +40,8 @@ void client_add_listen(void *c, struct wl_signal *signal,
 void register_client(Client *c, enum gwwm_client_type type) {
   PRINT_FUNCTION;
   char *tp = "<gwwm-client>";
-  SCM table = INNER_CLIENTS_HASH_TABLE;
   switch (type) {
   case GWWM_LAYER_CLIENT_TYPE:
-    table = REFP("gwwm client", "%layer-clients");
     tp = "<gwwm-layer-client>";
     break;
   case GWWM_XDG_CLIENT_TYPE:
@@ -54,13 +51,9 @@ void register_client(Client *c, enum gwwm_client_type type) {
     tp = "<gwwm-x-client>";
     break;
   }
-  PRINT_FUNCTION;
   SCM sc=(scm_call_3(REF("oop goops", "make"), REF("gwwm client", tp),
                               scm_from_utf8_keyword("data"),
                      scm_pointer_address(FROM_P(c))));
-  scm_hashq_set_x(table, (scm_pointer_address(FROM_P(c))),
-                  sc);
-  PRINT_FUNCTION;
   c->scm=sc;
 }
 
@@ -345,6 +338,7 @@ client_is_mapped(Client *c)
 bool
 client_wants_fullscreen(Client *c)
 {
+  PRINT_FUNCTION;
 #ifdef XWAYLAND
 	if (client_is_x11(c))
 		return wlr_xwayland_surface_from_wlr_surface(CLIENT_SURFACE(c))->fullscreen;

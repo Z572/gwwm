@@ -57,6 +57,7 @@
             client-surface
             client-geom
             %fstack
+            %clients
             <gwwm-client>
             <gwwm-x-client>
             <gwwm-layer-client>))
@@ -141,10 +142,11 @@
              *unspecified*)))
 
 (define-once %clients
-  (make-hash-table))
-
-(define-once %layer-clients
-  (make-hash-table))
+  (make-parameter
+   (make-q)
+   (lambda (o)
+     (if (q? o) o
+         (error "not a q! ~A" o)))))
 
 (define-method (client-do-set-fullscreen (c <gwwm-client>))
   (client-do-set-fullscreen c (client-fullscreen? c)))
@@ -198,16 +200,9 @@
 (define-method (logout-client (c <gwwm-base-client>))
   (remove-listeners c))
 (define-method (logout-client (c <gwwm-client>))
-
-  (pk 'bb2)
-  (hashq-remove! %clients (.data c))
   (next-method)
-  (pk 'bb3)
-  (set! (.data c) 0)
-  (pk 'bb4))
+  (set! (.data c) 0))
 (define-method (logout-client (c <gwwm-layer-client>))
-
-  (hashq-remove! %layer-clients (.data c))
   (next-method)
   (set! (.data c) 0))
 
@@ -231,7 +226,7 @@
 
 (define (client-list)
   "return all clients."
-  (hash-map->list (lambda (_ b) b) %clients))
+  (car (%clients)))
 
 (define (current-client)
   "return current client or #f."
@@ -249,12 +244,7 @@
 
 (define (client-alive? client)
   "return #t if client is alive, or #f deaded."
-  (let/ec return
-    (hash-for-each
-     (lambda (_ b)
-       (when (equal? b client)
-         (return #t)))
-     %clients) #f))
+  (not (zero? (.data client))))
 
 (define-method (client-set-tiled c (edges <list>))
   (client-set-tiled c (apply logior edges)))

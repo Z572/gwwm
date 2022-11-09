@@ -1428,6 +1428,7 @@ void mapnotify(struct wl_listener *listener, void *data) {
 
   /* Insert this client into client lists. */
   wl_list_insert(&clients, &c->link);
+  REF_CALL_2("ice-9 q", "q-push!", REF_CALL_0("gwwm client", "%clients"), sc);
   REF_CALL_2("ice-9 q", "q-push!", REF_CALL_0("gwwm client", "%fstack"), sc);
 
   /* Set initial monitor, tags, floating status, and focus */
@@ -2348,7 +2349,8 @@ unmapnotify(struct wl_listener *listener, void *data)
 	}
 
 	wl_list_remove(&c->link);
-	setmon(c, NULL, 0);
+    setmon(c, NULL, 0);
+    REF_CALL_2("ice-9 q", "q-remove!", REF_CALL_0("gwwm client", "%clients"), WRAP_CLIENT(c));
     REF_CALL_2("ice-9 q", "q-remove!", REF_CALL_0("gwwm client", "%fstack"), WRAP_CLIENT(c));
 	wlr_scene_node_destroy(CLIENT_SCENE(c));
 	printstatus();
@@ -2558,7 +2560,8 @@ SCM_DEFINE (gwwm_zoom, "zoom",0, 0,0,
 		sel = c;
 	wl_list_remove(&sel->link);
 	wl_list_insert(&clients, &sel->link);
-
+    REF_CALL_2("ice-9 q", "q-remove!", REF_CALL_0("gwwm client", "%client"), sel->scm);
+    REF_CALL_2("ice-9 q", "q-push!", REF_CALL_0("gwwm client", "%client"), sel->scm);
 	focusclient(sel, 1);
 	arrange(current_monitor());
   return SCM_UNSPECIFIED;

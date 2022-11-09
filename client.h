@@ -41,7 +41,6 @@ enum gwwm_client_type {
 #define WRAP_CLIENT(o) find_client(o)
 #define UNWRAP_CLIENT(o) unwrap_client_1(o)
 
-#define INNER_CLIENTS_HASH_TABLE REFP("gwwm client", "%clients")
 #define CLIENT_IS_FULLSCREEN(c)                                                \
   scm_to_bool(REF_CALL_1("gwwm client", "client-fullscreen?", WRAP_CLIENT(c)))
 #define CLIENT_SET_FULLSCREEN(c, f)                                            \
