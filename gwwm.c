@@ -235,7 +235,7 @@ struct wlr_cursor *gwwm_cursor(struct wlr_cursor *cursor) {
   SCM d;
   if (cursor) {
     d = REF_CALL_1("gwwm", "gwwm-cursor", WRAP_WLR_CURSOR(cursor));
-    return d;
+    return UNWRAP_WLR_CURSOR(d);
   } else {
     d = REF_CALL_0("gwwm", "gwwm-cursor");
     return scm_is_false(d) ? NULL : UNWRAP_WLR_CURSOR(d);
