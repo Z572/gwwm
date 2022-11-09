@@ -109,7 +109,6 @@ Monitor* monitor_from_listener(struct wl_listener *listener) {
  Atom get_netatom_n(int n){
    return netatom[n];
  };
- struct wlr_seat *seat;
  struct wl_list keyboards;
  unsigned int cursor_mode;
  Client *grabc;
@@ -191,15 +190,12 @@ define_wlr_v("wlroots backend",backend);
 define_wlr_v("wlroots render allocator",allocator);
 define_wlr_v("wlroots render renderer",renderer);
 define_wlr_v("wlroots types cursor",cursor);
+define_wlr_v("wlroots types seat",seat);
 
 #undef define_wlr_v
 
-SCM_DEFINE (gwwm_seat, "gwwm-seat",0,0,0,(),"") {
-  return WRAP_WLR_SEAT(seat);
-}
-
 struct wlr_seat *get_gloabl_seat(void) {
-  return seat;
+  return gwwm_seat(NULL);
 }
 SCM_DEFINE (gwwm_scene, "gwwm-scene",0,0,0,(),"") {
   return WRAP_WLR_SCENE(scene);
@@ -476,7 +472,7 @@ void arrange_interactive_layer(Monitor *m) {
         /* Deactivate the focused client. */
         focusclient(NULL, 0);
         exclusive_focus = surface;
-        client_notify_enter(exclusive_focus, wlr_seat_get_keyboard(seat));
+        client_notify_enter(exclusive_focus, wlr_seat_get_keyboard(gwwm_seat(NULL)));
         return;
       }
     }
@@ -516,7 +512,7 @@ axisnotify(struct wl_listener *listener, void *data)
 	struct wlr_event_pointer_axis *event = data;
     scm_c_run_hook(REF("gwwm hooks", "axis-event-hook"),
                    scm_list_1(WRAP_WLR_EVENT_POINTER_AXIS(event)));
-	wlr_idle_notify_activity(idle, seat);
+	wlr_idle_notify_activity(idle, gwwm_seat(NULL));
 }
 
 void
@@ -530,7 +526,7 @@ buttonpress(struct wl_listener *listener, void *data)
 	Client *c;
 	const Button *b;
 
-	wlr_idle_notify_activity(idle, seat);
+	wlr_idle_notify_activity(idle, gwwm_seat(NULL));
     scm_c_run_hook(REF("gwwm hooks", "cursor-button-event-hook"),
                    scm_list_1(WRAP_WLR_EVENT_POINTER_BUTTON(event)));
  ;
@@ -542,7 +538,7 @@ buttonpress(struct wl_listener *listener, void *data)
 		if (c && !client_is_unmanaged(c))
 			focusclient(c, 1);
 
-		keyboard = wlr_seat_get_keyboard(seat);
+		keyboard = wlr_seat_get_keyboard(gwwm_seat(NULL));
 		mods = keyboard ? wlr_keyboard_get_modifiers(keyboard) : 0;
 		for (b = buttons; b < END(buttons); b++) {
 			if (CLEANMASK(mods) == CLEANMASK(b->mod) &&
@@ -573,7 +569,7 @@ buttonpress(struct wl_listener *listener, void *data)
 	}
 	/* If the event wasn't handled by the compositor, notify the client with
 	 * pointer focus that a button press has occurred */
-	wlr_seat_pointer_notify_button(seat,
+	wlr_seat_pointer_notify_button(gwwm_seat(NULL),
 			event->time_msec, event->button, event->state);
 }
 
@@ -629,7 +625,7 @@ SCM_DEFINE (gwwm_cleanup, "%gwwm-cleanup",0,0,0, () ,"")
 	D(wlr_xcursor_manager_destroy,(cursor_mgr));
     D(wlr_cursor_destroy,(gwwm_cursor(NULL)));
     D(wlr_output_layout_destroy,(gwwm_output_layout(NULL)));
-	D(wlr_seat_destroy,(seat));
+	D(wlr_seat_destroy,(gwwm_seat(NULL)));
 	D(wl_display_destroy,(gwwm_display(NULL)));
     return SCM_UNSPECIFIED;
 }
@@ -779,7 +775,7 @@ createkeyboard(struct wlr_input_device *device)
 	LISTEN(&device->keyboard->events.key, &kb->key, keypress);
 	LISTEN(&device->events.destroy, &kb->destroy, cleanupkeyboard);
 
-	wlr_seat_set_keyboard(seat, device);
+	wlr_seat_set_keyboard(gwwm_seat(NULL), device);
 
 	/* And add the keyboard to our list of keyboards */
 	wl_list_insert(&keyboards, &kb->link);
@@ -1014,7 +1010,7 @@ cursorframe(struct wl_listener *listener, void *data)
 	 * multiple events together. For instance, two axis events may happen at the
 	 * same time, in which case a frame event won't be sent in between. */
 	/* Notify the client with pointer focus of the frame event. */
-	wlr_seat_pointer_notify_frame(seat);
+	wlr_seat_pointer_notify_frame(gwwm_seat(NULL));
 }
 
 void
@@ -1081,7 +1077,7 @@ void
 focusclient(Client *c, int lift)
 {
   PRINT_FUNCTION;
-  struct wlr_surface *old = seat->keyboard_state.focused_surface;
+  struct wlr_surface *old = gwwm_seat(NULL)->keyboard_state.focused_surface;
   SCM sc=WRAP_CLIENT(c);
 	/* Do not focus clients if a layer surface is focused */
 	if (exclusive_focus)
@@ -1134,12 +1130,12 @@ focusclient(Client *c, int lift)
 
 	if (!c) {
 		/* With no client, all we have left is to clear focus */
-		wlr_seat_keyboard_notify_clear_focus(seat);
+		wlr_seat_keyboard_notify_clear_focus(gwwm_seat(NULL));
 		return;
 	}
 
 	/* Have a client, so focus its top-level wlr_surface */
-	client_notify_enter(CLIENT_SURFACE(c), wlr_seat_get_keyboard(seat));
+	client_notify_enter(CLIENT_SURFACE(c), wlr_seat_get_keyboard(gwwm_seat(NULL)));
 
 	/* Activate the new client */
 	client_activate_surface(CLIENT_SURFACE(c), 1);
@@ -1302,7 +1298,7 @@ inputdevice(struct wl_listener *listener, void *data)
 	caps = WL_SEAT_CAPABILITY_POINTER;
 	if (!wl_list_empty(&keyboards))
 		caps |= WL_SEAT_CAPABILITY_KEYBOARD;
-	wlr_seat_set_capabilities(seat, caps);
+	wlr_seat_set_capabilities(gwwm_seat(NULL), caps);
 }
 
 bool
@@ -1334,7 +1330,7 @@ keypress(struct wl_listener *listener, void *data)
 	int handled = 0;
 	uint32_t mods = wlr_keyboard_get_modifiers(kb->device->keyboard);
 
-	wlr_idle_notify_activity(idle, seat);
+	wlr_idle_notify_activity(idle, gwwm_seat(NULL));
 
 	/* On _press_ if there is no active screen locker,
 	 * attempt to process a compositor keybinding. */
@@ -1344,8 +1340,8 @@ keypress(struct wl_listener *listener, void *data)
 
 	if (!handled) {
 		/* Pass unhandled keycodes along to the client. */
-		wlr_seat_set_keyboard(seat, kb->device);
-		wlr_seat_keyboard_notify_key(seat, event->time_msec,
+		wlr_seat_set_keyboard(gwwm_seat(NULL), kb->device);
+		wlr_seat_keyboard_notify_key(gwwm_seat(NULL), event->time_msec,
 			event->keycode, event->state);
 	}
 }
@@ -1366,7 +1362,7 @@ keypressmod(struct wl_listener *listener, void *data)
 	 * wlr_seat handles this transparently.
 	 */
 	/* Send modifiers to the client. */
-	wlr_seat_keyboard_notify_modifiers(seat,
+	wlr_seat_keyboard_notify_modifiers(gwwm_seat(NULL),
 		&kb->device->keyboard->modifiers);
 }
 
@@ -1486,14 +1482,14 @@ motionnotify(uint32_t time)
 
 	/* time is 0 in internal calls meant to restore pointer focus. */
 	if (time) {
-		wlr_idle_notify_activity(idle, seat);
+		wlr_idle_notify_activity(idle, gwwm_seat(NULL));
 
 		/* Update current_monitor (even while dragging a window) */
 		if (GWWM_SLOPPYFOCUS_P())
 			set_current_monitor(xytomon(cursor->x, cursor->y));
 	}
 
-	if (seat->drag && (icon = seat->drag->icon))
+	if (gwwm_seat(NULL)->drag && (icon = gwwm_seat(NULL)->drag->icon))
 		wlr_scene_node_set_position(icon->data, cursor->x + icon->surface->sx,
 				cursor->y + icon->surface->sy);
 	/* If we are currently grabbing the mouse, handle and return */
@@ -1699,7 +1695,7 @@ pointerfocus(Client *c, struct wlr_surface *surface, double sx, double sy,
 
 	/* If surface is NULL, clear pointer focus */
 	if (!surface) {
-		wlr_seat_pointer_notify_clear_focus(seat);
+		wlr_seat_pointer_notify_clear_focus(gwwm_seat(NULL));
 		return;
 	}
 
@@ -1711,8 +1707,8 @@ pointerfocus(Client *c, struct wlr_surface *surface, double sx, double sy,
 	/* Let the client know that the mouse cursor has entered one
 	 * of its surfaces, and make keyboard focus follow if desired.
 	 * wlroots makes this a no-op if surface is already focused */
-	wlr_seat_pointer_notify_enter(seat, surface, sx, sy);
-	wlr_seat_pointer_notify_motion(seat, time, sx, sy);
+	wlr_seat_pointer_notify_enter(gwwm_seat(NULL), surface, sx, sy);
+	wlr_seat_pointer_notify_motion(gwwm_seat(NULL), time, sx, sy);
 
 }
 
@@ -1806,9 +1802,9 @@ requeststartdrag(struct wl_listener *listener, void *data)
   PRINT_FUNCTION
 	struct wlr_seat_request_start_drag_event *event = data;
 
-	if (wlr_seat_validate_pointer_grab_serial(seat, event->origin,
+	if (wlr_seat_validate_pointer_grab_serial(gwwm_seat(NULL), event->origin,
 			event->serial))
-		wlr_seat_start_pointer_drag(seat, event->drag, event->serial);
+		wlr_seat_start_pointer_drag(gwwm_seat(NULL), event->drag, event->serial);
 	else
 		wlr_data_source_destroy(event->drag->source);
 }
@@ -1885,7 +1881,7 @@ setcursor(struct wl_listener *listener, void *data)
 	 * use the provided surface as the cursor image. It will set the
 	 * hardware cursor on the output that it's currently on and continue to
 	 * do so as the cursor moves between outputs. */
-	if (event->seat_client == seat->pointer_state.focused_client)
+	if (event->seat_client == gwwm_seat(NULL)->pointer_state.focused_client)
 		wlr_cursor_set_surface(cursor, event->surface,
 				event->hotspot_x, event->hotspot_y);
 }
@@ -2031,7 +2027,7 @@ setpsel(struct wl_listener *listener, void *data)
 	 * ignore such requests if they so choose, but in dwl we always honor
 	 */
 	struct wlr_seat_request_set_primary_selection_event *event = data;
-	wlr_seat_set_primary_selection(seat, event->source, event->serial);
+	wlr_seat_set_primary_selection(gwwm_seat(NULL), event->source, event->serial);
 }
 
 void
@@ -2044,7 +2040,7 @@ setsel(struct wl_listener *listener, void *data)
 	 */
 	struct wlr_seat_request_set_selection_event *event = data;
     scm_c_run_hook(REF("gwwm hooks", "selection-hook"), scm_list_1(WRAP_WLR_SEAT_REWUEST_SET_SELECTION_EVENT(event)));
-	wlr_seat_set_selection(seat, event->source, event->serial);
+	wlr_seat_set_selection(gwwm_seat(NULL), event->source, event->serial);
 }
 
 SCM_DEFINE (gwwm_setup_scene ,"%gwwm-setup-scene",0,0,0, (),"") {
@@ -2177,7 +2173,7 @@ SCM_DEFINE (gwwm_setup,"%gwwm-setup" ,0,0,0,(),"")
 	virtual_keyboard_mgr = wlr_virtual_keyboard_manager_v1_create(gwwm_display(NULL));
 	wl_signal_add(&virtual_keyboard_mgr->events.new_virtual_keyboard,
 			&new_virtual_keyboard);
-	seat = wlr_seat_create(gwwm_display(NULL), "seat0");
+	struct wlr_seat* seat=gwwm_seat(NULL); /* wlr_seat_create(gwwm_display(NULL), "seat0"); */
 	wl_signal_add(&seat->events.request_set_cursor, &request_cursor);
 	wl_signal_add(&seat->events.request_set_selection, &request_set_sel);
 	wl_signal_add(&seat->events.request_set_primary_selection, &request_set_psel);
@@ -2330,7 +2326,7 @@ unmaplayersurfacenotify(struct wl_listener *listener, void *data)
 	if (CLIENT_SURFACE(layersurface) == exclusive_focus)
 		exclusive_focus = NULL;
 	if (CLIENT_SURFACE(layersurface) ==
-			seat->keyboard_state.focused_surface)
+			gwwm_seat(NULL)->keyboard_state.focused_surface)
 		focusclient(current_client(), 1);
 	motionnotify(0);
 }
@@ -2669,7 +2665,7 @@ xwaylandready(struct wl_listener *listener, void *data)
 	netatom[NetWMWindowTypeUtility] = getatom(xc, "_NET_WM_WINDOW_TYPE_UTILITY");
 
 	/* assign the one and only seat */
-	wlr_xwayland_set_seat(xwayland, seat);
+	wlr_xwayland_set_seat(xwayland, gwwm_seat(NULL));
 
 	/* Set the default XWayland cursor to match the rest of dwl. */
 	if ((xcursor = wlr_xcursor_manager_get_xcursor(cursor_mgr, GWWM_CURSOR_NORMAL_IMAGE(), 1)))

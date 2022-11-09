@@ -55,6 +55,7 @@
 (define-dy gwwm-renderer renderer)
 (define-dy gwwm-allocator allocator)
 (define-dy gwwm-cursor cursor)
+(define-dy gwwm-seat seat)
 
 (define (init-global-keybind)
   (keymap-global-set (kbd (s S space))
@@ -170,7 +171,8 @@ gwwm [options]
               (gwwm-renderer)) gwwm-allocator)
       (begin (send-log ERROR (G_ "gwwm Couldn't create allocator"))
              (exit 1)))
-  (gwwm-cursor (wlr-cursor-create)))
+  (gwwm-cursor (wlr-cursor-create))
+  (gwwm-seat (wlr-seat-create (gwwm-display) "seat0")))
 (define (main)
   (setlocale LC_ALL "")
   (textdomain %gettext-domain)
