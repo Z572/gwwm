@@ -101,7 +101,6 @@ Monitor* monitor_from_listener(struct wl_listener *listener) {
  struct wlr_layer_shell_v1 *layer_shell;
  struct wlr_output_manager_v1 *output_mgr;
  struct wlr_virtual_keyboard_manager_v1 *virtual_keyboard_mgr;
-
  struct wlr_xcursor_manager *cursor_mgr;
  struct wl_listener new_xwayland_surface = {.notify = createnotifyx11};
  struct wl_listener xwayland_ready = {.notify = xwaylandready};
@@ -172,45 +171,31 @@ SCM_DEFINE_PUBLIC(gwwm_visibleon, "visibleon", 2, 0, 0, (SCM c, SCM m), "")
 }
 #undef FUNC_NAME
 
-
-struct wlr_backend* gwwm_backend(struct wlr_backend* backend)
-{
-  SCM b;
-  if (backend) {
-    b=REF_CALL_1("gwwm", "gwwm-backend",WRAP_WLR_BACKEND(backend));
-    return backend;
-  } else {
-    b=REF_CALL_0("gwwm", "gwwm-backend");
-    return scm_is_false(b) ? NULL : UNWRAP_WLR_BACKEND(b);
-  }
+#define define_wlr_v(module ,v) struct wlr_ ##v * gwwm_##v          \
+  (struct wlr_##v* var)                                             \
+  {                                                                 \
+    SCM b;                                                          \
+    const char* m=module;                                           \
+    if (var) {                                                      \
+      b=REF_CALL_1("gwwm", "gwwm-" #v,                              \
+                   (REF_CALL_1(m, "wrap-wlr-" #v, FROM_P(var))));   \
+      return var;                                                   \
+    } else {                                                        \
+      b=REF_CALL_0("gwwm", "gwwm-" #v);                             \
+      return scm_is_false(b) ? NULL :                               \
+        ((struct wlr_ ##v *)                                        \
+         (TO_P(REF_CALL_1(m, "unwrap-wlr-" #v, b))));               \
+    }                                                               \
 }
+define_wlr_v("wlroots backend",backend);
+define_wlr_v("wlroots render allocator",allocator);
+define_wlr_v("wlroots render renderer",renderer);
+define_wlr_v("wlroots types cursor",cursor);
 
-struct wlr_allocator* gwwm_allocator (struct wlr_allocator* alloc)
-{
-  SCM b;
-  if (alloc) {
-    b=REF_CALL_1("gwwm", "gwwm-allocator",WRAP_WLR_ALLOCATOR(alloc));
-    return alloc;
-  } else {
-    b=REF_CALL_0("gwwm", "gwwm-allocator");
-    return scm_is_false(b) ? NULL : UNWRAP_WLR_ALLOCATOR(b);
-  }
-}
+#undef define_wlr_v
 
 SCM_DEFINE (gwwm_seat, "gwwm-seat",0,0,0,(),"") {
   return WRAP_WLR_SEAT(seat);
-}
-
-struct wlr_renderer* gwwm_renderer(struct wlr_renderer* renderer)
-{
-  SCM b;
-  if (renderer) {
-    b=REF_CALL_1("gwwm", "gwwm-renderer",WRAP_WLR_RENDERER(renderer));
-    return renderer;
-  } else {
-    b=REF_CALL_0("gwwm", "gwwm-renderer");
-    return scm_is_false(b) ? NULL : UNWRAP_WLR_RENDERER(b);
-  }
 }
 
 struct wlr_seat *get_gloabl_seat(void) {
@@ -228,17 +213,6 @@ struct wl_display *gwwm_display(struct wl_display *display) {
   } else {
     d = REF_CALL_0("gwwm", "gwwm-display");
     return scm_is_false(d) ? NULL : UNWRAP_WL_DISPLAY(d);
-  }
-}
-
-struct wlr_cursor *gwwm_cursor(struct wlr_cursor *cursor) {
-  SCM d;
-  if (cursor) {
-    d = REF_CALL_1("gwwm", "gwwm-cursor", WRAP_WLR_CURSOR(cursor));
-    return UNWRAP_WLR_CURSOR(d);
-  } else {
-    d = REF_CALL_0("gwwm", "gwwm-cursor");
-    return scm_is_false(d) ? NULL : UNWRAP_WLR_CURSOR(d);
   }
 }
 
