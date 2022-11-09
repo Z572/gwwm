@@ -12,11 +12,8 @@
 #include "listener.h"
 #include <wlr/types/wlr_layer_shell_v1.h>
 SCM
-find_client(void *c) {
-  SCM p =(scm_pointer_address(scm_from_pointer(c ,NULL)));
-  return scm_hashq_ref(INNER_CLIENTS_HASH_TABLE, p ,
-                       scm_hashq_ref(REFP("gwwm client", "%layer-clients"),
-                                     p ,SCM_BOOL_F));
+find_client(Client *c) {
+  return (c) ? c->scm : SCM_BOOL_F;
 }
 
 Client*
@@ -41,7 +38,7 @@ void client_add_listen(void *c, struct wl_signal *signal,
   wl_signal_add(signal, listener);
 }
 
-void register_client(void *c, enum gwwm_client_type type) {
+void register_client(Client *c, enum gwwm_client_type type) {
   PRINT_FUNCTION;
   char *tp = "<gwwm-client>";
   SCM table = INNER_CLIENTS_HASH_TABLE;
@@ -58,11 +55,13 @@ void register_client(void *c, enum gwwm_client_type type) {
     break;
   }
   PRINT_FUNCTION;
-  scm_hashq_set_x(table, (scm_pointer_address(FROM_P(c))),
-                  (scm_call_3(REF("oop goops", "make"), REF("gwwm client", tp),
+  SCM sc=(scm_call_3(REF("oop goops", "make"), REF("gwwm client", tp),
                               scm_from_utf8_keyword("data"),
-                              scm_pointer_address(FROM_P(c)))));
+                     scm_pointer_address(FROM_P(c))));
+  scm_hashq_set_x(table, (scm_pointer_address(FROM_P(c))),
+                  sc);
   PRINT_FUNCTION;
+  c->scm=sc;
 }
 
 void *client_from_listener(struct wl_listener *listener) {
@@ -72,12 +71,14 @@ void *client_from_listener(struct wl_listener *listener) {
 }
 
 void
-logout_client(void *c){
+logout_client(Client *c){
   PRINT_FUNCTION;
   SCM sc=WRAP_CLIENT(c);
   scm_call_1(REFP("gwwm client","logout-client") ,sc);
+  c->scm=NULL;
   free(c);
 }
+
 struct wlr_scene_rect *
 client_border_n(Client *c, int n)
 {
