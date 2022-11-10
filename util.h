@@ -55,6 +55,12 @@ void *ecalloc(size_t nmemb, size_t size);
 #define UNWRAP_WLR_CURSOR(p)                                                   \
   (struct wlr_cursor *)(TO_P(                                                  \
       REF_CALL_1("wlroots types cursor ", "unwrap-wlr-cursor", p)))
+#define WRAP_WLR_XCURSOR_MANAGER(p)                                                     \
+  (REF_CALL_1("wlroots types xcursor", "wrap-wlr-xcursor-manager", FROM_P(p)))
+#define UNWRAP_WLR_XCURSOR_MANAGER(p)                                                   \
+  (struct wlr_xcursor_manager *)(TO_P(                                                  \
+      REF_CALL_1("wlroots types xcursor ", "unwrap-wlr-xcursor-manager", p)))
+
 #define WRAP_WLR_XDG_SURFACE(p)                                                \
   (REF_CALL_1("wlroots types xdg-shell", "wrap-wlr-xdg-surface", FROM_P(p)))
 #define UNWRAP_WLR_XDG_SURFACE(p)                                              \

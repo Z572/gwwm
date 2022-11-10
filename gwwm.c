@@ -100,7 +100,7 @@ Monitor* monitor_from_listener(struct wl_listener *listener) {
  struct wlr_layer_shell_v1 *layer_shell;
  struct wlr_output_manager_v1 *output_mgr;
  struct wlr_virtual_keyboard_manager_v1 *virtual_keyboard_mgr;
- struct wlr_xcursor_manager *cursor_mgr;
+ /* struct wlr_xcursor_manager *cursor_mgr; */
  struct wl_listener new_xwayland_surface = {.notify = createnotifyx11};
  struct wl_listener xwayland_ready = {.notify = xwaylandready};
  struct wlr_xwayland *xwayland;
@@ -196,6 +196,18 @@ define_wlr_v("wlroots types scene",scene);
 
 struct wlr_seat *get_gloabl_seat(void) {
   return gwwm_seat(NULL);
+}
+
+struct wlr_xcursor_manager*
+gwwm_xcursor_manager(struct wlr_xcursor_manager *o) {
+  SCM d;
+  if (o) {
+    d = REF_CALL_1("gwwm", "gwwm-xcursor-manager", WRAP_WLR_XCURSOR_MANAGER(o));
+    return o;
+  } else {
+    d = REF_CALL_0("gwwm", "gwwm-xcursor-manager");
+    return scm_is_false(d) ? NULL : UNWRAP_WLR_XCURSOR_MANAGER(d);
+  }
 }
 
 struct wl_display *gwwm_display(struct wl_display *display) {
@@ -555,7 +567,7 @@ buttonpress(struct wl_listener *listener, void *data)
             {
               client_set_resizing(c,0);
             }
-          wlr_xcursor_manager_set_cursor_image(cursor_mgr, GWWM_CURSOR_NORMAL_IMAGE(), cursor);
+          wlr_xcursor_manager_set_cursor_image(gwwm_xcursor_manager(NULL), GWWM_CURSOR_NORMAL_IMAGE(), cursor);
 			cursor_mode = CurNormal;
 			/* Drop the window off on its new monitor */
 		    set_current_monitor(xytomon(cursor->x, cursor->y));
@@ -619,7 +631,7 @@ SCM_DEFINE (gwwm_cleanup, "%gwwm-cleanup",0,0,0, () ,"")
 	D(wlr_backend_destroy,(gwwm_backend(NULL)));
     D(wlr_renderer_destroy,(gwwm_renderer(NULL)));
 	D(wlr_allocator_destroy,(gwwm_allocator(NULL)));
-	D(wlr_xcursor_manager_destroy,(cursor_mgr));
+	D(wlr_xcursor_manager_destroy,(gwwm_xcursor_manager(NULL)));
     D(wlr_cursor_destroy,(gwwm_cursor(NULL)));
     D(wlr_output_layout_destroy,(gwwm_output_layout(NULL)));
 	D(wlr_seat_destroy,(gwwm_seat(NULL)));
@@ -861,7 +873,7 @@ createmon(struct wl_listener *listener, void *data)
 			m->mfact = r->mfact;
 			m->nmaster = r->nmaster;
 			wlr_output_set_scale(wlr_output, r->scale);
-			wlr_xcursor_manager_load(cursor_mgr, r->scale);
+			wlr_xcursor_manager_load(gwwm_xcursor_manager(NULL), r->scale);
 			wlr_output_set_transform(wlr_output, r->rr);
 			break;
 		}
@@ -1520,7 +1532,7 @@ motionnotify(uint32_t time)
 	 * default. This is what makes the cursor image appear when you move it
 	 * off of a client or over its border. */
 	if (!surface && time)
-      wlr_xcursor_manager_set_cursor_image(cursor_mgr, GWWM_CURSOR_NORMAL_IMAGE(), cursor);
+      wlr_xcursor_manager_set_cursor_image(gwwm_xcursor_manager(NULL), GWWM_CURSOR_NORMAL_IMAGE(), cursor);
 
 	pointerfocus(c, surface, sx, sy, time);
 }
@@ -1569,7 +1581,7 @@ moveresize(const Arg *arg)
 	case CurMove:
 		grabcx = cursor->x - client_geom(grabc)->x;
 		grabcy = cursor->y - client_geom(grabc)->y;
-		wlr_xcursor_manager_set_cursor_image(cursor_mgr, "fleur", cursor);
+		wlr_xcursor_manager_set_cursor_image(gwwm_xcursor_manager(NULL), "fleur", cursor);
 		break;
 	case CurResize:
       client_set_resizing(grabc,1);
@@ -1580,7 +1592,7 @@ moveresize(const Arg *arg)
                                 client_geom(grabc)->width,
                                 client_geom(grabc)->y
                                 + client_geom(grabc)->height);
-		wlr_xcursor_manager_set_cursor_image(cursor_mgr,
+		wlr_xcursor_manager_set_cursor_image(gwwm_xcursor_manager(NULL),
 				"bottom_right_corner", cursor);
 		break;
 	}
@@ -1822,7 +1834,7 @@ SCM_DEFINE (gwwm_run,"%gwwm-run",0,0,0,(),"")
 
 	/* Start the backend. This will enumerate outputs and inputs, become the DRM
 	 * master, etc */
-	wlr_xcursor_manager_set_cursor_image(cursor_mgr, GWWM_CURSOR_NORMAL_IMAGE(), cursor);
+	wlr_xcursor_manager_set_cursor_image(gwwm_xcursor_manager(NULL), GWWM_CURSOR_NORMAL_IMAGE(), cursor);
 
 	/* Run the Wayland event loop. This does not return until you exit the
 	 * compositor. Starting the backend rigged up all of the necessary event
@@ -2125,13 +2137,6 @@ SCM_DEFINE (gwwm_setup,"%gwwm-setup" ,0,0,0,(),"")
 	 */
     struct wlr_cursor *cursor=gwwm_cursor(NULL);
 	wlr_cursor_attach_output_layout(cursor, gwwm_output_layout(NULL));
-
-	/* Creates an xcursor manager, another wlroots utility which loads up
-	 * Xcursor themes to source cursor images from and makes sure that cursor
-	 * images are available at all scale factors on the screen (necessary for
-	 * HiDPI support). Scaled cursors will be loaded with each output. */
-	cursor_mgr = wlr_xcursor_manager_create(NULL, 24);
-
 	/*
 	 * wlr_cursor *only* displays an image on screen. It does not move around
 	 * when the pointer moves. However, we can attach input devices to it, and
@@ -2658,7 +2663,7 @@ xwaylandready(struct wl_listener *listener, void *data)
 	wlr_xwayland_set_seat(xwayland, gwwm_seat(NULL));
 
 	/* Set the default XWayland cursor to match the rest of dwl. */
-	if ((xcursor = wlr_xcursor_manager_get_xcursor(cursor_mgr, GWWM_CURSOR_NORMAL_IMAGE(), 1)))
+	if ((xcursor = wlr_xcursor_manager_get_xcursor(gwwm_xcursor_manager(NULL), GWWM_CURSOR_NORMAL_IMAGE(), 1)))
 		wlr_xwayland_set_cursor(xwayland,
 				xcursor->images[0]->buffer, xcursor->images[0]->width * 4,
 				xcursor->images[0]->width, xcursor->images[0]->height,
