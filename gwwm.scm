@@ -27,6 +27,7 @@
   #:use-module (wlroots types output)
   #:use-module (wlroots types seat)
   #:use-module (gwwm configuration)
+  #:use-module (gwwm config)
   #:use-module (gwwm hooks)
   #:use-module (gwwm commands)
   #:export (main))
@@ -263,6 +264,9 @@ gwwm [options]
    (gwwm-cursor) #f
    (wlr-cursor-x (gwwm-cursor))
    (wlr-cursor-y (gwwm-cursor)))
-  (%gwwm-run)
-  (pk 'bs)
+  (wlr-xcursor-manager-set-cursor-image
+   (gwwm-xcursor-manager)
+   (config-cursor-normal-image (gwwm-config) )
+   (gwwm-cursor))
+  (wl-display-run (gwwm-display))
   (%gwwm-cleanup))

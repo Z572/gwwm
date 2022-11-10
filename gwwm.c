@@ -1825,25 +1825,6 @@ void resize(Client *c, struct wlr_box geo, int interact) {
              scm_from_bool(interact));
 }
 
-SCM_DEFINE (gwwm_run,"%gwwm-run",0,0,0,(),"")
-{
-  signal(SIGPIPE, SIG_IGN);
-  struct wlr_cursor *cursor=gwwm_cursor(NULL);
-
-	/* printstatus(); */
-
-	/* Start the backend. This will enumerate outputs and inputs, become the DRM
-	 * master, etc */
-	wlr_xcursor_manager_set_cursor_image(gwwm_xcursor_manager(NULL), GWWM_CURSOR_NORMAL_IMAGE(), cursor);
-
-	/* Run the Wayland event loop. This does not return until you exit the
-	 * compositor. Starting the backend rigged up all of the necessary event
-	 * loop configuration to listen to libinput events, DRM events, generate
-	 * frame events at the refresh rate, and so on. */
-	wl_display_run(gwwm_display(NULL));
-    return SCM_UNSPECIFIED;
-}
-
 Client *
 current_client(void)
 {
