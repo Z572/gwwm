@@ -17,18 +17,21 @@
 (define-syntax let-slots
   (lambda (x)
     (syntax-case x ()
-      ((_ obj ((slot-name changed-name)) body body* ...)
-       #'(let ((changed-name (slot-ref obj 'slot-name )))
-           body body* ...))
-      ((_ obj (slot-name) body body* ...)
-       #'(let ((slot-name (slot-ref obj 'slot-name )))
-           body body* ...))
-      ((_ obj () body body* ...)
-       #'(let () body body* ...))
-      ((_ obj (var var* ...) body body* ...)
-       #'(let ((obj* obj))
-           (let-slots obj* (var)
-             (let-slots obj* (var* ...)
+      ((_ obj (slot ...) body body* ...)
+       (identifier? #'obj)
+       (let* ((slots (map (lambda (o)
+                            (syntax-case o ()
+                              ((slot-name changed-name)
+                               #'(slot-name changed-name))
+                              (slot-name
+                               #'(slot-name slot-name))))
+                          #'(slot ...))))
+         (with-syntax ((((((name changed) ...))) slots))
+           #`(letrec-syntax ((changed
+                              (identifier-syntax
+                               (var (slot-ref obj 'name))
+                               ((set! var val)
+                                (slot-set! obj 'changed val)))) ...)
                body body* ...)))))))
 
 (define-syntax modify-instance
@@ -37,13 +40,13 @@
       ((_ obj ((slot-name changed-name) sexp ...) ...)
        #'(let ((obj* obj))
            (let-slots obj* ((slot-name changed-name) ...)
-             (slot-set! obj* 'slot-name
-                        (begin sexp ...)) ...)))
+             (set! slot-name
+                   (begin sexp ...)) ...)))
       ((_ obj (slot-name sexp ...) ...)
        #'(let ((obj* obj))
            (let-slots obj* (slot-name ...)
-             (slot-set! obj* 'slot-name
-                        (begin sexp ...)) ...))))))
+             (set! slot-name
+                   (begin sexp ...)) ...))))))
 
 (define-syntax modify-instance*
   (lambda (x)
@@ -52,13 +55,11 @@
        #'(let ((obj* obj))
            (let-slots obj* ((slot-name changed-name) ...)
              (let ((out (begin sexp ...)))
-               (slot-set! obj* 'slot-name out)
                (set! changed-name out)) ...)))
       ((_ obj (slot-name sexp ...) ...)
        #'(let ((obj* obj))
            (let-slots obj* (slot-name ...)
              (let ((out (begin sexp ...)))
-               (slot-set! obj* 'slot-name out)
                (set! slot-name out)) ...))))))
 ;; (define-syntax-rule (modify-slots))
 
