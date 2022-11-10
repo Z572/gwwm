@@ -1822,16 +1822,6 @@ SCM_DEFINE (gwwm_run,"%gwwm-run",0,0,0,(),"")
 
 	/* Start the backend. This will enumerate outputs and inputs, become the DRM
 	 * master, etc */
-
-	/* Now that outputs are initialized, choose initial current_monitor based on
-	 * cursor position, and set default cursor image */
-	set_current_monitor(xytomon(cursor->x, cursor->y));
-
-	/* TODO hack to get cursor to display in its initial location (100, 100)
-	 * instead of (0, 0) and then jumping.  still may not be fully
-	 * initialized, as the image/coordinates are not transformed for the
-	 * monitor when displayed here */
-	wlr_cursor_warp_closest(cursor, NULL, cursor->x, cursor->y);
 	wlr_xcursor_manager_set_cursor_image(cursor_mgr, GWWM_CURSOR_NORMAL_IMAGE(), cursor);
 
 	/* Run the Wayland event loop. This does not return until you exit the

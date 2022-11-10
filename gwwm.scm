@@ -253,6 +253,14 @@ gwwm [options]
       (send-log INFO (G_ "backend is started."))
       (begin (send-log ERROR (G_ "gwwm cannot start backend!"))
              (exit 1)))
+  (set! (current-monitor)
+        (monitor-at
+         (wlr-cursor-x (gwwm-cursor))
+         (wlr-cursor-y (gwwm-cursor))))
+  (wlr-cursor-warp-closest
+   (gwwm-cursor) #f
+   (wlr-cursor-x (gwwm-cursor))
+   (wlr-cursor-y (gwwm-cursor)))
   (%gwwm-run)
   (pk 'bs)
   (%gwwm-cleanup))
