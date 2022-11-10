@@ -26,13 +26,14 @@
                               (slot-name
                                #'(slot-name slot-name))))
                           #'(slot ...))))
-         (with-syntax ((((((name changed) ...))) slots))
-           #`(letrec-syntax ((changed
-                              (identifier-syntax
-                               (var (slot-ref obj 'name))
-                               ((set! var val)
-                                (slot-set! obj 'changed val)))) ...)
-               body body* ...)))))))
+         (syntax-case slots ()
+           (((name changed) ...)
+            #`(letrec-syntax ((changed
+                               (identifier-syntax
+                                (var (slot-ref obj 'name))
+                                ((set! var val)
+                                 (slot-set! obj 'changed val)))) ...)
+                body body* ...))))))))
 
 (define-syntax modify-instance
   (lambda (x)
