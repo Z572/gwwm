@@ -91,7 +91,6 @@ Monitor* monitor_from_listener(struct wl_listener *listener) {
  struct wlr_scene_node *layers[NUM_LAYERS];
  struct wlr_compositor *compositor;
 
- struct wlr_xdg_shell *xdg_shell;
  struct wlr_xdg_activation_v1 *activation;
  struct wl_list clients; /* tiling order */
  struct wlr_idle *idle;
@@ -191,9 +190,24 @@ define_wlr_v("wlroots render renderer",renderer);
 define_wlr_v("wlroots types cursor",cursor);
 define_wlr_v("wlroots types seat",seat);
 define_wlr_v("wlroots types scene",scene);
-
 #undef define_wlr_v
-
+struct wlr_xdg_shell *gwwm_xdg_shell(struct wlr_xdg_shell *var) {
+  SCM b;
+  const char *m = "wlroots types xdg-shell";
+  if (var) {
+    b = (scm_call_1((scm_c_public_ref("gwwm", "gwwm-xdg-shell")),
+                    ((scm_call_1((scm_c_public_ref(m, "wrap-wlr-xdg-shell")),
+                                 (scm_from_pointer(var, NULL)))))));
+    return var;
+  } else {
+    b = (scm_call_0((scm_c_public_ref("gwwm", "gwwm-xdg-shell"))));
+    return scm_is_false(b)
+      ? NULL
+               : ((struct wlr_xdg_shell *)((scm_to_pointer(
+                     (scm_call_1((scm_c_public_ref(m, "unwrap-wlr-xdg-shell")),
+                                 b))))));
+  }
+};
 struct wlr_seat *get_gloabl_seat(void) {
   return gwwm_seat(NULL);
 }
@@ -2101,8 +2115,7 @@ SCM_DEFINE (gwwm_setup,"%gwwm-setup" ,0,0,0,(),"")
 	layer_shell = wlr_layer_shell_v1_create(gwwm_display(NULL));
 	wl_signal_add(&layer_shell->events.new_surface, &new_layer_shell_surface);
 
-	xdg_shell = wlr_xdg_shell_create(gwwm_display(NULL));
-	wl_signal_add(&xdg_shell->events.new_surface, &new_xdg_surface);
+	wl_signal_add(&gwwm_xdg_shell(NULL)->events.new_surface, &new_xdg_surface);
 
 	input_inhibit_mgr = wlr_input_inhibit_manager_create(gwwm_display(NULL));
 
