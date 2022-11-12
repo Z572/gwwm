@@ -33,9 +33,10 @@ If you use emacs, you can use =geiser-connect= to connect gwwm.
 
 If you use guix:
 #+begin_src sh
-  git clone gwwm
-  git clone guile-wayland
-  git clone guile-wlroots
+  git clone https://github.com/Z572/gwwm
+  git clone https://github.com/Z572/guile-wayland
+  git clone https://github.com/Z572/guile-wlroots
+  git clone https://github.com/Z572/util572
   cd gwwm
   guix shell -D -f guix.scm
 #+end_src
