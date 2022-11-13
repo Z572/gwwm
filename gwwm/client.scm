@@ -56,6 +56,7 @@
             client-tags
             client-surface
             client-geom
+            client-wants-fullscreen?
             %fstack
             %clients
             <gwwm-client>
