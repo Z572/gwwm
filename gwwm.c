@@ -143,16 +143,6 @@ struct wl_listener request_start_drag = {.notify = requeststartdrag};
 struct wl_listener start_drag = {.notify = startdrag};
 struct wl_listener drag_icon_destroy = {.notify = dragicondestroy};
 
-void set_layersurface_geom(Client *c , struct wlr_box* box)
-{
-  /* PRINT_FUNCTION; */
-  /* c->geom=*box; */
-  PRINT_FUNCTION;
-  SCM sc=WRAP_CLIENT(c);
-  SCM sbox=scm_slot_set_x(sc,scm_from_utf8_symbol("geom"),
-                          (box) ? WRAP_WLR_BOX(box) : SCM_BOOL_F);
-}
-
 bool visibleon(Client *c, Monitor *m) {
   return ((m) && (client_monitor(c, NULL) == (m)) &&
           (client_tags(c) & (m)->tagset[(m)->seltags]));
@@ -456,7 +446,7 @@ void arrange_l(Client *layersurface,Monitor *m, struct wlr_box *usable_area, int
       wlr_layer_surface_v1_destroy(wlr_layer_surface);
       /* continue; */
     } else {
-      set_layersurface_geom(layersurface, &box);
+      set_client_geom(layersurface, &box);
 
       if (state->exclusive_zone > 0)
         applyexclusive(usable_area, state->anchor, state->exclusive_zone,
