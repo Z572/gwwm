@@ -1179,22 +1179,19 @@ SCM_DEFINE(gwwm_idle,"gwwm-idle",0,0,0,(),""){
   return WRAP_WLR_IDLE(idle);
 }
 
-void
-focusmon(const Arg *arg)
+SCM_DEFINE (gwwm_focusmon ,"focusmon",1,0,0,(SCM a),"" )
+#define FUNC_NAME s_gwwm_focusmon
 {
-  PRINT_FUNCTION
-	int i = 0, nmons = wl_list_length(&mons);
-	if (nmons)
-		do /* don't switch to disabled mons */
-		    set_current_monitor(dirtomon(arg->i));
-		while (!MONITOR_WLR_OUTPUT(current_monitor())->enabled && i++ < nmons);
-	focusclient(focustop(current_monitor()), 1);
-}
-
-SCM_DEFINE (gwwm_focusmon ,"focusmon",1,0,0,(SCM a),"" ){
-  focusmon(&((Arg){.i=scm_to_int(a)}));
+  PRINT_FUNCTION;
+  int i = 0, nmons = wl_list_length(&mons);
+  if (nmons)
+    do /* don't switch to disabled mons */
+      set_current_monitor(dirtomon(scm_to_int(a)));
+    while (!MONITOR_WLR_OUTPUT(current_monitor())->enabled && i++ < nmons);
+  focusclient(focustop(current_monitor()), 1);
   return SCM_UNSPECIFIED;
 }
+#undef FUNC_NAME
 
 void
 focusstack(const Arg *arg)
