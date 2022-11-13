@@ -203,7 +203,6 @@ void spawn(const Arg *arg);
 void startdrag(struct wl_listener *listener, void *data);
 void tag(const Arg *arg);
 void tagmon(const Arg *arg);
-void tile(Monitor *m);
 void logout_monitor(Monitor *m);
 void togglefloating(const Arg *arg);
 
