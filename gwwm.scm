@@ -210,10 +210,11 @@ gwwm [options]
                 (wlr-event-pointer-axis-delta-discrete event)
                 (wlr-event-pointer-axis-source event))))
   (add-hook! fullscreen-event-hook
-             (lambda (c fullscreen?)
-               (if (client-monitor c)
-                   ((@@ (gwwm client)%setfullscreen) c fullscreen?)
-                   (set! (client-fullscreen? c) fullscreen?))))
+             (lambda (c data)
+               (let ((fullscreen? (client-wants-fullscreen? c)))
+                 (if (client-monitor c)
+                     ((@@ (gwwm client)%setfullscreen) c fullscreen?)
+                     (set! (client-fullscreen? c) fullscreen?)))))
   (current-log-callback
    (let ((p (current-error-port)))
      (lambda (msg)

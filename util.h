@@ -77,7 +77,9 @@ void *ecalloc(size_t nmemb, size_t size);
   (REF_CALL_1("wlroots types scene", "wrap-wlr-scene-rect", FROM_P(p)))
 #define UNWRAP_WLR_SCENE_RECT(p)                                               \
   (TO_P(REF_CALL_1("wlroots types scene", "unwrap-wlr-scene-rect", p)))
-
+#define WRAP_XDG_TOPLEVEL_SET_FULLSCREEN_EVENT(p)                              \
+  (REF_CALL_1("wlroots types xdg-shell",                                \
+              "wrap-wlr-xdg-toplevel-set-fullscreen-event",FROM_P(p)))
 #define WRAP_WLR_SCENE(p)                                                      \
   (REF_CALL_1("wlroots types scene", "wrap-wlr-scene", FROM_P(p)))
 #define UNWRAP_WLR_SCENE(p)                                                    \
