@@ -8,6 +8,7 @@
 #include "libguile/symbols.h"
 #include "wlr/util/box.h"
 #include <stdbool.h>
+#include <stdint.h>
 #define _POSIX_C_SOURCE 200809L
 #include <getopt.h>
 #include <libinput.h>
@@ -726,6 +727,19 @@ commitlayersurfacenotify(struct wl_listener *listener, void *data)
 	arrangelayers(client_monitor(layersurface,NULL));
 }
 
+inline void mark_resize_done_p(Client *c) {
+  uint32_t configure_serial = client_resize_configure_serial(c);
+  struct wlr_xdg_surface *xdg_surface =
+      wlr_xdg_surface_from_wlr_surface(CLIENT_SURFACE(c));
+  uint32_t surface_configure_serial = xdg_surface->current.configure_serial;
+  if (configure_serial && (configure_serial <= surface_configure_serial ||
+                           (xdg_surface->current.geometry.width ==
+                                xdg_surface->pending.geometry.width &&
+                            xdg_surface->current.geometry.height ==
+                                xdg_surface->pending.geometry.height)))
+    client_set_resize_configure_serial(c, 0);
+}
+
 void
 commitnotify(struct wl_listener *listener, void *data)
 {
@@ -738,12 +752,8 @@ commitnotify(struct wl_listener *listener, void *data)
 	if (client_monitor(c,NULL) && !wlr_box_empty(&box) && (box.width != client_geom(c)->width - 2 * CLIENT_BW(c)
 			|| box.height != client_geom(c)->height - 2 * CLIENT_BW(c)))
 		arrange(client_monitor(c,NULL));
-
-	/* mark a pending resize as completed */
-	if (client_resize_configure_serial(c) && ((client_resize_configure_serial(c)) <= wlr_xdg_surface_from_wlr_surface(CLIENT_SURFACE(c))->current.configure_serial
-			|| (wlr_xdg_surface_from_wlr_surface(CLIENT_SURFACE(c))->current.geometry.width == wlr_xdg_surface_from_wlr_surface(CLIENT_SURFACE(c))->pending.geometry.width
-			&& wlr_xdg_surface_from_wlr_surface(CLIENT_SURFACE(c))->current.geometry.height == wlr_xdg_surface_from_wlr_surface(CLIENT_SURFACE(c))->pending.geometry.height)))
-      client_set_resize_configure_serial(c,0);
+    /* mark a pending resize as completed */
+    mark_resize_done_p(c);
 }
 
 void
