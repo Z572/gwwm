@@ -3,7 +3,7 @@
   #:use-module (gwwm listener)
   #:use-module (wlroots types output)
   #:use-module (wlroots types output-layout)
-  #:autoload (system foreign) (pointer-address)
+  #:autoload (system foreign) (pointer-address pointer->scm)
   #:export (current-monitor
             monitor-name
             monitor-description
@@ -101,9 +101,7 @@
   (and=> (wlr-output-layout-output-at
           ((@@ (gwwm) gwwm-output-layout)) x y)
          (lambda (o)
-           (hash-ref %monitors
-                     (pointer-address
-                      (wlr-output-data o))))))
+           (pointer->scm (wlr-output-data o)))))
 (define-method (equal? (o1 <gwwm-monitor>)
                        (o2 <gwwm-monitor>))
   (monitor=? o1 o2))
