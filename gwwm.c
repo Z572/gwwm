@@ -747,12 +747,6 @@ commitnotify(struct wl_listener *listener, void *data)
 	Client *c = client_from_listener(listener);
     SCM sc=WRAP_CLIENT(c);
     scm_c_run_hook(REF("gwwm hooks", "surface-commit-event-hook"), scm_list_1(sc));
-	struct wlr_box box = *client_get_geometry(c);
-
-	if (client_monitor(c,NULL) && !wlr_box_empty(&box) && (box.width != client_geom(c)->width - 2 * CLIENT_BW(c)
-			|| box.height != client_geom(c)->height - 2 * CLIENT_BW(c)))
-		arrange(client_monitor(c,NULL));
-    /* mark a pending resize as completed */
     mark_resize_done_p(c);
 }
 

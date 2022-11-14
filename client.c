@@ -188,6 +188,14 @@ client_get_geometry(Client *c)
     return geom;
 }
 
+SCM_DEFINE_PUBLIC (gwwm_client_get_geometry, "%client-get-geometry",1,0,0,(SCM c),"")
+#define FUNC_NAME s_gwwm_client_get_geometry
+{
+  return WRAP_WLR_BOX(client_get_geometry(UNWRAP_CLIENT(c)));;
+}
+#undef FUNC_NAME
+
+
 struct wlr_box* client_geom(void *c)
 {
   /* PRINT_FUNCTION; */

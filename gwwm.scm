@@ -198,6 +198,19 @@ gwwm [options]
                      )))
   (add-hook! create-monitor-hook set-default-layout)
 
+  (define (commit-event c)
+    (let ((box (%client-get-geometry c))
+          (m (client-monitor c)))
+      (if (and m (not (box-empty? box))
+               (or (not (= (box-width box)
+                           (- (box-width (client-geom c))
+                              (* 2 (client-border-width c)))))
+                   (not (= (box-height box)
+                           (- (box-height (client-geom c))
+                              (* 2 (client-border-width c)))))))
+          (arrange m))))
+  (add-hook! surface-commit-event-hook
+             commit-event)
   (define (pass-modifiers k)
     (wlr-seat-set-keyboard (gwwm-seat) (keyboard-input-device k)))
   (add-hook! axis-event-hook
