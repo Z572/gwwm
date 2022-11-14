@@ -673,7 +673,7 @@ void monitor_add_listen(Monitor *m, struct wl_signal *signal,
 void cleanupmon(struct wl_listener *listener, void *data) {
   PRINT_FUNCTION
     struct wlr_output *wlr_output = data;
-  Monitor *m = UNWRAP_MONITOR(wlr_output->data);
+  Monitor *m = wlr_output->data;
   int nmons, i = 0;
 
   wl_list_remove(&m->link);
@@ -867,9 +867,8 @@ createmon(struct wl_listener *listener, void *data)
 	 * monitor) becomes available. */
 	struct wlr_output *wlr_output = data;
 	const MonitorRule *r;
-	Monitor *m = ecalloc(1, sizeof(*m));
+	Monitor *m = wlr_output->data = ecalloc(1, sizeof(*m));
     register_monitor(m);
-    wlr_output->data = WRAP_MONITOR(m);
 	SET_MONITOR_WLR_OUTPUT(m,wlr_output);
 
 	wlr_output_init_render(wlr_output, gwwm_allocator(NULL), gwwm_renderer(NULL));
