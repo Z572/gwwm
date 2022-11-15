@@ -1,5 +1,7 @@
 #include "listener.h"
 #include <wayland-server-core.h>
+#include "libguile/error.h"
+#include "libguile/goops.h"
 #include "util.h"
 typedef struct Gwwm_listener {
   SCM obj;
@@ -36,11 +38,19 @@ SCM_DEFINE(remove_listeners, "remove-listeners", 1, 0, 0, (SCM c), "") {
 }
 
 SCM_DEFINE(scm_from_listener, "scm-from-listener", 1, 0, 0, (SCM listener),
-           "") {
+           "")
+#define FUNC_NAME s_scm_from_listener
+{
   Gwwm_listener *gl =
       wl_container_of(UNWRAP_WL_LISTENER(listener), gl, listener);
-  return gl->obj;
+  if (SCM_IS_A_P(gl->obj, REF("gwwm listener","<listener-manager>")))
+      return gl->obj;
+  else {
+    scm_wrong_type_arg(s_scm_from_listener, 0, gl->obj);
+    return SCM_UNSPECIFIED;
+  };
 }
+#undef FUNC_NAME
 
 
 void
