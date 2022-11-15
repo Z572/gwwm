@@ -927,11 +927,10 @@ void new_popup_notify(struct wl_listener *listener, void *data)
   struct wlr_xdg_popup *popup = data;
   struct wlr_box *box;
   Client *l = toplevel_from_popup(popup);
-  popup->base->surface->data=wlr_scene_xdg_surface_create(popup->parent->data,
+  struct wlr_scene_node *node=wlr_scene_xdg_surface_create(popup->parent->data,
                                                           popup->base);
-  if (wlr_surface_is_layer_surface(popup->parent) && l
-      && wlr_layer_surface_v1_from_wlr_surface(CLIENT_SURFACE(l))->current.layer < ZWLR_LAYER_SHELL_V1_LAYER_TOP)
-    wlr_scene_node_reparent(popup->base->surface->data, layers[LyrTop]);
+  popup->base->surface->data=node;
+  wlr_scene_node_reparent(node,layers[LyrTop]);
   if (!l || !client_monitor(l,NULL))
     return;
   box = CLIENT_IS_LAYER_SHELL(WRAP_CLIENT(l))
