@@ -81,6 +81,7 @@ typedef struct Monitor {
   int nmaster;
   int un_map; /* If a map/unmap happened on this monitor, then this should be
                  true */
+  SCM scm;
 } Monitor;
 
 Monitor* monitor_from_listener(struct wl_listener *listener) {
@@ -676,6 +677,7 @@ void cleanupmon(struct wl_listener *listener, void *data) {
   Monitor *m = wlr_output->data;
   int nmons, i = 0;
 
+  REF_CALL_2("ice-9 q", "q-remove!", REF_CALL_0("gwwm monitor", "%monitors"), m->scm);
   wl_list_remove(&m->link);
   wlr_output_layout_remove(gwwm_output_layout(NULL), MONITOR_WLR_OUTPUT(m));
   wlr_scene_output_destroy(m->scene_output);
@@ -842,20 +844,19 @@ createlayersurface(struct wl_listener *listener, void *data)
 void
 register_monitor(Monitor *m) {
   PRINT_FUNCTION;
-  scm_hashq_set_x(INNER_MONITOR_HASH_TABLE, (scm_pointer_address(scm_from_pointer(m ,NULL))),
-                  (scm_call_3(REF("oop goops", "make"), REF("gwwm monitor", "<gwwm-monitor>"),
-              scm_from_utf8_keyword("data"), scm_pointer_address(FROM_P(m)))));
+  SCM sm=(scm_call_3(REF("oop goops", "make"), REF("gwwm monitor", "<gwwm-monitor>"),
+                     scm_from_utf8_keyword("data"), scm_pointer_address(FROM_P(m))));
+  m->scm=sm;
 }
 
 SCM
 find_monitor(Monitor *m) {
-  return scm_hashq_ref(INNER_MONITOR_HASH_TABLE, (scm_pointer_address(scm_from_pointer(m ,NULL))) ,SCM_BOOL_F);
+  return m->scm ? m->scm : SCM_BOOL_F;
 }
 
 void
 logout_monitor(Monitor *m){
   remove_listeners(WRAP_MONITOR(m));
-  scm_hashq_remove_x(INNER_MONITOR_HASH_TABLE, scm_pointer_address(scm_from_pointer(m ,NULL)));
   free(m);
 }
 
@@ -907,6 +908,7 @@ createmon(struct wl_listener *listener, void *data)
     if (!wlr_output_commit(wlr_output))
       return;
 
+    REF_CALL_2("ice-9 q", "q-push!", REF_CALL_0("gwwm monitor", "%monitors"), m->scm);
 	wl_list_insert(&mons, &m->link);
 	printstatus();
 

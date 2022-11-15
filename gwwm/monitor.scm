@@ -1,4 +1,6 @@
 (define-module (gwwm monitor)
+  #:use-module (srfi srfi-1)
+  #:use-module (ice-9 q)
   #:use-module (oop goops)
   #:use-module (gwwm listener)
   #:use-module (wlroots types output)
@@ -22,13 +24,18 @@
             monitor-window-area
             monitor-area
             monitor-sellt
-            <gwwm-monitor>))
+            <gwwm-monitor>
+            %monitors))
 
 (define-once %monitors
-  (make-hash-table))
+  (make-parameter
+   (make-q)
+   (lambda (o)
+     (if (q? o) o
+         (error "not a q! ~A" o)))))
 (define (monitor-list)
   "return all monitors."
-  (hash-map->list (lambda (_ b) b) %monitors))
+  (car (%monitors)))
 (define-once %current-monitor #f)
 (define (get-current-monitor)
   %current-monitor)
@@ -101,9 +108,10 @@
   (and=> (wlr-output-layout-output-at
           ((@@ (gwwm) gwwm-output-layout)) x y)
          (lambda (o)
-           (hash-ref %monitors
-                     (pointer-address
-                      (wlr-output-data o))))))
+           (let ((b (pointer-address
+                     (wlr-output-data o))))
+             (find (lambda (m) (= (.data m) b))
+                   (monitor-list))))))
 (define-method (equal? (o1 <gwwm-monitor>)
                        (o2 <gwwm-monitor>))
   (monitor=? o1 o2))
