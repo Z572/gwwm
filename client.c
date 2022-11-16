@@ -174,18 +174,7 @@ void set_client_tags(Client *c,int tags) {
 struct wlr_box*
 client_get_geometry(Client *c)
 {
-  struct wlr_box *geom=ecalloc(1,sizeof(*geom));
-#ifdef XWAYLAND
-	if (client_is_x11(c)) {
-      geom->x = wlr_xwayland_surface_from_wlr_surface(CLIENT_SURFACE(c))->x;
-		geom->y = wlr_xwayland_surface_from_wlr_surface(CLIENT_SURFACE(c))->y;
-		geom->width = wlr_xwayland_surface_from_wlr_surface(CLIENT_SURFACE(c))->width;
-		geom->height = wlr_xwayland_surface_from_wlr_surface(CLIENT_SURFACE(c))->height;
-		return geom;
-	}
-#endif
-	wlr_xdg_surface_get_geometry(wlr_xdg_surface_from_wlr_surface(CLIENT_SURFACE(c)), geom);
-    return geom;
+  return UNWRAP_WLR_BOX (REF_CALL_1("gwwm client", "client-get-geometry", WRAP_CLIENT(c)));
 }
 
 SCM_DEFINE_PUBLIC (gwwm_client_get_geometry, "%client-get-geometry",1,0,0,(SCM c),"")

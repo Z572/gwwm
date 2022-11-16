@@ -23,6 +23,7 @@
 
   #:export (visibleon
             current-client
+            client-get-geometry
             client-floating?
             client-set-floating!
             client-is-floating?
@@ -263,6 +264,14 @@
 (define-method (client-set-tiled (c <gwwm-x-client>) edges)
   *unspecified*)
 
+(define-method (client-get-geometry (c <gwwm-client>))
+  (wlr-xdg-surface-get-geometry (client-xdg-surface c)))
+(define-method (client-get-geometry (c <gwwm-x-client>))
+  (let ((s (client-xwayland-surface c)))
+    (make-wlr-box (wlr-xwayland-surface-x s)
+                  (wlr-xwayland-surface-y s)
+                  (wlr-xwayland-surface-width s)
+                  (wlr-xwayland-surface-height s))))
 (define-method (applybounds (c <gwwm-client>) geom)
   (unless (client-is-fullscreen? c)
     (let ((_ min* (client-get-size-hints c))
