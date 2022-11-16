@@ -749,7 +749,7 @@ commitnotify(struct wl_listener *listener, void *data)
 	Client *c = client_from_listener(listener);
     SCM sc=WRAP_CLIENT(c);
     scm_c_run_hook(REF("gwwm hooks", "surface-commit-event-hook"), scm_list_1(sc));
-    mark_resize_done_p(c);
+    if (!client_is_x11(c)) mark_resize_done_p(c);
 }
 
 void
