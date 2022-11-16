@@ -1327,21 +1327,21 @@ keypress(struct wl_listener *listener, void *data)
 void
 keypressmod(struct wl_listener *listener, void *data)
 {
-  PRINT_FUNCTION
-	/* This event is raised when a modifier key, such as shift or alt, is
-	 * pressed. We simply communicate this to the client. */
-	Keyboard *kb = wl_container_of(listener, kb, modifiers);
-    scm_c_run_hook(REF("gwwm hooks", "modifiers-event-hook"),
-                   scm_list_1(WRAP_KEYBOARD(kb)));
-	/*
-	 * A seat can only have one keyboard, but this is a limitation of the
-	 * Wayland protocol - not wlroots. We assign all connected keyboards to the
-	 * same seat. You can swap out the underlying wlr_keyboard like this and
-	 * wlr_seat handles this transparently.
-	 */
-	/* Send modifiers to the client. */
-	wlr_seat_keyboard_notify_modifiers(gwwm_seat(NULL),
-		&kb->device->keyboard->modifiers);
+  PRINT_FUNCTION;
+  /* This event is raised when a modifier key, such as shift or alt, is
+   * pressed. We simply communicate this to the client. */
+  Keyboard *kb = wl_container_of(listener, kb, modifiers);
+  struct wlr_keyboard *keyboard=data;
+  scm_c_run_hook(REF("gwwm hooks", "modifiers-event-hook"),
+                 scm_list_1(WRAP_KEYBOARD(kb)));
+  /*
+   * A seat can only have one keyboard, but this is a limitation of the
+   * Wayland protocol - not wlroots. We assign all connected keyboards to the
+   * same seat. You can swap out the underlying wlr_keyboard like this and
+   * wlr_seat handles this transparently.
+   */
+  /* Send modifiers to the client. */
+  wlr_seat_keyboard_notify_modifiers(gwwm_seat(NULL), &keyboard->modifiers);
 }
 
 void
