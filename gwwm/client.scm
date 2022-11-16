@@ -56,6 +56,7 @@
             client-tags
             client-surface
             client-geom
+            client-mapped?
             client-wants-fullscreen?
             %fstack
             %clients
@@ -129,6 +130,10 @@
 
 (define-class <gwwm-x-client> (<gwwm-client>))
 
+(define-method (client-mapped? (c <gwwm-client>))
+  (wlr-xdg-surface-mapped? (client-xdg-surface c)))
+(define-method (client-mapped? (c <gwwm-x-client>))
+  (wlr-xwayland-surface-mapped? (client-xwayland-surface c)))
 (define client-is-fullscreen? client-fullscreen?)
 (define client-set-border-width! (setter client-border-width))
 

@@ -330,11 +330,8 @@ SCM_DEFINE (gwwm_client_is_float_type_p,"client-is-float-type?",1,0,0,
 bool
 client_is_mapped(Client *c)
 {
-#ifdef XWAYLAND
-	if (client_is_x11(c))
-		return wlr_xwayland_surface_from_wlr_surface(CLIENT_SURFACE(c))->mapped;
-#endif
-	return wlr_xdg_surface_from_wlr_surface(CLIENT_SURFACE(c))->mapped;
+  PRINT_FUNCTION;
+  return scm_to_bool(REF_CALL_1("gwwm client","client-mapped?",(WRAP_CLIENT(c))));
 }
 
 bool
