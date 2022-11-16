@@ -4,6 +4,7 @@
   #:use-module (wayland display)
   #:use-module (srfi srfi-26)
   #:use-module (ice-9 control)
+  #:use-module (gwwm config)
   #:use-module (gwwm monitor)
   #:use-module (gwwm layout)
   #:use-module (gwwm client)
@@ -18,6 +19,7 @@
             gwwm-quit
             setlayout
             arrange
+            focusstack
             tag))
 
 (define (arrange m)
@@ -61,6 +63,24 @@
 
 (define (focusclient client lift)
   ((@@ (gwwm) focusclient) client lift))
+
+(define* (focusstack bool)
+  (let ((c (current-client))
+        (m (current-monitor))
+        (c-l (client-list)))
+    (unless (or (not c)
+                (<= (length c-l) 1)
+                (and (client-fullscreen? c)
+                     (config-lockfullscreen? ((@@ (gwwm) gwwm-config)) )))
+      (and=> (let/ec return
+               (for-each (lambda (o)
+                           (if (equal? c o)
+                               (return #f)
+                               (when (visibleon o m)
+                                 (return o))))
+                         ((if bool identity reverse)
+                          (cdr (member c (append c-l c-l))))))
+             (cut focusclient <> #t)))))
 
 (define (focustop monitor)
   (let/ec return

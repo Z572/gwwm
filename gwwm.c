@@ -1188,45 +1188,6 @@ SCM_DEFINE (gwwm_focusmon ,"focusmon",1,0,0,(SCM a),"" )
 }
 #undef FUNC_NAME
 
-void
-focusstack(const Arg *arg)
-{
-  PRINT_FUNCTION
-	/* Focus the next or previous client (in tiling order) on current_monitor */
-	Client *c, *sel = current_client();
-	if (!sel || (CLIENT_IS_FULLSCREEN(sel) && GWWM_LOCKFULLSCREEN_P()))
-		return;
-	if (arg->i > 0) {
-		wl_list_for_each(c, &sel->link, link) {
-			if (&c->link == &clients)
-				continue;  /* wrap past the sentinel node */
-			if (visibleon(c, current_monitor()))
-				break;  /* found it */
-		}
-	} else {
-		wl_list_for_each_reverse(c, &sel->link, link) {
-			if (&c->link == &clients)
-				continue;  /* wrap past the sentinel node */
-			if (visibleon(c, current_monitor()))
-				break;  /* found it */
-		}
-	}
-	/* If only one client is visible on current_monitor, then c == sel */
-	focusclient(c, 1);
-}
-
-SCM_DEFINE (gwwm_focusstack, "focusstack" ,1,0,0,
-            (SCM a), "")
-#define FUNC_NAME s_gwwm_focusstack
-{
-  focusstack(&((Arg){
-    .i= scm_to_int(a)
-  }));
-  return SCM_UNSPECIFIED;
-}
-#undef FUNC_NAME
-
-
 Client *
 focustop(Monitor *m)
 {
