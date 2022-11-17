@@ -1207,6 +1207,21 @@ fullscreennotify(struct wl_listener *listener, void *data)
                             ? WRAP_WLR_XWAYLAND_SURFACE(data)
                             : WRAP_XDG_TOPLEVEL_SET_FULLSCREEN_EVENT(data) ));
 }
+void
+fullscreennotify_x11(struct wl_listener *listener, void *data)
+{
+  PRINT_FUNCTION;
+  struct wlr_xwayland_surface *surface=data;
+  if (surface->surface) {
+    Client *c = client_from_wlr_surface(surface->surface);
+    if (c)
+      {
+        scm_c_run_hook(REF("gwwm hooks", "fullscreen-event-hook"),
+                       scm_list_2(WRAP_CLIENT(c),WRAP_WLR_XWAYLAND_SURFACE(data)));
+      }
+  }
+
+}
 
 void
 incnmaster(const Arg *arg)
@@ -2357,6 +2372,17 @@ updatetitle(struct wl_listener *listener, void *data)
                  scm_list_1(WRAP_CLIENT(c)));
 }
 
+void updatetitle_x11(struct wl_listener *listener, void *data)
+{
+  Client *c;
+  struct wlr_xwayland_surface *xsurface=data;
+  if (xsurface->mapped && xsurface->surface && (c=client_from_wlr_surface(xsurface->surface)))
+    {
+      scm_c_run_hook(REF("gwwm hooks", "update-title-hook"),
+                 scm_list_1(WRAP_CLIENT(c)));
+    }
+}
+
 void
 urgent(struct wl_listener *listener, void *data)
 {
@@ -2513,11 +2539,15 @@ void
 activatex11(struct wl_listener *listener, void *data)
 {
   PRINT_FUNCTION
-	Client *c =client_from_listener(listener);
-
-	/* Only "managed" windows can be activated */
-  if (CLIENT_IS_MANAGED(c))
-		wlr_xwayland_surface_activate(wlr_xwayland_surface_from_wlr_surface(CLIENT_SURFACE(c)), 1);
+  struct wlr_xwayland_surface *xsurface=data;
+  Client *c;
+  if (xsurface->mapped && xsurface->surface &&
+      (c = client_from_wlr_surface(xsurface->surface))
+      && (CLIENT_IS_MANAGED(c)))
+    {
+      /* Only "managed" windows can be activated */
+      wlr_xwayland_surface_activate(wlr_xwayland_surface_from_wlr_surface(CLIENT_SURFACE(c)), 1);
+    }
 }
 
 void
@@ -2555,8 +2585,8 @@ createnotifyx11(struct wl_listener *listener, void *data)
     client_add_listen(c, &xwayland_surface->events.request_configure, configurex11);
 
     client_add_listen(c,&xwayland_surface->events.set_hints, sethints);
-    client_add_listen(c,&xwayland_surface->events.set_title,updatetitle);
-    client_add_listen(c,&xwayland_surface->events.request_fullscreen,fullscreennotify);
+    client_add_listen(c,&xwayland_surface->events.set_title,updatetitle_x11);
+    client_add_listen(c,&xwayland_surface->events.request_fullscreen,fullscreennotify_x11);
 }
 
 
@@ -2578,11 +2608,16 @@ void
 sethints(struct wl_listener *listener, void *data)
 {
   PRINT_FUNCTION;
-  Client *c = client_from_listener(listener);
+  struct wlr_xwayland_surface *xsurface=data;
+  Client *c;
+  if (xsurface->mapped && xsurface->surface &&
+      (c = client_from_wlr_surface(xsurface->surface))) {
+
   if (c != current_client() && CLIENT_SURFACE(c)) {
       CLIENT_SET_URGENT(c, (wlr_xwayland_surface_from_wlr_surface(CLIENT_SURFACE(c)))->hints_urgency);
 		printstatus();
-	}
+  }
+  }
 }
 
 void
