@@ -910,7 +910,6 @@ createmon(struct wl_listener *listener, void *data)
 
     REF_CALL_2("ice-9 q", "q-push!", REF_CALL_0("gwwm monitor", "%monitors"), m->scm);
 	wl_list_insert(&mons, &m->link);
-	printstatus();
 
 	/* Adds this to the output layout in the order it was configured in.
 	 *
@@ -1144,7 +1143,6 @@ focusclient(Client *c, int lift)
 		}
 	}
 
-	/* printstatus(); */
 	checkidleinhibitor(NULL);
 
 	if (!c) {
@@ -1437,8 +1435,6 @@ void mapnotify(struct wl_listener *listener, void *data) {
     applyrules(c);
   }
 
-  printstatus();
-
   if (CLIENT_IS_FULLSCREEN(c))
     setfullscreen(c, 1);
 
@@ -1703,44 +1699,6 @@ pointerfocus(Client *c, struct wlr_surface *surface, double sx, double sy,
 }
 
 void
-printstatus(void)
-{
-
-	Monitor *m = NULL;
-	Client *c;
-	unsigned int occ, urg;
-
-	wl_list_for_each(m, &mons, link) {
-		occ = urg = 0;
-		wl_list_for_each(c, &clients, link) {
-			if (client_monitor(c,NULL) != m)
-				continue;
-			occ |= client_tags(c);
-			if (CLIENT_IS_URGENT_P(c))
-				urg |= client_tags(c);
-		}
-		if ((c = focustop(m))) {
-          send_log(INFO,"MONITOR and TITLE",
-                   "MONITOR",MONITOR_WLR_OUTPUT(m)->name,
-                   "TITLE",client_get_title(c));
-          send_log(INFO,"is FULLSCREEN","MONITOR",MONITOR_WLR_OUTPUT(m)->name,
-                   "FULLSCREEN",((CLIENT_IS_FULLSCREEN(c)) ? "#t" : "#f"));
-          send_log(INFO,"is FLOATING",
-                   "MONITOR",MONITOR_WLR_OUTPUT(m)->name,
-                   "FLOATING", ((CLIENT_IS_FLOATING(c))? "#t": "#f"));
-		} else {
-          send_log(INFO, "title" ,"MONITOR", MONITOR_WLR_OUTPUT(m)->name);
-          send_log(INFO,"MONITOR","MONITOR",MONITOR_WLR_OUTPUT(m)->name);
-          send_log(INFO,"fullscreen","MONITOR", MONITOR_WLR_OUTPUT(m)->name);
-          send_log(INFO,"floating","MONITOR", MONITOR_WLR_OUTPUT(m)->name);
-		}
-        send_log(INFO ,"current-monitor" ,
-                 "MONITOR", MONITOR_WLR_OUTPUT(m)->name,
-                 "BOOL",((m == current_monitor())? "#t" : "#f"));
-    }
-}
-
-void
 quit(const Arg *arg)
 {
   REF_CALL_0("gwwm commands","gwwm-quit");
@@ -1863,7 +1821,6 @@ SCM_DEFINE (gwwm_setfloating ,"%setfloating" ,2,0,0,(SCM c,SCM floating),"")
                                  ? LyrFloat
                                  : LyrTile]);
   arrange(UNWRAP_MONITOR(REF_CALL_1("gwwm client","client-monitor",c)));
-  printstatus();
 
   return SCM_UNSPECIFIED;
 }
@@ -1912,35 +1869,7 @@ setfullscreen(Client *c, int fullscreen)
 		}
 	}
 	arrange(client_monitor(c,NULL));
-	printstatus();
 }
-
-/* void */
-/* setlayout(const Arg *arg) */
-/* { */
-/*   if (!arg || !arg->v || arg->v != (current_monitor())->lt[(current_monitor())->sellt]) */
-/*     (current_monitor())->sellt ^= 1; */
-/* 	if (arg && arg->v) */
-/*       (current_monitor())->lt[(current_monitor())->sellt] = (Layout *)arg->v; */
-/* 	/\* TODO change layout symbol? *\/ */
-/* 	arrange(current_monitor()); */
-/* 	printstatus(); */
-/* } */
-
-/* arg > 1.0 will set mfact absolutely */
-/* void */
-/* setmfact(const Arg *arg) */
-/* { */
-/* 	float f; */
-
-/* 	if (!arg || !current_monitor()->lt[(current_monitor())->sellt]->arrange) */
-/* 		return; */
-/* 	f = arg->f < 1.0 ? arg->f + (current_monitor())->mfact : arg->f - 1.0; */
-/* 	if (f < 0.1 || f > 0.9) */
-/* 		return; */
-/* 	(current_monitor())->mfact = f; */
-/* 	arrange(current_monitor()); */
-/* } */
 
 void
 setmon(Client *c, Monitor *m, unsigned int newtags)
@@ -2260,7 +2189,6 @@ toggleview(const Arg *arg)
       focusclient(focustop(current_monitor()), 1);
       arrange(current_monitor());
 	}
-	printstatus();
 }
 
 SCM_DEFINE (gwwm_toggleview, "toggleview",1,0,0,(SCM ui),""){
@@ -2308,7 +2236,6 @@ unmapnotify(struct wl_listener *listener, void *data)
     REF_CALL_2("ice-9 q", "q-remove!", REF_CALL_0("gwwm client", "%clients"), WRAP_CLIENT(c));
     REF_CALL_2("ice-9 q", "q-remove!", REF_CALL_0("gwwm client", "%fstack"), WRAP_CLIENT(c));
 	wlr_scene_node_destroy(CLIENT_SCENE(c));
-	printstatus();
 }
 
 void updatemon(Monitor *m, struct wlr_output_configuration_v1 *config) {
@@ -2391,7 +2318,6 @@ urgent(struct wl_listener *listener, void *data)
 	Client *c = client_from_wlr_surface(event->surface);
 	if (c && c != current_client()) {
       CLIENT_SET_URGENT(c,1);
-		printstatus();
 	}
 }
 
@@ -2407,7 +2333,6 @@ view(const Arg *arg)
       (current_monitor())->tagset[(current_monitor())->seltags] = arg->ui & TAGMASK;
 	focusclient(focustop(current_monitor()), 1);
 	arrange(current_monitor());
-	printstatus();
 }
 
 SCM_DEFINE (gwwm_view, "view",1,0,0,(SCM ui),""){
@@ -2613,10 +2538,9 @@ sethints(struct wl_listener *listener, void *data)
   if (xsurface->mapped && xsurface->surface &&
       (c = client_from_wlr_surface(xsurface->surface))) {
 
-  if (c != current_client() && CLIENT_SURFACE(c)) {
+    if (c != current_client() && CLIENT_SURFACE(c)) {
       CLIENT_SET_URGENT(c, (wlr_xwayland_surface_from_wlr_surface(CLIENT_SURFACE(c)))->hints_urgency);
-		printstatus();
-  }
+    }
   }
 }
 

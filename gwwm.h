@@ -181,7 +181,6 @@ void outputmgrapplyortest(struct wlr_output_configuration_v1 *config, int test);
 void outputmgrtest(struct wl_listener *listener, void *data);
 void pointerfocus(Client *c, struct wlr_surface *surface, double sx, double sy,
                   uint32_t time);
-void printstatus(void);
 void quit(const Arg *arg);
 void quitsignal(int signo);
 void rendermon(struct wl_listener *listener, void *data);
