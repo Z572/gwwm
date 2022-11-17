@@ -1381,14 +1381,10 @@ void mapnotify(struct wl_listener *listener, void *data) {
     client_scene_surface(c,
                          wlr_scene_subsurface_tree_create(scene_node, surface));
   }
-  if (surface) {
-    (surface)->data = scene_node;
-    /* Ideally we should do this in createnotify{,x11} but at that moment
-     * wlr_xwayland_surface doesn't have wlr_surface yet
-     */
-    client_add_listen(c, &surface->events.commit, commitnotify);
-    client_add_listen(c, &surface->events.destroy, destroy_surface_notify);
-  }
+  (surface)->data = scene_node;
+  client_add_listen(c, &surface->events.commit, commitnotify);
+  client_add_listen(c, &surface->events.destroy, destroy_surface_notify);
+
   scene_node->data = client_scene_surface(c, NULL)->data = c;
 
   if (client_is_unmanaged(c)) {
