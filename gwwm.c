@@ -3,6 +3,7 @@
  */
 #include "libguile/boolean.h"
 #include "libguile/goops.h"
+#include "libguile/gsubr.h"
 #include "libguile/numbers.h"
 #include "libguile/scm.h"
 #include "libguile/symbols.h"
@@ -1946,6 +1947,24 @@ SCM_DEFINE (gwwm_setup_scene ,"%gwwm-setup-scene",0,0,0, (),"") {
                                                             gwwm_backend(NULL)));
   return SCM_UNSPECIFIED;
 }
+
+SCM_DEFINE(gwwm_xwayland_setup,"%gwwm-xwayland-setup",0,0,0,(),""){
+  /*
+   * Initialise the XWayland X server.
+   * It will be started when the first X client is started.
+   */
+  xwayland = wlr_xwayland_create(gwwm_display(NULL), compositor, true);
+  if (xwayland) {
+    wl_signal_add(&xwayland->events.ready, &xwayland_ready);
+    wl_signal_add(&xwayland->events.new_surface, &new_xwayland_surface);
+
+    setenv("DISPLAY", xwayland->display_name, 1);
+  } else {
+    fprintf(stderr, "failed to setup XWayland X server, continuing without it\n");
+  }
+  return SCM_UNSPECIFIED;
+}
+
 SCM_DEFINE (gwwm_setup,"%gwwm-setup" ,0,0,0,(),"")
 {
     /* The Wayland display is managed by libwayland. It handles accepting
@@ -2068,21 +2087,7 @@ SCM_DEFINE (gwwm_setup,"%gwwm-setup" ,0,0,0,(),"")
 
 
 
-#ifdef XWAYLAND
-	/*
-	 * Initialise the XWayland X server.
-	 * It will be started when the first X client is started.
-	 */
-	xwayland = wlr_xwayland_create(gwwm_display(NULL), compositor, 1);
-	if (xwayland) {
-		wl_signal_add(&xwayland->events.ready, &xwayland_ready);
-		wl_signal_add(&xwayland->events.new_surface, &new_xwayland_surface);
 
-		setenv("DISPLAY", xwayland->display_name, 1);
-	} else {
-		fprintf(stderr, "failed to setup XWayland X server, continuing without it\n");
-	}
-#endif
     return SCM_UNSPECIFIED;
 }
 

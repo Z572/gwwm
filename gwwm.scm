@@ -262,7 +262,7 @@ gwwm [options]
   (gwwm-scene (wlr-scene-create))
   (%gwwm-setup-scene)
   (%gwwm-setup)
-
+  (%gwwm-xwayland-setup)
   (config-setup)
   (set-current-module (resolve-module '(guile-user)))
   (setup-server)
