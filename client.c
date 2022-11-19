@@ -61,7 +61,7 @@ void register_client(Client *c, enum gwwm_client_type type) {
 void *client_from_listener(struct wl_listener *listener) {
   /* PRINT_FUNCTION; */
   SCM scm = scm_from_listener(WRAP_WL_LISTENER(listener));
-  return UNWRAP_CLIENT(scm);
+  return scm_is_false(scm) ? NULL : UNWRAP_CLIENT(scm);
 }
 
 void
