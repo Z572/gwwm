@@ -31,6 +31,7 @@
   #:use-module (gwwm config)
   #:use-module (gwwm hooks)
   #:use-module (gwwm commands)
+  #:duplicates (merge-generics replace warn-override-core warn last)
   #:export (main))
 
 (eval-when (expand load eval)
