@@ -135,6 +135,8 @@ uint32_t client_set_size(Client *c, uint32_t width, uint32_t height);
 void client_set_tiled(Client *c, uint32_t edges);
 struct wlr_surface *client_surface_at(Client *c, double cx, double cy,
                                       double *sx, double *sy);
+typedef void (*client_iterator_func_t)(Client *c);
+void client_for_each_alives(client_iterator_func_t fn);
 void client_restack_surface(Client *c);
 void *client_from_listener(struct wl_listener *listener);
 void client_add_listen(void *c ,struct wl_signal *signal, wl_notify_func_t func);

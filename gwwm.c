@@ -2491,15 +2491,19 @@ configurex11(struct wl_listener *listener, void *data)
 }
 
 
+void gwwm_i_unfullscreen_all(Client *c){
+  PRINT_FUNCTION;
+  if (CLIENT_IS_FULLSCREEN(c) && visibleon(c, client_monitor(c,NULL)))
+    setfullscreen(c, 0);
+}
+
 void
 createnotifyx11(struct wl_listener *listener, void *data)
 {
   PRINT_FUNCTION
 	struct wlr_xwayland_surface *xwayland_surface = data;
 	Client *c;
-	wl_list_for_each(c, &clients, link)
-		if (CLIENT_IS_FULLSCREEN(c) && visibleon(c, client_monitor(c,NULL)))
-			setfullscreen(c, 0);
+    client_for_each_alives(&gwwm_i_unfullscreen_all);
 
 	/* Allocate a Client for this surface */
 	c = ecalloc(1, sizeof(*c));

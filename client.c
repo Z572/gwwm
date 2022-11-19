@@ -1,5 +1,6 @@
 #include "libguile/boolean.h"
 #include "libguile/goops.h"
+#include "libguile/list.h"
 #include "libguile/numbers.h"
 #include "libguile/scm.h"
 #include "string.h"
@@ -130,6 +131,15 @@ client_activate_surface(struct wlr_surface *s, int activated)
 			&& (surface = wlr_xdg_surface_from_wlr_surface(s))
 			&& surface->role == WLR_XDG_SURFACE_ROLE_TOPLEVEL)
 		wlr_xdg_toplevel_set_activated(surface, activated);
+}
+
+void client_for_each_alives(client_iterator_func_t fn){
+  SCM l=REF_CALL_0("gwwm client", "client-list");
+  int n=scm_to_int(scm_length(l));
+  for (int i=0;i < n; i++){
+    fn(UNWRAP_CLIENT(scm_list_ref(l, scm_from_int(i))));
+  }
+;
 }
 
 void
