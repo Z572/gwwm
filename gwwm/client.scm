@@ -1,6 +1,8 @@
 (define-module (gwwm client)
   #:use-module (srfi srfi-1)
+  #:use-module (srfi srfi-2)
   #:use-module (wlroots types scene)
+  #:use-module (wlroots types layer-shell)
   #:use-module (ice-9 q)
   #:use-module (ice-9 control)
   #:use-module (srfi srfi-71)
@@ -99,7 +101,7 @@
          #:slot-ref (lambda (c)
                       (wlr-xdg-toplevel-appid
                        (wlr-xdg-surface-toplevel
-                        (client-xdg-surface c))))
+                        (client-super-surface c))))
          #:slot-set! (const #f)
          #:getter client-get-appid)
   (floating? #:init-value #f
@@ -132,9 +134,9 @@
 (define-class <gwwm-x-client> (<gwwm-client>))
 
 (define-method (client-mapped? (c <gwwm-client>))
-  (wlr-xdg-surface-mapped? (client-xdg-surface c)))
+  (wlr-xdg-surface-mapped? (client-super-surface c)))
 (define-method (client-mapped? (c <gwwm-x-client>))
-  (wlr-xwayland-surface-mapped? (client-xwayland-surface c)))
+  (wlr-xwayland-surface-mapped? (client-super-surface c)))
 (define client-is-fullscreen? client-fullscreen?)
 (define client-set-border-width! (setter client-border-width))
 
@@ -158,18 +160,20 @@
 (define-method (client-do-set-fullscreen (c <gwwm-client>))
   (client-do-set-fullscreen c (client-fullscreen? c)))
 (define-method (client-do-set-fullscreen (client <gwwm-client>) fullscreen?)
-  (wlr-xdg-toplevel-set-fullscreen (client-xdg-surface client) fullscreen?))
+  (wlr-xdg-toplevel-set-fullscreen (client-super-surface client) fullscreen?))
 
-(define (client-xwayland-surface c)
-  (and=> (client-surface c)
-         (cut wlr-xwayland-surface-from-wlr-surface <>)))
-
-(define (client-xdg-surface c)
-  (and=> (client-surface c)
-         (cut wlr-xdg-surface-from-wlr-surface <>)))
+(define-method (client-super-surface (c <gwwm-client>))
+  (and-let* ((base (client-surface c)))
+    (wlr-xdg-surface-from-wlr-surface base)))
+(define-method (client-super-surface (c <gwwm-x-client>))
+  (and-let* ((base (client-surface c)))
+    (wlr-xwayland-surface-from-wlr-surface base)))
+(define-method (client-super-surface (c <gwwm-layer-client>))
+  (and-let* ((base (client-surface c)))
+    (wlr-layer-surface-v1-from-wlr-surface base)))
 
 (define-method (client-do-set-fullscreen (client <gwwm-x-client>) fullscreen?)
-  (wlr-xwayland-surface-set-fullscreen (client-xwayland-surface client)
+  (wlr-xwayland-surface-set-fullscreen (client-super-surface client)
                                        fullscreen?))
 ;; (define-method (set-fullscreen (c <gwwm-client>) fullscreen?)
 ;;   (let ((fullscreen? (->bool fullscreen?)))
@@ -192,17 +196,17 @@
               "*deaded*")))
 
 (define-method (client-get-appid (c <gwwm-x-client>))
-  (or (and=> (client-xwayland-surface c)
+  (or (and=> (client-super-surface c)
              wlr-xwayland-surface-class)
       "*unknow*"))
 
 (define-method (client-get-title (c <gwwm-client>))
   (wlr-xdg-toplevel-title
    (wlr-xdg-surface-toplevel
-    (client-xdg-surface c))))
+    (client-super-surface c))))
 (define-method (client-get-title (c <gwwm-x-client>))
   (wlr-xwayland-surface-title
-   (client-xwayland-surface c)))
+   (client-super-surface c)))
 
 (define-method (logout-client (c <gwwm-base-client>))
   (remove-listeners c))
@@ -214,9 +218,9 @@
   (set! (.data c) 0))
 
 (define-method (client-send-close (c <gwwm-client>))
-  (wlr-xdg-toplevel-send-close (client-xdg-surface c)))
+  (wlr-xdg-toplevel-send-close (client-super-surface c)))
 (define-method (client-send-close (c <gwwm-x-client>))
-  (wlr-xwayland-surface-close (client-xwayland-surface c)))
+  (wlr-xwayland-surface-close (client-super-surface c)))
 
 (define-method (equal? (o1 <gwwm-client>)
                        (o2 <gwwm-client>))
@@ -245,7 +249,7 @@
             #f))))
 
 (define-method (client-set-resizing! (c <gwwm-client>) resizing?)
-  (wlr-xdg-toplevel-set-resizing (client-xdg-surface c) resizing?))
+  (wlr-xdg-toplevel-set-resizing (client-super-surface c) resizing?))
 (define-method (client-set-resizing! (c <gwwm-x-client>) resizing?)
   *unspecified*)
 
@@ -258,16 +262,16 @@
 
 (define-method (client-set-tiled (c <gwwm-client>) (edges <integer>))
   (wlr-xdg-toplevel-set-tiled
-   (client-xdg-surface c)
+   (client-super-surface c)
    edges))
 
 (define-method (client-set-tiled (c <gwwm-x-client>) edges)
   *unspecified*)
 
 (define-method (client-get-geometry (c <gwwm-client>))
-  (wlr-xdg-surface-get-geometry (client-xdg-surface c)))
+  (wlr-xdg-surface-get-geometry (client-super-surface c)))
 (define-method (client-get-geometry (c <gwwm-x-client>))
-  (let ((s (client-xwayland-surface c)))
+  (let ((s (client-super-surface c)))
     (make-wlr-box (wlr-xwayland-surface-x s)
                   (wlr-xwayland-surface-y s)
                   (wlr-xwayland-surface-width s)
