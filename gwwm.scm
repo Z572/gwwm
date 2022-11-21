@@ -18,6 +18,7 @@
   #:use-module (gwwm utils)
   #:use-module (gwwm utils srfi-215)
   #:use-module (wayland display)
+  #:use-module (wayland signal)
   #:use-module (wlroots xwayland)
   #:use-module (wlroots backend)
   #:use-module (wlroots types pointer)
@@ -186,6 +187,14 @@ gwwm [options]
   (gwwm-seat (wlr-seat-create (gwwm-display) "seat0"))
   (gwwm-xdg-shell (wlr-xdg-shell-create (gwwm-display)))
   (gwwm-compositor (wlr-compositor-create (gwwm-display) (gwwm-renderer))))
+(define (xwayland-setup)
+  (let ((x (gwwm-xwayland (wlr-xwayland-create (gwwm-display) (gwwm-compositor) #t))))
+    (if x
+        (begin
+          (wl-signal-add (get-event-signal x 'ready) xwayland-ready)
+          (wl-signal-add (get-event-signal x 'new-surface) new-xwayland-surface)
+          (setenv "DISPLAY" (wlr-xwayland-display-name x)))
+        )))
 (define (main)
   (setlocale LC_ALL "")
   (textdomain %gettext-domain)
@@ -267,8 +276,13 @@ gwwm [options]
   (gwwm-scene (wlr-scene-create))
   (%gwwm-setup-scene)
   (%gwwm-setup)
-  (gwwm-xwayland (wlr-xwayland-create (gwwm-display) (gwwm-compositor) #t))
-  (%gwwm-xwayland-setup)
+  (let ((x (gwwm-xwayland (wlr-xwayland-create (gwwm-display) (gwwm-compositor) #t))))
+    (if x
+        (begin
+          (wl-signal-add (get-event-signal x 'ready) xwayland-ready)
+          (wl-signal-add (get-event-signal x 'new-surface) new-xwayland-surface)
+          (setenv "DISPLAY" (wlr-xwayland-display-name x)))
+        (send-log INFO (G_ "failed to setup XWayland X server, continuing without it."))))
   (config-setup)
   (set-current-module (resolve-module '(guile-user)))
   (setup-server)
