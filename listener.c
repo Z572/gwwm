@@ -10,7 +10,7 @@ typedef struct Gwwm_listener {
 } Gwwm_listener;
 
 SCM_DEFINE(scm_register_gwwm_listener, "%register-listener", 1, 0, 0, (SCM o), "") {
-  Gwwm_listener *listener=ecalloc(1, sizeof(*listener));
+  Gwwm_listener *listener=ecalloc(sizeof(*listener));
   SCM listeners=scm_slot_ref(o,scm_from_utf8_symbol("listeners"));
   listener->obj=o;
   scm_slot_set_x(o, scm_from_utf8_symbol("listeners"), scm_cons(WRAP_WL_LISTENER(listener)

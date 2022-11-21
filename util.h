@@ -6,7 +6,7 @@
 #include <stdarg.h>
 #include <string.h>
 void die(const char *fmt, ...);
-void *ecalloc(size_t nmemb, size_t size);
+void *ecalloc(size_t size);
 
 #define REF(A, B) (scm_c_public_ref(A, B))
 #define REFP(A, B) (scm_c_private_ref(A, B))

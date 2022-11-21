@@ -769,7 +769,7 @@ createkeyboard(struct wlr_input_device *device)
   PRINT_FUNCTION;
 	struct xkb_context *context;
 	struct xkb_keymap *keymap;
-	Keyboard *kb = device->data = ecalloc(1, sizeof(*kb));
+	Keyboard *kb = device->data = ecalloc(sizeof(*kb));
 	kb->device = device;
     SCM s_xkb = REF_CALL_1("gwwm config","config-xkb-rules", gwwm_config);
    #define rf(name) (scm_to_utf8_string(scm_slot_ref(s_xkb, scm_from_utf8_symbol(name))))
@@ -812,7 +812,7 @@ createlayersurface(struct wl_listener *listener, void *data)
 	if (!wlr_layer_surface->output) {
       wlr_layer_surface->output = MONITOR_WLR_OUTPUT(current_monitor());
 	}
-	layersurface = ecalloc(1, sizeof(Client));
+	layersurface = ecalloc(sizeof(Client));
 
     register_client(layersurface,GWWM_LAYER_CLIENT_TYPE);
     CLIENT_SET_TYPE(layersurface ,"LayerShell");
@@ -869,7 +869,7 @@ createmon(struct wl_listener *listener, void *data)
 	 * monitor) becomes available. */
 	struct wlr_output *wlr_output = data;
 	const MonitorRule *r;
-	Monitor *m = wlr_output->data = ecalloc(1, sizeof(*m));
+	Monitor *m = wlr_output->data = ecalloc(sizeof(*m));
     register_monitor(m);
 	SET_MONITOR_WLR_OUTPUT(m,wlr_output);
 
@@ -959,7 +959,7 @@ createnotify(struct wl_listener *listener, void *data)
 		return;
 
 	/* Allocate a Client for this surface */
-	c = ecalloc(1, sizeof(*c));
+	c = ecalloc(sizeof(*c));
     register_client(c,GWWM_XDG_CLIENT_TYPE);
     xdg_surface->data = WRAP_CLIENT(c);
     CLIENT_SET_TYPE(c ,"XDGShell");
@@ -2488,7 +2488,7 @@ createnotifyx11(struct wl_listener *listener, void *data)
     client_for_each_alives(&gwwm_i_unfullscreen_all);
 
 	/* Allocate a Client for this surface */
-	c = ecalloc(1, sizeof(*c));
+	c = ecalloc(sizeof(*c));
     register_client(c,GWWM_X_CLIENT_TYPE);
     xwayland_surface->data = WRAP_CLIENT(c);
     /* CLIENT_SET_SURFACE(c,xwayland_surface->surface); */
