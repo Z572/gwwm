@@ -104,7 +104,6 @@ Monitor* monitor_from_listener(struct wl_listener *listener) {
  struct wlr_output_manager_v1 *output_mgr;
  struct wlr_virtual_keyboard_manager_v1 *virtual_keyboard_mgr;
  struct wl_listener new_xwayland_surface = {.notify = createnotifyx11};
- struct wl_listener xwayland_ready = {.notify = xwaylandready};
  Atom netatom[NetLast];
  Atom get_netatom_n(int n){
    return netatom[n];
@@ -2482,8 +2481,8 @@ void gwwm_i_unfullscreen_all(Client *c){
 void
 createnotifyx11(struct wl_listener *listener, void *data)
 {
-  PRINT_FUNCTION
-	struct wlr_xwayland_surface *xwayland_surface = data;
+  PRINT_FUNCTION;
+  struct wlr_xwayland_surface *xwayland_surface = data;
 	Client *c;
     client_for_each_alives(&gwwm_i_unfullscreen_all);
 
@@ -2535,16 +2534,17 @@ sethints(struct wl_listener *listener, void *data)
   }
 }
 
-void
-xwaylandready(struct wl_listener *listener, void *data)
+SCM_DEFINE(xwaylandready,"xwaylandready",2,0,0,(SCM l, SCM d),"")
 {
-  PRINT_FUNCTION
+  PRINT_FUNCTION;
+  struct wl_listener *listener=UNWRAP_WL_LISTENER(l) ;
+  void *data=TO_P(d);
 	struct wlr_xcursor *xcursor;
 	xcb_connection_t *xc = xcb_connect(gwwm_xwayland(NULL)->display_name, NULL);
 	int err = xcb_connection_has_error(xc);
 	if (err) {
 		fprintf(stderr, "xcb_connect to X server failed with code %d\n. Continuing with degraded functionality.\n", err);
-		return;
+		return SCM_UNSPECIFIED;
 	}
 
 	/* Collect atoms we are interested in.  If getatom returns 0, we will
@@ -2565,6 +2565,7 @@ xwaylandready(struct wl_listener *listener, void *data)
 				xcursor->images[0]->hotspot_x, xcursor->images[0]->hotspot_y);
 
 	xcb_disconnect(xc);
+    return SCM_UNSPECIFIED;
 }
 #endif
 
@@ -2577,7 +2578,6 @@ SCM_DEFINE (config_setup,"%config-setup" ,0,0,0,(),"")
 void
 scm_init_gwwm(void)
 {
-  scm_c_define("xwayland-ready", (WRAP_WL_LISTENER(&xwayland_ready)));
   scm_c_define("new-xwayland-surface", (WRAP_WL_LISTENER(&new_xwayland_surface)));
 #ifndef SCM_MAGIC_SNARFER
 #include "gwwm.x"
