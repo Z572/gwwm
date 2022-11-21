@@ -93,8 +93,6 @@ Monitor* monitor_from_listener(struct wl_listener *listener) {
  const char broken[] = "broken";
  struct wlr_surface *exclusive_focus;
  struct wlr_scene_node *layers[NUM_LAYERS];
- struct wlr_compositor *compositor;
-
  struct wlr_xdg_activation_v1 *activation;
  struct wl_list clients; /* tiling order */
  struct wlr_idle *idle;
@@ -103,7 +101,6 @@ Monitor* monitor_from_listener(struct wl_listener *listener) {
  struct wlr_layer_shell_v1 *layer_shell;
  struct wlr_output_manager_v1 *output_mgr;
  struct wlr_virtual_keyboard_manager_v1 *virtual_keyboard_mgr;
- /* struct wlr_xcursor_manager *cursor_mgr; */
  struct wl_listener new_xwayland_surface = {.notify = createnotifyx11};
  struct wl_listener xwayland_ready = {.notify = xwaylandready};
  struct wlr_xwayland *xwayland;
@@ -184,6 +181,7 @@ define_wlr_v("wlroots render renderer",renderer);
 define_wlr_v("wlroots types cursor",cursor);
 define_wlr_v("wlroots types seat",seat);
 define_wlr_v("wlroots types scene",scene);
+define_wlr_v("wlroots types compositor",compositor);
 #undef define_wlr_v
 struct wlr_xdg_shell *gwwm_xdg_shell(struct wlr_xdg_shell *var) {
   SCM b;
@@ -1953,7 +1951,7 @@ SCM_DEFINE(gwwm_xwayland_setup,"%gwwm-xwayland-setup",0,0,0,(),""){
    * Initialise the XWayland X server.
    * It will be started when the first X client is started.
    */
-  xwayland = wlr_xwayland_create(gwwm_display(NULL), compositor, true);
+  xwayland = wlr_xwayland_create(gwwm_display(NULL), gwwm_compositor(NULL), true);
   if (xwayland) {
     wl_signal_add(&xwayland->events.ready, &xwayland_ready);
     wl_signal_add(&xwayland->events.new_surface, &new_xwayland_surface);
@@ -1990,7 +1988,6 @@ SCM_DEFINE (gwwm_setup,"%gwwm-setup" ,0,0,0,(),"")
 	 * to dig your fingers in and play with their behavior if you want. Note that
 	 * the clients cannot set the selection directly without compositor approval,
 	 * see the setsel() function. */
-	compositor = wlr_compositor_create(gwwm_display(NULL), gwwm_renderer(NULL));
 	wlr_export_dmabuf_manager_v1_create(gwwm_display(NULL));
 	wlr_screencopy_manager_v1_create(gwwm_display(NULL));
 	wlr_data_control_manager_v1_create(gwwm_display(NULL));
