@@ -65,6 +65,7 @@
 (define-dy gwwm-xdg-shell xdg-shell)
 (define-dy gwwm-xcursor-manager manager)
 (define-dy gwwm-compositor compositor)
+(define-dy gwwm-xwayland xwayland)
 
 (define (init-global-keybind)
   (keymap-global-set (kbd (s S space))
@@ -266,6 +267,7 @@ gwwm [options]
   (gwwm-scene (wlr-scene-create))
   (%gwwm-setup-scene)
   (%gwwm-setup)
+  (gwwm-xwayland (wlr-xwayland-create (gwwm-display) (gwwm-compositor) #t))
   (%gwwm-xwayland-setup)
   (config-setup)
   (set-current-module (resolve-module '(guile-user)))

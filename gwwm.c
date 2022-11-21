@@ -103,7 +103,6 @@ Monitor* monitor_from_listener(struct wl_listener *listener) {
  struct wlr_virtual_keyboard_manager_v1 *virtual_keyboard_mgr;
  struct wl_listener new_xwayland_surface = {.notify = createnotifyx11};
  struct wl_listener xwayland_ready = {.notify = xwaylandready};
- struct wlr_xwayland *xwayland;
  Atom netatom[NetLast];
  Atom get_netatom_n(int n){
    return netatom[n];
@@ -182,6 +181,7 @@ define_wlr_v("wlroots types cursor",cursor);
 define_wlr_v("wlroots types seat",seat);
 define_wlr_v("wlroots types scene",scene);
 define_wlr_v("wlroots types compositor",compositor);
+define_wlr_v("wlroots xwayland",xwayland);
 #undef define_wlr_v
 struct wlr_xdg_shell *gwwm_xdg_shell(struct wlr_xdg_shell *var) {
   SCM b;
@@ -631,7 +631,7 @@ SCM_DEFINE (gwwm_cleanup, "%gwwm-cleanup",0,0,0, () ,"")
   scm_c_run_hook(REF("gwwm hooks", "gwwm-cleanup-hook"),
                  scm_make_list(scm_from_int(0), SCM_UNSPECIFIED));
 #ifdef XWAYLAND
-    D(wlr_xwayland_destroy,xwayland);
+    D(wlr_xwayland_destroy,gwwm_xwayland(NULL));
 #endif
 	D(wl_display_destroy_clients,(gwwm_display(NULL)));
 	D(wlr_backend_destroy,(gwwm_backend(NULL)));
@@ -1951,12 +1951,11 @@ SCM_DEFINE(gwwm_xwayland_setup,"%gwwm-xwayland-setup",0,0,0,(),""){
    * Initialise the XWayland X server.
    * It will be started when the first X client is started.
    */
-  xwayland = wlr_xwayland_create(gwwm_display(NULL), gwwm_compositor(NULL), true);
-  if (xwayland) {
-    wl_signal_add(&xwayland->events.ready, &xwayland_ready);
-    wl_signal_add(&xwayland->events.new_surface, &new_xwayland_surface);
+  if (gwwm_xwayland(NULL)) {
+    wl_signal_add(&gwwm_xwayland(NULL)->events.ready, &xwayland_ready);
+    wl_signal_add(&gwwm_xwayland(NULL)->events.new_surface, &new_xwayland_surface);
 
-    setenv("DISPLAY", xwayland->display_name, 1);
+    setenv("DISPLAY", gwwm_xwayland(NULL)->display_name, 1);
   } else {
     fprintf(stderr, "failed to setup XWayland X server, continuing without it\n");
   }
@@ -2555,7 +2554,7 @@ xwaylandready(struct wl_listener *listener, void *data)
 {
   PRINT_FUNCTION
 	struct wlr_xcursor *xcursor;
-	xcb_connection_t *xc = xcb_connect(xwayland->display_name, NULL);
+	xcb_connection_t *xc = xcb_connect(gwwm_xwayland(NULL)->display_name, NULL);
 	int err = xcb_connection_has_error(xc);
 	if (err) {
 		fprintf(stderr, "xcb_connect to X server failed with code %d\n. Continuing with degraded functionality.\n", err);
@@ -2570,11 +2569,11 @@ xwaylandready(struct wl_listener *listener, void *data)
 	netatom[NetWMWindowTypeUtility] = getatom(xc, "_NET_WM_WINDOW_TYPE_UTILITY");
 
 	/* assign the one and only seat */
-	wlr_xwayland_set_seat(xwayland, gwwm_seat(NULL));
+	wlr_xwayland_set_seat(gwwm_xwayland(NULL), gwwm_seat(NULL));
 
 	/* Set the default XWayland cursor to match the rest of dwl. */
 	if ((xcursor = wlr_xcursor_manager_get_xcursor(gwwm_xcursor_manager(NULL), GWWM_CURSOR_NORMAL_IMAGE(), 1)))
-		wlr_xwayland_set_cursor(xwayland,
+		wlr_xwayland_set_cursor(gwwm_xwayland(NULL),
 				xcursor->images[0]->buffer, xcursor->images[0]->width * 4,
 				xcursor->images[0]->width, xcursor->images[0]->height,
 				xcursor->images[0]->hotspot_x, xcursor->images[0]->hotspot_y);
