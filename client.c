@@ -70,7 +70,7 @@ logout_client(Client *c){
   SCM sc=WRAP_CLIENT(c);
   scm_call_1(REFP("gwwm client","logout-client") ,sc);
   c->scm=NULL;
-  free(c);
+  /* free(c); */
 }
 
 void

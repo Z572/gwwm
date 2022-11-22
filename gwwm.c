@@ -3,6 +3,7 @@
  */
 #include "libguile/boolean.h"
 #include "libguile/foreign.h"
+#include "libguile/gc.h"
 #include "libguile/goops.h"
 #include "libguile/gsubr.h"
 #include "libguile/modules.h"
@@ -811,7 +812,7 @@ createlayersurface(struct wl_listener *listener, void *data)
 	if (!wlr_layer_surface->output) {
       wlr_layer_surface->output = MONITOR_WLR_OUTPUT(current_monitor());
 	}
-	layersurface = ecalloc(sizeof(Client));
+	layersurface = scm_gc_calloc(sizeof(Client),"layer-client");
 
     register_client(layersurface,GWWM_LAYER_CLIENT_TYPE);
     CLIENT_SET_TYPE(layersurface ,"LayerShell");
@@ -857,7 +858,7 @@ find_monitor(Monitor *m) {
 void
 logout_monitor(Monitor *m){
   remove_listeners(WRAP_MONITOR(m));
-  free(m);
+  /* free(m); */
 }
 
 void
@@ -868,7 +869,7 @@ createmon(struct wl_listener *listener, void *data)
 	 * monitor) becomes available. */
 	struct wlr_output *wlr_output = data;
 	const MonitorRule *r;
-	Monitor *m = wlr_output->data = ecalloc(sizeof(*m));
+	Monitor *m = wlr_output->data = scm_gc_calloc(sizeof(*m),"monitor");
     register_monitor(m);
 	SET_MONITOR_WLR_OUTPUT(m,wlr_output);
 
@@ -958,7 +959,7 @@ createnotify(struct wl_listener *listener, void *data)
 		return;
 
 	/* Allocate a Client for this surface */
-	c = ecalloc(sizeof(*c));
+	c = scm_gc_calloc(sizeof(*c), "xdg-client");
     register_client(c,GWWM_XDG_CLIENT_TYPE);
     xdg_surface->data = WRAP_CLIENT(c);
     CLIENT_SET_TYPE(c ,"XDGShell");
@@ -2487,7 +2488,7 @@ createnotifyx11(struct wl_listener *listener, void *data)
     client_for_each_alives(&gwwm_i_unfullscreen_all);
 
 	/* Allocate a Client for this surface */
-	c = ecalloc(sizeof(*c));
+	c = scm_gc_calloc(sizeof(*c),"x-client");
     register_client(c,GWWM_X_CLIENT_TYPE);
     xwayland_surface->data = WRAP_CLIENT(c);
     /* CLIENT_SET_SURFACE(c,xwayland_surface->surface); */
