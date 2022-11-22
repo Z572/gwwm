@@ -466,7 +466,6 @@ arrangelayer(Monitor *m, struct wl_list *list, struct wlr_box *usable_area, int 
 {
   PRINT_FUNCTION
 	Client *layersurface;
-	struct wlr_box *full_area = MONITOR_AREA(m);
 
 	wl_list_for_each(layersurface, list, link) {
       arrange_l(layersurface, m, usable_area,exclusive);
@@ -496,9 +495,9 @@ void arrange_interactive_layer(Monitor *m) {
   }
 }
 
-void
-arrangelayers(Monitor *m)
+SCM_DEFINE(arrangelayers,"arrangelayers",1,0,0,(SCM sm),"")
 {
+  Monitor *m=UNWRAP_MONITOR(sm);
   PRINT_FUNCTION
 	int i;
 	struct wlr_box usable_area = *MONITOR_AREA(m);
@@ -518,6 +517,7 @@ arrangelayers(Monitor *m)
 
 	/* Find topmost keyboard interactive layer, if such a layer exists */
     arrange_interactive_layer(m);
+    return SCM_UNSPECIFIED;
 }
 
 void
@@ -710,15 +710,15 @@ commitlayersurfacenotify(struct wl_listener *listener, void *data)
   PRINT_FUNCTION;
 	Client *layersurface = client_from_listener(listener);
 	struct wlr_layer_surface_v1 *wlr_layer_surface = wlr_layer_surface_v1_from_wlr_surface(CLIENT_SURFACE(layersurface));
-
-	if (!client_monitor(layersurface,NULL))
+    Monitor *m=client_monitor(layersurface,NULL);
+	if (!m)
 		return;
 
 	if (layers[wlr_layer_surface->current.layer] != CLIENT_SCENE(layersurface)) {
 		wlr_scene_node_reparent(CLIENT_SCENE(layersurface),
 				layers[wlr_layer_surface->current.layer]);
 		wl_list_remove(&layersurface->link);
-		wl_list_insert(&client_monitor(layersurface,NULL)->layers[wlr_layer_surface->current.layer],
+		wl_list_insert(&m->layers[wlr_layer_surface->current.layer],
 				&layersurface->link);
 	}
 
@@ -727,7 +727,7 @@ commitlayersurfacenotify(struct wl_listener *listener, void *data)
 	/* 	return; */
 	/* layersurface->mapped = wlr_layer_surface->mapped; */
     if (wlr_layer_surface->current.committed == 0) return;
-	arrangelayers(client_monitor(layersurface,NULL));
+	arrangelayers(WRAP_MONITOR(m));
 }
 
 inline void mark_resize_done_p(Client *c) {
@@ -823,14 +823,15 @@ createlayersurface(struct wl_listener *listener, void *data)
 	client_add_listen(layersurface,&wlr_layer_surface->events.map,maplayersurfacenotify);
 	client_add_listen(layersurface,&wlr_layer_surface->events.unmap,unmaplayersurfacenotify);
 
-    client_monitor(layersurface,wlr_layer_surface->output->data);
+    Monitor *m=wlr_layer_surface->output->data;
+    client_monitor(layersurface,m);
 	wlr_layer_surface->data = WRAP_CLIENT(layersurface);
 
 	CLIENT_SET_SCENE(layersurface,(wlr_layer_surface->surface->data =
 			wlr_scene_subsurface_tree_create(layers[wlr_layer_surface->pending.layer],
 			wlr_layer_surface->surface)));
 	CLIENT_SCENE(layersurface)->data = layersurface;
-	wl_list_insert(&(client_monitor(layersurface,NULL))->layers[wlr_layer_surface->pending.layer],
+	wl_list_insert(&m->layers[wlr_layer_surface->pending.layer],
 			&layersurface->link);
 
 	/* Temporarily set the layer's current state to pending
@@ -838,7 +839,7 @@ createlayersurface(struct wl_listener *listener, void *data)
 	 */
 	old_state = wlr_layer_surface->current;
 	wlr_layer_surface->current = wlr_layer_surface->pending;
-	arrangelayers(client_monitor(layersurface,NULL));
+	arrangelayers(WRAP_MONITOR(m));
 	wlr_layer_surface->current = old_state;
 }
 
@@ -1049,8 +1050,9 @@ destroylayersurfacenotify(struct wl_listener *listener, void *data)
 
   wl_list_remove(&layersurface->link);
   wlr_scene_node_destroy(CLIENT_SCENE(layersurface));
-  if (client_monitor(layersurface,NULL))
-    arrangelayers(client_monitor(layersurface,NULL));
+  Monitor *m=client_monitor(layersurface,NULL);
+  if (m)
+    arrangelayers(WRAP_MONITOR(m));
 }
 
 Monitor *
@@ -2226,6 +2228,7 @@ unmapnotify(struct wl_listener *listener, void *data)
 }
 
 void updatemon(Monitor *m, struct wlr_output_configuration_v1 *config) {
+  SCM sm=WRAP_MONITOR(m);
   struct wlr_output_configuration_head_v1 *config_head =
     wlr_output_configuration_head_v1_create(config, MONITOR_WLR_OUTPUT(m));
 
@@ -2239,7 +2242,7 @@ void updatemon(Monitor *m, struct wlr_output_configuration_v1 *config) {
   wlr_scene_output_set_position(m->scene_output, (MONITOR_AREA(m))->x,
                                 (MONITOR_AREA(m))->y);
   /* Calculate the effective monitor geometry to use for clients */
-  arrangelayers(m);
+  arrangelayers(sm);
   /* Don't move clients to the left output when plugging monitors */
   arrange(m);
 
