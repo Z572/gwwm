@@ -1968,15 +1968,30 @@ SCM_DEFINE (gwwm_setup_scene ,"%gwwm-setup-scene",0,0,0, (),"") {
   return SCM_UNSPECIFIED;
 }
 
+SCM_DEFINE (gwwm_setup_signal,"%gwwm-setup-signal",0,0,0,(),"")
+{
+  sigchld(0);
+  signal(SIGINT, quitsignal);
+  signal(SIGTERM, quitsignal);
+  return SCM_UNSPECIFIED;
+}
+SCM_DEFINE (gwwm_setup_othres,"%gwwm-setup-othres",0,0,0,(),"")
+{
+  	wlr_export_dmabuf_manager_v1_create(gwwm_display(NULL));
+	wlr_screencopy_manager_v1_create(gwwm_display(NULL));
+	wlr_data_control_manager_v1_create(gwwm_display(NULL));
+	wlr_data_device_manager_create(gwwm_display(NULL));
+	wlr_gamma_control_manager_v1_create(gwwm_display(NULL));
+	wlr_primary_selection_v1_device_manager_create(gwwm_display(NULL));
+	wlr_viewporter_create(gwwm_display(NULL));
+    return SCM_UNSPECIFIED;
+}
 SCM_DEFINE (gwwm_setup,"%gwwm-setup" ,0,0,0,(),"")
 {
     /* The Wayland display is managed by libwayland. It handles accepting
 	 * clients from the Unix socket, manging Wayland globals, and so on. */
 
 	/* Set up signal handlers */
-	sigchld(0);
-	signal(SIGINT, quitsignal);
-	signal(SIGTERM, quitsignal);
 
 	/* The backend is a wlroots feature which abstracts the underlying input and
 	 * output hardware. The autocreate option will choose the most suitable
@@ -1993,13 +2008,6 @@ SCM_DEFINE (gwwm_setup,"%gwwm-setup" ,0,0,0,(),"")
 	 * to dig your fingers in and play with their behavior if you want. Note that
 	 * the clients cannot set the selection directly without compositor approval,
 	 * see the setsel() function. */
-	wlr_export_dmabuf_manager_v1_create(gwwm_display(NULL));
-	wlr_screencopy_manager_v1_create(gwwm_display(NULL));
-	wlr_data_control_manager_v1_create(gwwm_display(NULL));
-	wlr_data_device_manager_create(gwwm_display(NULL));
-	wlr_gamma_control_manager_v1_create(gwwm_display(NULL));
-	wlr_primary_selection_v1_device_manager_create(gwwm_display(NULL));
-	wlr_viewporter_create(gwwm_display(NULL));
 
 	/* Initializes the interface used to implement urgency hints */
 	wl_signal_add(&gwwm_activation(NULL)->events.request_activate, &request_activate);

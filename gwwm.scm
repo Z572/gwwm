@@ -281,6 +281,8 @@ gwwm [options]
   (gwwm-setup)
   (gwwm-scene (wlr-scene-create))
   (%gwwm-setup-scene)
+  (%gwwm-setup-signal)
+  (%gwwm-setup-othres)
   (%gwwm-setup)
   (xwayland-setup)
   (config-setup)
