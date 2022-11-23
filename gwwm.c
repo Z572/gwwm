@@ -1735,9 +1735,10 @@ void
 rendermon(struct wl_listener *listener, void *data)
 {
   /* PRINT_FUNCTION */
-	/* This function is called every time an output is ready to display a frame,
-	 * generally at the output's refresh rate (e.g. 60Hz). */
-	Monitor *m = monitor_from_listener(listener);;
+  struct wlr_output *wlr_output=data;
+  /* This function is called every time an output is ready to display a frame,
+   * generally at the output's refresh rate (e.g. 60Hz). */
+  Monitor *m = wlr_output->data;
 	Client *c;
 	int skip = 0;
 	struct timespec now;
