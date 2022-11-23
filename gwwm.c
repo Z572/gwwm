@@ -690,9 +690,10 @@ void monitor_add_listen(Monitor *m, struct wl_signal *signal,
   wl_signal_add(signal, listener);
 }
 
-void cleanupmon(struct wl_listener *listener, void *data) {
-  PRINT_FUNCTION
-    struct wlr_output *wlr_output = data;
+void cleanupmon(struct wl_listener *listener, void *data)
+{
+  PRINT_FUNCTION;
+  struct wlr_output *wlr_output = data;
   Monitor *m = wlr_output->data;
   int nmons, i = 0;
 
@@ -708,17 +709,8 @@ void cleanupmon(struct wl_listener *listener, void *data) {
     while (!(MONITOR_WLR_OUTPUT(current_monitor()))->enabled && i++ < nmons);
 
   focusclient(focustop(current_monitor()), 1);
-  closemon(m);
-  logout_monitor(m);
-
-  PRINT_FUNCTION;
-}
-
-void
-closemon(Monitor *m)
-{
-  PRINT_FUNCTION;
   scm_call_1(REFP("gwwm", "closemon"),WRAP_MONITOR(m));
+  logout_monitor(m);
   PRINT_FUNCTION;
 }
 
