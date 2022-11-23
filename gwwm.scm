@@ -30,6 +30,7 @@
   #:use-module (wlroots types output)
   #:use-module (wlroots types seat)
   #:use-module (wlroots types compositor)
+  #:use-module (wlroots types xdg-activation)
   #:use-module (gwwm configuration)
   #:use-module (gwwm config)
   #:use-module (gwwm hooks)
@@ -68,6 +69,7 @@
 (define-dy gwwm-xcursor-manager manager)
 (define-dy gwwm-compositor compositor)
 (define-dy gwwm-xwayland xwayland)
+(define-dy gwwm-activation activation)
 
 (define (init-global-keybind)
   (keymap-global-set (kbd (s S space))
@@ -187,7 +189,8 @@ gwwm [options]
   (gwwm-xcursor-manager (wlr-xcursor-manager-create #f 24))
   (gwwm-seat (wlr-seat-create (gwwm-display) "seat0"))
   (gwwm-xdg-shell (wlr-xdg-shell-create (gwwm-display)))
-  (gwwm-compositor (wlr-compositor-create (gwwm-display) (gwwm-renderer))))
+  (gwwm-compositor (wlr-compositor-create (gwwm-display) (gwwm-renderer)))
+  (gwwm-activation (wlr-xdg-activation-v1-create (gwwm-display))))
 (define (xwayland-setup)
   (let ((x (gwwm-xwayland (wlr-xwayland-create (gwwm-display) (gwwm-compositor) #t))))
     (if x

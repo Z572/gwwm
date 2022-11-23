@@ -96,7 +96,6 @@ Monitor* monitor_from_listener(struct wl_listener *listener) {
  const char broken[] = "broken";
  struct wlr_surface *exclusive_focus;
  struct wlr_scene_node *layers[NUM_LAYERS];
- struct wlr_xdg_activation_v1 *activation;
  struct wl_list clients; /* tiling order */
  struct wlr_idle *idle;
  struct wlr_idle_inhibit_manager_v1 *idle_inhibit_mgr;
@@ -185,6 +184,24 @@ define_wlr_v("wlroots types scene",scene);
 define_wlr_v("wlroots types compositor",compositor);
 define_wlr_v("wlroots xwayland",xwayland);
 #undef define_wlr_v
+struct wlr_xdg_activation_v1 *gwwm_activation(struct wlr_xdg_activation_v1 *var) {
+  SCM b;
+  const char *m = "wlroots types xdg-activation";
+  SCM v=scm_c_public_ref("gwwm", "gwwm-activation");
+  if (var) {
+    b = (scm_call_1(v,
+                    ((scm_call_1((scm_c_public_ref(m, "wrap-wlr-activation")),
+                                 (scm_from_pointer(var, ((void *)0))))))));
+    return var;
+  } else {
+    b = (scm_call_0(v));
+    return scm_is_false(b)
+               ? NULL
+               : ((struct wlr_xdg_activation_v1 *)((scm_to_pointer(
+                     (scm_call_1((scm_c_public_ref(m, "unwrap-wlr-xdg-activation-v1")),
+                                 b))))));
+  }
+};
 struct wlr_xdg_shell *gwwm_xdg_shell(struct wlr_xdg_shell *var) {
   SCM b;
   const char *m = "wlroots types xdg-shell";
@@ -1984,8 +2001,7 @@ SCM_DEFINE (gwwm_setup,"%gwwm-setup" ,0,0,0,(),"")
 	wlr_viewporter_create(gwwm_display(NULL));
 
 	/* Initializes the interface used to implement urgency hints */
-	activation = wlr_xdg_activation_v1_create(gwwm_display(NULL));
-	wl_signal_add(&activation->events.request_activate, &request_activate);
+	wl_signal_add(&gwwm_activation(NULL)->events.request_activate, &request_activate);
 
 	/* Creates an output layout, which a wlroots utility for working with an
 	 * arrangement of screens in a physical layout. */
