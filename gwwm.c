@@ -881,6 +881,25 @@ logout_monitor(Monitor *m){
 }
 
 void
+init_monitor(struct wlr_output *wlr_output){
+  const MonitorRule *r;
+  Monitor *m = wlr_output->data;
+  for (size_t i = 0; i < LENGTH(m->layers); i++)
+		wl_list_init(&m->layers[i]);
+	m->tagset[0] = m->tagset[1] = 2;
+	for (r = monrules; r < END(monrules); r++) {
+		if (!r->name || strstr(wlr_output->name, r->name)) {
+			m->mfact = r->mfact;
+			m->nmaster = r->nmaster;
+			wlr_output_set_scale(wlr_output, r->scale);
+			wlr_xcursor_manager_load(gwwm_xcursor_manager(NULL), r->scale);
+			wlr_output_set_transform(wlr_output, r->rr);
+			break;
+		}
+	}
+}
+
+void
 createmon(struct wl_listener *listener, void *data)
 {
   PRINT_FUNCTION;
@@ -895,19 +914,7 @@ createmon(struct wl_listener *listener, void *data)
 	wlr_output_init_render(wlr_output, gwwm_allocator(NULL), gwwm_renderer(NULL));
 
 	/* Initialize monitor state using configured rules */
-	for (size_t i = 0; i < LENGTH(m->layers); i++)
-		wl_list_init(&m->layers[i]);
-	m->tagset[0] = m->tagset[1] = 2;
-	for (r = monrules; r < END(monrules); r++) {
-		if (!r->name || strstr(wlr_output->name, r->name)) {
-			m->mfact = r->mfact;
-			m->nmaster = r->nmaster;
-			wlr_output_set_scale(wlr_output, r->scale);
-			wlr_xcursor_manager_load(gwwm_xcursor_manager(NULL), r->scale);
-			wlr_output_set_transform(wlr_output, r->rr);
-			break;
-		}
-	}
+	init_monitor(wlr_output);
 	/* The mode is a tuple of (width, height, refresh rate), and each
 	 * monitor supports only a specific set of modes. We just pick the
 	 * monitor's preferred mode; a more sophisticated compositor would let
