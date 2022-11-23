@@ -164,12 +164,13 @@ SCM_DEFINE_PUBLIC(gwwm_visibleon, "visibleon", 2, 0, 0, (SCM c, SCM m), "")
   {                                                                 \
     SCM b;                                                          \
     const char* m=module;                                           \
+    SCM v=scm_c_public_ref("gwwm", "gwwm-" #v);                     \
     if (var) {                                                      \
-      b=REF_CALL_1("gwwm", "gwwm-" #v,                              \
+      b=scm_call_1(v,                              \
                    (REF_CALL_1(m, "wrap-wlr-" #v, FROM_P(var))));   \
       return var;                                                   \
     } else {                                                        \
-      b=REF_CALL_0("gwwm", "gwwm-" #v);                             \
+      b=scm_call_0(v);                             \
       return scm_is_false(b) ? NULL :                               \
         ((struct wlr_ ##v *)                                        \
          (TO_P(REF_CALL_1(m, "unwrap-wlr-" #v, b))));               \
