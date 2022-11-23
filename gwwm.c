@@ -2066,12 +2066,6 @@ SCM_DEFINE (gwwm_setup,"%gwwm-setup" ,0,0,0,(),"")
 	 *
 	 * And more comments are sprinkled throughout the notify functions above.
 	 */
-	wl_signal_add(&cursor->events.motion, &cursor_motion);
-	wl_signal_add(&cursor->events.motion_absolute, &cursor_motion_absolute);
-	wl_signal_add(&cursor->events.button, &cursor_button);
-	wl_signal_add(&cursor->events.axis, &cursor_axis);
-	wl_signal_add(&cursor->events.frame, &cursor_frame);
-
 	/*
 	 * Configures a seat, which is a single "seat" at which a user sits and
 	 * operates the computer. This conceptually includes up to one keyboard,
@@ -2608,6 +2602,11 @@ void
 scm_init_gwwm(void)
 {
   scm_c_define("new-xwayland-surface", (WRAP_WL_LISTENER(&new_xwayland_surface)));
+  scm_c_define("cursor-axis", (WRAP_WL_LISTENER(&cursor_axis)));
+  scm_c_define("cursor-frame", (WRAP_WL_LISTENER(&cursor_frame)));
+  scm_c_define("cursor-motion", (WRAP_WL_LISTENER(&cursor_motion)));
+  scm_c_define("cursor-motion-absolute", (WRAP_WL_LISTENER(&cursor_motion_absolute)));
+  scm_c_define("cursor-button", (WRAP_WL_LISTENER(&cursor_button)));
 #ifndef SCM_MAGIC_SNARFER
 #include "gwwm.x"
 #endif
