@@ -27,16 +27,16 @@ typedef struct Client Client;
 typedef struct Monitor Monitor;
 /* enums */
 enum { CurNormal, CurMove, CurResize }; /* cursor */
-enum {
-  LyrBg,
-  LyrBottom,
-  LyrTop,
-  LyrOverlay,
-  LyrTile,
-  LyrFloat,
-  LyrNoFocus,
-  NUM_LAYERS
-}; /* scene layers */
+/* enum { */
+/*   LyrBg, */
+/*   LyrBottom, */
+/*   LyrTop, */
+/*   LyrOverlay, */
+/*   LyrTile, */
+/*   LyrFloat, */
+/*   LyrNoFocus, */
+/*   NUM_LAYERS */
+/* }; /\* scene layers *\/ */
 #ifdef XWAYLAND
 enum {
   NetWMWindowTypeDialog,

@@ -10,6 +10,7 @@
 #include "libguile/numbers.h"
 #include "libguile/scm.h"
 #include "libguile/symbols.h"
+#include "wlr-layer-shell-unstable-v1-protocol.h"
 #include "wlr/util/box.h"
 #include <stdbool.h>
 #include <stdint.h>
@@ -95,7 +96,6 @@ Monitor* monitor_from_listener(struct wl_listener *listener) {
 }
  const char broken[] = "broken";
  struct wlr_surface *exclusive_focus;
- struct wlr_scene_node *layers[NUM_LAYERS];
  struct wl_list clients; /* tiling order */
  struct wlr_idle *idle;
  struct wlr_idle_inhibit_manager_v1 *idle_inhibit_mgr;
@@ -204,6 +204,29 @@ struct wlr_xdg_activation_v1 *gwwm_activation(struct wlr_xdg_activation_v1 *var)
                                  b))))));
   }
 };
+
+static struct wlr_scene_node *return_scene_node(enum zwlr_layer_shell_v1_layer n){
+  char* s="";
+  switch (n){
+  case ZWLR_LAYER_SHELL_V1_LAYER_BACKGROUND:
+    s="background-layer";
+    break;
+  case ZWLR_LAYER_SHELL_V1_LAYER_BOTTOM:
+    s="bottom-layer";
+    break;
+  case ZWLR_LAYER_SHELL_V1_LAYER_TOP:
+    s="top-layer";
+    break;
+  case ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY:
+    s="overlay-layer";
+    break;
+  default:
+    send_log(ERROR, "UNKNOW!!! enum zwlr_layer_shell_v1_layer!");
+    exit(1);
+  }
+  return UNWRAP_WLR_SCENE_NODE(REF("gwwm",s));
+}
+
 struct wlr_xdg_shell *gwwm_xdg_shell(struct wlr_xdg_shell *var) {
   SCM b;
   const char *m = "wlroots types xdg-shell";
@@ -370,7 +393,10 @@ applyrules(Client *c)
 					mon = m;
 		}
 	}
-	wlr_scene_node_reparent(CLIENT_SCENE(c), layers[CLIENT_IS_FLOATING(c) ? LyrFloat : LyrTile]);
+	wlr_scene_node_reparent(CLIENT_SCENE(c),
+                            UNWRAP_WLR_SCENE_NODE(REF("gwwm",CLIENT_IS_FLOATING(c)
+                                                      ? "float-layer"
+                                                      : "tile-layer")));
 	setmon(c, mon, newtags);
 }
 
@@ -396,17 +422,6 @@ SCM_DEFINE(gwwm_keyboard_input_device,"keyboard-input-device",1,0,0,(SCM k),""){
   Keyboard *kb=(UNWRAP_KEYBOARD(k));
   return WRAP_WLR_INPUT_DEVICE(kb->device);
 }
-
-SCM_DEFINE (gwwm_layer_list , "layer-list",0,0,0,(),"")
-#define FUNC_NAME s_gwwm_layer_list
-{
-  SCM a=scm_make_list(scm_from_int(0), SCM_UNSPECIFIED);
-  for (int i=0; i <LENGTH(layers); i++){
-    a=scm_cons(WRAP_WLR_SCENE_NODE(layers[i]),a);
-  }
-  return a;
-}
-#undef FUNC_NAME
 
 void arrange_l(Client *layersurface,Monitor *m, struct wlr_box *usable_area, int exclusive) {
 
@@ -725,9 +740,9 @@ commitlayersurfacenotify(struct wl_listener *listener, void *data)
 	if (!m)
 		return;
 
-	if (layers[wlr_layer_surface->current.layer] != CLIENT_SCENE(layersurface)) {
+	if (return_scene_node(wlr_layer_surface->current.layer) != CLIENT_SCENE(layersurface)) {
 		wlr_scene_node_reparent(CLIENT_SCENE(layersurface),
-				layers[wlr_layer_surface->current.layer]);
+                                return_scene_node(wlr_layer_surface->current.layer));
 		wl_list_remove(&layersurface->link);
 		wl_list_insert(&m->layers[wlr_layer_surface->current.layer],
 				&layersurface->link);
@@ -839,7 +854,7 @@ createlayersurface(struct wl_listener *listener, void *data)
 	wlr_layer_surface->data = WRAP_CLIENT(layersurface);
 
 	CLIENT_SET_SCENE(layersurface,(wlr_layer_surface->surface->data =
-			wlr_scene_subsurface_tree_create(layers[wlr_layer_surface->pending.layer],
+                                   wlr_scene_subsurface_tree_create(return_scene_node(wlr_layer_surface->pending.layer),
 			wlr_layer_surface->surface)));
 	CLIENT_SCENE(layersurface)->data = layersurface;
 	wl_list_insert(&m->layers[wlr_layer_surface->pending.layer],
@@ -949,7 +964,7 @@ void new_popup_notify(struct wl_listener *listener, void *data)
   struct wlr_scene_node *node=wlr_scene_xdg_surface_create(popup->parent->data,
                                                           popup->base);
   popup->base->surface->data=node;
-  wlr_scene_node_reparent(node,layers[LyrTop]);
+  wlr_scene_node_reparent(node,UNWRAP_WLR_SCENE_NODE(REF("gwwm","top-layer")));
   if (!l || !client_monitor(l,NULL))
     return;
   box = CLIENT_IS_LAYER_SHELL(WRAP_CLIENT(l))
@@ -1403,7 +1418,7 @@ void mapnotify(struct wl_listener *listener, void *data) {
                                     ? WRAP_WLR_XWAYLAND_SURFACE(data)
                                     : WRAP_WLR_XDG_SURFACE(data)));
   /* Create scene tree for this client and its border */
-  CLIENT_SET_SCENE(c, &wlr_scene_tree_create(layers[LyrTile])->node);
+  CLIENT_SET_SCENE(c, &wlr_scene_tree_create(UNWRAP_WLR_SCENE_NODE(REF("gwwm","tile-layer")))->node);
   struct wlr_surface *surface = (CLIENT_SURFACE(c));
   struct wlr_scene_node *scene_node = CLIENT_SCENE(c);
   /* struct wlr_scene */
@@ -1424,7 +1439,7 @@ void mapnotify(struct wl_listener *listener, void *data) {
   if (client_is_unmanaged(c)) {
     set_client_geom(c,(client_get_geometry(c)));
     /* Floating */
-    wlr_scene_node_reparent(scene_node, layers[LyrFloat]);
+    wlr_scene_node_reparent(scene_node, UNWRAP_WLR_SCENE_NODE(REF("gwwm","float-layer")));
     wlr_scene_node_set_position(scene_node, client_geom(c)->x + GWWM_BORDERPX(),
                                 client_geom(c)->y + GWWM_BORDERPX());
     return;
@@ -1446,7 +1461,7 @@ void mapnotify(struct wl_listener *listener, void *data) {
   if ((p = client_get_parent(c))) {
     /* Set the same monitor and tags than its parent */
     CLIENT_SET_FLOATING(c, 1);
-    wlr_scene_node_reparent(scene_node, layers[LyrFloat]);
+    wlr_scene_node_reparent(scene_node, UNWRAP_WLR_SCENE_NODE(REF("gwwm","float-layer")));
     /* TODO recheck if !p->mon is possible with wlroots 0.16.0 */
     setmon(c,
            (client_monitor(p, NULL)) ? client_monitor(p, NULL)
@@ -1839,9 +1854,10 @@ SCM_DEFINE (gwwm_setfloating ,"%setfloating" ,2,0,0,(SCM c,SCM floating),"")
   };
   (REF_CALL_2("gwwm client","client-set-floating!",c, floating));
   wlr_scene_node_reparent((UNWRAP_WLR_SCENE_NODE(REF_CALL_1("gwwm client" ,"client-scene",c))),
-                          layers[scm_to_bool(REF_CALL_1("gwwm client" ,"client-floating?",c))
-                                 ? LyrFloat
-                                 : LyrTile]);
+                          UNWRAP_WLR_SCENE_NODE(REF("gwwm",
+                                                    scm_to_bool(REF_CALL_1("gwwm client"
+                                                                           ,"client-floating?",c))
+                                                    ? "float-layer" : "tile-layer")));
   arrange(UNWRAP_MONITOR(REF_CALL_1("gwwm client","client-monitor",c)));
 
   return SCM_UNSPECIFIED;
@@ -1956,15 +1972,7 @@ setsel(struct wl_listener *listener, void *data)
 }
 
 SCM_DEFINE (gwwm_setup_scene ,"%gwwm-setup-scene",0,0,0, (),"") {
-  struct wlr_scene *scene=gwwm_scene(NULL);
-  layers[LyrBg] = &wlr_scene_tree_create(&scene->node)->node;
-  layers[LyrBottom] = &wlr_scene_tree_create(&scene->node)->node;
-  layers[LyrTile] = &wlr_scene_tree_create(&scene->node)->node;
-  layers[LyrFloat] = &wlr_scene_tree_create(&scene->node)->node;
-  layers[LyrTop] = &wlr_scene_tree_create(&scene->node)->node;
-  layers[LyrOverlay] = &wlr_scene_tree_create(&scene->node)->node;
-  layers[LyrNoFocus] = &wlr_scene_tree_create(&scene->node)->node;
-  wlr_scene_set_presentation(scene, wlr_presentation_create(gwwm_display(NULL),
+  wlr_scene_set_presentation(gwwm_scene(NULL), wlr_presentation_create(gwwm_display(NULL),
                                                             gwwm_backend(NULL)));
   return SCM_UNSPECIFIED;
 }
@@ -2116,7 +2124,7 @@ startdrag(struct wl_listener *listener, void *data)
 	if (!drag->icon)
 		return;
 
-	drag->icon->data = wlr_scene_subsurface_tree_create(layers[LyrNoFocus], drag->icon->surface);
+	drag->icon->data = wlr_scene_subsurface_tree_create(UNWRAP_WLR_SCENE_NODE(REF("gwwm","no-focus-layer")), drag->icon->surface);
 	motionnotify(0);
 	wl_signal_add(&drag->icon->events.destroy, &drag_icon_destroy);
 }
@@ -2400,11 +2408,15 @@ xytonode(double x, double y, struct wlr_surface **psurface,
 	struct wlr_surface *surface = NULL;
 	Client *c = NULL;
 	Client *l = NULL;
-	const int *layer;
-	int focus_order[] = { LyrOverlay, LyrTop, LyrFloat, LyrTile, LyrBottom, LyrBg };
+	char* focus_order[] = {"overlay-layer",
+                          "top-layer",
+                          "float-layer",
+                          "tile-layer",
+                          "bottom-layer",
+                          "background-layer"};
 
-	for (layer = focus_order; layer < END(focus_order); layer++) {
-		if ((node = wlr_scene_node_at(layers[*layer], x, y, nx, ny))) {
+	for (int layer = 0; layer < 5; layer++) {
+		if ((node = wlr_scene_node_at(UNWRAP_WLR_SCENE_NODE(REF("gwwm",focus_order[layer])), x, y, nx, ny))) {
 			if (node->type == WLR_SCENE_NODE_SURFACE)
 				surface = wlr_scene_surface_from_node(node)->surface;
 			/* Walk the tree to find a node that knows the client */
