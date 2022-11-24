@@ -201,7 +201,7 @@ gwwm [options]
     (if x
         (begin
           (wl-signal-add (get-event-signal x 'ready)
-                         (make-wl-listener xwaylandready))
+                         xwaylandready)
           (wl-signal-add (get-event-signal x 'new-surface)
                          new-xwayland-surface)
           (setenv "DISPLAY" (wlr-xwayland-display-name x)))
