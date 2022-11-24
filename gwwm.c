@@ -864,7 +864,7 @@ register_monitor(Monitor *m) {
 
 SCM
 find_monitor(Monitor *m) {
-  return m->scm ? m->scm : SCM_BOOL_F;
+  return (m && m->scm) ? m->scm : SCM_BOOL_F;
 }
 
 void
