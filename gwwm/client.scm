@@ -50,6 +50,7 @@
             client-resize
             client-set-resizing!
             client-title
+            client-appid
             client-scene
             client-set-scene!
             client-monitor
@@ -65,6 +66,7 @@
             %clients
             <gwwm-client>
             <gwwm-x-client>
+            <gwwm-xdg-client>
             <gwwm-layer-client>))
 
 (define %fstack
@@ -98,12 +100,9 @@
 
 (define-class <gwwm-client> (<gwwm-base-client>)
   (appid #:allocation #:virtual
-         #:slot-ref (lambda (c)
-                      (wlr-xdg-toplevel-appid
-                       (wlr-xdg-surface-toplevel
-                        (client-super-surface c))))
+         #:slot-ref (cut client-get-appid <>)
          #:slot-set! (const #f)
-         #:getter client-get-appid)
+         #:getter client-appid)
   (floating? #:init-value #f
              #:accessor client-floating?)
   (fullscreen? #:init-value #f
@@ -132,8 +131,9 @@
 (define-class <gwwm-layer-client> (<gwwm-base-client>))
 
 (define-class <gwwm-x-client> (<gwwm-client>))
+(define-class <gwwm-xdg-client> (<gwwm-client>))
 
-(define-method (client-mapped? (c <gwwm-client>))
+(define-method (client-mapped? (c <gwwm-xdg-client>))
   (wlr-xdg-surface-mapped? (client-super-surface c)))
 (define-method (client-mapped? (c <gwwm-x-client>))
   (wlr-xwayland-surface-mapped? (client-super-surface c)))
@@ -144,7 +144,7 @@
 ;; (define (client-set-border-width! c width)
 ;;   (set! (client-border-width c) (max 0 width)))
 
-(define-method (describe (c <gwwm-client>))
+(define-method (describe (c <gwwm-base-client>))
   (if (client-alive? c)
       (next-method)
       (begin (format #t (G_ "~S is a *deaded* client.~%") c)
@@ -159,10 +159,10 @@
 
 (define-method (client-do-set-fullscreen (c <gwwm-client>))
   (client-do-set-fullscreen c (client-fullscreen? c)))
-(define-method (client-do-set-fullscreen (client <gwwm-client>) fullscreen?)
+(define-method (client-do-set-fullscreen (client <gwwm-xdg-client>) fullscreen?)
   (wlr-xdg-toplevel-set-fullscreen (client-super-surface client) fullscreen?))
 
-(define-method (client-super-surface (c <gwwm-client>))
+(define-method (client-super-surface (c <gwwm-xdg-client>))
   (and-let* ((base (client-surface c)))
     (wlr-xdg-surface-from-wlr-surface base)))
 (define-method (client-super-surface (c <gwwm-x-client>))
@@ -195,38 +195,42 @@
               (client-get-appid client)
               "*deaded*")))
 
+(define-method (client-get-appid (c <gwwm-xdg-client>))
+  (or (and=> (client-super-surface c)
+             (lambda (o)
+               (wlr-xdg-toplevel-appid
+                (wlr-xdg-surface-toplevel
+                 o))))
+      "*unknow*"))
+
 (define-method (client-get-appid (c <gwwm-x-client>))
   (or (and=> (client-super-surface c)
              wlr-xwayland-surface-class)
       "*unknow*"))
 
-(define-method (client-get-title (c <gwwm-client>))
+(define-method (client-get-title (c <gwwm-xdg-client>))
   (wlr-xdg-toplevel-title
    (wlr-xdg-surface-toplevel
     (client-super-surface c))))
+
 (define-method (client-get-title (c <gwwm-x-client>))
   (wlr-xwayland-surface-title
    (client-super-surface c)))
 
 (define-method (logout-client (c <gwwm-base-client>))
-  (remove-listeners c))
-(define-method (logout-client (c <gwwm-client>))
-  (next-method)
-  (set! (.data c) 0))
-(define-method (logout-client (c <gwwm-layer-client>))
-  (next-method)
+  (remove-listeners c)
   (set! (.data c) 0))
 
-(define-method (client-send-close (c <gwwm-client>))
+(define-method (client-send-close (c <gwwm-xdg-client>))
   (wlr-xdg-toplevel-send-close (client-super-surface c)))
 (define-method (client-send-close (c <gwwm-x-client>))
   (wlr-xwayland-surface-close (client-super-surface c)))
 
-(define-method (equal? (o1 <gwwm-client>)
-                       (o2 <gwwm-client>))
+(define-method (equal? (o1 <gwwm-base-client>)
+                       (o2 <gwwm-base-client>))
   (client=? o1 o2))
 
-(define-method (client=? (c1 <gwwm-client>) (c2 <gwwm-client>))
+(define-method (client=? (c1 <gwwm-base-client>) (c2 <gwwm-base-client>))
   (equal? (.data c1) (.data c2)))
 
 (define (client-is-x11? client)
@@ -248,7 +252,7 @@
             c
             #f))))
 
-(define-method (client-set-resizing! (c <gwwm-client>) resizing?)
+(define-method (client-set-resizing! (c <gwwm-xdg-client>) resizing?)
   (wlr-xdg-toplevel-set-resizing (client-super-surface c) resizing?))
 (define-method (client-set-resizing! (c <gwwm-x-client>) resizing?)
   *unspecified*)
@@ -260,7 +264,7 @@
 (define-method (client-set-tiled c (edges <list>))
   (client-set-tiled c (apply logior edges)))
 
-(define-method (client-set-tiled (c <gwwm-client>) (edges <integer>))
+(define-method (client-set-tiled (c <gwwm-xdg-client>) (edges <integer>))
   (wlr-xdg-toplevel-set-tiled
    (client-super-surface c)
    edges))
@@ -268,7 +272,7 @@
 (define-method (client-set-tiled (c <gwwm-x-client>) edges)
   *unspecified*)
 
-(define-method (client-get-geometry (c <gwwm-client>))
+(define-method (client-get-geometry (c <gwwm-xdg-client>))
   (wlr-xdg-surface-get-geometry (client-super-surface c)))
 (define-method (client-get-geometry (c <gwwm-x-client>))
   (let ((s (client-super-surface c)))

@@ -40,13 +40,13 @@ void client_add_listen(void *c, struct wl_signal *signal,
 
 void register_client(Client *c, enum gwwm_client_type type) {
   PRINT_FUNCTION;
-  char *tp = "<gwwm-client>";
+  char *tp = "<gwwm-xdg-client>";
   switch (type) {
   case GWWM_LAYER_CLIENT_TYPE:
     tp = "<gwwm-layer-client>";
     break;
   case GWWM_XDG_CLIENT_TYPE:
-    tp = "<gwwm-client>";
+    tp = "<gwwm-xdg-client>";
     break;
   case GWWM_X_CLIENT_TYPE:
     tp = "<gwwm-x-client>";
