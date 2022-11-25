@@ -1253,12 +1253,10 @@ void
 fullscreennotify(struct wl_listener *listener, void *data)
 {
   PRINT_FUNCTION;
-  Client *c = client_from_listener(listener); /* wl_container_of(listener, c, fullscreen); */
+  Client *c = client_from_listener(listener);
   scm_c_run_hook(REF("gwwm hooks", "fullscreen-event-hook"),
                  scm_list_2(WRAP_CLIENT(c),
-                            client_is_x11(c)
-                            ? WRAP_WLR_XWAYLAND_SURFACE(data)
-                            : WRAP_XDG_TOPLEVEL_SET_FULLSCREEN_EVENT(data) ));
+                            WRAP_XDG_TOPLEVEL_SET_FULLSCREEN_EVENT(data)));
 }
 void
 fullscreennotify_x11(struct wl_listener *listener, void *data)
