@@ -1884,48 +1884,53 @@ SCM_DEFINE (gwwm_setfloating ,"%setfloating" ,2,0,0,(SCM c,SCM floating),"")
 #undef FUNC_NAME
 
 void
+setfullscreenbg(Client *c,bool fullscreen)
+{
+  if (fullscreen)
+    {
+      if (!client_fullscreen_bg(c,NULL))
+        {
+          client_fullscreen_bg(c,wlr_scene_rect_create
+                               (CLIENT_SCENE(c),
+                                client_geom(c)->width,
+                                client_geom(c)->height,
+                                GWWM_FULLSCREEN_BG()));
+
+          wlr_scene_node_lower_to_bottom(&client_fullscreen_bg(c,NULL)->node);
+        }
+    } else {
+    if (client_fullscreen_bg(c,NULL)) {
+      wlr_scene_node_destroy(&client_fullscreen_bg(c,NULL)->node);
+      scm_slot_set_x(WRAP_CLIENT(c),scm_from_utf8_symbol("fullscreen-bg"),SCM_BOOL_F);
+    }
+  }
+}
+
+void
 setfullscreen(Client *c, int fullscreen)
 {
   PRINT_FUNCTION;
   SCM sc=WRAP_CLIENT(c);
   CLIENT_SET_FULLSCREEN(c,fullscreen);
   CLIENT_SET_BW(c,(fullscreen ? 0 : GWWM_BORDERPX())) ;
-	client_set_fullscreen(c, fullscreen);
+  client_set_fullscreen(c, fullscreen);
 
-	if (fullscreen) {
-      scm_slot_set_x(sc, scm_from_utf8_symbol("prev-geom"),
-                     REF_CALL_1("oop goops","shallow-clone",WRAP_WLR_BOX(client_geom(c))));
-		resize(c, *MONITOR_AREA(client_monitor(c,NULL)), 0);
-		/* The xdg-protocol specifies:
-		 *
-		 * If the fullscreened surface is not opaque, the compositor must make
-		 * sure that other screen content not part of the same surface tree (made
-		 * up of subsurfaces, popups or similarly coupled surfaces) are not
-		 * visible below the fullscreened surface.
-		 *
-		 * For brevity we set a black background for all clients
-		 */
-		if (!client_fullscreen_bg(c,NULL)) {
-          client_fullscreen_bg(c,wlr_scene_rect_create
-              (CLIENT_SCENE(c),
-               client_geom(c)->width,
-               client_geom(c)->height,
-               GWWM_FULLSCREEN_BG()));
+  if (fullscreen) {
+    scm_slot_set_x(sc, scm_from_utf8_symbol("prev-geom"),
+                   REF_CALL_1("oop goops","shallow-clone",WRAP_WLR_BOX(client_geom(c))));
+    resize(c, *MONITOR_AREA(client_monitor(c,NULL)), 0);
 
-          wlr_scene_node_lower_to_bottom(&client_fullscreen_bg(c,NULL)->node);
-		}
-	} else {
-		/* restore previous size instead of arrange for floating windows since
-		 * client positions are set by the user and cannot be recalculated */
-      REF_CALL_3("gwwm client", "client-resize", sc, scm_slot_ref(sc, scm_from_utf8_symbol("prev-geom")),
-             scm_from_bool(0));
-      /* resize(c, *((struct wlr_box*)(scm_slot_ref(sc, scm_from_utf8_symbol("prev-geom")))), 0); */
-		if (client_fullscreen_bg(c,NULL)) {
-			wlr_scene_node_destroy(&client_fullscreen_bg(c,NULL)->node);
-            scm_slot_set_x(WRAP_CLIENT(c),scm_from_utf8_symbol("fullscreen-bg"),SCM_BOOL_F);
-		}
-	}
-	arrange(client_monitor(c,NULL));
+
+  } else {
+    /* restore previous size instead of arrange for floating windows since
+     * client positions are set by the user and cannot be recalculated */
+    REF_CALL_3("gwwm client", "client-resize", sc, scm_slot_ref(sc, scm_from_utf8_symbol("prev-geom")),
+               scm_from_bool(false));
+    /* resize(c, *((struct wlr_box*)(scm_slot_ref(sc, scm_from_utf8_symbol("prev-geom")))), 0); */
+
+  }
+  setfullscreenbg(c ,fullscreen);
+  arrange(client_monitor(c,NULL));
 }
 
 void
