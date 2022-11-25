@@ -205,6 +205,25 @@ struct wlr_xdg_activation_v1 *gwwm_activation(struct wlr_xdg_activation_v1 *var)
   }
 };
 
+struct wlr_layer_shell_v1 *gwwm_layer_shell(struct wlr_layer_shell_v1 *var) {
+  SCM b;
+  const char *m = "wlroots types layer-shell";
+  SCM v=scm_c_public_ref("gwwm", "gwwm-layer-shell");
+  if (var) {
+    b = (scm_call_1(v,
+                    ((scm_call_1((scm_c_public_ref(m, "wrap-wlr-layer-shell")),
+                                 (scm_from_pointer(var, ((void *)0))))))));
+    return var;
+  } else {
+    b = (scm_call_0(v));
+    return scm_is_false(b)
+               ? NULL
+               : ((struct wlr_layer_shell_v1 *)((scm_to_pointer(
+                     (scm_call_1((scm_c_public_ref(m, "unwrap-wlr-layer-shell")),
+                                 b))))));
+  }
+};
+
 static struct wlr_scene_node *return_scene_node(enum zwlr_layer_shell_v1_layer n){
   char* s="";
   switch (n){
@@ -2044,8 +2063,7 @@ SCM_DEFINE (gwwm_setup,"%gwwm-setup" ,0,0,0,(),"")
 	idle_inhibit_mgr = wlr_idle_inhibit_v1_create(gwwm_display(NULL));
 	wl_signal_add(&idle_inhibit_mgr->events.new_inhibitor, &idle_inhibitor_create);
 
-	layer_shell = wlr_layer_shell_v1_create(gwwm_display(NULL));
-	wl_signal_add(&layer_shell->events.new_surface, &new_layer_shell_surface);
+	wl_signal_add(&gwwm_layer_shell(NULL)->events.new_surface, &new_layer_shell_surface);
 
 	wl_signal_add(&gwwm_xdg_shell(NULL)->events.new_surface, &new_xdg_surface);
 
