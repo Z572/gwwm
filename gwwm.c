@@ -1463,7 +1463,7 @@ void mapnotify(struct wl_listener *listener, void *data) {
                                 client_geom(c)->y + GWWM_BORDERPX());
     return;
   }
-  client_init_border(c);
+  (scm_call_1(REFP("gwwm client","client-init-border"), WRAP_CLIENT(c)));
   /* Initialize client geometry with room for border */
   client_set_tiled(c, WLR_EDGE_TOP | WLR_EDGE_BOTTOM | WLR_EDGE_LEFT |
                           WLR_EDGE_RIGHT);

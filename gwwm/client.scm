@@ -20,6 +20,7 @@
   #:use-module (gwwm i18n)
   #:use-module (srfi srfi-26)
   #:use-module (srfi srfi-17)
+  #:use-module (gwwm utils srfi-215)
   #:use-module (oop goops)
   #:use-module (oop goops describe)
 
@@ -140,9 +141,14 @@
 (define client-is-fullscreen? client-fullscreen?)
 (define client-set-border-width! (setter client-border-width))
 
-
-;; (define (client-set-border-width! c width)
-;;   (set! (client-border-width c) (max 0 width)))
+(define-method (client-init-border (c <gwwm-client>))
+  (send-log DEBUG (G_ "client init border") 'c c)
+  (define scene (client-scene c))
+  (define (create)
+    (let ((rect (wlr-scene-rect-create scene 0 0 (make-rgba-color 0 0 0 0))))
+      ;;(set! (.data (.node rect)))
+      rect))
+  (slot-set! c 'borders (list (create) (create) (create) (create))))
 
 (define-method (describe (c <gwwm-base-client>))
   (if (client-alive? c)

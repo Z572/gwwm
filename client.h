@@ -111,7 +111,6 @@ uint32_t client_resize_configure_serial(Client *c);
 void register_client(Client *c, enum gwwm_client_type type);
 void logout_client(Client *c);
 struct wlr_scene_rect *client_border_n(Client *c, int n);
-void client_init_border(Client *c);
 struct wlr_scene_rect *client_fullscreen_bg(void *c,
                                             struct wlr_scene_rect *change);
 bool client_is_x11(Client *c);

@@ -1,4 +1,5 @@
 #include "libguile/boolean.h"
+#include "libguile/eval.h"
 #include "libguile/goops.h"
 #include "libguile/list.h"
 #include "libguile/numbers.h"
@@ -71,20 +72,6 @@ logout_client(Client *c){
   scm_call_1(REFP("gwwm client","logout-client") ,sc);
   c->scm=NULL;
   /* free(c); */
-}
-
-void
-client_init_border(Client *c)
-{
-  PRINT_FUNCTION;
-  SCM list =scm_make_list(scm_from_int(0), SCM_UNSPECIFIED);
-  for (int i = 0; i < 4; i++) {
-    struct wlr_scene_rect *rect= wlr_scene_rect_create(CLIENT_SCENE(c), 0, 0, GWWM_BORDERCOLOR());
-    rect->node.data = c;
-    wlr_scene_rect_set_color(rect, GWWM_BORDERCOLOR());
-    list=scm_cons(WRAP_WLR_SCENE_RECT(rect), list);
-  }
-  scm_slot_set_x(WRAP_CLIENT(c), scm_from_utf8_symbol("borders"), list);
 }
 
 bool
