@@ -24,7 +24,7 @@ unwrap_client_1(SCM o)
     return NULL;
   }
   SCM a=scm_call_1(REFP("gwwm client",".data"),o);
-  if (scm_is_false(a)) {
+  if (scm_to_bool(scm_zero_p(a))) {
     scm_error(scm_misc_error_key,"unwrap-client","client is delated" ,SCM_EOL,SCM_EOL);
     return NULL;
   }
