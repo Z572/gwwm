@@ -1,4 +1,6 @@
 (define-module (gwwm client)
+  #:autoload (gwwm commands) (arrange)
+  #:autoload (gwwm config) (gwwm-borderpx)
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-2)
   #:use-module (wlroots types scene)
@@ -165,7 +167,22 @@
 
 (define-method (client-do-set-fullscreen (c <gwwm-client>))
   (client-do-set-fullscreen c (client-fullscreen? c)))
+(define-method (client-do-set-fullscreen (c <gwwm-client>) fullscreen?)
+  (let ((fullscreen? (->bool fullscreen?)))
+    (set! (client-fullscreen? c) fullscreen?)
+    (set! (client-border-width c) (if fullscreen? 0 (gwwm-borderpx)))
+    (if fullscreen?
+        (begin (set! (client-prev-geom c)
+                     (shallow-clone (client-geom c)))
+               (client-resize
+                c
+                (shallow-clone
+                 (monitor-area (client-monitor c))) #f))
+        (client-resize c (shallow-clone (client-prev-geom c))))
+    (client-set-fullscreen-bg c fullscreen?)
+    (arrange (client-monitor c))))
 (define-method (client-do-set-fullscreen (client <gwwm-xdg-client>) fullscreen?)
+  (next-method)
   (wlr-xdg-toplevel-set-fullscreen (client-super-surface client) fullscreen?))
 
 (define-method (client-super-surface (c <gwwm-xdg-client>))
@@ -179,15 +196,10 @@
     (wlr-layer-surface-v1-from-wlr-surface base)))
 
 (define-method (client-do-set-fullscreen (client <gwwm-x-client>) fullscreen?)
+  (next-method)
   (wlr-xwayland-surface-set-fullscreen (client-super-surface client)
                                        fullscreen?))
-;; (define-method (set-fullscreen (c <gwwm-client>) fullscreen?)
-;;   (let ((fullscreen? (->bool fullscreen?)))
-;;     (set! (client-fullscreen? c) fullscreen?)
-;;     (set! (client-border-width c) 1)
-;;     (client-do-set-fullscreen c )
-;;     (if fullscreen?
-;;         (begin (set! client-p)))))
+
 (define client-set-fullscreen! (setter client-fullscreen?))
 (define client-is-floating? client-floating?)
 (define client-set-floating! (setter client-floating?))

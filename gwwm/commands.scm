@@ -41,7 +41,8 @@
 
 (define* (togglefullscreen #:optional (client (current-client)))
   (when client
-    ((@@ (gwwm client) %setfullscreen) client (not (client-fullscreen? client)))))
+    ((@@ (gwwm client) client-do-set-fullscreen)
+     client (not (client-fullscreen? client)))))
 
 (define* (setlayout layout #:optional (m (current-monitor)))
   (unless (equal? (list-ref (monitor-layouts m) (monitor-sellt m)) layout)

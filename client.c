@@ -477,11 +477,29 @@ client_fullscreen_bg(void *c , struct wlr_scene_rect *change) {
   }
 }
 
-SCM_DEFINE (gwwm_setfullscreen, "%setfullscreen",2,0,0,(SCM c,SCM yes),"")
-#define FUNC_NAME s_gwwm_setfullscreen
+SCM_DEFINE (gwwm_setfullscreenbg,"client-set-fullscreen-bg",2,0,0,(SCM client,SCM fullscreen_p),"")
+#define FUNC_NAME s_gwwm_setfullscreenbg
 {
-  GWWM_ASSERT_CLIENT_OR_FALSE(c ,1);
-  setfullscreen(UNWRAP_CLIENT(c),scm_to_bool(yes));
+  Client *c=UNWRAP_CLIENT(client);
+  bool fullscreen=scm_to_bool(fullscreen_p);
+  if (fullscreen)
+    {
+      if (!client_fullscreen_bg(c,NULL))
+        {
+          client_fullscreen_bg(c,wlr_scene_rect_create
+                               (CLIENT_SCENE(c),
+                                client_geom(c)->width,
+                                client_geom(c)->height,
+                                GWWM_FULLSCREEN_BG()));
+
+          wlr_scene_node_lower_to_bottom(&client_fullscreen_bg(c,NULL)->node);
+        }
+    } else {
+    if (client_fullscreen_bg(c,NULL)) {
+      wlr_scene_node_destroy(&client_fullscreen_bg(c,NULL)->node);
+      scm_slot_set_x(WRAP_CLIENT(c),scm_from_utf8_symbol("fullscreen-bg"),SCM_BOOL_F);
+    }
+  }
   return SCM_UNSPECIFIED;
 }
 #undef FUNC_NAME
