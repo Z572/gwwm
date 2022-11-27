@@ -95,6 +95,8 @@
         #:setter client-set-type!)
   (monitor #:init-value #f
            #:accessor client-monitor)
+  (super-surface #:init-value #f
+                 #:accessor client-super-surface)
   (surface #:init-value #f
            #:accessor client-surface)
   (scene #:init-value #f
@@ -181,16 +183,6 @@
 (define-method (client-do-set-fullscreen (client <gwwm-xdg-client>) fullscreen?)
   (next-method)
   (wlr-xdg-toplevel-set-fullscreen (client-super-surface client) fullscreen?))
-
-(define-method (client-super-surface (c <gwwm-xdg-client>))
-  (and-let* ((base (client-surface c)))
-    (wlr-xdg-surface-from-wlr-surface base)))
-(define-method (client-super-surface (c <gwwm-x-client>))
-  (and-let* ((base (client-surface c)))
-    (wlr-xwayland-surface-from-wlr-surface base)))
-(define-method (client-super-surface (c <gwwm-layer-client>))
-  (and-let* ((base (client-surface c)))
-    (wlr-layer-surface-v1-from-wlr-surface base)))
 
 (define-method (client-do-set-fullscreen (client <gwwm-x-client>) fullscreen?)
   (next-method)

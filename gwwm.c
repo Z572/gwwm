@@ -862,6 +862,9 @@ createlayersurface(struct wl_listener *listener, void *data)
     register_client(layersurface,GWWM_LAYER_CLIENT_TYPE);
     CLIENT_SET_TYPE(layersurface ,"LayerShell");
     CLIENT_SET_SURFACE(layersurface,wlr_layer_surface->surface);
+    scm_slot_set_x(WRAP_CLIENT(layersurface),
+                   scm_from_utf8_symbol("super-surface"),
+                   WRAP_WLR_LAYER_SURFACE(wlr_layer_surface));
 	client_add_listen(layersurface,&wlr_layer_surface->surface->events.commit, commitlayersurfacenotify);
 	client_add_listen(layersurface,&wlr_layer_surface->surface->events.destroy, destroy_surface_notify);
 	client_add_listen(layersurface,&wlr_layer_surface->events.destroy,destroylayersurfacenotify);
@@ -1017,6 +1020,9 @@ createnotify(struct wl_listener *listener, void *data)
     xdg_surface->data = WRAP_CLIENT(c);
     CLIENT_SET_TYPE(c ,"XDGShell");
     CLIENT_SET_SURFACE(c ,xdg_surface->surface);
+    scm_slot_set_x(WRAP_CLIENT(c),
+                   scm_from_utf8_symbol("super-surface"),
+                   WRAP_WLR_XDG_SURFACE(xdg_surface));
     CLIENT_SET_BW(c,GWWM_BORDERPX());
     client_add_listen(c,&xdg_surface->events.map, mapnotify);
     client_add_listen(c,&xdg_surface->events.unmap, unmapnotify);
@@ -2509,6 +2515,9 @@ createnotifyx11(struct wl_listener *listener, void *data)
     /* CLIENT_SET_SURFACE(c,xwayland_surface->surface); */
     CLIENT_SET_TYPE(c ,xwayland_surface->override_redirect ? "X11Unmanaged" : "X11Managed");
 	CLIENT_SET_BW(c,GWWM_BORDERPX());
+    scm_slot_set_x(WRAP_CLIENT(c),
+                   scm_from_utf8_symbol("super-surface"),
+                   WRAP_WLR_XWAYLAND_SURFACE(xwayland_surface));
 	/* Listen to the various events it can emit */
 	client_add_listen(c,&xwayland_surface->events.map, mapnotify);
 	client_add_listen(c,&xwayland_surface->events.unmap, unmapnotify);
