@@ -115,10 +115,7 @@
   (urgent? #:init-value #f
            #:accessor client-urgent?)
   (title #:allocation #:virtual
-         #:slot-ref (lambda (c)
-                      (if (client-alive? c)
-                          (client-get-title c)
-                          "*deaded*"))
+         #:slot-ref (cut client-get-title <>)
          #:slot-set! (lambda _ #t)
          #:getter client-title)
   (tags #:init-value 0 #:accessor client-tags)
