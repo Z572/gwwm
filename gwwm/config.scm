@@ -17,7 +17,9 @@
             load-init-file
             init-file
             make-xkb-rules
+            gwwm-borderpx
             gwwm-default-bordercolor
+            gwwm-sloppyfocus?
             gwwm-default-focuscolor))
 
 (define (init-file)
@@ -91,7 +93,7 @@
           (apply make <gwwm-config> (append (list (symbol->keyword 'init) value) ...))))))
 
 (define (g-config) ((@@ (gwwm) gwwm-config)) )
-(define-public (gwwm-borderpx)
+(define (gwwm-borderpx)
   (config-borderpx (g-config)))
-(define-public (gwwm-sloppyfocus?)
+(define (gwwm-sloppyfocus?)
   (config-sloppyfocus? (g-config)))
