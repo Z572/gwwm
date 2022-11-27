@@ -361,27 +361,6 @@ client_set_fullscreen(Client *c, bool fullscreen)
              scm_from_bool(fullscreen));
 }
 
-uint32_t
-client_set_size(Client *c, uint32_t width, uint32_t height)
-{
-  /* SCM sc=WRAP_CLIENT(c); */
-#ifdef XWAYLAND
-	if (client_is_x11(c)) {
-		wlr_xwayland_surface_configure(wlr_xwayland_surface_from_wlr_surface(CLIENT_SURFACE(c)),
-                                       client_geom(c)->x,
-                                       client_geom(c)->y, width, height);
-		return 0;
-	}
-#endif
-	return wlr_xdg_toplevel_set_size(wlr_xdg_surface_from_wlr_surface(CLIENT_SURFACE(c)), width, height);
-}
-
-SCM_DEFINE(gwwm_client_set_size, "client-set-size", 3, 0, 0,
-           (SCM c, SCM width, SCM height), "") {
-  return scm_from_uint32(client_set_size(UNWRAP_CLIENT(c), scm_to_uint32(width),
-                                         scm_to_uint32(height)));
-}
-
 void
 client_set_tiled(Client *c, uint32_t edges)
 {

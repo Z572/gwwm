@@ -130,7 +130,6 @@ bool client_is_unmanaged(Client *c);
 void client_notify_enter(struct wlr_surface *s, struct wlr_keyboard *kb);
 void client_send_close(Client *c);
 void client_set_fullscreen(Client *c, bool fullscreen);
-uint32_t client_set_size(Client *c, uint32_t width, uint32_t height);
 void client_set_tiled(Client *c, uint32_t edges);
 struct wlr_surface *client_surface_at(Client *c, double cx, double cy,
                                       double *sx, double *sy);

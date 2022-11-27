@@ -315,6 +315,15 @@
           (if (<= (+ y height (* 2 bw)) y)
               (set! (box-x box) yy)))))))
 
+(define-method (client-set-size! (c <gwwm-xdg-client>) width height)
+  (wlr-xdg-toplevel-set-size (client-super-surface c) width height))
+(define-method (client-set-size! (c <gwwm-x-client>) width height)
+  (wlr-xwayland-surface-configure (client-super-surface c)
+                                  (box-x (client-geom c))
+                                  (box-y (client-geom c))
+                                  width height)
+  0)
+
 (define-method (client-resize-border (c <gwwm-client>))
   (let* ((bw (client-border-width c))
          (geom (client-geom c))
@@ -344,9 +353,9 @@
     (wlr-scene-node-set-position (client-scene-surface c) bw bw)
     (client-resize-border c)
     (set! (client-resize-configure-serial c)
-          (client-set-size c
-                           (- width (* 2 bw))
-                           (- heigh (* 2 bw))))))
+          (client-set-size! c
+                            (- width (* 2 bw))
+                            (- heigh (* 2 bw))))))
 
 (define-method (client-resize (c <gwwm-client>) geo)
   (client-resize c geo #f))
