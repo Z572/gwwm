@@ -22,6 +22,9 @@ you need
 - wlroots
 - xorg-server-xwayland
 
+optional:
+- [[https://www.nongnu.org/guile-cairo/][guile-cairo]]
+
 #+begin_src sh
   autoreconf -fiv
   ./configure

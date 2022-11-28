@@ -13,6 +13,7 @@
  (gnu packages)
  (gnu packages autotools)
  (gnu packages guile)
+ (gnu packages gtk)
  (gnu packages guile-xyz)
  (gnu packages ibus)
  (gnu packages pkg-config)
@@ -166,7 +167,7 @@
            bash-minimal
            texinfo))
     (inputs (list guile-3.0-latest wlroots-next xorg-server-xwayland
-
+                  guile-cairo
                   guile-bytestructures
                   (primitive-load
                    (string-append (dirname (dirname (current-filename)))
