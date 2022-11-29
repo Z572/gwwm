@@ -103,8 +103,6 @@ Monitor* monitor_from_listener(struct wl_listener *listener) {
  struct wlr_layer_shell_v1 *layer_shell;
  struct wlr_output_manager_v1 *output_mgr;
  struct wlr_virtual_keyboard_manager_v1 *virtual_keyboard_mgr;
- struct wl_listener new_xwayland_surface = {.notify = createnotifyx11};
- struct wl_listener xwayland_ready = {.notify = xwaylandready};
  Atom netatom[NetLast];
  Atom get_netatom_n(int n){
    return netatom[n];
@@ -121,11 +119,6 @@ SCM get_gwwm_config(void) {
 
 struct wl_list mons;
 
-struct wl_listener cursor_axis = {.notify = axisnotify};
-struct wl_listener cursor_button = {.notify = buttonpress};
-struct wl_listener cursor_frame = {.notify = cursorframe};
-struct wl_listener cursor_motion = {.notify = motionrelative};
-struct wl_listener cursor_motion_absolute = {.notify = motionabsolute};
 struct wl_listener idle_inhibitor_create = {.notify = createidleinhibitor};
 struct wl_listener idle_inhibitor_destroy = {.notify = destroyidleinhibitor};
 struct wl_listener layout_change = {.notify = updatemons};
@@ -2599,16 +2592,24 @@ SCM_DEFINE (config_setup,"%config-setup" ,0,0,0,(),"")
   return SCM_UNSPECIFIED;
 }
 
+
 void
 scm_init_gwwm(void)
 {
-  scm_c_define("new-xwayland-surface", (WRAP_WL_LISTENER(&new_xwayland_surface)));
-  scm_c_define("xwaylandready", (WRAP_WL_LISTENER(&xwayland_ready)));
-  scm_c_define("cursor-axis", (WRAP_WL_LISTENER(&cursor_axis)));
-  scm_c_define("cursor-frame", (WRAP_WL_LISTENER(&cursor_frame)));
-  scm_c_define("cursor-motion", (WRAP_WL_LISTENER(&cursor_motion)));
-  scm_c_define("cursor-motion-absolute", (WRAP_WL_LISTENER(&cursor_motion_absolute)));
-  scm_c_define("cursor-button", (WRAP_WL_LISTENER(&cursor_button)));
+#define define_listener(name,scm_name,func) struct wl_listener *name=   \
+    scm_gc_calloc(sizeof(struct wl_listener),                           \
+                  "wl_listener");                                       \
+  name->notify = func;                                                  \
+  scm_c_define(scm_name, (WRAP_WL_LISTENER(name)));
+  define_listener(new_xwayland_surface,"new-xwayland-surface",createnotifyx11);
+  define_listener(xwayland_ready,"xwaylandready",xwaylandready);
+  define_listener(cursor_axis,"cursor-axis",axisnotify);
+  define_listener(cursor_frame,"cursor-frame",cursorframe);
+  define_listener(cursor_motion, "cursor-motion", motionrelative);
+  define_listener(cursor_motion_absolute, "cursor-motion-absolute", motionabsolute);
+  define_listener(cursor_button,"cursor-button", buttonpress);
+#undef define_listener
+
 #ifndef SCM_MAGIC_SNARFER
 #include "gwwm.x"
 #endif
