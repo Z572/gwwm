@@ -14,6 +14,7 @@
             config-fullscreenbg
             config-cursor-normal-image
             config-repeat-rate
+            config-enable-xwayland?
             load-init-file
             init-file
             make-xkb-rules
@@ -78,7 +79,10 @@
               #:focuscolor #:accessor config-focuscolor)
   (repeat-rate #:init-value 25
                #:init-keyword #:repeat-rate
-               #:accessor config-repeat-rate))
+               #:accessor config-repeat-rate)
+  (enable-xwayland? #:init-value #f
+                    #:init-keyword #:enable-xwayland?
+                    #:accessor config-enable-xwayland?))
 
 (define-syntax-rule (gwwm (init value) ...)
   (let ((init-keywords
