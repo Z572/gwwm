@@ -97,7 +97,6 @@ Monitor* monitor_from_listener(struct wl_listener *listener) {
  const char broken[] = "broken";
  struct wlr_surface *exclusive_focus;
  struct wl_list clients; /* tiling order */
- struct wlr_idle *idle;
  struct wlr_idle_inhibit_manager_v1 *idle_inhibit_mgr;
  struct wlr_input_inhibit_manager *input_inhibit_mgr;
  struct wlr_layer_shell_v1 *layer_shell;
@@ -173,6 +172,7 @@ SCM_DEFINE_PUBLIC(gwwm_visibleon, "visibleon", 2, 0, 0, (SCM c, SCM m), "")
 define_wlr_v("wlroots backend",backend);
 define_wlr_v("wlroots render allocator",allocator);
 define_wlr_v("wlroots render renderer",renderer);
+define_wlr_v("wlroots types idle",idle);
 define_wlr_v("wlroots types cursor",cursor);
 define_wlr_v("wlroots types seat",seat);
 define_wlr_v("wlroots types scene",scene);
@@ -575,7 +575,7 @@ axisnotify(struct wl_listener *listener, void *data)
 	struct wlr_event_pointer_axis *event = data;
     scm_c_run_hook(REF("gwwm hooks", "axis-event-hook"),
                    scm_list_1(WRAP_WLR_EVENT_POINTER_AXIS(event)));
-	wlr_idle_notify_activity(idle, gwwm_seat(NULL));
+	wlr_idle_notify_activity(gwwm_idle(NULL), gwwm_seat(NULL));
 }
 
 void
@@ -589,7 +589,7 @@ buttonpress(struct wl_listener *listener, void *data)
 	Client *c;
 	const Button *b;
 
-	wlr_idle_notify_activity(idle, gwwm_seat(NULL));
+	wlr_idle_notify_activity(gwwm_idle(NULL), gwwm_seat(NULL));
     scm_c_run_hook(REF("gwwm hooks", "cursor-button-event-hook"),
                    scm_list_1(WRAP_WLR_EVENT_POINTER_BUTTON(event)));
  ;
@@ -653,7 +653,7 @@ checkidleinhibitor(struct wlr_surface *exclude)
 		}
 	}
 
-	wlr_idle_set_enabled(idle, NULL, !inhibited);
+	wlr_idle_set_enabled(gwwm_idle(NULL), NULL, !inhibited);
 }
 
 Monitor *
@@ -1222,10 +1222,6 @@ SCM_DEFINE (gwwm_focusclient, "focusclient" ,2,0,0,(SCM client,SCM lift),"")
 }
 #undef FUNC_NAME
 
-SCM_DEFINE(gwwm_idle,"gwwm-idle",0,0,0,(),""){
-  return WRAP_WLR_IDLE(idle);
-}
-
 SCM_DEFINE (gwwm_focusmon ,"focusmon",1,0,0,(SCM a),"" )
 #define FUNC_NAME s_gwwm_focusmon
 {
@@ -1374,7 +1370,7 @@ keypress(struct wl_listener *listener, void *data)
 	int handled = 0;
 	uint32_t mods = wlr_keyboard_get_modifiers(kb->device->keyboard);
 
-	wlr_idle_notify_activity(idle, gwwm_seat(NULL));
+	wlr_idle_notify_activity(gwwm_idle(NULL), gwwm_seat(NULL));
 
 	/* On _press_ if there is no active screen locker,
 	 * attempt to process a compositor keybinding. */
@@ -1521,7 +1517,7 @@ motionnotify(uint32_t time)
 
 	/* time is 0 in internal calls meant to restore pointer focus. */
 	if (time) {
-		wlr_idle_notify_activity(idle, gwwm_seat(NULL));
+      wlr_idle_notify_activity(gwwm_idle(NULL), gwwm_seat(NULL));
 
 		/* Update current_monitor (even while dragging a window) */
 		if (GWWM_SLOPPYFOCUS_P())
@@ -2019,7 +2015,6 @@ SCM_DEFINE (gwwm_setup,"%gwwm-setup" ,0,0,0,(),"")
 	 * https://drewdevault.com/2018/07/29/Wayland-shells.html
 	 */
 	wl_list_init(&clients);
-	idle = wlr_idle_create(gwwm_display(NULL));
 
 	idle_inhibit_mgr = wlr_idle_inhibit_v1_create(gwwm_display(NULL));
 	wl_signal_add(&idle_inhibit_mgr->events.new_inhibitor, &idle_inhibitor_create);

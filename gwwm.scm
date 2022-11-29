@@ -24,6 +24,7 @@
   #:use-module (wlroots backend)
   #:use-module (wlroots types pointer)
   #:use-module (wlroots types scene)
+  #:use-module (wlroots types idle)
   #:use-module (wlroots types xdg-shell)
   #:use-module (wlroots types cursor)
   #:use-module (wlroots types xcursor)
@@ -72,6 +73,7 @@
 (define-dy gwwm-xwayland xwayland)
 (define-dy gwwm-activation activation)
 (define-dy gwwm-layer-shell layer-shell)
+(define-dy gwwm-idle idle)
 
 (define (init-global-keybind)
   (keymap-global-set (kbd (s S space))
@@ -208,7 +210,8 @@ gwwm [options]
   (gwwm-xdg-shell (wlr-xdg-shell-create (gwwm-display)))
   (gwwm-compositor (wlr-compositor-create (gwwm-display) (gwwm-renderer)))
   (gwwm-activation (wlr-xdg-activation-v1-create (gwwm-display)))
-  (gwwm-layer-shell (wlr-layer-shell-v1-create (gwwm-display))))
+  (gwwm-layer-shell (wlr-layer-shell-v1-create (gwwm-display)))
+  (gwwm-idle (wlr-idle-create (gwwm-display))))
 (define (xwayland-setup)
   (let ((x (gwwm-xwayland (wlr-xwayland-create (gwwm-display) (gwwm-compositor) #t))))
     (if x
