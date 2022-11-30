@@ -2,6 +2,7 @@
  * See LICENSE file for copyright and license details.
  */
 #include "libguile/boolean.h"
+#include "libguile/eval.h"
 #include "libguile/foreign.h"
 #include "libguile/gc.h"
 #include "libguile/goops.h"
@@ -95,7 +96,6 @@ Monitor* monitor_from_listener(struct wl_listener *listener) {
   return scm_is_false(scm) ? NULL : UNWRAP_MONITOR(scm);
 }
  const char broken[] = "broken";
- struct wlr_surface *exclusive_focus;
  struct wl_list clients; /* tiling order */
  struct wlr_idle_inhibit_manager_v1 *idle_inhibit_mgr;
  struct wlr_input_inhibit_manager *input_inhibit_mgr;
@@ -216,6 +216,17 @@ struct wlr_layer_shell_v1 *gwwm_layer_shell(struct wlr_layer_shell_v1 *var) {
                                  b))))));
   }
 };
+
+struct wlr_surface* exclusive_focus(SCM surface){
+  SCM b=REFP("gwwm", "exclusive-focus");
+  if (surface) {
+    scm_call_1(b, surface);
+    return UNWRAP_WLR_SURFACE(surface);
+  } else {
+    SCM o=scm_call_0(b);
+    return (scm_is_false(o)) ? NULL : UNWRAP_WLR_SURFACE(o);
+  }
+}
 
 static struct wlr_scene_node *return_scene_node(enum zwlr_layer_shell_v1_layer n){
   char* s="";
@@ -533,8 +544,8 @@ void arrange_interactive_layer(Monitor *m) {
       if (lsurface->current.keyboard_interactive && lsurface->mapped) {
         /* Deactivate the focused client. */
         focusclient(NULL, 0);
-        exclusive_focus = surface;
-        client_notify_enter(exclusive_focus, wlr_seat_get_keyboard(gwwm_seat(NULL)));
+        exclusive_focus(WRAP_WLR_SURFACE(surface));
+        client_notify_enter(exclusive_focus(NULL), wlr_seat_get_keyboard(gwwm_seat(NULL)));
         return;
       }
     }
@@ -1152,7 +1163,7 @@ focusclient(Client *c, int lift)
   struct wlr_surface *old = gwwm_seat(NULL)->keyboard_state.focused_surface;
   SCM sc=WRAP_CLIENT(c);
 	/* Do not focus clients if a layer surface is focused */
-	if (exclusive_focus)
+  if (exclusive_focus(NULL))
 		return;
 
 	/* Raise client in stacking order if requested */
@@ -2195,8 +2206,8 @@ unmaplayersurfacenotify(struct wl_listener *listener, void *data)
 
 	/* wlr_layer_surface_v1_from_wlr_surface(CLIENT_SURFACE(layersurface))->mapped = (layersurface->mapped = 0); */
 	wlr_scene_node_set_enabled(CLIENT_SCENE(layersurface), 0);
-	if (CLIENT_SURFACE(layersurface) == exclusive_focus)
-		exclusive_focus = NULL;
+	if (CLIENT_SURFACE(layersurface) == exclusive_focus(NULL))
+      exclusive_focus(SCM_BOOL_F);
 	if (CLIENT_SURFACE(layersurface) ==
 			gwwm_seat(NULL)->keyboard_state.focused_surface)
 		focusclient(current_client(), 1);

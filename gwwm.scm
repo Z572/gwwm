@@ -74,6 +74,7 @@
 (define-dy gwwm-activation activation)
 (define-dy gwwm-layer-shell layer-shell)
 (define-dy gwwm-idle idle)
+(define-dy exclusive-focus surface)
 
 (define (init-global-keybind)
   (keymap-global-set (kbd (s S space))
