@@ -22,6 +22,7 @@
   #:use-module (wayland signal)
   #:use-module (wlroots xwayland)
   #:use-module (wlroots backend)
+  #:use-module (wlroots types)
   #:use-module (wlroots types pointer)
   #:use-module (wlroots types scene)
   #:use-module (wlroots types idle)
