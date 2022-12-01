@@ -210,6 +210,7 @@ gwwm [options]
   (gwwm-xcursor-manager (wlr-xcursor-manager-create #f 24))
   (gwwm-seat (wlr-seat-create (gwwm-display) "seat0"))
   (gwwm-xdg-shell (wlr-xdg-shell-create (gwwm-display)))
+  (wl-signal-add (get-event-signal (gwwm-xdg-shell) 'new-surface) new-xdg-surface)
   (gwwm-compositor (wlr-compositor-create (gwwm-display) (gwwm-renderer)))
   (gwwm-activation (wlr-xdg-activation-v1-create (gwwm-display)))
   (gwwm-layer-shell (wlr-layer-shell-v1-create (gwwm-display)))
