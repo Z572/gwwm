@@ -34,6 +34,7 @@
   #:use-module (wlroots types layer-shell)
   #:use-module (wlroots types compositor)
   #:use-module (wlroots types xdg-activation)
+  #:use-module (wlroots types output-layout)
   #:use-module (gwwm configuration)
   #:use-module (gwwm config)
   #:use-module (gwwm hooks)
@@ -214,7 +215,8 @@ gwwm [options]
   (gwwm-compositor (wlr-compositor-create (gwwm-display) (gwwm-renderer)))
   (gwwm-activation (wlr-xdg-activation-v1-create (gwwm-display)))
   (gwwm-layer-shell (wlr-layer-shell-v1-create (gwwm-display)))
-  (gwwm-idle (wlr-idle-create (gwwm-display))))
+  (gwwm-idle (wlr-idle-create (gwwm-display)))
+  (gwwm-output-layout (wlr-output-layout-create)))
 (define (xwayland-setup)
   (let ((x (gwwm-xwayland (wlr-xwayland-create (gwwm-display) (gwwm-compositor) #t))))
     (if x

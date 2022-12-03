@@ -2009,7 +2009,6 @@ SCM_DEFINE (gwwm_setup,"%gwwm-setup" ,0,0,0,(),"")
 
 	/* Creates an output layout, which a wlroots utility for working with an
 	 * arrangement of screens in a physical layout. */
-	gwwm_output_layout(wlr_output_layout_create()) ;
 	wl_signal_add(&gwwm_output_layout(NULL)->events.change, &layout_change);
 	wlr_xdg_output_manager_v1_create(gwwm_display(NULL), gwwm_output_layout(NULL));
 
