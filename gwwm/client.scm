@@ -91,8 +91,6 @@
         #:accessor .data
         #:class <hidden-slot>)
   (geom #:init-value #f #:accessor client-geom)
-  (type #:init-keyword #:type #:getter client-type
-        #:setter client-set-type!)
   (monitor #:init-value #f
            #:accessor client-monitor)
   (super-surface #:init-value #f
@@ -135,6 +133,8 @@
 (define-class <gwwm-x-client> (<gwwm-client>))
 (define-class <gwwm-xdg-client> (<gwwm-client>))
 
+(define-method (client-type (c <gwwm-base-client>))
+  (class-of c))
 (define-method (client-mapped? (c <gwwm-xdg-client>))
   (wlr-xdg-surface-mapped? (client-super-surface c)))
 (define-method (client-mapped? (c <gwwm-x-client>))
@@ -241,10 +241,12 @@
   (equal? (.data c1) (.data c2)))
 
 (define (client-is-x11? client)
-  (->bool (member (client-type client) '("X11Managed" "X11Unmanaged"))))
+  (is-a? client <gwwm-x-client>))
 
-(define (client-is-unmanaged? client)
-  (string= (client-type client) "X11Unmanaged"))
+(define-method (client-is-unmanaged? client)
+  #f)
+(define-method (client-is-unmanaged? (client <gwwm-x-client>))
+  (wlr-xwayland-surface-override-redirect (client-super-surface client)))
 
 (define (client-list)
   "return all clients."

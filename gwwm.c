@@ -863,7 +863,6 @@ createlayersurface(struct wl_listener *listener, void *data)
 	layersurface = scm_gc_calloc(sizeof(Client),"layer-client");
 
     register_client(layersurface,GWWM_LAYER_CLIENT_TYPE);
-    CLIENT_SET_TYPE(layersurface ,"LayerShell");
     CLIENT_SET_SURFACE(layersurface,wlr_layer_surface->surface);
     scm_slot_set_x(WRAP_CLIENT(layersurface),
                    scm_from_utf8_symbol("super-surface"),
@@ -1021,7 +1020,6 @@ createnotify(struct wl_listener *listener, void *data)
 	c = scm_gc_calloc(sizeof(*c), "xdg-client");
     register_client(c,GWWM_XDG_CLIENT_TYPE);
     xdg_surface->data = WRAP_CLIENT(c);
-    CLIENT_SET_TYPE(c ,"XDGShell");
     CLIENT_SET_SURFACE(c ,xdg_surface->surface);
     scm_slot_set_x(WRAP_CLIENT(c),
                    scm_from_utf8_symbol("super-surface"),
@@ -2507,8 +2505,7 @@ createnotifyx11(struct wl_listener *listener, void *data)
     register_client(c,GWWM_X_CLIENT_TYPE);
     xwayland_surface->data = WRAP_CLIENT(c);
     /* CLIENT_SET_SURFACE(c,xwayland_surface->surface); */
-    CLIENT_SET_TYPE(c ,xwayland_surface->override_redirect ? "X11Unmanaged" : "X11Managed");
-	CLIENT_SET_BW(c,GWWM_BORDERPX());
+    CLIENT_SET_BW(c,GWWM_BORDERPX());
     scm_slot_set_x(WRAP_CLIENT(c),
                    scm_from_utf8_symbol("super-surface"),
                    WRAP_WLR_XWAYLAND_SURFACE(xwayland_surface));

@@ -70,12 +70,6 @@ enum gwwm_client_type {
   (REF_CALL_2("gwwm client", "client-set-border-width!", (WRAP_CLIENT(c)),     \
               scm_from_unsigned_integer(b)))
 
-#define CLIENT_TYPE(c)                                                         \
-  (scm_to_utf8_string(REF_CALL_1("gwwm client", "client-type", WRAP_CLIENT(c))))
-#define CLIENT_SET_TYPE(c, b)                                                  \
-  (scm_call_2(REFP("gwwm client", "client-set-type!"), (WRAP_CLIENT(c)),       \
-              scm_from_utf8_string(b)))
-
 #define CLIENT_SURFACE(c)                                                      \
   ((struct wlr_surface *)UNWRAP_WLR_SURFACE(                                   \
       REF_CALL_1("gwwm client", "client-surface", WRAP_CLIENT(c))))
@@ -87,13 +81,9 @@ enum gwwm_client_type {
 #define CLIENT_IS_LAYER_SHELL(cl)                                              \
   (SCM_IS_A_P(cl, REFP("gwwm client", "<gwwm-layer-client>")))
 #define CLIENT_IS_XDG_SHELL(cl)                                                \
-  (scm_to_bool(scm_string_equal_p(                                             \
-      (REF_CALL_1("gwwm client", "client-type", WRAP_CLIENT(c))),              \
-      scm_from_utf8_string("XDGShell"))))
+  (SCM_IS_A_P(cl, REFP("gwwm client", "<gwwm-xdg-client>")))
 #define CLIENT_IS_MANAGED(c)                                                   \
-  (scm_to_bool(scm_string_equal_p(                                             \
-      (REF_CALL_1("gwwm client", "client-type", WRAP_CLIENT(c))),              \
-      scm_from_utf8_string("X11Managed"))))
+  (!scm_to_bool(REF_CALL_1("gwwm client", "client-is-unmanaged?", WRAP_CLIENT(c))))
 #define CLIENT_SET_BORDER_COLOR(c, color)                                      \
   scm_call_2(REFP("gwwm client", "client-set-border-color"), WRAP_CLIENT(c),   \
              color)
