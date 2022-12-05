@@ -1872,29 +1872,6 @@ setcursor(struct wl_listener *listener, void *data)
 				event->hotspot_x, event->hotspot_y);
 }
 
-SCM_DEFINE (gwwm_setfloating ,"%setfloating" ,2,0,0,(SCM c,SCM floating),"")
-#define FUNC_NAME s_gwwm_setfloating
-{
-  PRINT_FUNCTION;
-  SCM_ASSERT((SCM_IS_A_P(c,REFP("gwwm client","<gwwm-base-client>")))
-           ,c,1, FUNC_NAME);
-
-  if (scm_to_bool(REF_CALL_1("gwwm client" ,"client-fullscreen?",c ))){
-    setfullscreen(UNWRAP_CLIENT(c), 0);
-  };
-  (REF_CALL_2("gwwm client","client-set-floating!",c, floating));
-  wlr_scene_node_reparent((UNWRAP_WLR_SCENE_NODE(REF_CALL_1("gwwm client" ,"client-scene",c))),
-                          UNWRAP_WLR_SCENE_NODE(REF("gwwm",
-                                                    scm_to_bool(REF_CALL_1("gwwm client"
-                                                                           ,"client-floating?",c))
-                                                    ? "float-layer" : "tile-layer")));
-  arrange(UNWRAP_MONITOR(REF_CALL_1("gwwm client","client-monitor",c)));
-
-  return SCM_UNSPECIFIED;
-}
-#undef FUNC_NAME
-
-
 void
 setfullscreen(Client *c, int fullscreen)
 {

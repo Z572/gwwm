@@ -58,7 +58,7 @@
 
 (define* (togglefloating #:optional (client (current-client)))
   (when (and client (not (client-fullscreen? client)))
-    ((@@ (gwwm) %setfloating)
+    (client-do-set-floating
      client
      (not (client-floating? client)))))
 

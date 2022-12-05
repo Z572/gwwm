@@ -1,4 +1,5 @@
 (define-module (gwwm client)
+  #:autoload (gwwm) (float-layer tile-layer)
   #:autoload (gwwm commands) (arrange)
   #:autoload (gwwm config) (gwwm-borderpx)
   #:use-module (srfi srfi-1)
@@ -66,6 +67,7 @@
             client-mapped?
             client-wants-fullscreen?
             client-do-set-fullscreen
+            client-do-set-floating
             %fstack
             %clients
             <gwwm-client>
@@ -195,6 +197,14 @@
 (define client-set-floating! (setter client-floating?))
 (define client-is-urgent? client-urgent?)
 (define client-set-urgent! (setter client-urgent?))
+
+(define-method (client-do-set-floating (c <gwwm-client>) floating?)
+  (when (client-fullscreen? c)
+    (client-do-set-fullscreen c #f))
+  (set! (client-floating? c) floating?)
+  (wlr-scene-node-reparent (client-scene c)
+                           (if (client-floating? c) float-layer tile-layer))
+  (arrange (client-monitor c)))
 
 (define-method (write (client <gwwm-client>) port)
   (format port "#<~s ~a>"
