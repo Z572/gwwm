@@ -273,7 +273,7 @@ gwwm [options]
              (lambda (c data)
                (let ((fullscreen? (client-wants-fullscreen? c)))
                  (if (client-monitor c)
-                     ((@@ (gwwm client)%setfullscreen) c fullscreen?)
+                     (client-do-set-fullscreen c fullscreen?)
                      (set! (client-fullscreen? c) fullscreen?)))))
   (current-log-callback
    (let ((p (current-error-port)))

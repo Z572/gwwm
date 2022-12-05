@@ -65,6 +65,7 @@
             client-geom
             client-mapped?
             client-wants-fullscreen?
+            client-do-set-fullscreen
             %fstack
             %clients
             <gwwm-client>
