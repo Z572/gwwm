@@ -2035,13 +2035,7 @@ SCM_DEFINE (gwwm_setup,"%gwwm-setup" ,0,0,0,(),"")
 			WLR_SERVER_DECORATION_MANAGER_MODE_SERVER);
 	wlr_xdg_decoration_manager_v1_create(gwwm_display(NULL));
 
-	/*
-	 * Creates a cursor, which is a wlroots utility for tracking the cursor
-	 * image shown on screen.
-	 */
-    struct wlr_cursor *cursor=gwwm_cursor(NULL);
-	wlr_cursor_attach_output_layout(cursor, gwwm_output_layout(NULL));
-	/*
+    /*
 	 * wlr_cursor *only* displays an image on screen. It does not move around
 	 * when the pointer moves. However, we can attach input devices to it, and
 	 * it will generate aggregate events for all of them. In these events, we

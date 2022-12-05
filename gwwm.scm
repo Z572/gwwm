@@ -216,7 +216,8 @@ gwwm [options]
   (gwwm-activation (wlr-xdg-activation-v1-create (gwwm-display)))
   (gwwm-layer-shell (wlr-layer-shell-v1-create (gwwm-display)))
   (gwwm-idle (wlr-idle-create (gwwm-display)))
-  (gwwm-output-layout (wlr-output-layout-create)))
+  (gwwm-output-layout (wlr-output-layout-create))
+  (wlr-cursor-attach-output-layout (gwwm-cursor) (gwwm-output-layout)))
 (define (xwayland-setup)
   (let ((x (gwwm-xwayland (wlr-xwayland-create (gwwm-display) (gwwm-compositor) #t))))
     (if x
