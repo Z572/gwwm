@@ -867,12 +867,6 @@ createlayersurface(struct wl_listener *listener, void *data)
     scm_slot_set_x(WRAP_CLIENT(layersurface),
                    scm_from_utf8_symbol("super-surface"),
                    WRAP_WLR_LAYER_SURFACE(wlr_layer_surface));
-	client_add_listen(layersurface,&wlr_layer_surface->surface->events.commit, commitlayersurfacenotify);
-	client_add_listen(layersurface,&wlr_layer_surface->surface->events.destroy, destroy_surface_notify);
-	client_add_listen(layersurface,&wlr_layer_surface->events.destroy,destroylayersurfacenotify);
-	client_add_listen(layersurface,&wlr_layer_surface->events.map,maplayersurfacenotify);
-	client_add_listen(layersurface,&wlr_layer_surface->events.unmap,unmaplayersurfacenotify);
-
     Monitor *m=wlr_layer_surface->output->data;
     client_monitor(layersurface,m);
 	wlr_layer_surface->data = WRAP_CLIENT(layersurface);
@@ -891,6 +885,18 @@ createlayersurface(struct wl_listener *listener, void *data)
 	wlr_layer_surface->current = wlr_layer_surface->pending;
 	arrangelayers(WRAP_MONITOR(m));
 	wlr_layer_surface->current = old_state;
+
+    scm_c_run_hook(REF("gwwm hooks", "create-client-hook"),
+                 scm_list_1(WRAP_CLIENT(layersurface)));
+
+
+    client_add_listen(layersurface,&wlr_layer_surface->surface->events.commit, commitlayersurfacenotify);
+    client_add_listen(layersurface,&wlr_layer_surface->surface->events.destroy, destroy_surface_notify);
+    client_add_listen(layersurface,&wlr_layer_surface->events.destroy,destroylayersurfacenotify);
+    client_add_listen(layersurface,&wlr_layer_surface->events.map,maplayersurfacenotify);
+    client_add_listen(layersurface,&wlr_layer_surface->events.unmap,unmaplayersurfacenotify);
+
+
 }
 
 void
@@ -1025,6 +1031,9 @@ createnotify(struct wl_listener *listener, void *data)
                    scm_from_utf8_symbol("super-surface"),
                    WRAP_WLR_XDG_SURFACE(xdg_surface));
     CLIENT_SET_BW(c,GWWM_BORDERPX());
+
+    scm_c_run_hook(REF("gwwm hooks", "create-client-hook"),
+                 scm_list_1(WRAP_CLIENT(c)));
     client_add_listen(c,&xdg_surface->events.map, mapnotify);
     client_add_listen(c,&xdg_surface->events.unmap, unmapnotify);
     client_add_listen(c,&xdg_surface->events.new_popup, new_popup_notify);
@@ -2503,6 +2512,8 @@ createnotifyx11(struct wl_listener *listener, void *data)
     scm_slot_set_x(WRAP_CLIENT(c),
                    scm_from_utf8_symbol("super-surface"),
                    WRAP_WLR_XWAYLAND_SURFACE(xwayland_surface));
+    scm_c_run_hook(REF("gwwm hooks", "create-client-hook"),
+                 scm_list_1(WRAP_CLIENT(c)));
 	/* Listen to the various events it can emit */
 	client_add_listen(c,&xwayland_surface->events.map, mapnotify);
 	client_add_listen(c,&xwayland_surface->events.unmap, unmapnotify);

@@ -292,6 +292,9 @@ gwwm [options]
                    msg2)
          (newline p)))))
   (add-hook! modifiers-event-hook pass-modifiers )
+  (add-hook! create-client-hook
+             (lambda (c)
+               (send-log DEBUG "client createed" 'CLIENT c)))
   (define (set-x11-client-surface client surface)
     (when (client-is-x11? client)
       (set! (client-surface client)
