@@ -299,22 +299,28 @@ gwwm [options]
   (add-hook! create-client-hook
              (lambda (c)
                (cond ((is-a? c <gwwm-xdg-client>)
-                      (add-listen c
-                                  (get-event-signal
-                                   (client-super-surface c)
-                                   'new-popup)
+                      (add-listen c (get-event-signal (client-super-surface c)
+                                                      'new-popup)
                                   new-popup-notify)
                       (add-listen c
                                   (get-event-signal
                                    (client-super-surface c)
                                    'map)
-                                  map-notify))
+                                  map-notify)
+                      (add-listen c
+                                  (get-event-signal
+                                   (client-super-surface c)
+                                   'unmap)
+                                  unmap-notify))
                      ((is-a? c <gwwm-x-client>)
                       (add-listen c
                                   (get-event-signal
                                    (client-super-surface c)
                                    'map)
-                                  map-notify)))))
+                                  map-notify)
+                      (add-listen c (get-event-signal (client-super-surface c)
+                                                      'unmap)
+                                  unmap-notify)))))
   (define (set-x11-client-surface client surface)
     (when (client-is-x11? client)
       (set! (client-surface client)

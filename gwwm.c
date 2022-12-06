@@ -1038,7 +1038,6 @@ createnotify(struct wl_listener *listener, void *data)
 
     scm_c_run_hook(REF("gwwm hooks", "create-client-hook"),
                  scm_list_1(WRAP_CLIENT(c)));
-    client_add_listen(c,&xdg_surface->events.unmap, unmapnotify);
     client_add_listen(c,&xdg_surface->toplevel->events.set_title, updatetitle);
     client_add_listen(c,&xdg_surface->toplevel->events.request_fullscreen,fullscreennotify);
 }
@@ -2194,9 +2193,11 @@ unmaplayersurfacenotify(struct wl_listener *listener, void *data)
 	motionnotify(0);
 }
 
-void
-unmapnotify(struct wl_listener *listener, void *data)
+SCM_DEFINE(unmapnotify,"unmap-notify",2,0,0,(SCM slistener ,SCM sdata),"")
 {
+  PRINT_FUNCTION;
+  struct wl_listener *listener=UNWRAP_WL_LISTENER(slistener);
+  void *data=TO_P(sdata);
   PRINT_FUNCTION
 	/* Called when the surface is unmapped, and should no longer be shown. */
 	Client *c = client_from_listener(listener);
@@ -2499,7 +2500,6 @@ createnotifyx11(struct wl_listener *listener, void *data)
     scm_c_run_hook(REF("gwwm hooks", "create-client-hook"),
                  scm_list_1(WRAP_CLIENT(c)));
 	/* Listen to the various events it can emit */
-	client_add_listen(c,&xwayland_surface->events.unmap, unmapnotify);
     client_add_listen(c, &xwayland_surface->events.request_activate, activatex11);
     client_add_listen(c, &xwayland_surface->events.request_configure, configurex11);
 
