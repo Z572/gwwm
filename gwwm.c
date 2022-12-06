@@ -1038,7 +1038,6 @@ createnotify(struct wl_listener *listener, void *data)
 
     scm_c_run_hook(REF("gwwm hooks", "create-client-hook"),
                  scm_list_1(WRAP_CLIENT(c)));
-    client_add_listen(c,&xdg_surface->events.map, mapnotify);
     client_add_listen(c,&xdg_surface->events.unmap, unmapnotify);
     client_add_listen(c,&xdg_surface->toplevel->events.set_title, updatetitle);
     client_add_listen(c,&xdg_surface->toplevel->events.request_fullscreen,fullscreennotify);
@@ -1440,8 +1439,12 @@ void destroy_surface_notify(struct wl_listener *listener, void *data) {
   logout_client((client_from_listener(listener)));
 }
 
-void mapnotify(struct wl_listener *listener, void *data) {
+SCM_DEFINE(mapnotify,"map-notify",2,0,0,(SCM slistener ,SCM sdata),"")
+{
   PRINT_FUNCTION;
+  struct wl_listener *listener=UNWRAP_WL_LISTENER(slistener);
+  void *data=TO_P(sdata);
+
   /* Called when the surface is mapped, or ready to display on-screen. */
   Client *p, *c = client_from_listener(listener);
   SCM sc = WRAP_CLIENT(c);
@@ -1475,7 +1478,7 @@ void mapnotify(struct wl_listener *listener, void *data) {
     wlr_scene_node_reparent(scene_node, UNWRAP_WLR_SCENE_NODE(REF("gwwm","float-layer")));
     wlr_scene_node_set_position(scene_node, client_geom(c)->x + GWWM_BORDERPX(),
                                 client_geom(c)->y + GWWM_BORDERPX());
-    return;
+    return SCM_UNSPECIFIED;
   }
   (scm_call_1(REFP("gwwm client","client-init-border"), WRAP_CLIENT(c)));
   /* Initialize client geometry with room for border */
@@ -1508,6 +1511,7 @@ void mapnotify(struct wl_listener *listener, void *data) {
     setfullscreen(c, 1);
 
   client_monitor(c, NULL)->un_map = 1;
+  return SCM_UNSPECIFIED;
 }
 
 void
@@ -2495,7 +2499,6 @@ createnotifyx11(struct wl_listener *listener, void *data)
     scm_c_run_hook(REF("gwwm hooks", "create-client-hook"),
                  scm_list_1(WRAP_CLIENT(c)));
 	/* Listen to the various events it can emit */
-	client_add_listen(c,&xwayland_surface->events.map, mapnotify);
 	client_add_listen(c,&xwayland_surface->events.unmap, unmapnotify);
     client_add_listen(c, &xwayland_surface->events.request_activate, activatex11);
     client_add_listen(c, &xwayland_surface->events.request_configure, configurex11);

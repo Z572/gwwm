@@ -169,7 +169,6 @@ bool keybinding(uint32_t mods, xkb_keycode_t keycode);
 void keypress(struct wl_listener *listener, void *data);
 void keypressmod(struct wl_listener *listener, void *data);
 void maplayersurfacenotify(struct wl_listener *listener, void *data);
-void mapnotify(struct wl_listener *listener, void *data);
 void motionabsolute(struct wl_listener *listener, void *data);
 void motionnotify(uint32_t time);
 void motionrelative(struct wl_listener *listener, void *data);

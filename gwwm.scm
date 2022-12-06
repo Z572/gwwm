@@ -303,7 +303,18 @@ gwwm [options]
                                   (get-event-signal
                                    (client-super-surface c)
                                    'new-popup)
-                                  new-popup-notify)))))
+                                  new-popup-notify)
+                      (add-listen c
+                                  (get-event-signal
+                                   (client-super-surface c)
+                                   'map)
+                                  map-notify))
+                     ((is-a? c <gwwm-x-client>)
+                      (add-listen c
+                                  (get-event-signal
+                                   (client-super-surface c)
+                                   'map)
+                                  map-notify)))))
   (define (set-x11-client-surface client surface)
     (when (client-is-x11? client)
       (set! (client-surface client)
