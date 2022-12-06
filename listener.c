@@ -1,6 +1,7 @@
 #include "listener.h"
 #include <wayland-server-core.h>
 #include "libguile/error.h"
+#include "libguile/gc.h"
 #include "libguile/goops.h"
 #include "libguile/scm.h"
 #include "util.h"
@@ -20,6 +21,7 @@ SCM_DEFINE(scm_register_gwwm_listener, "%register-listener", 1, 0, 0, (SCM o), "
 
 SCM_DEFINE (scm_add_listen ,"%add-listen",3,0,0,(SCM o,SCM signal,SCM p),""){
     struct wl_listener* listener=UNWRAP_WL_LISTENER((scm_register_gwwm_listener(o)));
+    scm_gc_protect_object(p);
     listener->notify=TO_P(p);
     wl_signal_add(UNWRAP_WL_SIGNAL(signal), listener);
     return SCM_UNSPECIFIED;

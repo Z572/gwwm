@@ -15,6 +15,7 @@
   #:use-module (gwwm monitor)
   #:use-module (gwwm layout)
   #:use-module (gwwm layout tile)
+  #:use-module (gwwm listener)
   #:use-module (gwwm utils)
   #:use-module (gwwm utils srfi-215)
   #:use-module (wayland display)
@@ -295,6 +296,14 @@ gwwm [options]
   (add-hook! create-client-hook
              (lambda (c)
                (send-log DEBUG "client createed" 'CLIENT c)))
+  (add-hook! create-client-hook
+             (lambda (c)
+               (cond ((is-a? c <gwwm-xdg-client>)
+                      (add-listen c
+                                  (get-event-signal
+                                   (client-super-surface c)
+                                   'new-popup)
+                                  new-popup-notify)))))
   (define (set-x11-client-surface client surface)
     (when (client-is-x11? client)
       (set! (client-surface client)

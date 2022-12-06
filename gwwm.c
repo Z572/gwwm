@@ -985,8 +985,11 @@ createmon(struct wl_listener *listener, void *data)
 	m->scene_output = wlr_scene_output_create(gwwm_scene(NULL), wlr_output);
 	wlr_output_layout_add_auto(gwwm_output_layout(NULL), wlr_output);
 }
-void new_popup_notify(struct wl_listener *listener, void *data)
+
+SCM_DEFINE(gwwm_new_popup_notify,"new-popup-notify",2,0,0,(SCM sl ,SCM d),"")
 {
+  struct wl_listener *listener=UNWRAP_WL_LISTENER(sl);
+  void *data= TO_P(d);
   PRINT_FUNCTION;
   struct wlr_xdg_popup *popup = data;
   struct wlr_box *box;
@@ -996,13 +999,14 @@ void new_popup_notify(struct wl_listener *listener, void *data)
   popup->base->surface->data=node;
   wlr_scene_node_reparent(node,UNWRAP_WLR_SCENE_NODE(REF("gwwm","top-layer")));
   if (!l || !client_monitor(l,NULL))
-    return;
+    return SCM_UNSPECIFIED;
   box = CLIENT_IS_LAYER_SHELL(WRAP_CLIENT(l))
     ? MONITOR_AREA((client_monitor(l,NULL)))
     : (MONITOR_WINDOW_AREA(((client_monitor(l,NULL)))));
   box->x -= client_geom(l)->x;
   box->y -= client_geom(l)->y;
   wlr_xdg_popup_unconstrain_from_box(popup, box);
+  return SCM_UNSPECIFIED;
 }
 
 void
@@ -1036,7 +1040,6 @@ createnotify(struct wl_listener *listener, void *data)
                  scm_list_1(WRAP_CLIENT(c)));
     client_add_listen(c,&xdg_surface->events.map, mapnotify);
     client_add_listen(c,&xdg_surface->events.unmap, unmapnotify);
-    client_add_listen(c,&xdg_surface->events.new_popup, new_popup_notify);
     client_add_listen(c,&xdg_surface->toplevel->events.set_title, updatetitle);
     client_add_listen(c,&xdg_surface->toplevel->events.request_fullscreen,fullscreennotify);
 }

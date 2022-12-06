@@ -63,6 +63,7 @@
             client-get-size-hints
             client-tags
             client-surface
+            client-super-surface
             client-geom
             client-mapped?
             client-wants-fullscreen?
