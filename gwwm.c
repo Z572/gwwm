@@ -99,7 +99,6 @@ Monitor* monitor_from_listener(struct wl_listener *listener) {
  struct wl_list clients; /* tiling order */
  struct wlr_idle_inhibit_manager_v1 *idle_inhibit_mgr;
  struct wlr_input_inhibit_manager *input_inhibit_mgr;
- struct wlr_layer_shell_v1 *layer_shell;
  struct wlr_output_manager_v1 *output_mgr;
  struct wlr_virtual_keyboard_manager_v1 *virtual_keyboard_mgr;
  Atom netatom[NetLast];
