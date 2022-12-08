@@ -45,6 +45,12 @@ void *ecalloc(size_t size);
 #define UNWRAP_WLR_OUTPUT_LAYOUT(p)                                            \
   (TO_P(REF_CALL_1("wlroots types output-layout ", "unwrap-wlr-output-layout", \
                    p)))
+#define WRAP_WLR_OUTPUT_CONFIGURATION_V1(p)                                              \
+  (REF_CALL_1("wlroots types output-management", "wrap-wlr-output-configuration-v1",         \
+              FROM_P(p)))
+#define UNWRAP_WLR_OUTPUT_CONFIGURATION_V1(p)                                            \
+  (TO_P(REF_CALL_1("wlroots types output-management ", "unwrap-wlr-output-configuration-v1", \
+                   p)))
 #define WRAP_WLR_OUTPUT(p)                                                     \
   (REF_CALL_1("wlroots types output", "wrap-wlr-output", FROM_P(p)))
 #define UNWRAP_WLR_OUTPUT(p)                                                   \

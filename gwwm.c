@@ -2221,8 +2221,9 @@ SCM_DEFINE(unmapnotify,"unmap-notify",2,0,0,(SCM slistener ,SCM sdata),"")
     return SCM_UNSPECIFIED;
 }
 
-void updatemon(Monitor *m, struct wlr_output_configuration_v1 *config) {
-  SCM sm=WRAP_MONITOR(m);
+SCM_DEFINE(gwwm_updatemon,"update-monitor",2,0,0,(SCM sm,SCM sconfig),""){
+    Monitor *m=UNWRAP_MONITOR(sm);
+    struct wlr_output_configuration_v1 *config=UNWRAP_WLR_OUTPUT_CONFIGURATION_V1(sconfig);
   struct wlr_output_configuration_head_v1 *config_head =
     wlr_output_configuration_head_v1_create(config, MONITOR_WLR_OUTPUT(m));
 
@@ -2244,6 +2245,7 @@ void updatemon(Monitor *m, struct wlr_output_configuration_v1 *config) {
   config_head->state.mode = ((MONITOR_WLR_OUTPUT(m))->current_mode);
   config_head->state.x = MONITOR_AREA(m)->x;
   config_head->state.y = MONITOR_AREA(m)->y;
+  return SCM_UNSPECIFIED;
 }
 void
 updatemons(struct wl_listener *listener, void *data)
@@ -2264,7 +2266,7 @@ updatemons(struct wl_listener *listener, void *data)
                 WRAP_WLR_BOX(wlr_output_layout_get_box(
                                                        gwwm_output_layout(NULL), NULL))));
         wl_list_for_each(m, &mons, link) {
-          updatemon(m,config);
+          (gwwm_updatemon(WRAP_MONITOR(m),WRAP_WLR_OUTPUT_CONFIGURATION_V1(config)));
 	}
 
 	if (current_monitor() && MONITOR_WLR_OUTPUT(current_monitor())->enabled)
