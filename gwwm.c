@@ -2210,7 +2210,7 @@ SCM_DEFINE(unmapnotify,"unmap-notify",2,0,0,(SCM slistener ,SCM sdata),"")
 
 	if (client_is_unmanaged(c)) {
 		wlr_scene_node_destroy(CLIENT_SCENE(c));
-		return;
+		return SCM_UNSPECIFIED;
 	}
 
 	wl_list_remove(&c->link);
@@ -2218,6 +2218,7 @@ SCM_DEFINE(unmapnotify,"unmap-notify",2,0,0,(SCM slistener ,SCM sdata),"")
     REF_CALL_2("ice-9 q", "q-remove!", REF_CALL_0("gwwm client", "%clients"), WRAP_CLIENT(c));
     REF_CALL_2("ice-9 q", "q-remove!", REF_CALL_0("gwwm client", "%fstack"), WRAP_CLIENT(c));
 	wlr_scene_node_destroy(CLIENT_SCENE(c));
+    return SCM_UNSPECIFIED;
 }
 
 void updatemon(Monitor *m, struct wlr_output_configuration_v1 *config) {
