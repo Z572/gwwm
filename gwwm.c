@@ -1622,7 +1622,7 @@ moveresize(const Arg *arg)
 		return;
     SCM sgrabc= WRAP_CLIENT(grabc);
 	/* Float the window and tell motionnotify to grab it */
-	gwwm_setfloating(sgrabc, scm_from_bool(1));
+	CLIENT_SET_FLOATING(grabc,1);
 	switch (cursor_mode = arg->ui) {
 	case CurMove:
 		grabcx = cursor->x - client_geom(grabc)->x;

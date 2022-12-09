@@ -186,7 +186,6 @@ void requeststartdrag(struct wl_listener *listener, void *data);
 void resize(Client *c, struct wlr_box geo, int interact);
 Client *current_client(void);
 void setcursor(struct wl_listener *listener, void *data);
-SCM gwwm_setfloating(SCM c, SCM floating);
 void setfullscreen(Client *c, int fullscreen);
 void setlayout(const Arg *arg);
 Monitor* monitor_from_listener(struct wl_listener *listener);
