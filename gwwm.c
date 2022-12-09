@@ -1452,7 +1452,6 @@ SCM_DEFINE(mapnotify,"map-notify",2,0,0,(SCM slistener ,SCM sdata),"")
                                     ? WRAP_WLR_XWAYLAND_SURFACE(data)
                                     : WRAP_WLR_XDG_SURFACE(data)));
   /* Create scene tree for this client and its border */
-  CLIENT_SET_SCENE(c, &wlr_scene_tree_create(UNWRAP_WLR_SCENE_NODE(REF("gwwm","tile-layer")))->node);
   struct wlr_surface *surface = (CLIENT_SURFACE(c));
   struct wlr_scene_node *scene_node = CLIENT_SCENE(c);
   /* struct wlr_scene */
