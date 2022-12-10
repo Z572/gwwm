@@ -818,6 +818,8 @@ createkeyboard(struct wlr_input_device *device)
 	struct xkb_keymap *keymap;
 	Keyboard *kb = device->data = ecalloc(sizeof(*kb));
 	kb->device = device;
+    scm_c_run_hook(REF("gwwm hooks", "create-keyboard-hook"),
+                   scm_list_1(WRAP_KEYBOARD(kb)));
     SCM s_xkb = REF_CALL_1("gwwm config","config-xkb-rules", gwwm_config);
    #define rf(name) (scm_to_utf8_string(scm_slot_ref(s_xkb, scm_from_utf8_symbol(name))))
     const struct xkb_rule_names xr = {
