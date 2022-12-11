@@ -1633,6 +1633,7 @@ moveresize(const Arg *arg)
 		grabcx = cursor->x - client_geom(grabc)->x;
 		grabcy = cursor->y - client_geom(grabc)->y;
 		wlr_xcursor_manager_set_cursor_image(gwwm_xcursor_manager(NULL), "fleur", cursor);
+        arrange(current_monitor());
 		break;
 	case CurResize:
       client_set_resizing(grabc,1);
