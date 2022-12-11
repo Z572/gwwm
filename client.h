@@ -131,7 +131,7 @@ void client_add_listen(void *c ,struct wl_signal *signal, wl_notify_func_t func)
 int client_tags(Client *c);
 void set_client_tags(Client *c,int tags);
 void client_set_resizing(Client *c, bool resizing);
-void *toplevel_from_popup(struct wlr_xdg_popup *popup);
+Client* toplevel_from_popup(struct wlr_xdg_popup *popup);
 struct wlr_box* client_geom(void *c);
 void set_client_geom(Client *c , struct wlr_box* box);
 struct wlr_scene_node *client_scene_surface(Client *c, struct wlr_scene_node *surface);

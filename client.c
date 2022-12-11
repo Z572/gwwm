@@ -395,7 +395,7 @@ client_set_resizing(Client *c,bool resizing)
   REF_CALL_2("gwwm client","client-set-resizing!" ,WRAP_CLIENT(c), scm_from_bool(resizing));
 }
 
-void *
+Client *
 toplevel_from_popup(struct wlr_xdg_popup *popup)
 {
 	struct wlr_xdg_surface *surface = popup->base;
