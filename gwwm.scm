@@ -296,15 +296,21 @@ gwwm [options]
   (add-hook! create-client-hook
              (lambda (c)
                (send-log DEBUG "client createed" 'CLIENT c)))
+  (define new-popup-notify*
+    (lambda (c)
+      (lambda (listener data)
+        (let ((popup (wrap-wlr-xdg-popup data)))
+          (add-listen c (get-event-signal (.base popup)
+                                          'new-popup)
+                      (new-popup-notify* c))
+          (run-hook create-popup-hook popup))
+        (new-popup-notify listener data))))
   (add-hook! create-client-hook
              (lambda (c)
                (cond ((is-a? c <gwwm-xdg-client>)
                       (add-listen c (get-event-signal (client-super-surface c)
                                                       'new-popup)
-                                  (lambda (listener data)
-                                    (let ((popup (wrap-wlr-xdg-popup data)))
-                                      (run-hook create-popup-hook popup))
-                                    (new-popup-notify listener data)))
+                                  (new-popup-notify* c))
                       (add-listen c
                                   (get-event-signal
                                    (client-super-surface c)
