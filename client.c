@@ -1,6 +1,7 @@
 #include "libguile/boolean.h"
 #include "libguile/eval.h"
 #include "libguile/goops.h"
+#include "libguile/gsubr.h"
 #include "libguile/list.h"
 #include "libguile/numbers.h"
 #include "libguile/scm.h"
@@ -400,6 +401,12 @@ SCM_DEFINE_PUBLIC (gwwm_client_at,"client-at",2,0,0,(SCM x, SCM y),""){
   xytonode(scm_to_double(x), scm_to_double(y), NULL, &c, NULL, NULL, NULL);
   return c ? WRAP_CLIENT(c): SCM_BOOL_F;
 }
+
+SCM_DEFINE_PUBLIC(gwwm_client_from_popup,"client-from-popup",1,0,0,(SCM popup),"" ){
+  Client *c=toplevel_from_popup(UNWRAP_WLR_XDG_POPUP(popup));
+  return c? WRAP_CLIENT(c): SCM_BOOL_F;
+}
+
 
 Client *
 toplevel_from_popup(struct wlr_xdg_popup *popup)
