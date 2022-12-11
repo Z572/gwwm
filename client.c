@@ -395,6 +395,12 @@ client_set_resizing(Client *c,bool resizing)
   REF_CALL_2("gwwm client","client-set-resizing!" ,WRAP_CLIENT(c), scm_from_bool(resizing));
 }
 
+SCM_DEFINE_PUBLIC (gwwm_client_at,"client-at",2,0,0,(SCM x, SCM y),""){
+  Client *c=NULL;
+  xytonode(scm_to_double(x), scm_to_double(y), NULL, &c, NULL, NULL, NULL);
+  return c ? WRAP_CLIENT(c): SCM_BOOL_F;
+}
+
 Client *
 toplevel_from_popup(struct wlr_xdg_popup *popup)
 {
