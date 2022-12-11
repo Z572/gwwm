@@ -12,7 +12,8 @@
             surface-commit-event-hook
             fullscreen-event-hook
             gwwm-cleanup-hook
-            client-map-event-hook))
+            client-map-event-hook
+            cursor-frame-event-hook))
 
 (define-public create-monitor-hook (make-hook 1))
 (define-public create-client-hook (make-hook 1))
@@ -25,6 +26,7 @@
 (define-public modifiers-event-hook (make-hook 1))
 (define-public keypress-event-hook (make-hook 2))
 (define-public cleanup-keyboard-hook (make-hook 2))
+(define-public cursor-frame-event-hook (make-hook 1))
 (define-public cursor-button-event-hook (make-hook 1))
 (define-public surface-commit-event-hook (make-hook 1))
 (define-public gwwm-cleanup-hook (make-hook 0))

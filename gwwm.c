@@ -1100,6 +1100,9 @@ cursorframe(struct wl_listener *listener, void *data)
 	 * multiple events together. For instance, two axis events may happen at the
 	 * same time, in which case a frame event won't be sent in between. */
 	/* Notify the client with pointer focus of the frame event. */
+  struct wlr_cursor *cursor=data;
+  scm_c_run_hook(REF("gwwm hooks","cursor-frame-event-hook"),
+                 scm_list_1(WRAP_WLR_CURSOR(cursor)));
 	wlr_seat_pointer_notify_frame(gwwm_seat(NULL));
 }
 
