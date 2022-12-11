@@ -1022,10 +1022,10 @@ createnotify(struct wl_listener *listener, void *data)
 	struct wlr_xdg_surface *xdg_surface = data;
 	Client *c;
 
-	if (xdg_surface->role == WLR_XDG_SURFACE_ROLE_POPUP) {
+	if (xdg_surface->role == WLR_XDG_SURFACE_ROLE_POPUP ||
+        xdg_surface->role == WLR_XDG_SURFACE_ROLE_NONE) {
       return;
-	} else if (xdg_surface->role == WLR_XDG_SURFACE_ROLE_NONE)
-		return;
+	}
 
 	/* Allocate a Client for this surface */
 	c = scm_gc_calloc(sizeof(*c), "xdg-client");
