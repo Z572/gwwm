@@ -993,7 +993,7 @@ SCM_DEFINE(gwwm_new_popup_notify,"new-popup-notify",2,0,0,(SCM sl ,SCM d),"")
   void *data= TO_P(d);
   PRINT_FUNCTION;
   struct wlr_xdg_popup *popup = data;
-  struct wlr_box *box;
+  struct wlr_box box;
   Client *l = toplevel_from_popup(popup);
   struct wlr_scene_node *node=wlr_scene_xdg_surface_create(popup->parent->data,
                                                           popup->base);
@@ -1002,11 +1002,11 @@ SCM_DEFINE(gwwm_new_popup_notify,"new-popup-notify",2,0,0,(SCM sl ,SCM d),"")
   if (!l || !client_monitor(l,NULL))
     return SCM_UNSPECIFIED;
   box = CLIENT_IS_LAYER_SHELL(WRAP_CLIENT(l))
-    ? MONITOR_AREA((client_monitor(l,NULL)))
-    : (MONITOR_WINDOW_AREA(((client_monitor(l,NULL)))));
-  box->x -= client_geom(l)->x;
-  box->y -= client_geom(l)->y;
-  wlr_xdg_popup_unconstrain_from_box(popup, box);
+    ? *MONITOR_AREA((client_monitor(l,NULL)))
+    : *(MONITOR_WINDOW_AREA(((client_monitor(l,NULL)))));
+  box.x -= client_geom(l)->x;
+  box.y -= client_geom(l)->y;
+  wlr_xdg_popup_unconstrain_from_box(popup, &box);
   return SCM_UNSPECIFIED;
 }
 
