@@ -998,9 +998,9 @@ SCM_DEFINE(gwwm_new_popup_notify,"new-popup-notify",2,0,0,(SCM sl ,SCM d),"")
   struct wlr_scene_node *node=wlr_scene_xdg_surface_create(popup->parent->data,
                                                           popup->base);
   popup->base->surface->data=node;
-  wlr_scene_node_reparent(node,UNWRAP_WLR_SCENE_NODE(REF("gwwm","top-layer")));
   if (!l || !client_monitor(l,NULL))
     return SCM_UNSPECIFIED;
+  if (!CLIENT_IS_FLOATING(l)) (wlr_scene_node_raise_to_top(node->parent));
   box = CLIENT_IS_LAYER_SHELL(WRAP_CLIENT(l))
     ? *MONITOR_AREA((client_monitor(l,NULL)))
     : *(MONITOR_WINDOW_AREA(((client_monitor(l,NULL)))));
