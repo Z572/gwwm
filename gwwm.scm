@@ -301,7 +301,10 @@ gwwm [options]
                (cond ((is-a? c <gwwm-xdg-client>)
                       (add-listen c (get-event-signal (client-super-surface c)
                                                       'new-popup)
-                                  new-popup-notify)
+                                  (lambda (listener data)
+                                    (let ((popup (wrap-wlr-xdg-popup data)))
+                                      (run-hook create-popup-hook popup))
+                                    (new-popup-notify listener data)))
                       (add-listen c
                                   (get-event-signal
                                    (client-super-surface c)
