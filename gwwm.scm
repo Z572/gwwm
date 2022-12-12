@@ -216,6 +216,7 @@ gwwm [options]
   (gwwm-compositor (wlr-compositor-create (gwwm-display) (gwwm-renderer)))
   (gwwm-activation (wlr-xdg-activation-v1-create (gwwm-display)))
   (gwwm-layer-shell (wlr-layer-shell-v1-create (gwwm-display)))
+  (wl-signal-add (get-event-signal (gwwm-layer-shell) 'new-surface) new-layer-shell-surface)
   (gwwm-idle (wlr-idle-create (gwwm-display)))
   (gwwm-output-layout (wlr-output-layout-create))
   (wlr-cursor-attach-output-layout (gwwm-cursor) (gwwm-output-layout)))

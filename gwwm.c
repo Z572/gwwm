@@ -123,7 +123,6 @@ struct wl_listener layout_change = {.notify = updatemons};
 struct wl_listener new_input = {.notify = inputdevice};
 struct wl_listener new_virtual_keyboard = {.notify = virtualkeyboard};
 struct wl_listener new_output = {.notify = createmon};
-struct wl_listener new_layer_shell_surface = {.notify = createlayersurface};
 struct wl_listener output_mgr_apply = {.notify = outputmgrapply};
 struct wl_listener output_mgr_test = {.notify = outputmgrtest};
 struct wl_listener request_activate = {.notify = urgent};
@@ -2022,7 +2021,6 @@ SCM_DEFINE (gwwm_setup,"%gwwm-setup" ,0,0,0,(),"")
 	idle_inhibit_mgr = wlr_idle_inhibit_v1_create(gwwm_display(NULL));
 	wl_signal_add(&idle_inhibit_mgr->events.new_inhibitor, &idle_inhibitor_create);
 
-	wl_signal_add(&gwwm_layer_shell(NULL)->events.new_surface, &new_layer_shell_surface);
 	input_inhibit_mgr = wlr_input_inhibit_manager_create(gwwm_display(NULL));
 
 	/* Use decoration protocols to negotiate server-side decorations */
@@ -2602,6 +2600,7 @@ scm_init_gwwm(void)
   define_listener(cursor_motion_absolute, "cursor-motion-absolute", motionabsolute);
   define_listener(cursor_button,"cursor-button", buttonpress);
   define_listener(new_xdg_surface,"new-xdg-surface" ,createnotify);
+  define_listener(new_layer_shell_surface,"new-layer-shell-surface" ,createlayersurface);
 #undef define_listener
 
 #ifndef SCM_MAGIC_SNARFER
