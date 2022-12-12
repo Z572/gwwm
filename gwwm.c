@@ -1450,23 +1450,10 @@ SCM_DEFINE(mapnotify,"map-notify",2,0,0,(SCM slistener ,SCM sdata),"")
   /* Called when the surface is mapped, or ready to display on-screen. */
   Client *p, *c = client_from_listener(listener);
   SCM sc = WRAP_CLIENT(c);
-  /* struct wlr_xdg_surface *surface = data; */
-  scm_c_run_hook(REF("gwwm hooks", "client-map-event-hook"),
-                 scm_list_2(sc, client_is_x11(c)
-                                    ? WRAP_WLR_XWAYLAND_SURFACE(data)
-                                    : WRAP_WLR_XDG_SURFACE(data)));
   /* Create scene tree for this client and its border */
   struct wlr_surface *surface = (CLIENT_SURFACE(c));
   struct wlr_scene_node *scene_node = CLIENT_SCENE(c);
-  /* struct wlr_scene */
-  if (wlr_surface_is_xdg_surface(surface)) {
-    client_scene_surface(
-        c, wlr_scene_xdg_surface_create(
-               scene_node, wlr_xdg_surface_from_wlr_surface(surface)));
-  } else {
-    client_scene_surface(c,
-                         wlr_scene_subsurface_tree_create(scene_node, surface));
-  }
+
   (surface)->data = scene_node;
   client_add_listen(c, &surface->events.commit, commitnotify);
   client_add_listen(c, &surface->events.destroy, destroy_surface_notify);

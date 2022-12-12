@@ -69,6 +69,7 @@
             client-wants-fullscreen?
             client-do-set-fullscreen
             client-do-set-floating
+            client-scene-surface
             %fstack
             %clients
             <gwwm-client>

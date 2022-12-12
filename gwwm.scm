@@ -306,17 +306,33 @@ gwwm [options]
                       (new-popup-notify* c))
           (run-hook create-popup-hook popup))
         (new-popup-notify listener data))))
+  (define map-notify*
+    (lambda (listener data)
+      (let* ((c (scm-from-listener listener)))
+        (run-hook client-map-event-hook
+                  c
+                  ((if (client-is-x11? c)
+                       wrap-wlr-xwayland-surface
+                       wrap-wlr-xdg-surface)
+                   data))
+        (set! (client-scene-surface c)
+              (if (is-a? c <gwwm-xdg-client>)
+                  (wlr-scene-xdg-surface-create
+                   (client-scene c)
+                   (client-super-surface c))
+                  (wlr-scene-subsurface-tree-create
+                   (client-scene c)
+                   (client-surface c)))))
+      (map-notify listener data)))
+
   (add-hook! create-client-hook
              (lambda (c)
                (cond ((is-a? c <gwwm-xdg-client>)
                       (add-listen c (get-event-signal (client-super-surface c)
                                                       'new-popup)
                                   (new-popup-notify* c))
-                      (add-listen c
-                                  (get-event-signal
-                                   (client-super-surface c)
-                                   'map)
-                                  map-notify)
+                      (add-listen c (get-event-signal
+                                     (client-super-surface c) 'map) map-notify*)
                       (add-listen c
                                   (get-event-signal
                                    (client-super-surface c)
