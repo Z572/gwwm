@@ -958,7 +958,6 @@ createmon(struct wl_listener *listener, void *data)
 	 * the user configure it. */
     scm_c_run_hook(REF("gwwm hooks", "create-monitor-hook"), scm_list_1(WRAP_MONITOR(m)));
 	/* Set up event listeners */
-    monitor_add_listen(m,&wlr_output->events.frame,rendermon);
     monitor_add_listen(m,&wlr_output->events.destroy,cleanupmon);
 
 	wlr_output_enable(wlr_output, 1);
@@ -1768,9 +1767,11 @@ quitsignal(int signo)
 	quit(NULL);
 }
 
-void
-rendermon(struct wl_listener *listener, void *data)
+
+SCM_DEFINE(rendermon,"render-monitor-notify",2,0,0,(SCM slistener ,SCM sdata),"")
 {
+  struct wl_listener *listener=UNWRAP_WL_LISTENER(slistener);
+  void *data=TO_P(sdata);
   /* PRINT_FUNCTION */
   struct wlr_output *wlr_output=data;
   /* This function is called every time an output is ready to display a frame,
@@ -1797,10 +1798,11 @@ rendermon(struct wl_listener *listener, void *data)
 		}
 	}
 	if (!skip && !wlr_scene_output_commit(m->scene_output))
-		return;
+		return SCM_UNSPECIFIED;
 	/* Let clients know a frame has been rendered */
 	wlr_scene_output_send_frame_done(m->scene_output, &now);
 	m->un_map = 0;
+    return SCM_UNSPECIFIED;
 }
 
 void

@@ -180,7 +180,6 @@ void pointerfocus(Client *c, struct wlr_surface *surface, double sx, double sy,
                   uint32_t time);
 void quit(const Arg *arg);
 void quitsignal(int signo);
-void rendermon(struct wl_listener *listener, void *data);
 void destroy_surface_notify(struct wl_listener *listener, void *data);
 void requeststartdrag(struct wl_listener *listener, void *data);
 void resize(Client *c, struct wlr_box geo, int interact);

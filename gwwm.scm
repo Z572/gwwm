@@ -168,7 +168,7 @@ gwwm [options]
                            (> (box-x geom)
                               (box-width (monitor-area m))))
                   (client-resize c (modify-instance geom
-                                                    (x (- x (box-width (monitor-window-area m)))))
+                                     (x (- x (box-width (monitor-window-area m)))))
                                  #t))
                 (pk 'bb)
                 (when (equal? (client-monitor c) m)
@@ -244,6 +244,10 @@ gwwm [options]
                (wlr-output-enable-adaptive-sync (monitor-wlr-output m) #t)))
   (add-hook! create-monitor-hook set-mode)
   (add-hook! create-monitor-hook set-default-layout)
+  (add-hook! create-monitor-hook
+             (lambda (m)
+               (add-listen m (get-event-signal (monitor-wlr-output m) 'frame)
+                           render-monitor-notify)))
 
   (define (commit-event c)
     (let ((box (%client-get-geometry c))
