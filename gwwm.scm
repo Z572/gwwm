@@ -345,7 +345,7 @@ gwwm [options]
                                   (get-event-signal
                                    (client-super-surface c)
                                    'map)
-                                  map-notify)
+                                  map-notify*)
                       (add-listen c (get-event-signal (client-super-surface c)
                                                       'unmap)
                                   unmap-notify)))))
