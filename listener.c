@@ -10,7 +10,11 @@ typedef struct Gwwm_listener {
   struct wl_listener listener;
 } Gwwm_listener;
 
-SCM_DEFINE(scm_register_gwwm_listener, "%register-listener", 1, 0, 0, (SCM o), "") {
+SCM_DEFINE(scm_register_gwwm_listener, "%register-listener", 1, 0, 0, (SCM o), "")
+#define FUNC_NAME s_scm_register_gwwm_listener
+{
+  SCM_ASSERT(scm_from_bool(SCM_IS_A_P(o, REF("gwwm listener","<listener-manager>")))
+             ,o, SCM_ARG1, FUNC_NAME);
   Gwwm_listener *listener=ecalloc(sizeof(*listener));
   SCM listeners=scm_slot_ref(o,scm_from_utf8_symbol("listeners"));
   listener->obj=o;
@@ -18,6 +22,7 @@ SCM_DEFINE(scm_register_gwwm_listener, "%register-listener", 1, 0, 0, (SCM o), "
                                                                  ,listeners));
   return WRAP_WL_LISTENER(&listener->listener);
 }
+#undef FUNC_NAME
 
 SCM_DEFINE (scm_add_listen ,"%add-listen",3,0,0,(SCM o,SCM signal,SCM p),""){
     struct wl_listener* listener=UNWRAP_WL_LISTENER((scm_register_gwwm_listener(o)));
@@ -27,16 +32,8 @@ SCM_DEFINE (scm_add_listen ,"%add-listen",3,0,0,(SCM o,SCM signal,SCM p),""){
     return SCM_UNSPECIFIED;
 }
 
-SCM_DEFINE(remove_listeners, "remove-listeners", 1, 0, 0, (SCM c), "") {
-  SCM listeners = (scm_slot_ref(c, scm_from_utf8_symbol("listeners")));
-  int length = scm_to_int(REF_CALL_1("guile", "length", listeners));
-  for (int i = 0; i < length; i++) {
-    struct wl_listener *listener =
-      UNWRAP_WL_LISTENER(scm_list_ref(listeners, scm_from_int(i)));
-    wl_list_remove(&listener->link);
-  }
-  scm_slot_set_x(c, scm_from_utf8_symbol("listeners"),
-                 scm_make_list(scm_from_int(0), SCM_UNSPECIFIED));
+SCM remove_listeners(SCM o){
+  REF_CALL_1("gwwm listener", "remove-listeners", o);
   return SCM_UNSPECIFIED;
 }
 

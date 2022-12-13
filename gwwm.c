@@ -731,6 +731,7 @@ void cleanupmon(struct wl_listener *listener, void *data)
   PRINT_FUNCTION;
   struct wlr_output *wlr_output = data;
   Monitor *m = wlr_output->data;
+  SCM sm=WRAP_MONITOR(m);
   int nmons, i = 0;
 
   REF_CALL_2("ice-9 q", "q-remove!", REF_CALL_0("gwwm monitor", "%monitors"), m->scm);
@@ -745,9 +746,8 @@ void cleanupmon(struct wl_listener *listener, void *data)
     while (!(MONITOR_WLR_OUTPUT(current_monitor()))->enabled && i++ < nmons);
 
   focusclient(focustop(current_monitor()), 1);
-  scm_call_1(REFP("gwwm", "closemon"),WRAP_MONITOR(m));
-  logout_monitor(m);
-  PRINT_FUNCTION;
+  scm_call_1(REFP("gwwm", "closemon"),sm);
+  logout_monitor(sm);
 }
 
 void
@@ -913,9 +913,8 @@ find_monitor(Monitor *m) {
 }
 
 void
-logout_monitor(Monitor *m){
-  remove_listeners(WRAP_MONITOR(m));
-  /* free(m); */
+logout_monitor(SCM m){
+  remove_listeners(m);
 }
 
 void
@@ -1217,7 +1216,6 @@ focusclient(Client *c, int lift)
 	}
 
 	checkidleinhibitor(NULL);
-
 	if (!c) {
 		/* With no client, all we have left is to clear focus */
 		wlr_seat_keyboard_notify_clear_focus(gwwm_seat(NULL));
@@ -2210,6 +2208,7 @@ SCM_DEFINE(unmapnotify,"unmap-notify",2,0,0,(SCM slistener ,SCM sdata),"")
 }
 
 SCM_DEFINE(gwwm_updatemon,"update-monitor",2,0,0,(SCM sm,SCM sconfig),""){
+
     Monitor *m=UNWRAP_MONITOR(sm);
     struct wlr_output_configuration_v1 *config=UNWRAP_WLR_OUTPUT_CONFIGURATION_V1(sconfig);
   struct wlr_output_configuration_head_v1 *config_head =
