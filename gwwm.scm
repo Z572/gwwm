@@ -356,7 +356,7 @@ gwwm [options]
   (add-hook! client-map-event-hook set-x11-client-surface)
   (add-hook! client-map-event-hook (lambda (client surface)
                                      (set! (client-scene client)
-                                           (wlr-scene-tree-create tile-layer))))
+                                           (.node (wlr-scene-tree-create tile-layer)))))
   (parse-command-line)
   (send-log DEBUG (G_ "init global keybind ..."))
   (init-global-keybind)
