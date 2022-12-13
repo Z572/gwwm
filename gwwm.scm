@@ -236,15 +236,13 @@ gwwm [options]
   (define (set-mode m)
     (let ((output (monitor-wlr-output m)))
       (wlr-output-set-mode output (wlr-output-preferred-mode output))))
-  (add-hook! create-monitor-hook set-mode)
   (define (set-default-layout m)
     (set! (monitor-layouts m)
-          (make-list 2
-                     tile-layout
-                     ;; (make <layout>
-                     ;;   #:symbol "[]="
-                     ;;   #:procedure %tile)
-                     )))
+          (make-list 2 tile-layout)))
+  (add-hook! create-monitor-hook
+             (lambda (m)
+               (wlr-output-enable-adaptive-sync (monitor-wlr-output m) #t)))
+  (add-hook! create-monitor-hook set-mode)
   (add-hook! create-monitor-hook set-default-layout)
 
   (define (commit-event c)

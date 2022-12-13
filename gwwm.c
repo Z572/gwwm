@@ -958,8 +958,6 @@ createmon(struct wl_listener *listener, void *data)
 	 * monitor's preferred mode; a more sophisticated compositor would let
 	 * the user configure it. */
     scm_c_run_hook(REF("gwwm hooks", "create-monitor-hook"), scm_list_1(WRAP_MONITOR(m)));
-	wlr_output_enable_adaptive_sync(wlr_output, 1);
-
 	/* Set up event listeners */
     monitor_add_listen(m,&wlr_output->events.frame,rendermon);
     monitor_add_listen(m,&wlr_output->events.destroy,cleanupmon);
