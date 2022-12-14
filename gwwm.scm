@@ -209,6 +209,7 @@ gwwm [options]
   (wl-signal-add (get-event-signal (gwwm-cursor) 'motion) cursor-motion)
   (wl-signal-add (get-event-signal (gwwm-cursor) 'motion-absolute) cursor-motion-absolute)
   (wl-signal-add (get-event-signal (gwwm-cursor) 'button) cursor-button)
+  (wl-signal-add (get-event-signal (gwwm-backend) 'new-input) new-input)
   (gwwm-xcursor-manager (wlr-xcursor-manager-create #f 24))
   (gwwm-seat (wlr-seat-create (gwwm-display) "seat0"))
   (gwwm-xdg-shell (wlr-xdg-shell-create (gwwm-display)))

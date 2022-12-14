@@ -120,7 +120,6 @@ struct wl_list mons;
 struct wl_listener idle_inhibitor_create = {.notify = createidleinhibitor};
 struct wl_listener idle_inhibitor_destroy = {.notify = destroyidleinhibitor};
 struct wl_listener layout_change = {.notify = updatemons};
-struct wl_listener new_input = {.notify = inputdevice};
 struct wl_listener new_virtual_keyboard = {.notify = virtualkeyboard};
 struct wl_listener new_output = {.notify = createmon};
 struct wl_listener output_mgr_apply = {.notify = outputmgrapply};
@@ -2033,7 +2032,6 @@ SCM_DEFINE (gwwm_setup,"%gwwm-setup" ,0,0,0,(),"")
 	 * let us know when new input devices are available on the backend.
 	 */
 	wl_list_init(&keyboards);
-	wl_signal_add(&gwwm_backend(NULL)->events.new_input, &new_input);
 	virtual_keyboard_mgr = wlr_virtual_keyboard_manager_v1_create(gwwm_display(NULL));
 	wl_signal_add(&virtual_keyboard_mgr->events.new_virtual_keyboard,
 			&new_virtual_keyboard);
@@ -2587,6 +2585,7 @@ scm_init_gwwm(void)
   define_listener(cursor_button,"cursor-button", buttonpress);
   define_listener(new_xdg_surface,"new-xdg-surface" ,createnotify);
   define_listener(new_layer_shell_surface,"new-layer-shell-surface" ,createlayersurface);
+  define_listener(new_input,"new-input",inputdevice);
 #undef define_listener
 
 #ifndef SCM_MAGIC_SNARFER
