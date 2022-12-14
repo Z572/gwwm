@@ -2587,7 +2587,7 @@ scm_init_gwwm(void)
   define_listener(new_layer_shell_surface,"new-layer-shell-surface" ,createlayersurface);
   define_listener(new_input,"new-input",inputdevice);
 #undef define_listener
-
+  scm_c_define("%c-clients",WRAP_WL_LIST(&clients));
 #ifndef SCM_MAGIC_SNARFER
 #include "gwwm.x"
 #endif

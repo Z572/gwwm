@@ -13,6 +13,7 @@
 #include "client.h"
 #include "gwwm.h"
 #include "listener.h"
+#include "wayland-util.h"
 #include <wlr/types/wlr_layer_shell_v1.h>
 SCM find_client(Client *c) {
   return (c) ? c->scm : SCM_BOOL_F;
@@ -467,6 +468,12 @@ client_fullscreen_bg(void *c , struct wlr_scene_rect *change) {
     o=scm_slot_ref(sc, scm_from_utf8_symbol("fullscreen-bg"));
     return scm_is_false(o)? NULL : UNWRAP_WLR_SCENE_RECT(o);
   }
+}
+
+SCM_DEFINE_PUBLIC (gwwm_client_from_list,"gwwm-client-from-link",1,0,0,(SCM slink),""){
+  struct wl_list *link=UNWRAP_WL_LIST(slink);
+  Client *c;
+  return WRAP_CLIENT(wl_container_of(link->next, c, link));
 }
 
 SCM_DEFINE (gwwm_setfullscreenbg,"client-set-fullscreen-bg",2,0,0,(SCM client,SCM fullscreen_p),"")
