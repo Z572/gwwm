@@ -268,7 +268,7 @@ with pointer focus of the frame event."
                            cleanup-monitor)))
 
   (define (commit-event c)
-    (let ((box (%client-get-geometry c))
+    (let ((box (client-get-geometry c))
           (m (client-monitor c)))
       (if (and m (not (box-empty? box))
                (or (not (= (box-width box)
