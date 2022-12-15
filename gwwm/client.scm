@@ -180,7 +180,7 @@
             (set! (client-fullscreen-bg c) bg)
             (wlr-scene-node-lower-to-bottom (.node bg))))
 
-        (when client-fullscreen-bg
+        (when (client-fullscreen-bg c)
           (let ((bg (client-fullscreen-bg c)))
             (wlr-scene-node-destroy (.node bg))
             (set! (client-fullscreen-bg c) #f))))))
