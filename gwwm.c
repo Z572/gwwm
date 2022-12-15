@@ -1074,21 +1074,6 @@ createpointer(struct wlr_input_device *device)
 }
 
 void
-cursorframe(struct wl_listener *listener, void *data)
-{
-  PRINT_FUNCTION;
-	/* This event is forwarded by the cursor when a pointer emits an frame
-	 * event. Frame events are sent after regular pointer events to group
-	 * multiple events together. For instance, two axis events may happen at the
-	 * same time, in which case a frame event won't be sent in between. */
-	/* Notify the client with pointer focus of the frame event. */
-  struct wlr_cursor *cursor=data;
-  scm_c_run_hook(REF("gwwm hooks","cursor-frame-event-hook"),
-                 scm_list_1(WRAP_WLR_CURSOR(cursor)));
-	wlr_seat_pointer_notify_frame(gwwm_seat(NULL));
-}
-
-void
 destroyidleinhibitor(struct wl_listener *listener, void *data)
 {
   PRINT_FUNCTION;
@@ -2566,7 +2551,6 @@ scm_init_gwwm(void)
   scm_c_define(scm_name, (WRAP_WL_LISTENER(name)));
   define_listener(new_xwayland_surface,"new-xwayland-surface",createnotifyx11);
   define_listener(xwayland_ready,"xwaylandready",xwaylandready);
-  define_listener(cursor_frame,"cursor-frame",cursorframe);
   define_listener(cursor_motion, "cursor-motion", motionrelative);
   define_listener(cursor_motion_absolute, "cursor-motion-absolute", motionabsolute);
   define_listener(cursor_button,"cursor-button", buttonpress);

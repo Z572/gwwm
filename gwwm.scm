@@ -210,7 +210,17 @@ gwwm [options]
                     (let ((event (wrap-wlr-event-pointer-axis data)))
                       (run-hook axis-event-hook event)
                       (wlr-idle-notify-activity (gwwm-idle) (gwwm-seat))))))
-  (wl-signal-add (get-event-signal (gwwm-cursor) 'frame) cursor-frame)
+  (wl-signal-add (get-event-signal (gwwm-cursor) 'frame)
+                 (make-wl-listener
+                  (lambda (listener data)
+                    "This event is forwarded by the cursor when a pointer emits
+an frame event. Frame events are sent after regular pointer events to group
+multiple events together. For instance, two axis events may happen at the same
+time, in which case a frame event won't be sent in between. Notify the client
+with pointer focus of the frame event."
+                    (let ((cursor (wrap-wlr-cursor data)))
+                      (run-hook cursor-frame-event-hook cursor)
+                      (wlr-seat-pointer-notify-frame (gwwm-seat))))))
   (wl-signal-add (get-event-signal (gwwm-cursor) 'motion) cursor-motion)
   (wl-signal-add (get-event-signal (gwwm-cursor) 'motion-absolute) cursor-motion-absolute)
   (wl-signal-add (get-event-signal (gwwm-cursor) 'button) cursor-button)
