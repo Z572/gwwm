@@ -253,6 +253,36 @@ with pointer focus of the frame event."
                          new-xwayland-surface)
           (setenv "DISPLAY" (wlr-xwayland-display-name x)))
         (send-log INFO (G_ "failed to setup XWayland X server, continuing without it.")))))
+(define (map-notify* c)
+  (lambda (listener data)
+    (run-hook client-map-event-hook c
+              ((if (client-is-x11? c)
+                   wrap-wlr-xwayland-surface
+                   wrap-wlr-xdg-surface)
+               data))
+    (when (client-is-x11? c)
+      (set! (client-surface c)
+            (wlr-xwayland-surface-surface
+             (client-super-surface c))))
+    (set! (client-scene client)
+          (.node (wlr-scene-tree-create tile-layer)))
+    (set! (client-scene-surface c)
+          (if (is-a? c <gwwm-xdg-client>)
+              (wlr-scene-xdg-surface-create
+               (client-scene c)
+               (client-super-surface c))
+              (wlr-scene-subsurface-tree-create
+               (client-scene c)
+               (client-surface c))))
+    (wl-signal-add (get-event-signal (client-surface c) 'commit)
+                   (make-wl-listener
+                    (lambda (a b)
+                      (let ((client c))
+                        (run-hook surface-commit-event-hook client)
+                        (unless (client-is-x11? client)
+                          (client-mark-resize-done-p client))))))
+    (map-notify listener data)))
+
 (define (main)
   (setlocale LC_ALL "")
   (textdomain %gettext-domain)
@@ -333,32 +363,6 @@ with pointer focus of the frame event."
                       (new-popup-notify* c))
           (run-hook create-popup-hook popup))
         (new-popup-notify listener data))))
-  (define map-notify*
-    (lambda (listener data)
-      (let* ((c (scm-from-listener listener)))
-        (run-hook client-map-event-hook
-                  c
-                  ((if (client-is-x11? c)
-                       wrap-wlr-xwayland-surface
-                       wrap-wlr-xdg-surface)
-                   data))
-        (set! (client-scene-surface c)
-              (if (is-a? c <gwwm-xdg-client>)
-                  (wlr-scene-xdg-surface-create
-                   (client-scene c)
-                   (client-super-surface c))
-                  (wlr-scene-subsurface-tree-create
-                   (client-scene c)
-                   (client-surface c))))
-        (wl-signal-add (get-event-signal (client-surface c) 'commit)
-                       (make-wl-listener
-                        (lambda (a b)
-                          (let ((client c))
-                            (run-hook surface-commit-event-hook client)
-                            (unless (client-is-x11? client)
-                              (client-mark-resize-done-p client)))))))
-      (map-notify listener data)))
-
   (add-hook! create-client-hook
              (lambda (c)
                (cond ((is-a? c <gwwm-xdg-client>)
@@ -366,7 +370,7 @@ with pointer focus of the frame event."
                                                       'new-popup)
                                   (new-popup-notify* c))
                       (add-listen c (get-event-signal
-                                     (client-super-surface c) 'map) map-notify*)
+                                     (client-super-surface c) 'map) (map-notify* c))
                       (add-listen c
                                   (get-event-signal
                                    (client-super-surface c)
@@ -377,18 +381,10 @@ with pointer focus of the frame event."
                                   (get-event-signal
                                    (client-super-surface c)
                                    'map)
-                                  map-notify*)
+                                  (map-notify* c))
                       (add-listen c (get-event-signal (client-super-surface c)
                                                       'unmap)
                                   unmap-notify)))))
-  (define (set-x11-client-surface client surface)
-    (when (client-is-x11? client)
-      (set! (client-surface client)
-            (wlr-xwayland-surface-surface surface))))
-  (add-hook! client-map-event-hook set-x11-client-surface)
-  (add-hook! client-map-event-hook (lambda (client surface)
-                                     (set! (client-scene client)
-                                           (.node (wlr-scene-tree-create tile-layer)))))
   (parse-command-line)
   (send-log DEBUG (G_ "init global keybind ..."))
   (init-global-keybind)
