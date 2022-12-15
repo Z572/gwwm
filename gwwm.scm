@@ -340,7 +340,14 @@ with pointer focus of the frame event."
                    (client-super-surface c))
                   (wlr-scene-subsurface-tree-create
                    (client-scene c)
-                   (client-surface c)))))
+                   (client-surface c))))
+        (wl-signal-add (get-event-signal (client-surface c) 'commit)
+                       (make-wl-listener
+                        (lambda (a b)
+                          (let ((client c))
+                            (run-hook surface-commit-event-hook client)
+                            (unless (client-is-x11? client)
+                              (client-mark-resize-done-p client)))))))
       (map-notify listener data)))
 
   (add-hook! create-client-hook

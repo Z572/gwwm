@@ -763,7 +763,8 @@ commitlayersurfacenotify(struct wl_listener *listener, void *data)
 	arrangelayers(WRAP_MONITOR(m));
 }
 
-inline void mark_resize_done_p(Client *c) {
+SCM_DEFINE (mark_resize_done_p,"client-mark-resize-done-p",1,0,0,(SCM sc),"") {
+  Client *c=UNWRAP_CLIENT(sc);
   uint32_t configure_serial = client_resize_configure_serial(c);
   struct wlr_xdg_surface *xdg_surface =
       wlr_xdg_surface_from_wlr_surface(CLIENT_SURFACE(c));
@@ -774,16 +775,6 @@ inline void mark_resize_done_p(Client *c) {
                             xdg_surface->current.geometry.height ==
                                 xdg_surface->pending.geometry.height)))
     client_set_resize_configure_serial(c, 0);
-}
-
-void
-commitnotify(struct wl_listener *listener, void *data)
-{
-  /* PRINT_FUNCTION; */
-	Client *c = client_from_listener(listener);
-    SCM sc=WRAP_CLIENT(c);
-    scm_c_run_hook(REF("gwwm hooks", "surface-commit-event-hook"), scm_list_1(sc));
-    if (!client_is_x11(c)) mark_resize_done_p(c);
 }
 
 void
@@ -1422,7 +1413,6 @@ SCM_DEFINE(mapnotify,"map-notify",2,0,0,(SCM slistener ,SCM sdata),"")
   struct wlr_scene_node *scene_node = CLIENT_SCENE(c);
 
   (surface)->data = scene_node;
-  client_add_listen(c, &surface->events.commit, commitnotify);
   client_add_listen(c, &surface->events.destroy, destroy_surface_notify);
 
   scene_node->data = client_scene_surface(c, NULL)->data = c;
