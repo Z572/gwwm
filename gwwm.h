@@ -135,7 +135,6 @@ void applyrules(Client *c);
 void arrange(Monitor *m);
 void arrangelayer(Monitor *m, struct wl_list *list, struct wlr_box *usable_area,
                   int exclusive);
-void buttonpress(struct wl_listener *listener, void *data);
 void checkidleinhibitor(struct wlr_surface *exclude);
 void cleanupkeyboard(struct wl_listener *listener, void *data);
 void commitlayersurfacenotify(struct wl_listener *listener, void *data);

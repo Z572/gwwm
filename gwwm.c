@@ -573,11 +573,12 @@ SCM_DEFINE(arrangelayers,"arrangelayers",1,0,0,(SCM sm),"")
     return SCM_UNSPECIFIED;
 }
 
-void
-buttonpress(struct wl_listener *listener, void *data)
+SCM_DEFINE (buttonpress,"buttonpress",2,0,0,(SCM slistener ,SCM sdata),"")
 {
-  PRINT_FUNCTION
-	struct wlr_event_pointer_button *event = data;
+  PRINT_FUNCTION;
+  struct wl_listener *listener=UNWRAP_WL_LISTENER(slistener);
+  void *data=TO_P(sdata);
+  struct wlr_event_pointer_button *event = data;
     struct wlr_cursor *cursor=gwwm_cursor(NULL);
 	struct wlr_keyboard *keyboard;
 	uint32_t mods;
@@ -602,7 +603,7 @@ buttonpress(struct wl_listener *listener, void *data)
 			if (CLEANMASK(mods) == CLEANMASK(b->mod) &&
 					event->button == b->button && b->func) {
 				b->func(&b->arg);
-				return;
+				return SCM_UNSPECIFIED;
 			}
 		}
 		break;
@@ -621,7 +622,7 @@ buttonpress(struct wl_listener *listener, void *data)
 			/* Drop the window off on its new monitor */
 		    set_current_monitor(xytomon(cursor->x, cursor->y));
 			setmon(grabc, current_monitor(), 0);
-			return;
+			return SCM_UNSPECIFIED;
 		}
 		break;
 	}
@@ -629,6 +630,7 @@ buttonpress(struct wl_listener *listener, void *data)
 	 * pointer focus that a button press has occurred */
 	wlr_seat_pointer_notify_button(gwwm_seat(NULL),
 			event->time_msec, event->button, event->state);
+    return SCM_UNSPECIFIED;
 }
 
 void
@@ -2542,7 +2544,6 @@ scm_init_gwwm(void)
   define_listener(xwayland_ready,"xwaylandready",xwaylandready);
   define_listener(cursor_motion, "cursor-motion", motionrelative);
   define_listener(cursor_motion_absolute, "cursor-motion-absolute", motionabsolute);
-  define_listener(cursor_button,"cursor-button", buttonpress);
   define_listener(new_xdg_surface,"new-xdg-surface" ,createnotify);
   define_listener(new_layer_shell_surface,"new-layer-shell-surface" ,createlayersurface);
   define_listener(new_input,"new-input",inputdevice);
