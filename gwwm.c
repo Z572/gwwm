@@ -775,6 +775,7 @@ SCM_DEFINE (mark_resize_done_p,"client-mark-resize-done-p",1,0,0,(SCM sc),"") {
                             xdg_surface->current.geometry.height ==
                                 xdg_surface->pending.geometry.height)))
     client_set_resize_configure_serial(c, 0);
+  return SCM_UNSPECIFIED;
 }
 
 void
