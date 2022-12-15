@@ -21,7 +21,8 @@
             gwwm-borderpx
             gwwm-default-bordercolor
             gwwm-sloppyfocus?
-            gwwm-default-focuscolor))
+            gwwm-default-focuscolor
+            g-config))
 
 (define (init-file)
   "return init file."

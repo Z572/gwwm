@@ -1,7 +1,7 @@
 (define-module (gwwm client)
   #:autoload (gwwm) (float-layer tile-layer)
   #:autoload (gwwm commands) (arrange)
-  #:autoload (gwwm config) (gwwm-borderpx)
+  #:autoload (gwwm config) (gwwm-borderpx g-config config-fullscreenbg)
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-2)
   #:use-module (wlroots types scene)
@@ -169,6 +169,22 @@
      (if (q? o) o
          (error "not a q! ~A" o)))))
 
+(define (client-set-fullscreen-bg c)
+  (let ((full? (client-fullscreen? c)))
+    (if full?
+        (unless (client-fullscreen-bg c)
+          (let ((bg (wlr-scene-rect-create (client-scene c)
+                                           (box-width (client-geom c))
+                                           (box-height (client-geom c))
+                                           (config-fullscreenbg (g-config)))))
+            (set! (client-fullscreen-bg c) bg)
+            (wlr-scene-node-lower-to-bottom (.node bg))))
+
+        (when client-fullscreen-bg
+          (let ((bg (client-fullscreen-bg c)))
+            (wlr-scene-node-destroy (.node bg))
+            (set! (client-fullscreen-bg c) #f))))))
+
 (define-method (client-do-set-fullscreen (c <gwwm-client>))
   (client-do-set-fullscreen c (client-fullscreen? c)))
 (define-method (client-do-set-fullscreen (c <gwwm-client>) fullscreen?)
@@ -183,7 +199,7 @@
                 (shallow-clone
                  (monitor-area (client-monitor c))) #f))
         (client-resize c (shallow-clone (client-prev-geom c))))
-    (client-set-fullscreen-bg c fullscreen?)
+    (client-set-fullscreen-bg c)
     (arrange (client-monitor c))))
 (define-method (client-do-set-fullscreen (client <gwwm-xdg-client>) fullscreen?)
   (next-method)
