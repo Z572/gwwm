@@ -584,11 +584,6 @@ SCM_DEFINE (buttonpress,"buttonpress",2,0,0,(SCM slistener ,SCM sdata),"")
 	uint32_t mods;
 	Client *c;
 	const Button *b;
-
-	wlr_idle_notify_activity(gwwm_idle(NULL), gwwm_seat(NULL));
-    scm_c_run_hook(REF("gwwm hooks", "cursor-button-event-hook"),
-                   scm_list_1(WRAP_WLR_EVENT_POINTER_BUTTON(event)));
- ;
 	switch (event->state) {
 	case WLR_BUTTON_PRESSED:
 		/* Change focus if the button was _pressed_ over a client */
