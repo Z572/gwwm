@@ -263,7 +263,9 @@ with pointer focus of the frame event."
   (add-hook! create-monitor-hook
              (lambda (m)
                (add-listen m (get-event-signal (monitor-wlr-output m) 'frame)
-                           render-monitor-notify)))
+                           render-monitor-notify)
+               (add-listen m (get-event-signal (monitor-wlr-output m) 'destroy)
+                           cleanup-monitor)))
 
   (define (commit-event c)
     (let ((box (%client-get-geometry c))

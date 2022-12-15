@@ -713,9 +713,11 @@ void monitor_add_listen(Monitor *m, struct wl_signal *signal,
   wl_signal_add(signal, listener);
 }
 
-void cleanupmon(struct wl_listener *listener, void *data)
+SCM_DEFINE (cleanupmon,"cleanup-monitor",2,0,0,(SCM slistener ,SCM sdata),"")
 {
   PRINT_FUNCTION;
+  struct wl_listener *listener=UNWRAP_WL_LISTENER(slistener);
+  void *data=TO_P(sdata);
   struct wlr_output *wlr_output = data;
   Monitor *m = wlr_output->data;
   SCM sm=WRAP_MONITOR(m);
@@ -735,6 +737,7 @@ void cleanupmon(struct wl_listener *listener, void *data)
   focusclient(focustop(current_monitor()), 1);
   scm_call_1(REFP("gwwm", "closemon"),sm);
   logout_monitor(sm);
+  return SCM_UNSPECIFIED;
 }
 
 void
@@ -926,9 +929,7 @@ createmon(struct wl_listener *listener, void *data)
 	Monitor *m = wlr_output->data = scm_gc_calloc(sizeof(*m),"monitor");
     register_monitor(m);
 	SET_MONITOR_WLR_OUTPUT(m,wlr_output);
-
 	wlr_output_init_render(wlr_output, gwwm_allocator(NULL), gwwm_renderer(NULL));
-
 	/* Initialize monitor state using configured rules */
 	init_monitor(wlr_output);
 	/* The mode is a tuple of (width, height, refresh rate), and each
@@ -936,9 +937,6 @@ createmon(struct wl_listener *listener, void *data)
 	 * monitor's preferred mode; a more sophisticated compositor would let
 	 * the user configure it. */
     scm_c_run_hook(REF("gwwm hooks", "create-monitor-hook"), scm_list_1(WRAP_MONITOR(m)));
-	/* Set up event listeners */
-    monitor_add_listen(m,&wlr_output->events.destroy,cleanupmon);
-
 	wlr_output_enable(wlr_output, 1);
     if (wlr_output_is_wl(wlr_output)) {
       wlr_wl_output_set_title(wlr_output, "gwwm");
