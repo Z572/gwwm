@@ -204,7 +204,12 @@ gwwm [options]
       (begin (send-log ERROR (G_ "gwwm Couldn't create allocator"))
              (exit 1)))
   (gwwm-cursor (wlr-cursor-create))
-  (wl-signal-add (get-event-signal (gwwm-cursor) 'axis) cursor-axis)
+  (wl-signal-add (get-event-signal (gwwm-cursor) 'axis)
+                 (make-wl-listener
+                  (lambda (listener data)
+                    (let ((event (wrap-wlr-event-pointer-axis data)))
+                      (run-hook axis-event-hook event)
+                      (wlr-idle-notify-activity (gwwm-idle) (gwwm-seat))))))
   (wl-signal-add (get-event-signal (gwwm-cursor) 'frame) cursor-frame)
   (wl-signal-add (get-event-signal (gwwm-cursor) 'motion) cursor-motion)
   (wl-signal-add (get-event-signal (gwwm-cursor) 'motion-absolute) cursor-motion-absolute)

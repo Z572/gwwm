@@ -574,18 +574,6 @@ SCM_DEFINE(arrangelayers,"arrangelayers",1,0,0,(SCM sm),"")
 }
 
 void
-axisnotify(struct wl_listener *listener, void *data)
-{
-  PRINT_FUNCTION
-	/* This event is forwarded by the cursor when a pointer emits an axis event,
-	 * for example when you move the scroll wheel. */
-	struct wlr_event_pointer_axis *event = data;
-    scm_c_run_hook(REF("gwwm hooks", "axis-event-hook"),
-                   scm_list_1(WRAP_WLR_EVENT_POINTER_AXIS(event)));
-	wlr_idle_notify_activity(gwwm_idle(NULL), gwwm_seat(NULL));
-}
-
-void
 buttonpress(struct wl_listener *listener, void *data)
 {
   PRINT_FUNCTION
@@ -2578,7 +2566,6 @@ scm_init_gwwm(void)
   scm_c_define(scm_name, (WRAP_WL_LISTENER(name)));
   define_listener(new_xwayland_surface,"new-xwayland-surface",createnotifyx11);
   define_listener(xwayland_ready,"xwaylandready",xwaylandready);
-  define_listener(cursor_axis,"cursor-axis",axisnotify);
   define_listener(cursor_frame,"cursor-frame",cursorframe);
   define_listener(cursor_motion, "cursor-motion", motionrelative);
   define_listener(cursor_motion_absolute, "cursor-motion-absolute", motionabsolute);
