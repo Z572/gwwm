@@ -1007,7 +1007,6 @@ createnotify(struct wl_listener *listener, void *data)
 
     scm_c_run_hook(REF("gwwm hooks", "create-client-hook"),
                  scm_list_1(WRAP_CLIENT(c)));
-    client_add_listen(c,&xdg_surface->toplevel->events.set_title, updatetitle);
     client_add_listen(c,&xdg_surface->toplevel->events.request_fullscreen,fullscreennotify);
 }
 
@@ -2230,15 +2229,6 @@ SCM_DEFINE (updatemons,"updatemons",2,0,0,(SCM slistener ,SCM sdata),"")
         setmon(c, current_monitor(), client_tags(c));
   wlr_output_manager_v1_set_configuration(output_mgr, config);
   return SCM_UNSPECIFIED;
-}
-
-void
-updatetitle(struct wl_listener *listener, void *data)
-{
-  PRINT_FUNCTION;
-  Client *c = client_from_listener(listener);
-  scm_c_run_hook(REF("gwwm hooks", "update-title-hook"),
-                 scm_list_1(WRAP_CLIENT(c)));
 }
 
 void updatetitle_x11(struct wl_listener *listener, void *data)
