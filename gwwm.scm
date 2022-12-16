@@ -19,6 +19,7 @@
   #:use-module (gwwm utils)
   #:use-module (gwwm utils srfi-215)
   #:use-module (wayland display)
+  #:use-module (wayland list)
   #:use-module (wayland listener)
   #:use-module (wayland signal)
   #:use-module (wlroots xwayland)
@@ -188,6 +189,18 @@ gwwm [options]
 (define-public overlay-layer #f)
 (define-public no-focus-layer #f)
 
+(define* (add-listen* obj symbol proc
+                      #:key
+                      (destroy-when obj)
+                      (remove-when-destroy? #t))
+  (let ((listener (make-wl-listener proc)))
+    (wl-signal-add (get-event-signal obj symbol) listener)
+    (when remove-when-destroy?
+      (wl-signal-add
+       (get-event-signal destroy-when 'destroy)
+       (make-wl-listener
+        (lambda _
+          (wl-list-remove (.link listener))))))))
 
 (define (gwwm-setup)
   (gwwm-display (wl-display-create))
@@ -205,33 +218,36 @@ gwwm [options]
              (exit 1)))
   (gwwm-cursor (wlr-cursor-create))
   (define (idle-activity) (wlr-idle-notify-activity (gwwm-idle) (gwwm-seat)))
-  (wl-signal-add (get-event-signal (gwwm-cursor) 'axis)
-                 (make-wl-listener
-                  (lambda (listener data)
-                    (let ((event (wrap-wlr-event-pointer-axis data)))
-                      (run-hook axis-event-hook event)
-                      (idle-activity)))))
-  (wl-signal-add (get-event-signal (gwwm-cursor) 'frame)
-                 (make-wl-listener
-                  (lambda (listener data)
-                    "This event is forwarded by the cursor when a pointer emits
+  (add-listen* (gwwm-cursor) 'axis
+               (lambda (listener data)
+                 (let ((event (wrap-wlr-event-pointer-axis data)))
+                   (run-hook axis-event-hook event)
+                   (idle-activity)))
+               #:remove-when-destroy? #f)
+  (add-listen* (gwwm-cursor) 'frame
+               (lambda (listener data)
+                 "This event is forwarded by the cursor when a pointer emits
 an frame event. Frame events are sent after regular pointer events to group
 multiple events together. For instance, two axis events may happen at the same
 time, in which case a frame event won't be sent in between. Notify the client
 with pointer focus of the frame event."
-                    (let ((cursor (wrap-wlr-cursor data)))
-                      (run-hook cursor-frame-event-hook cursor)
-                      (wlr-seat-pointer-notify-frame (gwwm-seat))))))
-  (wl-signal-add (get-event-signal (gwwm-cursor) 'motion) cursor-motion)
-  (wl-signal-add (get-event-signal (gwwm-cursor) 'motion-absolute) cursor-motion-absolute)
-  (wl-signal-add (get-event-signal (gwwm-cursor) 'button)
-                 (make-wl-listener
-                  (lambda (listener data)
-                    (let ((event (wrap-wlr-event-pointer-button data)))
-                      (idle-activity)
-                      (run-hook cursor-button-event-hook event)
-                      (buttonpress listener data)))))
-  (wl-signal-add (get-event-signal (gwwm-backend) 'new-input) new-input)
+                 (let ((cursor (wrap-wlr-cursor data)))
+                   (run-hook cursor-frame-event-hook cursor)
+                   (wlr-seat-pointer-notify-frame (gwwm-seat))))
+               #:remove-when-destroy? #f)
+  (add-listen* (gwwm-cursor) 'motion motionrelative
+               #:remove-when-destroy? #f)
+  (add-listen* (gwwm-cursor) 'motion-absolute
+               motionabsolute
+               #:remove-when-destroy? #f)
+  (add-listen* (gwwm-cursor) 'button
+               (lambda (listener data)
+                 (let ((event (wrap-wlr-event-pointer-button data)))
+                   (idle-activity)
+                   (run-hook cursor-button-event-hook event)
+                   (buttonpress listener data)))
+               #:remove-when-destroy? #f)
+  (add-listen* (gwwm-backend) 'new-input inputdevice)
   (gwwm-xcursor-manager (wlr-xcursor-manager-create #f 24))
   (gwwm-seat (wlr-seat-create (gwwm-display) "seat0"))
   (gwwm-xdg-shell (wlr-xdg-shell-create (gwwm-display)))
@@ -274,14 +290,13 @@ with pointer focus of the frame event."
               (wlr-scene-subsurface-tree-create
                (client-scene c)
                (client-surface c))))
-    (wl-signal-add (get-event-signal (client-surface c) 'commit)
-                   (make-wl-listener
-                    (lambda (a b)
-                      (let ((client c))
-                        (run-hook surface-commit-event-hook client)
-                        (unless (client-is-x11? client)
-                          (client-mark-resize-done-p client))))))
-    (map-notify listener data)))
+    (add-listen* (client-surface c) 'commit
+                 (lambda (a b)
+                   (let ((client c))
+                     (run-hook surface-commit-event-hook client)
+                     (unless (client-is-x11? client)
+                       (client-mark-resize-done-p client)))))
+    (map-notify c listener data)))
 
 (define (main)
   (setlocale LC_ALL "")
@@ -299,10 +314,8 @@ with pointer focus of the frame event."
   (add-hook! create-monitor-hook set-default-layout)
   (add-hook! create-monitor-hook
              (lambda (m)
-               (add-listen m (get-event-signal (monitor-wlr-output m) 'frame)
-                           render-monitor-notify)
-               (add-listen m (get-event-signal (monitor-wlr-output m) 'destroy)
-                           cleanup-monitor)))
+               (add-listen* (monitor-wlr-output m) 'frame render-monitor-notify)
+               (add-listen* (monitor-wlr-output m) 'destroy cleanup-monitor)))
 
   (define (commit-event c)
     (let ((box (client-get-geometry c))
@@ -358,33 +371,24 @@ with pointer focus of the frame event."
     (lambda (c)
       (lambda (listener data)
         (let ((popup (wrap-wlr-xdg-popup data)))
-          (add-listen c (get-event-signal (.base popup)
-                                          'new-popup)
-                      (new-popup-notify* c))
+          (add-listen* (.base popup) 'new-popup (new-popup-notify* c))
           (run-hook create-popup-hook popup))
         (new-popup-notify listener data))))
-  (add-hook! create-client-hook
-             (lambda (c)
-               (cond ((is-a? c <gwwm-xdg-client>)
-                      (add-listen c (get-event-signal (client-super-surface c)
-                                                      'new-popup)
-                                  (new-popup-notify* c))
-                      (add-listen c (get-event-signal
-                                     (client-super-surface c) 'map) (map-notify* c))
-                      (add-listen c
-                                  (get-event-signal
-                                   (client-super-surface c)
-                                   'unmap)
-                                  unmap-notify))
-                     ((is-a? c <gwwm-x-client>)
-                      (add-listen c
-                                  (get-event-signal
-                                   (client-super-surface c)
-                                   'map)
-                                  (map-notify* c))
-                      (add-listen c (get-event-signal (client-super-surface c)
-                                                      'unmap)
-                                  unmap-notify)))))
+  (add-hook!
+   create-client-hook
+   (lambda (c)
+     (cond ((is-a? c <gwwm-xdg-client>)
+            (add-listen* (client-super-surface c) 'new-popup
+                         (new-popup-notify* c))
+            (add-listen* (client-super-surface c) 'map (map-notify* c))
+            (add-listen* (client-super-surface c) 'unmap
+                         (lambda (listener data)
+                           (unmap-notify c listener data))))
+           ((is-a? c <gwwm-x-client>)
+            (add-listen* (client-super-surface c) 'map (map-notify* c))
+            (add-listen* (client-super-surface c) 'unmap
+                         (lambda (listener data)
+                           (unmap-notify c listener data)))))))
   (parse-command-line)
   (send-log DEBUG (G_ "init global keybind ..."))
   (init-global-keybind)

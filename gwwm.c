@@ -1273,10 +1273,12 @@ create_switch(struct wlr_input_device *device){
   PRINT_FUNCTION
   send_log(WARNING, "TODO: impl create switch function" );
 }
-void
-inputdevice(struct wl_listener *listener, void *data)
+
+SCM_DEFINE(inputdevice,"inputdevice",2,0,0,(SCM sl ,SCM d),"")
 {
   PRINT_FUNCTION
+  struct wl_listener *listener=UNWRAP_WL_LISTENER(sl);
+  void *data= TO_P(d);
 	/* This event is raised by the backend when a new input device becomes
 	 * available. */
 	struct wlr_input_device *device = data;
@@ -1314,6 +1316,7 @@ inputdevice(struct wl_listener *listener, void *data)
 	if (!wl_list_empty(&keyboards))
 		caps |= WL_SEAT_CAPABILITY_KEYBOARD;
 	wlr_seat_set_capabilities(gwwm_seat(NULL), caps);
+    return SCM_UNSPECIFIED;
 }
 
 bool
@@ -1395,15 +1398,14 @@ void destroy_surface_notify(struct wl_listener *listener, void *data) {
   logout_client((client_from_listener(listener)));
 }
 
-SCM_DEFINE(mapnotify,"map-notify",2,0,0,(SCM slistener ,SCM sdata),"")
+SCM_DEFINE(mapnotify,"map-notify",3,0,0,(SCM sc,SCM slistener ,SCM sdata),"")
 {
   PRINT_FUNCTION;
   struct wl_listener *listener=UNWRAP_WL_LISTENER(slistener);
   void *data=TO_P(sdata);
 
   /* Called when the surface is mapped, or ready to display on-screen. */
-  Client *p, *c = client_from_listener(listener);
-  SCM sc = WRAP_CLIENT(c);
+  Client *p, *c = UNWRAP_CLIENT(sc);
   /* Create scene tree for this client and its border */
   struct wlr_surface *surface = (CLIENT_SURFACE(c));
   struct wlr_scene_node *scene_node = CLIENT_SCENE(c);
@@ -1455,10 +1457,12 @@ SCM_DEFINE(mapnotify,"map-notify",2,0,0,(SCM slistener ,SCM sdata),"")
   return SCM_UNSPECIFIED;
 }
 
-void
-motionabsolute(struct wl_listener *listener, void *data)
+SCM_DEFINE(motionabsolute,"motionabsolute",2,0,0,(SCM sl ,SCM d),"")
 {
   PRINT_FUNCTION
+  struct wl_listener *listener=UNWRAP_WL_LISTENER(sl);
+  void *data= TO_P(d);
+
 	/* This event is forwarded by the cursor when a pointer emits an _absolute_
 	 * motion event, from 0..1 on each axis. This happens, for example, when
 	 * wlroots is running under a Wayland window rather than KMS+DRM, and you
@@ -1467,7 +1471,8 @@ motionabsolute(struct wl_listener *listener, void *data)
 	 * emits these events. */
 	struct wlr_event_pointer_motion_absolute *event = data;
   wlr_cursor_warp_absolute(gwwm_cursor(NULL), event->device, event->x, event->y);
-	motionnotify(event->time_msec);
+  motionnotify(event->time_msec);
+  return SCM_UNSPECIFIED;
 }
 
 void
@@ -1537,10 +1542,12 @@ SCM_DEFINE (gwwm_motionnotify, "%motionnotify" , 1,0,0,
 #undef FUNC_NAME
 
 
-void
-motionrelative(struct wl_listener *listener, void *data)
+SCM_DEFINE(motionrelative,"motionrelative",2,0,0,(SCM sl ,SCM d),"")
 {
   PRINT_FUNCTION;
+  struct wl_listener *listener=UNWRAP_WL_LISTENER(sl);
+  void *data= TO_P(d);
+
   /* This event is forwarded by the cursor when a pointer emits a _relative_
    * pointer motion event (i.e. a delta) */
   struct wlr_event_pointer_motion *event = data;
@@ -1552,6 +1559,7 @@ motionrelative(struct wl_listener *listener, void *data)
 	 * the cursor around without any input. */
 	wlr_cursor_move(cursor, event->device, event->delta_x, event->delta_y);
 	motionnotify(event->time_msec);
+    return SCM_UNSPECIFIED;
 }
 
 void
@@ -2137,14 +2145,14 @@ unmaplayersurfacenotify(struct wl_listener *listener, void *data)
 	motionnotify(0);
 }
 
-SCM_DEFINE(unmapnotify,"unmap-notify",2,0,0,(SCM slistener ,SCM sdata),"")
+SCM_DEFINE(unmapnotify,"unmap-notify",3,0,0,(SCM sc,SCM slistener ,SCM sdata),"")
 {
   PRINT_FUNCTION;
   struct wl_listener *listener=UNWRAP_WL_LISTENER(slistener);
   void *data=TO_P(sdata);
   PRINT_FUNCTION
 	/* Called when the surface is unmapped, and should no longer be shown. */
-	Client *c = client_from_listener(listener);
+	Client *c = UNWRAP_CLIENT(sc);
 	if (c == grabc) {
 		cursor_mode = CurNormal;
 		grabc = NULL;
@@ -2537,11 +2545,8 @@ scm_init_gwwm(void)
   scm_c_define(scm_name, (WRAP_WL_LISTENER(name)));
   define_listener(new_xwayland_surface,"new-xwayland-surface",createnotifyx11);
   define_listener(xwayland_ready,"xwaylandready",xwaylandready);
-  define_listener(cursor_motion, "cursor-motion", motionrelative);
-  define_listener(cursor_motion_absolute, "cursor-motion-absolute", motionabsolute);
   define_listener(new_xdg_surface,"new-xdg-surface" ,createnotify);
   define_listener(new_layer_shell_surface,"new-layer-shell-surface" ,createlayersurface);
-  define_listener(new_input,"new-input",inputdevice);
 #undef define_listener
   scm_c_define("%c-clients",WRAP_WL_LIST(&clients));
 #ifndef SCM_MAGIC_SNARFER
