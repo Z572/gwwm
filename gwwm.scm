@@ -264,7 +264,7 @@ with pointer focus of the frame event."
       (set! (client-surface c)
             (wlr-xwayland-surface-surface
              (client-super-surface c))))
-    (set! (client-scene client)
+    (set! (client-scene c)
           (.node (wlr-scene-tree-create tile-layer)))
     (set! (client-scene-surface c)
           (if (is-a? c <gwwm-xdg-client>)
