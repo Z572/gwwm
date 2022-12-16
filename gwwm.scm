@@ -258,6 +258,7 @@ with pointer focus of the frame event."
   (wl-signal-add (get-event-signal (gwwm-layer-shell) 'new-surface) new-layer-shell-surface)
   (gwwm-idle (wlr-idle-create (gwwm-display)))
   (gwwm-output-layout (wlr-output-layout-create))
+  (add-listen* (gwwm-output-layout) 'change updatemons)
   (wlr-cursor-attach-output-layout (gwwm-cursor) (gwwm-output-layout)))
 (define (xwayland-setup)
   (let ((x (gwwm-xwayland (wlr-xwayland-create (gwwm-display) (gwwm-compositor) #t))))

@@ -195,7 +195,6 @@ void togglefloating(const Arg *arg);
 
 void toggleview(const Arg *arg);
 void unmaplayersurfacenotify(struct wl_listener *listener, void *data);
-void updatemons(struct wl_listener *listener, void *data);
 void updatetitle(struct wl_listener *listener, void *data);
 void urgent(struct wl_listener *listener, void *data);
 void set_layersurface_geom(Client *c , struct wlr_box* box);

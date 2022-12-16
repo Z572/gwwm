@@ -119,7 +119,6 @@ struct wl_list mons;
 
 struct wl_listener idle_inhibitor_create = {.notify = createidleinhibitor};
 struct wl_listener idle_inhibitor_destroy = {.notify = destroyidleinhibitor};
-struct wl_listener layout_change = {.notify = updatemons};
 struct wl_listener new_virtual_keyboard = {.notify = virtualkeyboard};
 struct wl_listener new_output = {.notify = createmon};
 struct wl_listener output_mgr_apply = {.notify = outputmgrapply};
@@ -1953,8 +1952,7 @@ SCM_DEFINE (gwwm_setup,"%gwwm-setup" ,0,0,0,(),"")
 
 	/* Creates an output layout, which a wlroots utility for working with an
 	 * arrangement of screens in a physical layout. */
-	wl_signal_add(&gwwm_output_layout(NULL)->events.change, &layout_change);
-	wlr_xdg_output_manager_v1_create(gwwm_display(NULL), gwwm_output_layout(NULL));
+    wlr_xdg_output_manager_v1_create(gwwm_display(NULL), gwwm_output_layout(NULL));
 
 	/* Configure a listener to be notified when new outputs are available on the
 	 * backend. */
@@ -2201,33 +2199,37 @@ SCM_DEFINE(gwwm_updatemon,"update-monitor",2,0,0,(SCM sm,SCM sconfig),""){
   config_head->state.y = MONITOR_AREA(m)->y;
   return SCM_UNSPECIFIED;
 }
-void
-updatemons(struct wl_listener *listener, void *data)
-{
-  PRINT_FUNCTION
-	/*
-	 * Called whenever the output layout changes: adding or removing a
-	 * monitor, changing an output's mode or position, etc.  This is where
-	 * the change officially happens and we update geometry, window
-	 * positions, focus, and the stored configuration in wlroots'
-	 * output-manager implementation.
-	 */
-	struct wlr_output_configuration_v1 *config =
-		wlr_output_configuration_v1_create();
-	Client *c;
-	Monitor *m;
-    (scm_call_1(REFP("gwwm", "entire-layout-box"),
-                WRAP_WLR_BOX(wlr_output_layout_get_box(
-                                                       gwwm_output_layout(NULL), NULL))));
-        wl_list_for_each(m, &mons, link) {
-          (gwwm_updatemon(WRAP_MONITOR(m),WRAP_WLR_OUTPUT_CONFIGURATION_V1(config)));
-	}
 
-	if (current_monitor() && MONITOR_WLR_OUTPUT(current_monitor())->enabled)
-		wl_list_for_each(c, &clients, link)
-			if (!client_monitor(c,NULL) && client_is_mapped(c))
-              setmon(c, current_monitor(), client_tags(c));
-	wlr_output_manager_v1_set_configuration(output_mgr, config);
+SCM_DEFINE (updatemons,"updatemons",2,0,0,(SCM slistener ,SCM sdata),"")
+{
+  /*
+   * Called whenever the output layout changes: adding or removing a
+   * monitor, changing an output's mode or position, etc.  This is where
+   * the change officially happens and we update geometry, window
+   * positions, focus, and the stored configuration in wlroots'
+   * output-manager implementation.
+   */
+  PRINT_FUNCTION;
+  struct wl_listener *listener=UNWRAP_WL_LISTENER(slistener);
+  void *data=TO_P(sdata);
+  struct wlr_output_configuration_v1 *config =
+    wlr_output_configuration_v1_create();
+  Client *c;
+  Monitor *m;
+  (scm_call_1(REFP("gwwm", "entire-layout-box"),
+              WRAP_WLR_BOX(wlr_output_layout_get_box(gwwm_output_layout(NULL),
+                                                     NULL))));
+
+  wl_list_for_each(m, &mons, link) {
+    (gwwm_updatemon(WRAP_MONITOR(m),WRAP_WLR_OUTPUT_CONFIGURATION_V1(config)));
+  }
+
+  if (current_monitor() && MONITOR_WLR_OUTPUT(current_monitor())->enabled)
+    wl_list_for_each(c, &clients, link)
+      if (!client_monitor(c,NULL) && client_is_mapped(c))
+        setmon(c, current_monitor(), client_tags(c));
+  wlr_output_manager_v1_set_configuration(output_mgr, config);
+  return SCM_UNSPECIFIED;
 }
 
 void
