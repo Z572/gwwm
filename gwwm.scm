@@ -342,12 +342,6 @@ with pointer focus of the frame event."
                 (wlr-event-pointer-axis-delta event)
                 (wlr-event-pointer-axis-delta-discrete event)
                 (wlr-event-pointer-axis-source event))))
-  (add-hook! fullscreen-event-hook
-             (lambda (c data)
-               (let ((fullscreen? (client-wants-fullscreen? c)))
-                 (if (client-monitor c)
-                     (client-do-set-fullscreen c fullscreen?)
-                     (set! (client-fullscreen? c) fullscreen?)))))
   (current-log-callback
    (let ((p (current-error-port)))
      (lambda (msg)
@@ -378,6 +372,15 @@ with pointer focus of the frame event."
   (define (set-title-notify c)
     (lambda (listener data)
       (run-hook update-title-hook c)))
+  (define (request-fullscreen-notify c)
+    (lambda (listener data)
+      (pk 'oooo)
+      (let ((fullscreen? (client-wants-fullscreen? c))
+            (event (wrap-wlr-xdg-toplevel-set-fullscreen-event data)))
+        (if (client-monitor c)
+            (client-do-set-fullscreen c fullscreen?)
+            (set! (client-fullscreen? c) fullscreen?))
+        (run-hook fullscreen-event-hook c event))))
   (add-hook!
    create-client-hook
    (lambda (c)
@@ -389,6 +392,12 @@ with pointer focus of the frame event."
                          'set-title
                          (set-title-notify c)
                          #:destroy-when (client-super-surface c))
+
+            (add-listen* (wlr-xdg-surface-toplevel (client-super-surface c))
+                         'request-fullscreen
+                         (request-fullscreen-notify c)
+                         #:destroy-when (client-surface c))
+
             (add-listen* (client-super-surface c) 'unmap
                          (lambda (listener data)
                            (unmap-notify c listener data))))

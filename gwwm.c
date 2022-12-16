@@ -1007,7 +1007,6 @@ createnotify(struct wl_listener *listener, void *data)
 
     scm_c_run_hook(REF("gwwm hooks", "create-client-hook"),
                  scm_list_1(WRAP_CLIENT(c)));
-    client_add_listen(c,&xdg_surface->toplevel->events.request_fullscreen,fullscreennotify);
 }
 
 void
@@ -1215,16 +1214,6 @@ focustop(Monitor *m)
   PRINT_FUNCTION;
   SCM c=REF_CALL_1("gwwm commands", "focustop", WRAP_MONITOR(m));
   return UNWRAP_CLIENT(c);
-}
-
-void
-fullscreennotify(struct wl_listener *listener, void *data)
-{
-  PRINT_FUNCTION;
-  struct wlr_xdg_toplevel_set_fullscreen_event *event=data;
-  scm_c_run_hook(REF("gwwm hooks", "fullscreen-event-hook"),
-                 scm_list_2(event->surface->data,
-                            WRAP_XDG_TOPLEVEL_SET_FULLSCREEN_EVENT(event)));
 }
 
 void
