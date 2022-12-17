@@ -442,7 +442,10 @@ with pointer focus of the frame event."
             (add-listen* (client-super-surface c) 'destroy
                          (lambda (listener data)
                            (destroy-layer-client-notify c listener data))
-                         #:remove-when-destroy? #f)))))
+                         #:remove-when-destroy? #f)
+            (add-listen* (client-super-surface c) 'unmap
+                         (lambda (listener data)
+                           (unmap-layer-client-notify c listener data)))))))
   (parse-command-line)
   (send-log DEBUG (G_ "init global keybind ..."))
   (init-global-keybind)

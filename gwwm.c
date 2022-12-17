@@ -868,7 +868,6 @@ SCM_DEFINE (createlayersurface,"create-layer-client",2,0,0,(SCM slistener ,SCM s
                  scm_list_1(WRAP_CLIENT(layersurface)));
 
     client_add_listen(layersurface,&wlr_layer_surface->surface->events.destroy, destroy_surface_notify);
-    client_add_listen(layersurface,&wlr_layer_surface->events.unmap,unmaplayersurfacenotify);
     return SCM_UNSPECIFIED;
 }
 
@@ -2064,11 +2063,12 @@ SCM_DEFINE (gwwm_toggleview, "toggleview",1,0,0,(SCM ui),""){
   return SCM_UNSPECIFIED;
 }
 
-void
-unmaplayersurfacenotify(struct wl_listener *listener, void *data)
+SCM_DEFINE (unmaplayersurfacenotify,"unmap-layer-client-notify",3,0,0,(SCM c,SCM slistener ,SCM sdata),"")
 {
-  PRINT_FUNCTION
-	Client *layersurface = client_from_listener(listener);
+  PRINT_FUNCTION;
+  struct wl_listener *listener=UNWRAP_WL_LISTENER(slistener);
+  void *data=TO_P(sdata);
+	Client *layersurface = UNWRAP_CLIENT(c);
 
 	/* wlr_layer_surface_v1_from_wlr_surface(CLIENT_SURFACE(layersurface))->mapped = (layersurface->mapped = 0); */
 	wlr_scene_node_set_enabled(CLIENT_SCENE(layersurface), 0);
@@ -2078,6 +2078,7 @@ unmaplayersurfacenotify(struct wl_listener *listener, void *data)
 			gwwm_seat(NULL)->keyboard_state.focused_surface)
 		focusclient(current_client(), 1);
 	motionnotify(0);
+    return SCM_UNSPECIFIED;
 }
 
 SCM_DEFINE(unmapnotify,"unmap-notify",3,0,0,(SCM sc,SCM slistener ,SCM sdata),"")
