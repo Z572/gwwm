@@ -144,7 +144,6 @@ SCM find_monitor(Monitor *m);
 void createkeyboard(struct wlr_input_device *device);
 void createlayersurface(struct wl_listener *listener, void *data);
 void createmon(struct wl_listener *listener, void *data);
-void createnotify(struct wl_listener *listener, void *data);
 void createpointer(struct wlr_input_device *device);
 void create_touch(struct wlr_input_device *device);
 void create_tablet_tool(struct wlr_input_device *device);

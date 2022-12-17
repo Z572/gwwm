@@ -978,21 +978,23 @@ SCM_DEFINE(gwwm_new_popup_notify,"new-popup-notify",2,0,0,(SCM sl ,SCM d),"")
   return SCM_UNSPECIFIED;
 }
 
-void
-createnotify(struct wl_listener *listener, void *data)
+SCM_DEFINE(createnotify,"create-notify",2,0,0,(SCM sl ,SCM d),"")
 {
+  /* This event is raised when wlr_xdg_shell receives a new xdg surface from a
+   * client, either a toplevel (application window) or popup,
+   * or when wlr_layer_shell receives a new popup from a layer.
+   * If you want to do something tricky with popups you should check if
+   * its parent is wlr_xdg_shell or wlr_layer_shell */
   PRINT_FUNCTION;
-	/* This event is raised when wlr_xdg_shell receives a new xdg surface from a
-	 * client, either a toplevel (application window) or popup,
-	 * or when wlr_layer_shell receives a new popup from a layer.
-	 * If you want to do something tricky with popups you should check if
-	 * its parent is wlr_xdg_shell or wlr_layer_shell */
+  struct wl_listener *listener=UNWRAP_WL_LISTENER(sl);
+  void *data= TO_P(d);
+
 	struct wlr_xdg_surface *xdg_surface = data;
 	Client *c;
 
 	if (xdg_surface->role == WLR_XDG_SURFACE_ROLE_POPUP ||
         xdg_surface->role == WLR_XDG_SURFACE_ROLE_NONE) {
-      return;
+      return SCM_UNSPECIFIED;
 	}
 
 	/* Allocate a Client for this surface */
@@ -1007,6 +1009,7 @@ createnotify(struct wl_listener *listener, void *data)
 
     scm_c_run_hook(REF("gwwm hooks", "create-client-hook"),
                  scm_list_1(WRAP_CLIENT(c)));
+    return SCM_UNSPECIFIED;
 }
 
 void
@@ -2526,7 +2529,6 @@ scm_init_gwwm(void)
   scm_c_define(scm_name, (WRAP_WL_LISTENER(name)));
   define_listener(new_xwayland_surface,"new-xwayland-surface",createnotifyx11);
   define_listener(xwayland_ready,"xwaylandready",xwaylandready);
-  define_listener(new_xdg_surface,"new-xdg-surface" ,createnotify);
   define_listener(new_layer_shell_surface,"new-layer-shell-surface" ,createlayersurface);
 #undef define_listener
   scm_c_define("%c-clients",WRAP_WL_LIST(&clients));
