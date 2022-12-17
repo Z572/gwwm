@@ -435,7 +435,10 @@ with pointer focus of the frame event."
                            (unmap-notify c listener data))))
            ((is-a? c <gwwm-layer-client>)
             (add-listen* (client-super-surface c) 'map
-                         (map-layer-client-notify c))))))
+                         (map-layer-client-notify c))
+            (add-listen* (.surface (client-super-surface c)) 'commit
+                         (lambda (listener data)
+                           (commit-layer-client-notify c listener data)))))))
   (parse-command-line)
   (send-log DEBUG (G_ "init global keybind ..."))
   (init-global-keybind)

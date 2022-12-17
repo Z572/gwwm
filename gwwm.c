@@ -735,15 +735,17 @@ SCM_DEFINE (cleanupmon,"cleanup-monitor",2,0,0,(SCM slistener ,SCM sdata),"")
   return SCM_UNSPECIFIED;
 }
 
-void
-commitlayersurfacenotify(struct wl_listener *listener, void *data)
+SCM_DEFINE (commitlayersurfacenotify,"commit-layer-client-notify",3,0,0,
+            (SCM c,SCM slistener ,SCM sdata),"")
 {
   PRINT_FUNCTION;
-	Client *layersurface = client_from_listener(listener);
+  struct wl_listener *listener=UNWRAP_WL_LISTENER(slistener);
+  void *data=TO_P(sdata);
+  Client *layersurface = UNWRAP_CLIENT(c);
 	struct wlr_layer_surface_v1 *wlr_layer_surface = wlr_layer_surface_v1_from_wlr_surface(CLIENT_SURFACE(layersurface));
     Monitor *m=client_monitor(layersurface,NULL);
 	if (!m)
-		return;
+		return SCM_UNSPECIFIED;
 
 	if (return_scene_node(wlr_layer_surface->current.layer) != CLIENT_SCENE(layersurface)) {
 		wlr_scene_node_reparent(CLIENT_SCENE(layersurface),
@@ -753,12 +755,9 @@ commitlayersurfacenotify(struct wl_listener *listener, void *data)
 				&layersurface->link);
 	}
 
-	/* if (wlr_layer_surface->current.committed == 0 */
-	/* 		&& layersurface->mapped == wlr_layer_surface->mapped) */
-	/* 	return; */
-	/* layersurface->mapped = wlr_layer_surface->mapped; */
-    if (wlr_layer_surface->current.committed == 0) return;
+    if (wlr_layer_surface->current.committed == 0) return SCM_UNSPECIFIED;
 	arrangelayers(WRAP_MONITOR(m));
+    return SCM_UNSPECIFIED;
 }
 
 SCM_DEFINE (mark_resize_done_p,"client-mark-resize-done-p",1,0,0,(SCM sc),"") {
@@ -868,8 +867,6 @@ SCM_DEFINE (createlayersurface,"create-layer-client",2,0,0,(SCM slistener ,SCM s
     scm_c_run_hook(REF("gwwm hooks", "create-client-hook"),
                  scm_list_1(WRAP_CLIENT(layersurface)));
 
-
-    client_add_listen(layersurface,&wlr_layer_surface->surface->events.commit, commitlayersurfacenotify);
     client_add_listen(layersurface,&wlr_layer_surface->surface->events.destroy, destroy_surface_notify);
     client_add_listen(layersurface,&wlr_layer_surface->events.destroy,destroylayersurfacenotify);
     client_add_listen(layersurface,&wlr_layer_surface->events.unmap,unmaplayersurfacenotify);
