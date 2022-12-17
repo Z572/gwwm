@@ -275,7 +275,7 @@ with pointer focus of the frame event."
   (gwwm-compositor (wlr-compositor-create (gwwm-display) (gwwm-renderer)))
   (gwwm-activation (wlr-xdg-activation-v1-create (gwwm-display)))
   (gwwm-layer-shell (wlr-layer-shell-v1-create (gwwm-display)))
-  (wl-signal-add (get-event-signal (gwwm-layer-shell) 'new-surface) new-layer-shell-surface)
+  (add-listen* (gwwm-layer-shell) 'new-surface create-layer-client)
   (gwwm-idle (wlr-idle-create (gwwm-display)))
   (gwwm-output-layout (wlr-output-layout-create))
   (add-listen* (gwwm-output-layout) 'change updatemons)

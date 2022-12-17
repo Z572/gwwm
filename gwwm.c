@@ -828,10 +828,11 @@ SCM_DEFINE(createkeyboard,"create-keyboard",1,0,0,(SCM sdevice),"")
     return SCM_UNSPECIFIED;
 }
 
-void
-createlayersurface(struct wl_listener *listener, void *data)
+SCM_DEFINE (createlayersurface,"create-layer-client",2,0,0,(SCM slistener ,SCM sdata),"")
 {
   PRINT_FUNCTION;
+  struct wl_listener *listener=UNWRAP_WL_LISTENER(slistener);
+  void *data=TO_P(sdata);
 	struct wlr_layer_surface_v1 *wlr_layer_surface = data;
 	Client *layersurface;
 	struct wlr_layer_surface_v1_state old_state;
@@ -873,8 +874,7 @@ createlayersurface(struct wl_listener *listener, void *data)
     client_add_listen(layersurface,&wlr_layer_surface->events.destroy,destroylayersurfacenotify);
     client_add_listen(layersurface,&wlr_layer_surface->events.map,maplayersurfacenotify);
     client_add_listen(layersurface,&wlr_layer_surface->events.unmap,unmaplayersurfacenotify);
-
-
+    return SCM_UNSPECIFIED;
 }
 
 void
@@ -2487,7 +2487,6 @@ scm_init_gwwm(void)
   scm_c_define(scm_name, (WRAP_WL_LISTENER(name)));
   define_listener(new_xwayland_surface,"new-xwayland-surface",createnotifyx11);
   define_listener(xwayland_ready,"xwaylandready",xwaylandready);
-  define_listener(new_layer_shell_surface,"new-layer-shell-surface" ,createlayersurface);
 #undef define_listener
   scm_c_define("%c-clients",WRAP_WL_LIST(&clients));
 #ifndef SCM_MAGIC_SNARFER
