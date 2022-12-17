@@ -787,9 +787,9 @@ createidleinhibitor(struct wl_listener *listener, void *data)
 	checkidleinhibitor(NULL);
 }
 
-void
-createkeyboard(struct wlr_input_device *device)
+SCM_DEFINE(createkeyboard,"create-keyboard",1,0,0,(SCM sdevice),"")
 {
+  struct wlr_input_device *device=UNWRAP_WLR_INPUT_DEVICE(sdevice);
   PRINT_FUNCTION;
 	struct xkb_context *context;
 	struct xkb_keymap *keymap;
@@ -826,6 +826,7 @@ createkeyboard(struct wlr_input_device *device)
 
 	/* And add the keyboard to our list of keyboards */
 	wl_list_insert(&keyboards, &kb->link);
+    return SCM_UNSPECIFIED;
 }
 
 void
@@ -1012,10 +1013,12 @@ SCM_DEFINE(createnotify,"create-notify",2,0,0,(SCM sl ,SCM d),"")
     return SCM_UNSPECIFIED;
 }
 
-void
-createpointer(struct wlr_input_device *device)
+
+SCM_DEFINE(createpointer,"create-pointer",1,0,0,(SCM sdevice),"")
 {
   PRINT_FUNCTION;
+  struct wlr_input_device *device=UNWRAP_WLR_INPUT_DEVICE(sdevice);
+
   scm_c_run_hook(REF("gwwm hooks", "create-pointer-hook"),
                  scm_list_1(WRAP_WLR_INPUT_DEVICE(device)));
 	if (wlr_input_device_is_libinput(device)) {
@@ -1058,6 +1061,7 @@ createpointer(struct wlr_input_device *device)
 	}
 
 	wlr_cursor_attach_input_device(gwwm_cursor(NULL), device);
+    return SCM_UNSPECIFIED;
 }
 
 void
@@ -1243,27 +1247,6 @@ incnmaster(const Arg *arg)
   arrange(current_monitor());
 }
 
-void
-create_touch(struct wlr_input_device *device){
-  PRINT_FUNCTION
-  send_log(WARNING, "TODO: impl create touch function");
-}
-void
-create_tablet_tool(struct wlr_input_device *device){
-  PRINT_FUNCTION
-  send_log(WARNING, "TODO: impl create tablet_tool function" );
-}
-void
-create_tablet_pad(struct wlr_input_device *device){
-  PRINT_FUNCTION
-  send_log(WARNING, "TODO: impl create tablet_pad function" );
-}
-void
-create_switch(struct wlr_input_device *device){
-  PRINT_FUNCTION
-  send_log(WARNING, "TODO: impl create switch function" );
-}
-
 SCM_DEFINE(inputdevice,"inputdevice",2,0,0,(SCM sl ,SCM d),"")
 {
   PRINT_FUNCTION
@@ -1273,31 +1256,6 @@ SCM_DEFINE(inputdevice,"inputdevice",2,0,0,(SCM sl ,SCM d),"")
 	 * available. */
 	struct wlr_input_device *device = data;
 	uint32_t caps;
-
-	switch (device->type) {
-	case WLR_INPUT_DEVICE_KEYBOARD:
-		createkeyboard(device);
-		break;
-	case WLR_INPUT_DEVICE_POINTER:
-		createpointer(device);
-		break;
-    case WLR_INPUT_DEVICE_TOUCH:
-      create_touch(device);
-      break;
-    case WLR_INPUT_DEVICE_TABLET_TOOL:
-      create_tablet_tool(device);
-      break;
-    case WLR_INPUT_DEVICE_TABLET_PAD:
-      create_tablet_pad(device);
-      break;
-    case WLR_INPUT_DEVICE_SWITCH:
-      create_switch(device);
-      break;
-	default:
-      send_log(WARNING,"unknow input device");
-		/* TODO handle other input device types */
-		break;
-	}
 	/* We need to let the wlr_seat know what our capabilities are, which is
 	 * communiciated to the client. In dwl we always have a cursor, even if
 	 * there are no pointer devices, so we always include that capability. */
@@ -2270,7 +2228,7 @@ virtualkeyboard(struct wl_listener *listener, void *data)
   PRINT_FUNCTION
 	struct wlr_virtual_keyboard_v1 *keyboard = data;
 	struct wlr_input_device *device = &keyboard->input_device;
-	createkeyboard(device);
+	createkeyboard(WRAP_WLR_INPUT_DEVICE(device));
 }
 
 SCM_DEFINE (gwwm_monitor_tagset, "%monitor-tagset",1, 0,0,
