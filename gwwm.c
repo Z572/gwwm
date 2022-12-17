@@ -872,7 +872,6 @@ SCM_DEFINE (createlayersurface,"create-layer-client",2,0,0,(SCM slistener ,SCM s
     client_add_listen(layersurface,&wlr_layer_surface->surface->events.commit, commitlayersurfacenotify);
     client_add_listen(layersurface,&wlr_layer_surface->surface->events.destroy, destroy_surface_notify);
     client_add_listen(layersurface,&wlr_layer_surface->events.destroy,destroylayersurfacenotify);
-    client_add_listen(layersurface,&wlr_layer_surface->events.map,maplayersurfacenotify);
     client_add_listen(layersurface,&wlr_layer_surface->events.unmap,unmaplayersurfacenotify);
     return SCM_UNSPECIFIED;
 }
@@ -1332,15 +1331,6 @@ keypressmod(struct wl_listener *listener, void *data)
    */
   /* Send modifiers to the client. */
   wlr_seat_keyboard_notify_modifiers(gwwm_seat(NULL), &keyboard->modifiers);
-}
-
-void
-maplayersurfacenotify(struct wl_listener *listener, void *data)
-{
-  PRINT_FUNCTION
-	Client *l = client_from_listener(listener);
-	wlr_surface_send_enter(CLIENT_SURFACE(l), MONITOR_WLR_OUTPUT((client_monitor(l,NULL))));
-	motionnotify(0);
 }
 
 void destroy_surface_notify(struct wl_listener *listener, void *data) {

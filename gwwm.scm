@@ -7,6 +7,7 @@
   #:use-module (util572 box )
   #:use-module (ice-9 format)
   #:use-module (wlroots render renderer)
+  #:use-module (wlroots types surface)
   #:use-module (wlroots types input-device)
   #:use-module (wlroots render allocator)
   #:use-module (system repl server)
@@ -319,6 +320,12 @@ with pointer focus of the frame event."
                        (client-mark-resize-done-p client)))))
     (map-notify c listener data)))
 
+(define (map-layer-client-notify c)
+  (lambda (listener data)
+    (wlr-surface-send-enter
+     (client-surface c)
+     (monitor-wlr-output(client-monitor c)))
+    (%motionnotify 0)))
 (define (main)
   (setlocale LC_ALL "")
   (textdomain %gettext-domain)
@@ -425,7 +432,10 @@ with pointer focus of the frame event."
             (add-listen* (client-super-surface c) 'map (map-notify* c))
             (add-listen* (client-super-surface c) 'unmap
                          (lambda (listener data)
-                           (unmap-notify c listener data)))))))
+                           (unmap-notify c listener data))))
+           ((is-a? c <gwwm-layer-client>)
+            (add-listen* (client-super-surface c) 'map
+                         (map-layer-client-notify c))))))
   (parse-command-line)
   (send-log DEBUG (G_ "init global keybind ..."))
   (init-global-keybind)
