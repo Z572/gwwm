@@ -142,7 +142,6 @@ void commitnotify(struct wl_listener *listener, void *data);
 void createidleinhibitor(struct wl_listener *listener, void *data);
 SCM find_monitor(Monitor *m);
 void createlayersurface(struct wl_listener *listener, void *data);
-void createmon(struct wl_listener *listener, void *data);
 void create_touch(struct wlr_input_device *device);
 void create_tablet_tool(struct wlr_input_device *device);
 void create_tablet_pad(struct wlr_input_device *device);

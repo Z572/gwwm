@@ -120,7 +120,6 @@ struct wl_list mons;
 struct wl_listener idle_inhibitor_create = {.notify = createidleinhibitor};
 struct wl_listener idle_inhibitor_destroy = {.notify = destroyidleinhibitor};
 struct wl_listener new_virtual_keyboard = {.notify = virtualkeyboard};
-struct wl_listener new_output = {.notify = createmon};
 struct wl_listener output_mgr_apply = {.notify = outputmgrapply};
 struct wl_listener output_mgr_test = {.notify = outputmgrtest};
 struct wl_listener request_activate = {.notify = urgent};
@@ -915,12 +914,14 @@ init_monitor(struct wlr_output *wlr_output){
 	}
 }
 
-void
-createmon(struct wl_listener *listener, void *data)
+SCM_DEFINE (createmon,"create-monitor",2,0,0,(SCM slistener ,SCM sdata),"")
 {
-  PRINT_FUNCTION;
 	/* This event is raised by the backend when a new output (aka a display or
 	 * monitor) becomes available. */
+
+  PRINT_FUNCTION;
+  struct wl_listener *listener=UNWRAP_WL_LISTENER(slistener);
+  void *data=TO_P(sdata);
 	struct wlr_output *wlr_output = data;
 	const MonitorRule *r;
 	Monitor *m = wlr_output->data = scm_gc_calloc(sizeof(*m),"monitor");
@@ -941,7 +942,7 @@ createmon(struct wl_listener *listener, void *data)
       wlr_x11_output_set_title(wlr_output, "gwwm");
     }
     if (!wlr_output_commit(wlr_output))
-      return;
+      return SCM_UNSPECIFIED;
 
     REF_CALL_2("ice-9 q", "q-push!", REF_CALL_0("gwwm monitor", "%monitors"), m->scm);
 	wl_list_insert(&mons, &m->link);
@@ -954,6 +955,7 @@ createmon(struct wl_listener *listener, void *data)
 	 */
 	m->scene_output = wlr_scene_output_create(gwwm_scene(NULL), wlr_output);
 	wlr_output_layout_add_auto(gwwm_output_layout(NULL), wlr_output);
+    return SCM_UNSPECIFIED;
 }
 
 SCM_DEFINE(gwwm_new_popup_notify,"new-popup-notify",2,0,0,(SCM sl ,SCM d),"")
@@ -1906,8 +1908,6 @@ SCM_DEFINE (gwwm_setup,"%gwwm-setup" ,0,0,0,(),"")
 	/* Configure a listener to be notified when new outputs are available on the
 	 * backend. */
 	wl_list_init(&mons);
-	wl_signal_add(&(gwwm_backend(NULL)->events.new_output), &new_output);
-
 	/* Set up our client lists and the xdg-shell. The xdg-shell is a
 	 * Wayland protocol which is used for application windows. For more
 	 * detail on shells, refer to the article:

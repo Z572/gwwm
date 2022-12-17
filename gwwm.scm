@@ -267,6 +267,7 @@ with pointer focus of the frame event."
                       (send-log WARNING "TODO"))
                      (else (send-log WARNING "unknow input device")))
                    (inputdevice listener data))))
+  (add-listen* (gwwm-backend) 'new-output create-monitor)
   (gwwm-xcursor-manager (wlr-xcursor-manager-create #f 24))
   (gwwm-seat (wlr-seat-create (gwwm-display) "seat0"))
   (gwwm-xdg-shell (wlr-xdg-shell-create (gwwm-display)))
