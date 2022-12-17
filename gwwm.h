@@ -145,7 +145,6 @@ void create_tablet_tool(struct wlr_input_device *device);
 void create_tablet_pad(struct wlr_input_device *device);
 void create_switch(struct wlr_input_device *device);
 void destroyidleinhibitor(struct wl_listener *listener, void *data);
-void destroylayersurfacenotify(struct wl_listener *listener, void *data);
 Monitor *dirtomon(enum wlr_direction dir);
 void dragicondestroy(struct wl_listener *listener, void *data);
 void focusclient(Client *c, int lift);
