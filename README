@@ -1,5 +1,5 @@
 # -*- mode: org -*-
-#+title: gwwm - guile wayland windows mamager.
+#+title: gwwm - guile wayland windows manager.
 
 fork from dwl, add guile to configure it.
 
