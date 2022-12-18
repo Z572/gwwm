@@ -966,12 +966,6 @@ SCM_DEFINE(gwwm_new_popup_notify,"new-popup-notify",2,0,0,(SCM sl ,SCM d),"")
   if (!l || !client_monitor(l,NULL))
     return SCM_UNSPECIFIED;
   if (!CLIENT_IS_FLOATING(l)) (wlr_scene_node_raise_to_top(node->parent));
-  box = CLIENT_IS_LAYER_SHELL(WRAP_CLIENT(l))
-    ? *MONITOR_AREA((client_monitor(l,NULL)))
-    : *(MONITOR_WINDOW_AREA(((client_monitor(l,NULL)))));
-  box.x -= client_geom(l)->x;
-  box.y -= client_geom(l)->y;
-  wlr_xdg_popup_unconstrain_from_box(popup, &box);
   return SCM_UNSPECIFIED;
 }
 
