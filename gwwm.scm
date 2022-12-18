@@ -330,19 +330,16 @@ with pointer focus of the frame event."
 (define (main)
   (setlocale LC_ALL "")
   (textdomain %gettext-domain)
-  (define (set-mode m)
-    (let ((output (monitor-wlr-output m)))
-      (wlr-output-set-mode output (wlr-output-preferred-mode output))))
-  (define (set-default-layout m)
-    (set! (monitor-layouts m)
-          (make-list 2 tile-layout)))
+
   (add-hook! create-monitor-hook
              (lambda (m)
-               (wlr-output-enable-adaptive-sync (monitor-wlr-output m) #t)))
-  (add-hook! create-monitor-hook set-mode)
-  (add-hook! create-monitor-hook set-default-layout)
-  (add-hook! create-monitor-hook
-             (lambda (m)
+               (let ((output (monitor-wlr-output m)))
+                 (wlr-output-set-mode output (wlr-output-preferred-mode output))
+                 (wlr-output-enable output #t)
+                 (wlr-output-enable-adaptive-sync (monitor-wlr-output m) #t))
+
+               (set! (monitor-layouts m)
+                     (make-list 2 tile-layout))
                (add-listen* (monitor-wlr-output m) 'frame
                             (lambda (listener data)
                               (render-monitor-notify m listener data)))

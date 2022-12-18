@@ -29,8 +29,10 @@
        (wlr-scene-node-set-enabled
         (client-scene c) (visibleon c (client-monitor c )))))
    (client-list))
-  (and=> (layout-procedure
-          (list-ref (monitor-layouts m) (monitor-sellt m))) (cut <> m))
+  (and=> (list-ref (monitor-layouts m) (monitor-sellt m))
+         (lambda (lay)
+           (and=> (layout-procedure lay)
+                  (cut <> m))))
   ((@@ (gwwm) %motionnotify) 0))
 
 (define* (tag int #:optional (client (current-client)))

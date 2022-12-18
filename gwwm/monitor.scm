@@ -90,7 +90,7 @@
                    #:getter monitor-physical-height)
   (wlr-output #:accessor monitor-wlr-output
               #:setter set-.wlr-output!)
-  (layouts #:init-value (list)
+  (layouts #:init-value (list #f #f)
            #:accessor monitor-layouts
            #:setter set-.monitor-layouts)
   (sellt #:init-value 0

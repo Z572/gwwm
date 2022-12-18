@@ -928,7 +928,6 @@ SCM_DEFINE (createmon,"create-monitor",2,0,0,(SCM slistener ,SCM sdata),"")
 	 * monitor's preferred mode; a more sophisticated compositor would let
 	 * the user configure it. */
     scm_c_run_hook(REF("gwwm hooks", "create-monitor-hook"), scm_list_1(WRAP_MONITOR(m)));
-	wlr_output_enable(wlr_output, 1);
     if (wlr_output_is_wl(wlr_output)) {
       wlr_wl_output_set_title(wlr_output, "gwwm");
     } else if (wlr_output_is_x11(wlr_output)) {
