@@ -708,14 +708,13 @@ void monitor_add_listen(Monitor *m, struct wl_signal *signal,
   wl_signal_add(signal, listener);
 }
 
-SCM_DEFINE (cleanupmon,"cleanup-monitor",2,0,0,(SCM slistener ,SCM sdata),"")
+SCM_DEFINE (cleanupmon,"cleanup-monitor",3,0,0,(SCM sm, SCM slistener ,SCM sdata),"")
 {
   PRINT_FUNCTION;
   struct wl_listener *listener=UNWRAP_WL_LISTENER(slistener);
   void *data=TO_P(sdata);
   struct wlr_output *wlr_output = data;
-  Monitor *m = wlr_output->data;
-  SCM sm=WRAP_MONITOR(m);
+  Monitor *m = UNWRAP_MONITOR(sm);
   int nmons, i = 0;
 
   REF_CALL_2("ice-9 q", "q-remove!", REF_CALL_0("gwwm monitor", "%monitors"), m->scm);
@@ -1665,7 +1664,7 @@ quitsignal(int signo)
 }
 
 
-SCM_DEFINE(rendermon,"render-monitor-notify",2,0,0,(SCM slistener ,SCM sdata),"")
+SCM_DEFINE(rendermon,"render-monitor-notify",3,0,0,(SCM sm,SCM slistener ,SCM sdata),"")
 {
   struct wl_listener *listener=UNWRAP_WL_LISTENER(slistener);
   void *data=TO_P(sdata);
@@ -1673,7 +1672,7 @@ SCM_DEFINE(rendermon,"render-monitor-notify",2,0,0,(SCM slistener ,SCM sdata),""
   struct wlr_output *wlr_output=data;
   /* This function is called every time an output is ready to display a frame,
    * generally at the output's refresh rate (e.g. 60Hz). */
-  Monitor *m = wlr_output->data;
+  Monitor *m = UNWRAP_MONITOR(sm);
 	Client *c;
 	int skip = 0;
 	struct timespec now;
