@@ -169,21 +169,16 @@ gwwm [options]
 (define (closemon m)
   (for-each (lambda (c)
               (let ((geom (client-geom c)))
-                (pk 1)
                 (when (and (client-is-floating? c)
                            (> (box-x geom)
                               (box-width (monitor-area m))))
                   (client-resize c (modify-instance geom
-                                     (x (- x (box-width (monitor-window-area m)))))
-                                 #t))
-                (pk 'bb)
+                                     (x (- x (box-width (monitor-window-area m))))) #t))
                 (when (equal? (client-monitor c) m)
-                  (
-                   %setmon
+                  (%setmon
                    c
                    (current-monitor)
-                   (client-tags c)))
-                (pk '3)))
+                   (client-tags c)))))
             (client-list)))
 
 (define-public background-layer #f)
