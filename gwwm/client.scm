@@ -107,10 +107,7 @@
          #:setter client-set-scene!))
 
 (define-class <gwwm-client> (<gwwm-base-client>)
-  (appid #:allocation #:virtual
-         #:slot-ref (cut client-get-appid <>)
-         #:slot-set! (const #f)
-         #:getter client-appid)
+  (appid #:accessor client-appid)
   (floating? #:init-value #f
              #:accessor client-floating?)
   (fullscreen? #:init-value #f
@@ -119,10 +116,7 @@
                  #:accessor client-fullscreen-bg)
   (urgent? #:init-value #f
            #:accessor client-urgent?)
-  (title #:allocation #:virtual
-         #:slot-ref (cut client-get-title <>)
-         #:slot-set! (lambda _ #t)
-         #:getter client-title)
+  (title #:accessor client-title)
   (tags #:init-value 0 #:accessor client-tags)
   (borders #:init-value (list))
   (border-width #:init-value 1 #:accessor client-border-width)

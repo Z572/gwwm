@@ -430,6 +430,7 @@ with pointer focus of the frame event."
             (wlr-xdg-popup-unconstrain-from-box popup geom))))))
   (define (set-title-notify c)
     (lambda (listener data)
+      (set! (client-title c) (client-get-title c))
       (run-hook update-title-hook c)))
   (define (request-fullscreen-notify c)
     (lambda (listener data)
@@ -443,28 +444,38 @@ with pointer focus of the frame event."
   (add-hook!
    create-client-hook
    (lambda (c)
+     (when (is-a? c <gwwm-client>)
+       (set! (client-appid c) (client-get-appid c))
+       (set! (client-title c) (client-get-title c))
+       (add-listen* (client-super-surface c) 'unmap
+                    (lambda (listener data)
+                      (unmap-notify c listener data)))
+       (add-listen* (client-super-surface c) 'map (map-notify* c)))
      (cond ((is-a? c <gwwm-xdg-client>)
             (add-listen* (client-super-surface c) 'new-popup
                          (new-popup-notify* c))
-            (add-listen* (client-super-surface c) 'map (map-notify* c))
             (add-listen* (wlr-xdg-surface-toplevel (client-super-surface c))
-                         'set-title
-                         (set-title-notify c)
+                         'set-title (set-title-notify c)
                          #:destroy-when (client-super-surface c))
 
+            (add-listen* (wlr-xdg-surface-toplevel (client-super-surface c))
+                         'set-app-id
+                         (lambda (listener data)
+                           (set! (client-appid c)
+                                 (client-get-appid c)))
+                         #:destroy-when (client-super-surface c))
             (add-listen* (wlr-xdg-surface-toplevel (client-super-surface c))
                          'request-fullscreen
                          (request-fullscreen-notify c)
                          #:destroy-when (client-surface c))
 
-            (add-listen* (client-super-surface c) 'unmap
-                         (lambda (listener data)
-                           (unmap-notify c listener data))))
+            )
            ((is-a? c <gwwm-x-client>)
-            (add-listen* (client-super-surface c) 'map (map-notify* c))
-            (add-listen* (client-super-surface c) 'unmap
+            (add-listen* (client-super-surface c) 'set-app-id
                          (lambda (listener data)
-                           (unmap-notify c listener data))))
+                           (set! (client-appid c)
+                                 (client-get-appid c)))
+                         #:destroy-when (client-super-surface c)))
            ((is-a? c <gwwm-layer-client>)
             (add-listen* (client-super-surface c) 'map
                          (map-layer-client-notify c))
