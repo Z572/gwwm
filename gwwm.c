@@ -2146,9 +2146,6 @@ SCM_DEFINE (updatemons,"updatemons",2,0,0,(SCM slistener ,SCM sdata),"")
     wlr_output_configuration_v1_create();
   Client *c;
   Monitor *m;
-  (scm_call_1(REFP("gwwm", "entire-layout-box"),
-              WRAP_WLR_BOX(wlr_output_layout_get_box(gwwm_output_layout(NULL),
-                                                     NULL))));
 
   wl_list_for_each(m, &mons, link) {
     (gwwm_updatemon(WRAP_MONITOR(m),WRAP_WLR_OUTPUT_CONFIGURATION_V1(config)));
