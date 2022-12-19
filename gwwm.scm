@@ -428,10 +428,14 @@ with pointer focus of the frame event."
               (x (- x (box-x (client-geom c))))
               (y (- y (box-y (client-geom c)))))
             (wlr-xdg-popup-unconstrain-from-box popup geom))))))
+
   (define (set-title-notify c)
     (lambda (listener data)
-      (set! (client-title c) (client-get-title c))
-      (run-hook update-title-hook c)))
+      (let ((title (client-title c))
+            (new (client-get-title c)))
+        (set! (client-title c) new )
+        (run-hook update-title-hook c title new))))
+
   (define (request-fullscreen-notify c)
     (lambda (listener data)
       (pk 'oooo)
