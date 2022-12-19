@@ -99,7 +99,6 @@ Monitor* monitor_from_listener(struct wl_listener *listener) {
  struct wl_list clients; /* tiling order */
  struct wlr_idle_inhibit_manager_v1 *idle_inhibit_mgr;
  struct wlr_input_inhibit_manager *input_inhibit_mgr;
- struct wlr_output_manager_v1 *output_mgr;
  struct wlr_virtual_keyboard_manager_v1 *virtual_keyboard_mgr;
  Atom netatom[NetLast];
  Atom get_netatom_n(int n){
@@ -120,8 +119,6 @@ struct wl_list mons;
 struct wl_listener idle_inhibitor_create = {.notify = createidleinhibitor};
 struct wl_listener idle_inhibitor_destroy = {.notify = destroyidleinhibitor};
 struct wl_listener new_virtual_keyboard = {.notify = virtualkeyboard};
-struct wl_listener output_mgr_apply = {.notify = outputmgrapply};
-struct wl_listener output_mgr_test = {.notify = outputmgrtest};
 struct wl_listener request_activate = {.notify = urgent};
 struct wl_listener request_cursor = {.notify = setcursor};
 struct wl_listener request_set_psel = {.notify = setpsel};
@@ -1526,24 +1523,19 @@ moveresize(const Arg *arg)
 	}
 }
 
-void
-outputmgrapply(struct wl_listener *listener, void *data)
-{
-  PRINT_FUNCTION
-	struct wlr_output_configuration_v1 *config = data;
-	outputmgrapplyortest(config, 0);
-}
 
-void
-outputmgrapplyortest(struct wlr_output_configuration_v1 *config, int test)
+SCM_DEFINE(gwwm_outputmgrapplyortest,"output-manager-apply-or-test",2,0,0,
+           (SCM sconfig,SCM test_p),"")
 {
-  PRINT_FUNCTION
+  PRINT_FUNCTION;
 	/*
 	 * Called when a client such as wlr-randr requests a change in output
 	 * configuration.  This is only one way that the layout can be changed,
 	 * so any Monitor information should be updated by updatemons() after an
 	 * gwwm_output_layout(NULL).change event, not here.
 	 */
+  struct wlr_output_configuration_v1 *config=UNWRAP_WLR_OUTPUT_CONFIGURATION_V1(sconfig);
+  bool test=scm_to_bool(test_p);
 	struct wlr_output_configuration_head_v1 *config_head;
 	int ok = 1;
 
@@ -1610,14 +1602,7 @@ outputmgrapplyortest(struct wlr_output_configuration_v1 *config, int test)
 	else
 		wlr_output_configuration_v1_send_failed(config);
 	wlr_output_configuration_v1_destroy(config);
-}
-
-void
-outputmgrtest(struct wl_listener *listener, void *data)
-{
-  PRINT_FUNCTION
-	struct wlr_output_configuration_v1 *config = data;
-	outputmgrapplyortest(config, 1);
+    return SCM_UNSPECIFIED;
 }
 
 void
@@ -1934,14 +1919,6 @@ SCM_DEFINE (gwwm_setup,"%gwwm-setup" ,0,0,0,(),"")
 	wl_signal_add(&seat->events.request_set_primary_selection, &request_set_psel);
 	wl_signal_add(&seat->events.request_start_drag, &request_start_drag);
 	wl_signal_add(&seat->events.start_drag, &start_drag);
-
-	output_mgr = wlr_output_manager_v1_create(gwwm_display(NULL));
-	wl_signal_add(&output_mgr->events.apply, &output_mgr_apply);
-	wl_signal_add(&output_mgr->events.test, &output_mgr_test);
-
-
-
-
     return SCM_UNSPECIFIED;
 }
 
@@ -2127,35 +2104,6 @@ SCM_DEFINE(gwwm_updatemon,"update-monitor",2,0,0,(SCM sm,SCM sconfig),""){
   config_head->state.mode = ((MONITOR_WLR_OUTPUT(m))->current_mode);
   config_head->state.x = MONITOR_AREA(m)->x;
   config_head->state.y = MONITOR_AREA(m)->y;
-  return SCM_UNSPECIFIED;
-}
-
-SCM_DEFINE (updatemons,"updatemons",2,0,0,(SCM slistener ,SCM sdata),"")
-{
-  /*
-   * Called whenever the output layout changes: adding or removing a
-   * monitor, changing an output's mode or position, etc.  This is where
-   * the change officially happens and we update geometry, window
-   * positions, focus, and the stored configuration in wlroots'
-   * output-manager implementation.
-   */
-  PRINT_FUNCTION;
-  struct wl_listener *listener=UNWRAP_WL_LISTENER(slistener);
-  void *data=TO_P(sdata);
-  struct wlr_output_configuration_v1 *config =
-    wlr_output_configuration_v1_create();
-  Client *c;
-  Monitor *m;
-
-  wl_list_for_each(m, &mons, link) {
-    (gwwm_updatemon(WRAP_MONITOR(m),WRAP_WLR_OUTPUT_CONFIGURATION_V1(config)));
-  }
-
-  if (current_monitor() && MONITOR_WLR_OUTPUT(current_monitor())->enabled)
-    wl_list_for_each(c, &clients, link)
-      if (!client_monitor(c,NULL) && client_is_mapped(c))
-        setmon(c, current_monitor(), client_tags(c));
-  wlr_output_manager_v1_set_configuration(output_mgr, config);
   return SCM_UNSPECIFIED;
 }
 

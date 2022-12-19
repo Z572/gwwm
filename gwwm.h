@@ -159,9 +159,6 @@ void keypressmod(struct wl_listener *listener, void *data);
 void maplayersurfacenotify(struct wl_listener *listener, void *data);
 void motionnotify(uint32_t time);
 void moveresize(const Arg *arg);
-void outputmgrapply(struct wl_listener *listener, void *data);
-void outputmgrapplyortest(struct wlr_output_configuration_v1 *config, int test);
-void outputmgrtest(struct wl_listener *listener, void *data);
 void pointerfocus(Client *c, struct wlr_surface *surface, double sx, double sy,
                   uint32_t time);
 void quit(const Arg *arg);
