@@ -7,6 +7,7 @@
 #include "libguile/gc.h"
 #include "libguile/goops.h"
 #include "libguile/gsubr.h"
+#include "libguile/list.h"
 #include "libguile/modules.h"
 #include "libguile/numbers.h"
 #include "libguile/scm.h"
@@ -420,18 +421,6 @@ arrange(Monitor *m)
   REF_CALL_1("gwwm commands","arrange",(WRAP_MONITOR(m)));
 }
 
-SCM_DEFINE (gwwm_keyboard_list , "keyboard-list",0,0,0,(),"")
-#define FUNC_NAME s_gwwm_keyboard_list
-{
-  SCM a=scm_make_list(scm_from_int(0), SCM_UNSPECIFIED);
-  	Keyboard *kb;
-	wl_list_for_each(kb, &keyboards, link) {
-      a=scm_cons(WRAP_KEYBOARD(kb), a);
-    }
-    return a;
-}
-#undef FUNC_NAME
-
 SCM_DEFINE(gwwm_keyboard_input_device,"keyboard-input-device",1,0,0,(SCM k),""){
   Keyboard *kb=(UNWRAP_KEYBOARD(k));
   return WRAP_WLR_INPUT_DEVICE(kb->device);
@@ -690,7 +679,6 @@ cleanupkeyboard(struct wl_listener *listener, void *data)
     scm_c_run_hook(REF("gwwm hooks", "cleanup-keyboard-hook"),
                    scm_list_2(WRAP_WLR_INPUT_DEVICE(device),
                               WRAP_KEYBOARD(kb)));
-	wl_list_remove(&kb->link);
 	wl_list_remove(&kb->modifiers.link);
 	wl_list_remove(&kb->key.link);
 	wl_list_remove(&kb->destroy.link);
@@ -781,7 +769,7 @@ createidleinhibitor(struct wl_listener *listener, void *data)
 	checkidleinhibitor(NULL);
 }
 
-SCM_DEFINE(createkeyboard,"create-keyboard",1,0,0,(SCM sdevice),"")
+SCM_DEFINE(createkeyboard,"%create-keyboard",1,0,0,(SCM sdevice),"")
 {
   struct wlr_input_device *device=UNWRAP_WLR_INPUT_DEVICE(sdevice);
   PRINT_FUNCTION;
@@ -817,10 +805,7 @@ SCM_DEFINE(createkeyboard,"create-keyboard",1,0,0,(SCM sdevice),"")
 	LISTEN(&device->events.destroy, &kb->destroy, cleanupkeyboard);
 
 	wlr_seat_set_keyboard(gwwm_seat(NULL), device);
-
-	/* And add the keyboard to our list of keyboards */
-	wl_list_insert(&keyboards, &kb->link);
-    return SCM_UNSPECIFIED;
+    return WRAP_KEYBOARD(kb);
 }
 
 SCM_DEFINE (createlayersurface,"create-layer-client",2,0,0,(SCM slistener ,SCM sdata),"")
@@ -1248,7 +1233,7 @@ SCM_DEFINE(inputdevice,"inputdevice",2,0,0,(SCM sl ,SCM d),"")
 	 * there are no pointer devices, so we always include that capability. */
 	/* TODO do we actually require a cursor? */
 	caps = WL_SEAT_CAPABILITY_POINTER;
-	if (!wl_list_empty(&keyboards))
+	if (!scm_to_bool(scm_zero_p(scm_length(REF_CALL_0("gwwm keyboard", "keyboard-list")))))
 		caps |= WL_SEAT_CAPABILITY_KEYBOARD;
 	wlr_seat_set_capabilities(gwwm_seat(NULL), caps);
     return SCM_UNSPECIFIED;

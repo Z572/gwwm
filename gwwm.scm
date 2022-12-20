@@ -215,6 +215,9 @@ gwwm [options]
                     (%setmon c m (client-tags c)))) (client-list)))
     (wlr-output-manager-v1-set-configuration (gwwm-output-manager) config)))
 
+(define (create-keyboard device)
+  ((@@ (gwwm keyboard) add-keyboard) (%create-keyboard device)))
+
 (define (gwwm-setup)
   (gwwm-display (wl-display-create))
   (or (and=> (wlr-backend-autocreate(gwwm-display)) gwwm-backend)
@@ -260,6 +263,9 @@ with pointer focus of the frame event."
                    (run-hook cursor-button-event-hook event)
                    (buttonpress listener data)))
                #:remove-when-destroy? #f)
+  (add-hook! cleanup-keyboard-hook
+             (lambda (device keyboard)
+               ((@@ (gwwm keyboard) remove-keyboard) keyboard)))
   (add-listen* (gwwm-backend) 'new-input
                (lambda (listener data)
                  (let ((device (wrap-wlr-input-device data)))
