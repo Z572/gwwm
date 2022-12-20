@@ -2,6 +2,7 @@
   #:use-module (oop goops)
   #:use-module (oop goops describe)
   #:use-module (ice-9 getopt-long)
+  #:use-module (ice-9 q)
   #:use-module (srfi srfi-2)
   #:use-module (srfi srfi-26)
   #:use-module (srfi srfi-19)
@@ -449,7 +450,12 @@ with pointer focus of the frame event."
        (set! (client-title c) (client-get-title c))
        (add-listen* (client-super-surface c) 'unmap
                     (lambda (listener data)
-                      (unmap-notify c listener data)))
+                      (unmap-notify c listener data)
+                      (unless (client-is-unmanaged? c)
+                        (%setmon c #f 0)
+                        (q-remove! (%clients) c)
+                        (q-remove! (%fstack) c)
+                        (wlr-scene-node-destroy (client-scene c)))))
        (add-listen* (client-super-surface c) 'map (map-notify* c)))
      (cond ((is-a? c <gwwm-xdg-client>)
             (add-listen* (client-super-surface c) 'new-popup

@@ -1784,7 +1784,7 @@ SCM_DEFINE_PUBLIC(gwwm_setmon, "%setmon", 3, 0, 0, (SCM c ,SCM m, SCM newtags), 
   PRINT_FUNCTION;
   GWWM_ASSERT_CLIENT_OR_FALSE(c ,1);
   setmon(UNWRAP_CLIENT(c),
-         UNWRAP_MONITOR(m),
+         scm_is_true(m) ? UNWRAP_MONITOR(m) : NULL,
          scm_to_unsigned_integer(newtags, 0, 12));
   return SCM_UNSPECIFIED;
 }
@@ -2072,10 +2072,6 @@ SCM_DEFINE(unmapnotify,"unmap-notify",3,0,0,(SCM sc,SCM slistener ,SCM sdata),""
 	}
 
 	wl_list_remove(&c->link);
-    setmon(c, NULL, 0);
-    REF_CALL_2("ice-9 q", "q-remove!", REF_CALL_0("gwwm client", "%clients"), WRAP_CLIENT(c));
-    REF_CALL_2("ice-9 q", "q-remove!", REF_CALL_0("gwwm client", "%fstack"), WRAP_CLIENT(c));
-	wlr_scene_node_destroy(CLIENT_SCENE(c));
     return SCM_UNSPECIFIED;
 }
 
