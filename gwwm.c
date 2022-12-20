@@ -847,8 +847,6 @@ SCM_DEFINE (createlayersurface,"create-layer-client",2,0,0,(SCM slistener ,SCM s
 
     scm_c_run_hook(REF("gwwm hooks", "create-client-hook"),
                  scm_list_1(WRAP_CLIENT(layersurface)));
-
-    client_add_listen(layersurface,&wlr_layer_surface->surface->events.destroy, destroy_surface_notify);
     return SCM_UNSPECIFIED;
 }
 
@@ -1304,9 +1302,12 @@ keypressmod(struct wl_listener *listener, void *data)
   wlr_seat_keyboard_notify_modifiers(gwwm_seat(NULL), &keyboard->modifiers);
 }
 
-void destroy_surface_notify(struct wl_listener *listener, void *data) {
+SCM_DEFINE (destroy_surface_notify,"destroy-surface-notify",3,0,0,
+            (SCM c, SCM listener, SCM data),"")
+{
   PRINT_FUNCTION;
-  logout_client((client_from_listener(listener)));
+  logout_client(UNWRAP_CLIENT(c));
+  return SCM_UNSPECIFIED;
 }
 
 SCM_DEFINE(mapnotify,"map-notify",3,0,0,(SCM sc,SCM slistener ,SCM sdata),"")
@@ -1322,7 +1323,6 @@ SCM_DEFINE(mapnotify,"map-notify",3,0,0,(SCM sc,SCM slistener ,SCM sdata),"")
   struct wlr_scene_node *scene_node = CLIENT_SCENE(c);
 
   (surface)->data = scene_node;
-  client_add_listen(c, &surface->events.destroy, destroy_surface_notify);
 
   scene_node->data = client_scene_surface(c, NULL)->data = c;
 

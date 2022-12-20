@@ -324,6 +324,10 @@ with pointer focus of the frame event."
                    wrap-wlr-xdg-surface)
                data))
     (when (client-is-x11? c)
+      (add-listen* (.surface (client-super-surface c)) 'destroy
+                   (lambda (listener data)
+                     (destroy-surface-notify c listener data))
+                   #:remove-when-destroy? #f)
       (set! (client-surface c)
             (wlr-xwayland-surface-surface
              (client-super-surface c))))
@@ -464,6 +468,10 @@ with pointer focus of the frame event."
                         (wlr-scene-node-destroy (client-scene c)))))
        (add-listen* (client-super-surface c) 'map (map-notify* c)))
      (cond ((is-a? c <gwwm-xdg-client>)
+            (add-listen* (client-surface c) 'destroy
+                         (lambda (listener data)
+                           (destroy-surface-notify c listener data))
+                         #:remove-when-destroy? #f)
             (add-listen* (client-super-surface c) 'new-popup
                          (new-popup-notify* c))
             (add-listen* (wlr-xdg-surface-toplevel (client-super-surface c))
@@ -491,6 +499,10 @@ with pointer focus of the frame event."
            ((is-a? c <gwwm-layer-client>)
             (add-listen* (client-super-surface c) 'map
                          (map-layer-client-notify c))
+            (add-listen* (client-surface c) 'destroy
+                         (lambda (listener data)
+                           (destroy-surface-notify c listener data))
+                         #:remove-when-destroy? #f)
             (add-listen* (.surface (client-super-surface c)) 'commit
                          (lambda (listener data)
                            (commit-layer-client-notify c listener data)))
