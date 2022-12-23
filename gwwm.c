@@ -121,11 +121,6 @@ struct wl_listener idle_inhibitor_create = {.notify = createidleinhibitor};
 struct wl_listener idle_inhibitor_destroy = {.notify = destroyidleinhibitor};
 struct wl_listener new_virtual_keyboard = {.notify = virtualkeyboard};
 struct wl_listener request_activate = {.notify = urgent};
-struct wl_listener request_cursor = {.notify = setcursor};
-struct wl_listener request_set_psel = {.notify = setpsel};
-struct wl_listener request_set_sel = {.notify = setsel};
-struct wl_listener request_start_drag = {.notify = requeststartdrag};
-struct wl_listener start_drag = {.notify = startdrag};
 struct wl_listener drag_icon_destroy = {.notify = dragicondestroy};
 
 bool visibleon(Client *c, Monitor *m) {
@@ -1670,17 +1665,19 @@ SCM_DEFINE(rendermon,"render-monitor-notify",3,0,0,(SCM sm,SCM slistener ,SCM sd
     return SCM_UNSPECIFIED;
 }
 
-void
-requeststartdrag(struct wl_listener *listener, void *data)
+SCM_DEFINE (requeststartdrag,"requeststartdrag",2,0,0,(SCM slistener ,SCM sdata),"")
 {
-  PRINT_FUNCTION
-	struct wlr_seat_request_start_drag_event *event = data;
+  PRINT_FUNCTION;
+  struct wl_listener *listener=UNWRAP_WL_LISTENER(slistener);
+  void *data=TO_P(sdata);
+  struct wlr_seat_request_start_drag_event *event = data;
 
 	if (wlr_seat_validate_pointer_grab_serial(gwwm_seat(NULL), event->origin,
 			event->serial))
 		wlr_seat_start_pointer_drag(gwwm_seat(NULL), event->drag, event->serial);
 	else
 		wlr_data_source_destroy(event->drag->source);
+    return SCM_UNSPECIFIED;
 }
 
 void resize(Client *c, struct wlr_box geo, int interact) {
@@ -1697,22 +1694,11 @@ current_client(void)
   return (UNWRAP_CLIENT(c)) ;
 }
 
-/* SCM_DEFINE (gwwm_current_client, "current-client",0, 0,0, */
-/*             () , */
-/*             "c") */
-/* #define FUNC_NAME s_gwwm_current_client */
-/* { */
-/*   Client *c=current_client(); */
-/*   if (c) { */
-/*     return WRAP_CLIENT(c) ; */
-/*   } */
-/*   return SCM_BOOL_F ; */
-/* } */
-/* #undef FUNC_NAME */
-
-void
-setcursor(struct wl_listener *listener, void *data)
+SCM_DEFINE (setcursor,"setcursor",2,0,0,(SCM slistener ,SCM sdata),"")
 {
+  PRINT_FUNCTION;
+  struct wl_listener *listener=UNWRAP_WL_LISTENER(slistener);
+  void *data=TO_P(sdata);
   PRINT_FUNCTION;
   /* This event is raised by the seat when a client provides a cursor image */
   struct wlr_seat_pointer_request_set_cursor_event *event = data;
@@ -1720,7 +1706,7 @@ setcursor(struct wl_listener *listener, void *data)
 	/* If we're "grabbing" the cursor, don't use the client's image */
 	/* TODO still need to save the provided surface to restore later */
 	if (cursor_mode != CurNormal)
-		return;
+		return SCM_UNSPECIFIED;
 	/* This can be sent by any client, so we check to make sure this one is
 	 * actually has pointer focus first. If so, we can tell the cursor to
 	 * use the provided surface as the cursor image. It will set the
@@ -1729,6 +1715,7 @@ setcursor(struct wl_listener *listener, void *data)
 	if (event->seat_client == gwwm_seat(NULL)->pointer_state.focused_client)
 		wlr_cursor_set_surface(cursor, event->surface,
 				event->hotspot_x, event->hotspot_y);
+    return SCM_UNSPECIFIED;
 }
 
 void
@@ -1775,29 +1762,19 @@ SCM_DEFINE_PUBLIC(gwwm_setmon, "%setmon", 3, 0, 0, (SCM c ,SCM m, SCM newtags), 
 }
 #undef FUNC_NAME
 
-void
-setpsel(struct wl_listener *listener, void *data)
+
+SCM_DEFINE (setpsel,"setpsel",2,0,0,(SCM slistener ,SCM sdata),"")
 {
-  PRINT_FUNCTION
+  PRINT_FUNCTION;
+  struct wl_listener *listener=UNWRAP_WL_LISTENER(slistener);
+  void *data=TO_P(sdata);
 	/* This event is raised by the seat when a client wants to set the selection,
 	 * usually when the user copies something. wlroots allows compositors to
 	 * ignore such requests if they so choose, but in dwl we always honor
 	 */
 	struct wlr_seat_request_set_primary_selection_event *event = data;
 	wlr_seat_set_primary_selection(gwwm_seat(NULL), event->source, event->serial);
-}
-
-void
-setsel(struct wl_listener *listener, void *data)
-{
-  PRINT_FUNCTION
-	/* This event is raised by the seat when a client wants to set the selection,
-	 * usually when the user copies something. wlroots allows compositors to
-	 * ignore such requests if they so choose, but in dwl we always honor
-	 */
-	struct wlr_seat_request_set_selection_event *event = data;
-    scm_c_run_hook(REF("gwwm hooks", "selection-hook"), scm_list_1(WRAP_WLR_SEAT_REWUEST_SET_SELECTION_EVENT(event)));
-	wlr_seat_set_selection(gwwm_seat(NULL), event->source, event->serial);
+    return SCM_UNSPECIFIED;
 }
 
 SCM_DEFINE (gwwm_setup_scene ,"%gwwm-setup-scene",0,0,0, (),"") {
@@ -1898,12 +1875,6 @@ SCM_DEFINE (gwwm_setup,"%gwwm-setup" ,0,0,0,(),"")
 	virtual_keyboard_mgr = wlr_virtual_keyboard_manager_v1_create(gwwm_display(NULL));
 	wl_signal_add(&virtual_keyboard_mgr->events.new_virtual_keyboard,
 			&new_virtual_keyboard);
-	struct wlr_seat* seat=gwwm_seat(NULL); /* wlr_seat_create(gwwm_display(NULL), "seat0"); */
-	wl_signal_add(&seat->events.request_set_cursor, &request_cursor);
-	wl_signal_add(&seat->events.request_set_selection, &request_set_sel);
-	wl_signal_add(&seat->events.request_set_primary_selection, &request_set_psel);
-	wl_signal_add(&seat->events.request_start_drag, &request_start_drag);
-	wl_signal_add(&seat->events.start_drag, &start_drag);
     return SCM_UNSPECIFIED;
 }
 
@@ -1919,18 +1890,20 @@ sigchld(int unused)
 		die("can't install SIGCHLD handler:");
 }
 
-void
-startdrag(struct wl_listener *listener, void *data)
+SCM_DEFINE (startdrag,"startdrag",2,0,0,(SCM slistener ,SCM sdata),"")
 {
-  PRINT_FUNCTION
+  PRINT_FUNCTION;
+  struct wl_listener *listener=UNWRAP_WL_LISTENER(slistener);
+  void *data=TO_P(sdata);
 	struct wlr_drag *drag = data;
 
 	if (!drag->icon)
-		return;
+		return SCM_UNSPECIFIED;
 
 	drag->icon->data = wlr_scene_subsurface_tree_create(UNWRAP_WLR_SCENE_NODE(REF("gwwm","no-focus-layer")), drag->icon->surface);
 	motionnotify(0);
 	wl_signal_add(&drag->icon->events.destroy, &drag_icon_destroy);
+    return SCM_UNSPECIFIED;
 }
 
 void

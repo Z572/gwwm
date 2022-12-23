@@ -288,6 +288,15 @@ with pointer focus of the frame event."
   (add-listen* (gwwm-backend) 'new-output create-monitor)
   (gwwm-xcursor-manager (wlr-xcursor-manager-create #f 24))
   (gwwm-seat (wlr-seat-create (gwwm-display) "seat0"))
+  (add-listen* (gwwm-seat) 'request-set-cursor setcursor)
+  (add-listen* (gwwm-seat) 'request-set-selection
+               (lambda (listener data)
+                 (let ((event (wrap-wlr-seat-request-set-selection-event data)))
+                   (run-hook selection-hook event)
+                   (wlr-seat-set-selection (gwwm-seat) (.source event) (.serial event)))))
+  (add-listen* (gwwm-seat) 'request-start-drag requeststartdrag)
+  (add-listen* (gwwm-seat) 'request-set-primary-selection setpsel)
+  (add-listen* (gwwm-seat) 'start-drag startdrag)
   (gwwm-xdg-shell (wlr-xdg-shell-create (gwwm-display)))
   (add-listen* (gwwm-xdg-shell) 'new-surface create-notify)
   (gwwm-compositor (wlr-compositor-create (gwwm-display) (gwwm-renderer)))
@@ -445,7 +454,6 @@ with pointer focus of the frame event."
 
   (define (request-fullscreen-notify c)
     (lambda (listener data)
-      (pk 'oooo)
       (let ((fullscreen? (client-wants-fullscreen? c))
             (event (wrap-wlr-xdg-toplevel-set-fullscreen-event data)))
         (if (client-monitor c)
