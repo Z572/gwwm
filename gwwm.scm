@@ -260,7 +260,11 @@ with pointer focus of the frame event."
                                          (%motionnotify (.time-msec event))))
                #:remove-when-destroy? #f)
   (add-listen* (gwwm-cursor) 'motion-absolute
-               motionabsolute
+               (lambda (listener data)
+                 (let ((event (wrap-wlr-event-pointer-motion-absolute data)))
+                   (let-slots event (device x y time-msec)
+                     (wlr-cursor-warp-absolute (gwwm-cursor) device x y)
+                     (%motionnotify time-msec))))
                #:remove-when-destroy? #f)
   (add-listen* (gwwm-cursor) 'button
                (lambda (listener data)

@@ -1363,24 +1363,6 @@ SCM_DEFINE(mapnotify,"map-notify",3,0,0,(SCM sc,SCM slistener ,SCM sdata),"")
   return SCM_UNSPECIFIED;
 }
 
-SCM_DEFINE(motionabsolute,"motionabsolute",2,0,0,(SCM sl ,SCM d),"")
-{
-  PRINT_FUNCTION
-  struct wl_listener *listener=UNWRAP_WL_LISTENER(sl);
-  void *data= TO_P(d);
-
-	/* This event is forwarded by the cursor when a pointer emits an _absolute_
-	 * motion event, from 0..1 on each axis. This happens, for example, when
-	 * wlroots is running under a Wayland window rather than KMS+DRM, and you
-	 * move the mouse over the window. You could enter the window from any edge,
-	 * so we have to warp the mouse there. There is also some hardware which
-	 * emits these events. */
-	struct wlr_event_pointer_motion_absolute *event = data;
-  wlr_cursor_warp_absolute(gwwm_cursor(NULL), event->device, event->x, event->y);
-  motionnotify(event->time_msec);
-  return SCM_UNSPECIFIED;
-}
-
 void
 motionnotify(uint32_t time)
 {
