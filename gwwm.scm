@@ -251,7 +251,13 @@ with pointer focus of the frame event."
                    (run-hook cursor-frame-event-hook cursor)
                    (wlr-seat-pointer-notify-frame (gwwm-seat))))
                #:remove-when-destroy? #f)
-  (add-listen* (gwwm-cursor) 'motion motionrelative
+  (add-listen* (gwwm-cursor) 'motion (lambda (listener data)
+                                       (let ((event (wrap-wlr-event-pointer-motion data)))
+                                         (wlr-cursor-move (gwwm-cursor)
+                                                          (.device event)
+                                                          (.delta-x event)
+                                                          (.delta-y event))
+                                         (%motionnotify (.time-msec event))))
                #:remove-when-destroy? #f)
   (add-listen* (gwwm-cursor) 'motion-absolute
                motionabsolute
