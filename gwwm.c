@@ -1042,12 +1042,7 @@ SCM_DEFINE (destroylayersurfacenotify,"destroy-layer-client-notify",3,0,0,(SCM c
   struct wl_listener *listener=UNWRAP_WL_LISTENER(slistener);
   void *data=TO_P(sdata);
   Client *layersurface = UNWRAP_CLIENT(c);
-
   wl_list_remove(&layersurface->link);
-  wlr_scene_node_destroy(CLIENT_SCENE(layersurface));
-  Monitor *m=client_monitor(layersurface,NULL);
-  if (m)
-    arrangelayers(WRAP_MONITOR(m));
   return SCM_UNSPECIFIED;
 }
 
