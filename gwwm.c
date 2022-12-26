@@ -1733,12 +1733,6 @@ SCM_DEFINE (setpsel,"setpsel",2,0,0,(SCM slistener ,SCM sdata),"")
     return SCM_UNSPECIFIED;
 }
 
-SCM_DEFINE (gwwm_setup_scene ,"%gwwm-setup-scene",0,0,0, (),"") {
-  wlr_scene_set_presentation(gwwm_scene(NULL), wlr_presentation_create(gwwm_display(NULL),
-                                                            gwwm_backend(NULL)));
-  return SCM_UNSPECIFIED;
-}
-
 SCM_DEFINE (gwwm_setup_signal,"%gwwm-setup-signal",0,0,0,(),"")
 {
   sigchld(0);

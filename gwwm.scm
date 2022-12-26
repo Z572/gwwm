@@ -43,6 +43,7 @@
   #:use-module (wlroots types compositor)
   #:use-module (wlroots types xdg-activation)
   #:use-module (wlroots types output-layout)
+  #:use-module (wlroots types presentation-time)
   #:use-module (gwwm configuration)
   #:use-module (gwwm config)
   #:use-module (gwwm hooks)
@@ -543,7 +544,11 @@ with pointer focus of the frame event."
   (setvbuf (current-error-port) 'line)
   (gwwm-setup)
   (gwwm-scene (wlr-scene-create))
-  (%gwwm-setup-scene)
+  (wlr-scene-set-presentation
+   (gwwm-scene)
+   (wlr-presentation-create
+    (gwwm-display)
+    (gwwm-backend)))
   (let* ((scene (gwwm-scene))
          (create (lambda () (.node (wlr-scene-tree-create (.node scene))))))
     (set! background-layer (create))
