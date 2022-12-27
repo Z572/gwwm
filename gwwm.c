@@ -1316,8 +1316,8 @@ SCM_DEFINE(mapnotify,"map-notify",3,0,0,(SCM sc,SCM slistener ,SCM sdata),"")
 
   scene_node->data = client_scene_surface(c, NULL)->data = c;
 
+  (set_client_geom (c,(client_get_geometry(c))));
   if (client_is_unmanaged(c)) {
-    set_client_geom(c,(client_get_geometry(c)));
     /* Floating */
     wlr_scene_node_reparent(scene_node, UNWRAP_WLR_SCENE_NODE(REF("gwwm","float-layer")));
     wlr_scene_node_set_position(scene_node, client_geom(c)->x + GWWM_BORDERPX(),
@@ -1328,7 +1328,6 @@ SCM_DEFINE(mapnotify,"map-notify",3,0,0,(SCM sc,SCM slistener ,SCM sdata),"")
   /* Initialize client geometry with room for border */
   client_set_tiled(c, WLR_EDGE_TOP | WLR_EDGE_BOTTOM | WLR_EDGE_LEFT |
                           WLR_EDGE_RIGHT);
-  (set_client_geom (c,(client_get_geometry(c))));
   client_geom(c)->width += 2 * CLIENT_BW(c);
   client_geom(c)->height += 2 * CLIENT_BW(c);
 
