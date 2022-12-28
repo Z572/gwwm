@@ -280,8 +280,7 @@ with pointer focus of the frame event."
   (add-listen* (gwwm-backend) 'new-input
                (lambda (listener data)
                  (let ((device (wrap-wlr-input-device data)))
-                   (case (value->wlr-input-device-type
-                          (wlr-input-device-type device))
+                   (case (.type device)
                      ((WLR_INPUT_DEVICE_KEYBOARD)
                       (create-keyboard device))
                      ((WLR_INPUT_DEVICE_POINTER)
