@@ -1939,24 +1939,6 @@ SCM_DEFINE (gwwm_toggleview, "toggleview",1,0,0,(SCM ui),""){
   return SCM_UNSPECIFIED;
 }
 
-SCM_DEFINE (unmaplayersurfacenotify,"unmap-layer-client-notify",3,0,0,(SCM c,SCM slistener ,SCM sdata),"")
-{
-  PRINT_FUNCTION;
-  struct wl_listener *listener=UNWRAP_WL_LISTENER(slistener);
-  void *data=TO_P(sdata);
-	Client *layersurface = UNWRAP_CLIENT(c);
-
-	/* wlr_layer_surface_v1_from_wlr_surface(CLIENT_SURFACE(layersurface))->mapped = (layersurface->mapped = 0); */
-	wlr_scene_node_set_enabled(CLIENT_SCENE(layersurface), 0);
-	if (CLIENT_SURFACE(layersurface) == exclusive_focus(NULL))
-      exclusive_focus(SCM_BOOL_F);
-	if (CLIENT_SURFACE(layersurface) ==
-			gwwm_seat(NULL)->keyboard_state.focused_surface)
-		focusclient(current_client(), 1);
-	motionnotify(0);
-    return SCM_UNSPECIFIED;
-}
-
 SCM_DEFINE(unmapnotify,"unmap-notify",3,0,0,(SCM sc,SCM slistener ,SCM sdata),"")
 {
   PRINT_FUNCTION;
