@@ -402,7 +402,13 @@ with pointer focus of the frame event."
                               (render-monitor-notify m listener data)))
                (add-listen* (monitor-wlr-output m) 'destroy
                             (lambda (listener data)
-                              (cleanup-monitor m listener data)))))
+                              (q-remove! (%monitors) m)
+                              (wlr-output-layout-remove
+                               (gwwm-output-layout)
+                               (monitor-wlr-output m))
+                              (cleanup-monitor m listener data)
+                              (focusclient (focustop (current-monitor)) #t)
+                              (closemon m)))))
 
   (define (commit-event c)
     (let ((box (client-get-geometry c))

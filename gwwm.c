@@ -697,9 +697,7 @@ SCM_DEFINE (cleanupmon,"cleanup-monitor",3,0,0,(SCM sm, SCM slistener ,SCM sdata
   Monitor *m = UNWRAP_MONITOR(sm);
   int nmons, i = 0;
 
-  REF_CALL_2("ice-9 q", "q-remove!", REF_CALL_0("gwwm monitor", "%monitors"), m->scm);
   wl_list_remove(&m->link);
-  wlr_output_layout_remove(gwwm_output_layout(NULL), MONITOR_WLR_OUTPUT(m));
   wlr_scene_output_destroy(m->scene_output);
 
   if ((nmons = wl_list_length(&mons)))
@@ -707,9 +705,6 @@ SCM_DEFINE (cleanupmon,"cleanup-monitor",3,0,0,(SCM sm, SCM slistener ,SCM sdata
       set_current_monitor(
                           wl_container_of(mons.prev, (current_monitor()), link));
     while (!(MONITOR_WLR_OUTPUT(current_monitor()))->enabled && i++ < nmons);
-
-  focusclient(focustop(current_monitor()), 1);
-  scm_call_1(REFP("gwwm", "closemon"),sm);
   logout_monitor(sm);
   return SCM_UNSPECIFIED;
 }
