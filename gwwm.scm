@@ -210,7 +210,7 @@ gwwm [options]
     (entire-layout-box (wlr-output-layout-get-box (gwwm-output-layout)))
     (for-each (cut update-monitor <> config) (monitor-list))
     (and-let* ((m (current-monitor))
-               ((wlr-output-enabled (monitor-wlr-output m))))
+               ((.enabled (monitor-wlr-output m))))
       (for-each (lambda (c)
                   (when (and (not (client-monitor c)) (client-mapped? c))
                     (%setmon c m (client-tags c)))) (client-list)))
