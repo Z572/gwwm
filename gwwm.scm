@@ -6,6 +6,7 @@
   #:use-module (srfi srfi-2)
   #:use-module (srfi srfi-26)
   #:use-module (srfi srfi-19)
+  #:use-module (srfi srfi-189)
   #:use-module (wlroots util box)
   #:use-module (util572 box )
   #:use-module (ice-9 format)
@@ -85,7 +86,14 @@
 (define-dy gwwm-activation activation)
 (define-dy gwwm-layer-shell layer-shell)
 (define-dy gwwm-idle idle)
-(define-dy exclusive-focus surface)
+(define-once exclusive-focus
+  (let ((%o (nothing)))
+    (lambda* (#:optional (surface (nothing)))
+      (if (nothing? surface)
+          (maybe-ref/default %o #f)
+          (begin
+            (set! %o (just surface))
+            surface)))))
 (define-dy gwwm-output-manager mgr)
 
 (define (init-global-keybind)

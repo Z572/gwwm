@@ -515,10 +515,14 @@ void arrange_interactive_layer(Monitor *m) {
                              link) {
       struct wlr_surface *surface = CLIENT_SURFACE(layersurface);
       struct wlr_layer_surface_v1 *lsurface =
-        wlr_layer_surface_v1_from_wlr_surface(surface);
-      if (lsurface->current.keyboard_interactive && lsurface->mapped) {
+        TO_P(REF_CALL_1("wlroots types","get-pointer",
+                        scm_slot_ref(WRAP_CLIENT(layersurface),
+                                     scm_from_utf8_symbol("super-surface"))));
+      if (lsurface->current.keyboard_interactive ==
+          ZWLR_LAYER_SURFACE_V1_KEYBOARD_INTERACTIVITY_EXCLUSIVE) {
         /* Deactivate the focused client. */
         focusclient(NULL, 0);
+
         exclusive_focus(WRAP_WLR_SURFACE(surface));
         client_notify_enter(exclusive_focus(NULL), wlr_seat_get_keyboard(gwwm_seat(NULL)));
         return;

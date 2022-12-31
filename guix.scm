@@ -142,7 +142,8 @@
                                      '("guile-wayland"
                                        "guile-wlroots"
                                        "guile-bytestructures"
-                                       "util572")))
+                                       "util572"
+                                       "guile-srfi-189")))
                           (effective (target-guile-effective-version))
                           (mods (map (lambda (o)
                                        (string-append
@@ -169,6 +170,7 @@
     (inputs (list guile-3.0-latest wlroots-next xorg-server-xwayland
                   guile-cairo
                   guile-bytestructures
+                  guile-srfi-189
                   (primitive-load
                    (string-append (dirname (dirname (current-filename)))
                                   "/guile-wayland/guix.scm"))
