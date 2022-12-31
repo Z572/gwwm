@@ -539,6 +539,7 @@ with pointer focus of the frame event."
                                  (client-get-appid c)))
                          #:destroy-when (client-super-surface c)))
            ((is-a? c <gwwm-layer-client>)
+            (q-push! (%layer-clients) c)
             (add-listen* (client-super-surface c) 'map
                          (map-layer-client-notify c))
             (add-listen* (client-surface c) 'destroy
@@ -550,6 +551,7 @@ with pointer focus of the frame event."
                            (commit-layer-client-notify c listener data)))
             (add-listen* (client-super-surface c) 'destroy
                          (lambda (listener data)
+                           (q-remove! (%layer-clients) c)
                            (destroy-layer-client-notify c listener data)
                            (wlr-scene-node-destroy (client-scene c))
                            (and=> (client-monitor c) arrangelayers))

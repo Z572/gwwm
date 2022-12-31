@@ -2,6 +2,7 @@
   #:autoload (gwwm) (float-layer tile-layer)
   #:autoload (gwwm commands) (arrange)
   #:autoload (gwwm config) (gwwm-borderpx g-config config-fullscreenbg)
+  #:duplicates (merge-generics replace warn-override-core warn last)
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-2)
   #:use-module (wlroots types scene)
@@ -72,11 +73,18 @@
             client-scene-surface
             %fstack
             %clients
+            %layer-clients
             <gwwm-client>
             <gwwm-x-client>
             <gwwm-xdg-client>
             <gwwm-layer-client>))
 
+(define %layer-clients
+  (make-parameter
+   (make-q)
+   (lambda (o)
+     (if (q? o) o
+         (error "not a q! ~A" o)))))
 (define %fstack
   (make-parameter
    (make-q)

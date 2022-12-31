@@ -5,6 +5,7 @@
 #include "libguile/list.h"
 #include "libguile/numbers.h"
 #include "libguile/scm.h"
+#include "libguile/symbols.h"
 #include "string.h"
 #include <stdbool.h>
 #include <stdint.h>
@@ -25,7 +26,7 @@ unwrap_client_1(SCM o)
   if (scm_is_false(o)) {
     return NULL;
   }
-  SCM a=scm_call_1(REFP("gwwm client",".data"),o);
+  SCM a=scm_slot_ref(o, scm_from_utf8_symbol("data"));
   if (scm_to_bool(scm_zero_p(a))) {
     scm_error(scm_misc_error_key,"unwrap-client","client is delated" ,SCM_EOL,SCM_EOL);
     return NULL;
