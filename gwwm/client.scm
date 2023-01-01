@@ -156,7 +156,11 @@
     (let ((rect (wlr-scene-rect-create scene 0 0 (make-rgba-color 0 0 0 0))))
       ;;(set! (.data (.node rect)))
       rect))
-  (slot-set! c 'borders (list (create) (create) (create) (create))))
+  (slot-set! c 'borders (list (create) (create) (create) (create)))
+  (client-set-tiled c (list 1 2 4 8))
+  (modify-instance* (client-geom c)
+    (width (+ width (* 2 (gwwm-borderpx))))
+    (height (+ height (* 2 (gwwm-borderpx))))))
 
 (define-method (describe (c <gwwm-base-client>))
   (if (client-alive? c)

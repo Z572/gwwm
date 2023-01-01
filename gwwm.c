@@ -1324,12 +1324,6 @@ SCM_DEFINE(mapnotify,"map-notify",3,0,0,(SCM sc,SCM slistener ,SCM sdata),"")
     return SCM_UNSPECIFIED;
   }
   (scm_call_1(REFP("gwwm client","client-init-border"), WRAP_CLIENT(c)));
-  /* Initialize client geometry with room for border */
-  client_set_tiled(c, WLR_EDGE_TOP | WLR_EDGE_BOTTOM | WLR_EDGE_LEFT |
-                          WLR_EDGE_RIGHT);
-  client_geom(c)->width += 2 * CLIENT_BW(c);
-  client_geom(c)->height += 2 * CLIENT_BW(c);
-
   /* Insert this client into client lists. */
   wl_list_insert(&clients, &c->link);
   REF_CALL_2("ice-9 q", "q-push!", REF_CALL_0("gwwm client", "%clients"), sc);
