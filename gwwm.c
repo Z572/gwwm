@@ -684,14 +684,6 @@ cleanupkeyboard(struct wl_listener *listener, void *data)
 	free(kb);
 }
 
-void monitor_add_listen(Monitor *m, struct wl_signal *signal,
-                       wl_notify_func_t func) {
-  struct wl_listener *listener =
-      UNWRAP_WL_LISTENER((scm_register_gwwm_listener(WRAP_MONITOR(m))));
-  listener->notify = func;
-  wl_signal_add(signal, listener);
-}
-
 SCM_DEFINE (cleanupmon,"cleanup-monitor",3,0,0,(SCM sm, SCM slistener ,SCM sdata),"")
 {
   PRINT_FUNCTION;
@@ -859,7 +851,6 @@ find_monitor(Monitor *m) {
 
 void
 logout_monitor(SCM m){
-  remove_listeners(m);
 }
 
 void

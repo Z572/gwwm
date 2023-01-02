@@ -2,7 +2,6 @@
   #:use-module (srfi srfi-1)
   #:use-module (ice-9 q)
   #:use-module (oop goops)
-  #:use-module (gwwm listener)
   #:use-module (wlroots types output)
   #:use-module (wlroots types output-layout)
   #:autoload (system foreign) (pointer-address)
@@ -44,7 +43,7 @@
 (define current-monitor (make-procedure-with-setter
                          get-current-monitor
                          set-current-monitor))
-(define-class <gwwm-monitor> (<listener-manager>)
+(define-class <gwwm-monitor> ()
   (data #:init-keyword #:data #:accessor .data #:class <hidden-slot>)
   (name #:allocation #:virtual
         #:slot-ref (lambda (m) (.name (monitor-wlr-output m)))
