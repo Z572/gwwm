@@ -225,7 +225,22 @@ gwwm [options]
     (wlr-output-manager-v1-set-configuration (gwwm-output-manager) config)))
 
 (define (create-keyboard device)
-  ((@@ (gwwm keyboard) add-keyboard) (%create-keyboard device)))
+  (let ((kb (%create-keyboard device)))
+    ((@@ (gwwm keyboard) add-keyboard) kb)
+    (add-listen* (.device device) 'modifiers
+                 (lambda (listener data)
+                   (wlr-seat-set-keyboard
+                    (gwwm-seat) device)
+                   (keypressmod kb listener data))
+                 #:destroy-when device)
+    (add-listen* (.device device) 'key
+                 (lambda (listener data)
+                   (keypress kb listener data))
+                 #:destroy-when device)
+    (add-listen* device 'destroy
+                 (lambda (listener data)
+                   (run-hook cleanup-keyboard-hook kb)
+                   ((@@ (gwwm keyboard) remove-keyboard) kb)))))
 
 (define (gwwm-setup)
   (gwwm-display (wl-display-create))
@@ -282,9 +297,6 @@ with pointer focus of the frame event."
                    (run-hook cursor-button-event-hook event)
                    (buttonpress listener data)))
                #:remove-when-destroy? #f)
-  (add-hook! cleanup-keyboard-hook
-             (lambda (device keyboard)
-               ((@@ (gwwm keyboard) remove-keyboard) keyboard)))
   (add-listen* (gwwm-backend) 'new-input
                (lambda (listener data)
                  (let ((device (wrap-wlr-input-device data)))
@@ -431,8 +443,6 @@ with pointer focus of the frame event."
           (arrange m))))
   (add-hook! surface-commit-event-hook
              commit-event)
-  (define (pass-modifiers k)
-    (wlr-seat-set-keyboard (gwwm-seat) (keyboard-input-device k)))
   (add-hook! axis-event-hook
              (lambda (event)
                (wlr-seat-pointer-notify-axis
@@ -458,7 +468,6 @@ with pointer focus of the frame event."
                      (display " " p))
                    msg2)
          (newline p)))))
-  (add-hook! modifiers-event-hook pass-modifiers )
   (add-hook! create-client-hook
              (lambda (c)
                (send-log DEBUG "client createed" 'CLIENT c)))

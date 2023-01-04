@@ -7,6 +7,7 @@
 #include "libguile/gc.h"
 #include "libguile/goops.h"
 #include "libguile/gsubr.h"
+#include "libguile/keywords.h"
 #include "libguile/list.h"
 #include "libguile/modules.h"
 #include "libguile/numbers.h"
@@ -416,11 +417,6 @@ arrange(Monitor *m)
   REF_CALL_1("gwwm commands","arrange",(WRAP_MONITOR(m)));
 }
 
-SCM_DEFINE(gwwm_keyboard_input_device,"keyboard-input-device",1,0,0,(SCM k),""){
-  Keyboard *kb=(UNWRAP_KEYBOARD(k));
-  return WRAP_WLR_INPUT_DEVICE(kb->device);
-}
-
 void arrange_l(Client *layersurface,Monitor *m, struct wlr_box *usable_area, int exclusive) {
 
   struct wlr_box *full_area = MONITOR_AREA(m);
@@ -669,21 +665,6 @@ SCM_DEFINE (gwwm_cleanup, "%gwwm-cleanup",0,0,0, () ,"")
 }
 #undef D
 
-void
-cleanupkeyboard(struct wl_listener *listener, void *data)
-{
-  PRINT_FUNCTION
-	struct wlr_input_device *device = data;
-	Keyboard *kb = device->data;
-    scm_c_run_hook(REF("gwwm hooks", "cleanup-keyboard-hook"),
-                   scm_list_2(WRAP_WLR_INPUT_DEVICE(device),
-                              WRAP_KEYBOARD(kb)));
-	wl_list_remove(&kb->modifiers.link);
-	wl_list_remove(&kb->key.link);
-	wl_list_remove(&kb->destroy.link);
-	free(kb);
-}
-
 SCM_DEFINE (cleanupmon,"cleanup-monitor",3,0,0,(SCM sm, SCM slistener ,SCM sdata),"")
 {
   PRINT_FUNCTION;
@@ -761,10 +742,11 @@ SCM_DEFINE(createkeyboard,"%create-keyboard",1,0,0,(SCM sdevice),"")
   PRINT_FUNCTION;
 	struct xkb_context *context;
 	struct xkb_keymap *keymap;
-	Keyboard *kb = device->data = ecalloc(sizeof(*kb));
-	kb->device = device;
+    SCM kb=scm_make(scm_list_3(REFP("gwwm keyboard", "<gwwm-keyboard>"),
+                               scm_from_utf8_keyword("device"),
+                               WRAP_WLR_INPUT_DEVICE(device)));
     scm_c_run_hook(REF("gwwm hooks", "create-keyboard-hook"),
-                   scm_list_1(WRAP_KEYBOARD(kb)));
+                   scm_list_1(kb));
     SCM s_xkb = REF_CALL_1("gwwm config","config-xkb-rules", gwwm_config);
    #define rf(name) (scm_to_utf8_string(scm_slot_ref(s_xkb, scm_from_utf8_symbol(name))))
     const struct xkb_rule_names xr = {
@@ -784,14 +766,7 @@ SCM_DEFINE(createkeyboard,"%create-keyboard",1,0,0,(SCM sdevice),"")
 	xkb_keymap_unref(keymap);
 	xkb_context_unref(context);
 	wlr_keyboard_set_repeat_info(device->keyboard, (scm_to_int32(REF_CALL_1("gwwm config","config-repeat-rate", gwwm_config))), repeat_delay);
-
-	/* Here we set up listeners for keyboard events. */
-	LISTEN(&device->keyboard->events.modifiers, &kb->modifiers, keypressmod);
-	LISTEN(&device->keyboard->events.key, &kb->key, keypress);
-	LISTEN(&device->events.destroy, &kb->destroy, cleanupkeyboard);
-
-	wlr_seat_set_keyboard(gwwm_seat(NULL), device);
-    return WRAP_KEYBOARD(kb);
+    return kb;
 }
 
 SCM_DEFINE (createlayersurface,"create-layer-client",2,0,0,(SCM slistener ,SCM sdata),"")
@@ -1231,20 +1206,20 @@ keybinding(uint32_t mods, xkb_keycode_t keycode)
                                 scm_from_uint32(keycode)));
 }
 
-void
-keypress(struct wl_listener *listener, void *data)
+SCM_DEFINE (keypress,"keypress",3,0,0,(SCM kb, SCM slistener ,SCM sdata),"")
 {
   PRINT_FUNCTION
 	/* This event is raised when a key is pressed or released. */
-	Keyboard *kb = wl_container_of(listener, kb, key);
-	struct wlr_event_keyboard_key *event = data;
+	struct wlr_event_keyboard_key *event = TO_P(sdata);
     scm_c_run_hook(REF("gwwm hooks", "keypress-event-hook"),
-                   scm_list_2(WRAP_KEYBOARD(kb),
+                   scm_list_2(kb,
                               WRAP_WLR_EVENT_KEYBOARD_KEY(event)));
 	/* Translate libinput keycode -> xkbcommon */
 	uint32_t keycode = event->keycode + 8;
 	int handled = 0;
-	uint32_t mods = wlr_keyboard_get_modifiers(kb->device->keyboard);
+	uint32_t mods = wlr_keyboard_get_modifiers
+      ((UNWRAP_WLR_INPUT_DEVICE
+        (scm_slot_ref(kb, scm_from_utf8_symbol("device"))))->keyboard);
 
 	wlr_idle_notify_activity(gwwm_idle(NULL), gwwm_seat(NULL));
 
@@ -1256,22 +1231,23 @@ keypress(struct wl_listener *listener, void *data)
 
 	if (!handled) {
 		/* Pass unhandled keycodes along to the client. */
-		wlr_seat_set_keyboard(gwwm_seat(NULL), kb->device);
+		wlr_seat_set_keyboard(gwwm_seat(NULL),
+                              (UNWRAP_WLR_INPUT_DEVICE
+                               (scm_slot_ref(kb, scm_from_utf8_symbol("device")))));
 		wlr_seat_keyboard_notify_key(gwwm_seat(NULL), event->time_msec,
 			event->keycode, event->state);
 	}
+    return SCM_UNSPECIFIED;
 }
 
-void
-keypressmod(struct wl_listener *listener, void *data)
+SCM_DEFINE (keypressmod,"keypressmod",3,0,0,(SCM kb, SCM slistener ,SCM sdata),"")
 {
   PRINT_FUNCTION;
   /* This event is raised when a modifier key, such as shift or alt, is
    * pressed. We simply communicate this to the client. */
-  Keyboard *kb = wl_container_of(listener, kb, modifiers);
-  struct wlr_keyboard *keyboard=data;
+  struct wlr_keyboard *keyboard=TO_P(sdata);
   scm_c_run_hook(REF("gwwm hooks", "modifiers-event-hook"),
-                 scm_list_1(WRAP_KEYBOARD(kb)));
+                 scm_list_1(kb));
   /*
    * A seat can only have one keyboard, but this is a limitation of the
    * Wayland protocol - not wlroots. We assign all connected keyboards to the
@@ -1280,6 +1256,7 @@ keypressmod(struct wl_listener *listener, void *data)
    */
   /* Send modifiers to the client. */
   wlr_seat_keyboard_notify_modifiers(gwwm_seat(NULL), &keyboard->modifiers);
+  return SCM_UNSPECIFIED;
 }
 
 SCM_DEFINE (destroy_surface_notify,"destroy-surface-notify",3,0,0,

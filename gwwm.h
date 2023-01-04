@@ -69,15 +69,6 @@ typedef struct {
   int margin;
 } Edge;
 
-typedef struct {
-  struct wl_list link;
-  struct wlr_input_device *device;
-
-  struct wl_listener modifiers;
-  struct wl_listener key;
-  struct wl_listener destroy;
-} Keyboard;
-
 #define WRAP_MONITOR(o) find_monitor(o)
 #define UNWRAP_MONITOR(o)                                                      \
   (struct Monitor *)(TO_P(MAKE_P(scm_call_1(REFP("gwwm monitor", ".data"), o))))
@@ -136,7 +127,6 @@ void arrange(Monitor *m);
 void arrangelayer(Monitor *m, struct wl_list *list, struct wlr_box *usable_area,
                   int exclusive);
 void checkidleinhibitor(struct wlr_surface *exclude);
-void cleanupkeyboard(struct wl_listener *listener, void *data);
 void commitnotify(struct wl_listener *listener, void *data);
 void createidleinhibitor(struct wl_listener *listener, void *data);
 SCM find_monitor(Monitor *m);
@@ -154,8 +144,6 @@ Client *focustop(Monitor *m);
 void fullscreennotify(struct wl_listener *listener, void *data);
 void incnmaster(const Arg *arg);
 bool keybinding(uint32_t mods, xkb_keycode_t keycode);
-void keypress(struct wl_listener *listener, void *data);
-void keypressmod(struct wl_listener *listener, void *data);
 void maplayersurfacenotify(struct wl_listener *listener, void *data);
 void motionnotify(uint32_t time);
 void moveresize(const Arg *arg);

@@ -3,14 +3,12 @@
   #:use-module (wlroots types input-device)
   #:use-module (ice-9 q)
   #:export (keyboard-input-device
-            keyboard-list <gwwm-keyboard>))
+            keyboard-list <gwwm-keyboard>
+            .device))
 
 ;;; XXX: are we should really call it keyboard.
 (define-class <gwwm-keyboard> ()
-  (data #:init-keyword #:data #:accessor .data))
-
-(define-method (keyboard-input-device (keyboard <gwwm-keyboard>))
-  ((@@ (gwwm) keyboard-input-device) keyboard))
+  (device #:init-keyword #:device #:accessor .device))
 
 (define-once %keyboards (make-q))
 
@@ -25,4 +23,4 @@
 
 (define-method (write (o <gwwm-keyboard>) port)
   (format port "#<<gwwm-keyboard> ~S>"
-          (wlr-input-device-name (keyboard-input-device o))))
+          (wlr-input-device-name (.device o))))
