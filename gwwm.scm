@@ -619,5 +619,6 @@ with pointer focus of the frame event."
    (gwwm-xcursor-manager)
    (config-cursor-normal-image (gwwm-config) )
    (gwwm-cursor))
+  (run-hook gwwm-after-init-hook)
   (wl-display-run (gwwm-display))
   (%gwwm-cleanup))

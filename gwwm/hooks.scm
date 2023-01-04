@@ -14,7 +14,8 @@
             gwwm-cleanup-hook
             client-map-event-hook
             cursor-frame-event-hook
-            create-popup-hook))
+            create-popup-hook
+            gwwm-after-init-hook))
 
 (define-public create-monitor-hook (make-hook 1))
 (define-public create-client-hook (make-hook 1))
@@ -32,4 +33,5 @@
 (define-public cursor-button-event-hook (make-hook 1))
 (define-public surface-commit-event-hook (make-hook 1))
 (define-public gwwm-cleanup-hook (make-hook 0))
+(define-public gwwm-after-init-hook (make-hook 0))
 (define-public client-map-event-hook (make-hook 2))
