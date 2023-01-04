@@ -122,7 +122,6 @@ struct wl_listener idle_inhibitor_create = {.notify = createidleinhibitor};
 struct wl_listener idle_inhibitor_destroy = {.notify = destroyidleinhibitor};
 struct wl_listener new_virtual_keyboard = {.notify = virtualkeyboard};
 struct wl_listener request_activate = {.notify = urgent};
-struct wl_listener drag_icon_destroy = {.notify = dragicondestroy};
 
 bool visibleon(Client *c, Monitor *m) {
   return ((m) && (client_monitor(c, NULL) == (m)) &&
@@ -1040,17 +1039,6 @@ SCM_DEFINE (gwwm_dirtomon ,"dirtomon" ,1,0,0,(SCM dir),"")
 #undef  FUNC_NAME
 
 void
-dragicondestroy(struct wl_listener *listener, void *data)
-{
-  PRINT_FUNCTION
-	struct wlr_drag_icon *icon = data;
-	wlr_scene_node_destroy(icon->data);
-	// Focus enter isn't sent during drag, so refocus the focused node.
-	focusclient(current_client(), 1);
-	motionnotify(0);
-}
-
-void
 focusclient(Client *c, int lift)
 {
   PRINT_FUNCTION;
@@ -1318,9 +1306,11 @@ SCM_DEFINE(mapnotify,"map-notify",3,0,0,(SCM sc,SCM slistener ,SCM sdata),"")
   return SCM_UNSPECIFIED;
 }
 
-void
-motionnotify(uint32_t time)
+SCM_DEFINE (gwwm_motionnotify, "%motionnotify" , 1,0,0,
+            (SCM stime), "")
+#define FUNC_NAME s_gwwm_motionnotify
 {
+  uint32_t time=scm_to_uint32( stime);
   PRINT_FUNCTION
 	double sx = 0, sy = 0;
 	Client *c = NULL;
@@ -1337,10 +1327,8 @@ motionnotify(uint32_t time)
 			set_current_monitor(xytomon(cursor->x, cursor->y));
 	}
 
-	if (gwwm_seat(NULL)->drag && (icon = gwwm_seat(NULL)->drag->icon))
-		wlr_scene_node_set_position(icon->data, cursor->x + icon->surface->sx,
-				cursor->y + icon->surface->sy);
-	/* If we are currently grabbing the mouse, handle and return */
+    scm_c_run_hook(REF("gwwm hooks", "motion-notify-hook"),
+                   scm_list_1(scm_from_uint32(time)));
 
 	if (cursor_mode == CurMove) {
 
@@ -1352,7 +1340,7 @@ motionnotify(uint32_t time)
             .height = (client_geom(grabc))->height
           },
           1);
-		return;
+		return SCM_UNSPECIFIED;
 	} else if (cursor_mode == CurResize) {
       resize(grabc, (struct wlr_box){
           .x = (client_geom(grabc))->x,
@@ -1360,7 +1348,7 @@ motionnotify(uint32_t time)
           .width = cursor->x - client_geom(grabc)->x,
           .height = cursor->y - client_geom(grabc)->y
         }, 1);
-		return;
+		return SCM_UNSPECIFIED;
 	}
 
 	/* Find the client under the pointer and send the event along. */
@@ -1373,13 +1361,6 @@ motionnotify(uint32_t time)
       wlr_xcursor_manager_set_cursor_image(gwwm_xcursor_manager(NULL), GWWM_CURSOR_NORMAL_IMAGE(), cursor);
 
 	pointerfocus(c, surface, sx, sy, time);
-}
-
-SCM_DEFINE (gwwm_motionnotify, "%motionnotify" , 1,0,0,
-            (SCM time), "")
-#define FUNC_NAME s_gwwm_motionnotify
-{
-  motionnotify(scm_to_uint32( time));
   return SCM_UNSPECIFIED;
 }
 #undef FUNC_NAME
@@ -1798,22 +1779,6 @@ sigchld(int unused)
 	 */
 	if (signal(SIGCHLD, sigchld) == SIG_ERR)
 		die("can't install SIGCHLD handler:");
-}
-
-SCM_DEFINE (startdrag,"startdrag",2,0,0,(SCM slistener ,SCM sdata),"")
-{
-  PRINT_FUNCTION;
-  struct wl_listener *listener=UNWRAP_WL_LISTENER(slistener);
-  void *data=TO_P(sdata);
-	struct wlr_drag *drag = data;
-
-	if (!drag->icon)
-		return SCM_UNSPECIFIED;
-
-	drag->icon->data = wlr_scene_subsurface_tree_create(UNWRAP_WLR_SCENE_NODE(REF("gwwm","no-focus-layer")), drag->icon->surface);
-	motionnotify(0);
-	wl_signal_add(&drag->icon->events.destroy, &drag_icon_destroy);
-    return SCM_UNSPECIFIED;
 }
 
 void

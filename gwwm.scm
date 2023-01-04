@@ -13,6 +13,7 @@
   #:use-module (wlroots render renderer)
   #:use-module (wlroots types surface)
   #:use-module (wlroots types input-device)
+  #:use-module (wlroots types data-device)
   #:use-module (wlroots types output-management)
   #:use-module (wlroots render allocator)
   #:use-module (system repl server)
@@ -335,7 +336,36 @@ with pointer focus of the frame event."
                    (wlr-seat-set-selection (gwwm-seat) (.source event) (.serial event)))))
   (add-listen* (gwwm-seat) 'request-start-drag requeststartdrag)
   (add-listen* (gwwm-seat) 'request-set-primary-selection setpsel)
-  (add-listen* (gwwm-seat) 'start-drag startdrag)
+  (add-listen* (gwwm-seat)
+               'start-drag
+               ;; startdrag
+               (lambda (listener data)
+                 (and-let* ((drag (wrap-wlr-drag data))
+                            (icon (.icon drag))
+                            (scene (wlr-scene-subsurface-tree-create
+                                    no-focus-layer
+                                    (.surface icon)))
+                            (drag-move
+                             (lambda _
+                               (wlr-scene-node-set-position
+                                scene
+                                (inexact->exact
+                                 (round (+ (.x (gwwm-cursor))
+                                           (.sx (.surface icon)))))
+                                (inexact->exact
+                                 (round (+ (.y (gwwm-cursor))
+                                           (.sy (.surface icon)))))))))
+
+                   (add-hook! motion-notify-hook drag-move)
+                   (%motionnotify 0)
+                   (add-hook! motion-notify-hook drag-move)
+                   (add-listen* icon 'destroy
+                                (lambda (listener data)
+                                  (remove-hook! motion-notify-hook drag-move)
+                                  (wlr-scene-node-destroy scene)
+                                  (focusclient (current-client) #t)
+                                  (%motionnotify 0))
+                                #:remove-when-destroy? #f))))
   (gwwm-xdg-shell (wlr-xdg-shell-create (gwwm-display)))
   (add-listen* (gwwm-xdg-shell) 'new-surface create-notify)
   (gwwm-compositor (wlr-compositor-create (gwwm-display) (gwwm-renderer)))

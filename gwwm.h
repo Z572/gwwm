@@ -136,7 +136,6 @@ void create_tablet_pad(struct wlr_input_device *device);
 void create_switch(struct wlr_input_device *device);
 void destroyidleinhibitor(struct wl_listener *listener, void *data);
 Monitor *dirtomon(enum wlr_direction dir);
-void dragicondestroy(struct wl_listener *listener, void *data);
 void focusclient(Client *c, int lift);
 void focusmon(const Arg *arg);
 void focusstack(const Arg *arg);
@@ -145,7 +144,6 @@ void fullscreennotify(struct wl_listener *listener, void *data);
 void incnmaster(const Arg *arg);
 bool keybinding(uint32_t mods, xkb_keycode_t keycode);
 void maplayersurfacenotify(struct wl_listener *listener, void *data);
-void motionnotify(uint32_t time);
 void moveresize(const Arg *arg);
 void pointerfocus(Client *c, struct wlr_surface *surface, double sx, double sy,
                   uint32_t time);
