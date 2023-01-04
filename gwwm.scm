@@ -262,6 +262,15 @@ gwwm [options]
                (lambda (listener data)
                  (let ((event (wrap-wlr-event-pointer-axis data)))
                    (run-hook axis-event-hook event)
+                   (let-slots event (time-msec orientation delta delta-discrete
+                                               source)
+                     (wlr-seat-pointer-notify-axis
+                      (gwwm-seat)
+                      time-msec
+                      orientation
+                      delta
+                      delta-discrete
+                      source))
                    (idle-activity)))
                #:remove-when-destroy? #f)
   (add-listen* (gwwm-cursor) 'frame
@@ -443,15 +452,6 @@ with pointer focus of the frame event."
           (arrange m))))
   (add-hook! surface-commit-event-hook
              commit-event)
-  (add-hook! axis-event-hook
-             (lambda (event)
-               (wlr-seat-pointer-notify-axis
-                (gwwm-seat)
-                (wlr-event-pointer-axis-time-msec event)
-                (wlr-event-pointer-axis-orientation event)
-                (wlr-event-pointer-axis-delta event)
-                (wlr-event-pointer-axis-delta-discrete event)
-                (wlr-event-pointer-axis-source event))))
   (current-log-callback
    (let ((p (current-error-port)))
      (lambda (msg)
