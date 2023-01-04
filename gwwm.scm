@@ -609,12 +609,12 @@ with pointer focus of the frame event."
              (exit 1)))
   (set! (current-monitor)
         (monitor-at
-         (wlr-cursor-x (gwwm-cursor))
-         (wlr-cursor-y (gwwm-cursor))))
+         (.x (gwwm-cursor))
+         (.y (gwwm-cursor))))
   (wlr-cursor-warp-closest
    (gwwm-cursor) #f
-   (wlr-cursor-x (gwwm-cursor))
-   (wlr-cursor-y (gwwm-cursor)))
+   (.x (gwwm-cursor))
+   (.y (gwwm-cursor)))
   (wlr-xcursor-manager-set-cursor-image
    (gwwm-xcursor-manager)
    (config-cursor-normal-image (gwwm-config) )
