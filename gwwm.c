@@ -1270,8 +1270,6 @@ SCM_DEFINE(mapnotify,"map-notify",3,0,0,(SCM sc,SCM slistener ,SCM sdata),"")
   (surface)->data = scene_node;
 
   scene_node->data = client_scene_surface(c, NULL)->data = c;
-
-  (set_client_geom (c,(client_get_geometry(c))));
   if (client_is_unmanaged(c)) {
     /* Floating */
     wlr_scene_node_reparent(scene_node, UNWRAP_WLR_SCENE_NODE(REF("gwwm","float-layer")));

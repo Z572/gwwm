@@ -66,6 +66,7 @@
             client-surface
             client-super-surface
             client-geom
+            client-prev-geom
             client-mapped?
             client-wants-fullscreen?
             client-do-set-fullscreen
@@ -103,7 +104,7 @@
   (data #:init-keyword #:data
         #:accessor .data
         #:class <hidden-slot>)
-  (geom #:init-value #f #:accessor client-geom)
+  (geom #:accessor client-geom)
   (monitor #:init-value #f
            #:accessor client-monitor)
   (super-surface #:init-value #f
@@ -128,7 +129,7 @@
   (tags #:init-value 0 #:accessor client-tags)
   (borders #:init-value (list))
   (border-width #:init-value 1 #:accessor client-border-width)
-  (prev-geom #:accessor client-prev-geom #:init-value #f)
+  (prev-geom #:accessor client-prev-geom)
   (scene-surface #:accessor client-scene-surface #:init-value #f)
   (resize-configure-serial #:accessor client-resize-configure-serial #:init-value #f))
 

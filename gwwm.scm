@@ -419,6 +419,9 @@ with pointer focus of the frame event."
               (wlr-scene-subsurface-tree-create
                (client-scene c)
                (client-surface c))))
+    (let ((geom (client-get-geometry c)))
+      (set! (client-geom c) geom)
+      (set! (client-prev-geom c) (shallow-clone geom)))
     (add-listen* (client-surface c) 'commit
                  (lambda (a b)
                    (let ((client c))
