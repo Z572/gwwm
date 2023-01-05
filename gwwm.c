@@ -1222,23 +1222,6 @@ SCM_DEFINE (keypress,"keypress",3,0,0,(SCM kb, SCM slistener ,SCM sdata),"")
     return SCM_UNSPECIFIED;
 }
 
-SCM_DEFINE (keypressmod,"keypressmod",3,0,0,(SCM kb, SCM slistener ,SCM sdata),"")
-{
-  PRINT_FUNCTION;
-  /* This event is raised when a modifier key, such as shift or alt, is
-   * pressed. We simply communicate this to the client. */
-  struct wlr_keyboard *keyboard=TO_P(sdata);
-  /*
-   * A seat can only have one keyboard, but this is a limitation of the
-   * Wayland protocol - not wlroots. We assign all connected keyboards to the
-   * same seat. You can swap out the underlying wlr_keyboard like this and
-   * wlr_seat handles this transparently.
-   */
-  /* Send modifiers to the client. */
-  wlr_seat_keyboard_notify_modifiers(gwwm_seat(NULL), &keyboard->modifiers);
-  return SCM_UNSPECIFIED;
-}
-
 SCM_DEFINE (destroy_surface_notify,"destroy-surface-notify",3,0,0,
             (SCM c, SCM listener, SCM data),"")
 {

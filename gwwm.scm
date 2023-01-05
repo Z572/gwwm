@@ -231,10 +231,12 @@ gwwm [options]
     ((@@ (gwwm keyboard) add-keyboard) kb)
     (add-listen* (.device device) 'modifiers
                  (lambda (listener data)
-                   (wlr-seat-set-keyboard
-                    (gwwm-seat) device)
-                   (run-hook modifiers-event-hook kb)
-                   (keypressmod kb listener data))
+                   (let ((wlr-keyboard (wrap-wlr-keyboard data)))
+                     (wlr-seat-set-keyboard
+                      (gwwm-seat) device)
+                     (run-hook modifiers-event-hook kb)
+                     (wlr-seat-keyboard-notify-modifiers
+                      (gwwm-seat) (.modifiers wlr-keyboard))))
                  #:destroy-when device)
     (add-listen* (.device device) 'key
                  (lambda (listener data)
