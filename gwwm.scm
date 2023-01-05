@@ -14,6 +14,7 @@
   #:use-module (wlroots types surface)
   #:use-module (wlroots types input-device)
   #:use-module (wlroots types data-device)
+  #:use-module (wlroots types keyboard)
   #:use-module (wlroots types output-management)
   #:use-module (wlroots render allocator)
   #:use-module (system repl server)
@@ -232,11 +233,14 @@ gwwm [options]
                  (lambda (listener data)
                    (wlr-seat-set-keyboard
                     (gwwm-seat) device)
+                   (run-hook modifiers-event-hook kb)
                    (keypressmod kb listener data))
                  #:destroy-when device)
     (add-listen* (.device device) 'key
                  (lambda (listener data)
-                   (keypress kb listener data))
+                   (let ((event (wrap-wlr-event-keyboard-key data)))
+                     (run-hook keypress-event-hook kb event)
+                     (keypress kb listener data)))
                  #:destroy-when device)
     (add-listen* device 'destroy
                  (lambda (listener data)
@@ -258,7 +262,7 @@ gwwm [options]
       (begin (send-log ERROR (G_ "gwwm Couldn't create allocator"))
              (exit 1)))
   (gwwm-cursor (wlr-cursor-create))
-  (define (idle-activity) (wlr-idle-notify-activity (gwwm-idle) (gwwm-seat)))
+  (define (idle-activity . _) (wlr-idle-notify-activity (gwwm-idle) (gwwm-seat)))
   (add-listen* (gwwm-cursor) 'axis
                (lambda (listener data)
                  (let ((event (wrap-wlr-event-pointer-axis data)))
@@ -377,6 +381,7 @@ with pointer focus of the frame event."
   (add-listen* (gwwm-output-layout) 'change update-monitors)
   (gwwm-output-manager (wlr-output-manager-v1-create (gwwm-display)))
 
+  (add-hook! keypress-event-hook idle-activity)
   (add-listen* (gwwm-output-manager) 'apply (lambda (listener data)
                                               (let ((config (wrap-wlr-output-configuration-v1 data)))
                                                 (output-manager-apply-or-test config #f))))

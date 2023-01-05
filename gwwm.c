@@ -1196,21 +1196,15 @@ keybinding(uint32_t mods, xkb_keycode_t keycode)
 
 SCM_DEFINE (keypress,"keypress",3,0,0,(SCM kb, SCM slistener ,SCM sdata),"")
 {
-  PRINT_FUNCTION
+  PRINT_FUNCTION;
 	/* This event is raised when a key is pressed or released. */
 	struct wlr_event_keyboard_key *event = TO_P(sdata);
-    scm_c_run_hook(REF("gwwm hooks", "keypress-event-hook"),
-                   scm_list_2(kb,
-                              WRAP_WLR_EVENT_KEYBOARD_KEY(event)));
-	/* Translate libinput keycode -> xkbcommon */
+  /* Translate libinput keycode -> xkbcommon */
 	uint32_t keycode = event->keycode + 8;
 	int handled = 0;
 	uint32_t mods = wlr_keyboard_get_modifiers
       ((UNWRAP_WLR_INPUT_DEVICE
         (scm_slot_ref(kb, scm_from_utf8_symbol("device"))))->keyboard);
-
-	wlr_idle_notify_activity(gwwm_idle(NULL), gwwm_seat(NULL));
-
 	/* On _press_ if there is no active screen locker,
 	 * attempt to process a compositor keybinding. */
 	if (!input_inhibit_mgr->active_inhibitor
@@ -1234,8 +1228,6 @@ SCM_DEFINE (keypressmod,"keypressmod",3,0,0,(SCM kb, SCM slistener ,SCM sdata),"
   /* This event is raised when a modifier key, such as shift or alt, is
    * pressed. We simply communicate this to the client. */
   struct wlr_keyboard *keyboard=TO_P(sdata);
-  scm_c_run_hook(REF("gwwm hooks", "modifiers-event-hook"),
-                 scm_list_1(kb));
   /*
    * A seat can only have one keyboard, but this is a limitation of the
    * Wayland protocol - not wlroots. We assign all connected keyboards to the
