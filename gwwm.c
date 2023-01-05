@@ -710,21 +710,6 @@ SCM_DEFINE (commitlayersurfacenotify,"commit-layer-client-notify",3,0,0,
     return SCM_UNSPECIFIED;
 }
 
-SCM_DEFINE (mark_resize_done_p,"client-mark-resize-done-p",1,0,0,(SCM sc),"") {
-  Client *c=UNWRAP_CLIENT(sc);
-  uint32_t configure_serial = client_resize_configure_serial(c);
-  struct wlr_xdg_surface *xdg_surface =
-      wlr_xdg_surface_from_wlr_surface(CLIENT_SURFACE(c));
-  uint32_t surface_configure_serial = xdg_surface->current.configure_serial;
-  if (configure_serial && (configure_serial <= surface_configure_serial ||
-                           (xdg_surface->current.geometry.width ==
-                                xdg_surface->pending.geometry.width &&
-                            xdg_surface->current.geometry.height ==
-                                xdg_surface->pending.geometry.height)))
-    client_set_resize_configure_serial(c, 0);
-  return SCM_UNSPECIFIED;
-}
-
 void
 createidleinhibitor(struct wl_listener *listener, void *data)
 {

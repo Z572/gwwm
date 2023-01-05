@@ -434,7 +434,18 @@ with pointer focus of the frame event."
                    (let ((client c))
                      (run-hook surface-commit-event-hook client)
                      (unless (client-is-x11? client)
-                       (client-mark-resize-done-p client)))))
+                       (let ((serial (client-resize-configure-serial client))
+                             (current (.current
+                                       (client-super-surface c)))
+                             (pending (.pending
+                                       (client-super-surface c))))
+                         (when (and (not (zero? serial))
+                                    (or (<= serial (.configure-serial current))
+                                        (and (= (box-width (.geometry current))
+                                                (box-width (.geometry pending)))
+                                             (= (box-height (.geometry current))
+                                                (box-height (.geometry pending))))))
+                           (set! (client-resize-configure-serial client) 0)))))))
     (map-notify c listener data)))
 
 (define (map-layer-client-notify c)

@@ -72,6 +72,7 @@
             client-do-set-fullscreen
             client-do-set-floating
             client-scene-surface
+            client-resize-configure-serial
             %fstack
             %clients
             %layer-clients
