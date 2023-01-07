@@ -188,7 +188,7 @@ gwwm [options]
                   (client-resize c (modify-instance geom
                                      (x (- x (box-width (monitor-window-area m))))) #t))
                 (when (equal? (client-monitor c) m)
-                  (%setmon
+                  (setmon
                    c
                    (current-monitor)
                    (client-tags c)))))
@@ -215,6 +215,26 @@ gwwm [options]
         (lambda _
           (wl-list-remove (.link listener))))))))
 
+(define (setmon c m newtag)
+  (let ((old (client-monitor c))
+        (surface (client-surface c)))
+    (unless (equal? old m)
+      (set! (client-monitor c) m)
+      (when old
+        (wlr-surface-send-leave surface
+                                (monitor-wlr-output old))
+        (arrange old))
+      (when m
+        (client-resize c (client-geom c) #f)
+        (wlr-surface-send-enter surface (monitor-wlr-output m))
+        (set! (client-tags c)
+              (if (zero? newtag)
+                  (list-ref (%monitor-tagset m)
+                            (%monitor-seltags m))
+                  newtag))
+        (arrange m))
+      (focusclient (focustop (current-monitor)) #t))))
+
 (define (update-monitors listener data)
   (let ((config (wlr-output-configuration-v1-create)))
     (entire-layout-box (wlr-output-layout-get-box (gwwm-output-layout)))
@@ -223,7 +243,7 @@ gwwm [options]
                ((.enabled (monitor-wlr-output m))))
       (for-each (lambda (c)
                   (when (and (not (client-monitor c)) (client-mapped? c))
-                    (%setmon c m (client-tags c)))) (client-list)))
+                    (setmon c m (client-tags c)))) (client-list)))
     (wlr-output-manager-v1-set-configuration (gwwm-output-manager) config)))
 
 (define (create-keyboard device)
@@ -571,7 +591,7 @@ with pointer focus of the frame event."
                     (lambda (listener data)
                       (unmap-notify c listener data)
                       (unless (client-is-unmanaged? c)
-                        (%setmon c #f 0)
+                        (setmon c #f 0)
                         (q-remove! (%clients) c)
                         (q-remove! (%fstack) c)
                         (wlr-scene-node-destroy (client-scene c)))))

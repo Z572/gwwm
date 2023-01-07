@@ -15,6 +15,7 @@
 #include "libguile/symbols.h"
 #include "wlr-layer-shell-unstable-v1-protocol.h"
 #include "wlr/util/box.h"
+#include <math.h>
 #include <stdbool.h>
 #include <stdint.h>
 #define _POSIX_C_SOURCE 200809L
@@ -1582,40 +1583,12 @@ setfullscreen(Client *c, int fullscreen)
 void
 setmon(Client *c, Monitor *m, unsigned int newtags)
 {
-  PRINT_FUNCTION
-	Monitor *oldmon = client_monitor(c,NULL);
-	if (oldmon == m)
-		return;
-    PRINT_FUNCTION;
-	client_monitor(c,m);
-    PRINT_FUNCTION;
-	/* TODO leave/enter is not optimal but works */
-	if (oldmon) {
-		wlr_surface_send_leave(CLIENT_SURFACE(c), MONITOR_WLR_OUTPUT(oldmon));
-		arrange(oldmon);
-	}
-	if (m) {
-		/* Make sure window actually overlaps with the monitor */
-      resize(c, *client_geom(c), 0);
-		wlr_surface_send_enter(CLIENT_SURFACE(c), MONITOR_WLR_OUTPUT(m));
-        set_client_tags(c,newtags ? newtags : m->tagset[m->seltags]); /* assign tags of target monitor */
-		arrange(m);
-	}
-	focusclient(focustop(current_monitor()), 1);
-}
-
-SCM_DEFINE_PUBLIC(gwwm_setmon, "%setmon", 3, 0, 0, (SCM c ,SCM m, SCM newtags), "")
-#define FUNC_NAME s_gwwm_setmon
-{
   PRINT_FUNCTION;
-  GWWM_ASSERT_CLIENT_OR_FALSE(c ,1);
-  setmon(UNWRAP_CLIENT(c),
-         scm_is_true(m) ? UNWRAP_MONITOR(m) : NULL,
-         scm_to_unsigned_integer(newtags, 0, 12));
-  return SCM_UNSPECIFIED;
+  scm_call_3(REFP("gwwm", "setmon"),
+             WRAP_CLIENT(c),
+             WRAP_MONITOR(m),
+             scm_from_unsigned_integer(exp(newtags)));
 }
-#undef FUNC_NAME
-
 
 SCM_DEFINE (setpsel,"setpsel",2,0,0,(SCM slistener ,SCM sdata),"")
 {
