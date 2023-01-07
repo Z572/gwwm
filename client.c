@@ -425,6 +425,10 @@ toplevel_from_popup(struct wlr_xdg_popup *popup)
 	}
 }
 
+SCM_DEFINE_PUBLIC (gwwm_client_from_wlr_surface ,"client-from-wlr-surface" ,1,0,0,(SCM surface),""){
+  return WRAP_CLIENT(client_from_wlr_surface(UNWRAP_WLR_SURFACE(surface)));
+}
+
 SCM_DEFINE (gwwm_client_get_parent, "client-get-parent" ,1,0,0,
             (SCM c), "")
 #define FUNC_NAME s_gwwm_client_get_parent

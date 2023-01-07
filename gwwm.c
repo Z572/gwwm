@@ -121,7 +121,6 @@ struct wl_list mons;
 struct wl_listener idle_inhibitor_create = {.notify = createidleinhibitor};
 struct wl_listener idle_inhibitor_destroy = {.notify = destroyidleinhibitor};
 struct wl_listener new_virtual_keyboard = {.notify = virtualkeyboard};
-struct wl_listener request_activate = {.notify = urgent};
 
 bool visibleon(Client *c, Monitor *m) {
   return ((m) && (client_monitor(c, NULL) == (m)) &&
@@ -1652,32 +1651,6 @@ SCM_DEFINE (gwwm_setup_othres,"%gwwm-setup-othres",0,0,0,(),"")
 }
 SCM_DEFINE (gwwm_setup,"%gwwm-setup" ,0,0,0,(),"")
 {
-    /* The Wayland display is managed by libwayland. It handles accepting
-	 * clients from the Unix socket, manging Wayland globals, and so on. */
-
-	/* Set up signal handlers */
-
-	/* The backend is a wlroots feature which abstracts the underlying input and
-	 * output hardware. The autocreate option will choose the most suitable
-	 * backend based on the current environment, such as opening an X11 window
-	 * if an X11 server is running. The NULL argument here optionally allows you
-	 * to pass in a custom renderer if wlr_renderer doesn't meet your needs. The
-	 * backend uses the renderer, for example, to fall back to software cursors
-	 * if the backend does not support hardware cursors (some older GPUs
-	 * don't). */
-
-	/* This creates some hands-off wlroots interfaces. The compositor is
-	 * necessary for clients to allocate surfaces and the data device manager
-	 * handles the clipboard. Each of these wlroots interfaces has room for you
-	 * to dig your fingers in and play with their behavior if you want. Note that
-	 * the clients cannot set the selection directly without compositor approval,
-	 * see the setsel() function. */
-
-	/* Initializes the interface used to implement urgency hints */
-	wl_signal_add(&gwwm_activation(NULL)->events.request_activate, &request_activate);
-
-	/* Creates an output layout, which a wlroots utility for working with an
-	 * arrangement of screens in a physical layout. */
     wlr_xdg_output_manager_v1_create(gwwm_display(NULL), gwwm_output_layout(NULL));
 
 	/* Configure a listener to be notified when new outputs are available on the
@@ -1885,17 +1858,6 @@ void updatetitle_x11(struct wl_listener *listener, void *data)
       scm_c_run_hook(REF("gwwm hooks", "update-title-hook"),
                  scm_list_1(WRAP_CLIENT(c)));
     }
-}
-
-void
-urgent(struct wl_listener *listener, void *data)
-{
-  PRINT_FUNCTION
-	struct wlr_xdg_activation_v1_request_activate_event *event = data;
-	Client *c = client_from_wlr_surface(event->surface);
-	if (c && c != current_client()) {
-      CLIENT_SET_URGENT(c,1);
-	}
 }
 
 void

@@ -165,7 +165,6 @@ void togglefloating(const Arg *arg);
 
 void toggleview(const Arg *arg);
 void updatetitle(struct wl_listener *listener, void *data);
-void urgent(struct wl_listener *listener, void *data);
 void set_layersurface_geom(Client *c , struct wlr_box* box);
 void view(const Arg *arg);
 void virtualkeyboard(struct wl_listener *listener, void *data);

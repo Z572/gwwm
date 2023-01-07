@@ -376,6 +376,13 @@ with pointer focus of the frame event."
   (add-listen* (gwwm-xdg-shell) 'new-surface create-notify)
   (gwwm-compositor (wlr-compositor-create (gwwm-display) (gwwm-renderer)))
   (gwwm-activation (wlr-xdg-activation-v1-create (gwwm-display)))
+  (add-listen* (gwwm-activation) 'request-activate
+               (lambda (listener data)
+                 (let* ((event (wrap-wlr-xdg-activation-v1-request-activate-event data))
+                        (c (client-from-wlr-surface (.surface event))))
+                   (pk 's)
+                   (unless (equal? c (current-client))
+                     (set! (client-urgent? c) #t)))))
   (gwwm-layer-shell (wlr-layer-shell-v1-create (gwwm-display)))
   (add-listen* (gwwm-layer-shell) 'new-surface create-layer-client)
   (gwwm-idle (wlr-idle-create (gwwm-display)))
