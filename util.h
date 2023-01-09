@@ -88,6 +88,10 @@ void *ecalloc(size_t size);
   (REF_CALL_1("wlroots types scene", "wrap-wlr-scene-node", FROM_P(p)))
 #define UNWRAP_WLR_SCENE_NODE(p)                                               \
   (TO_P(REF_CALL_1("wlroots types scene", "unwrap-wlr-scene-node", p)))
+#define WRAP_WLR_SCENE_OUTPUT(p)                                                 \
+  (REF_CALL_1("wlroots types scene", "wrap-wlr-scene-output", FROM_P(p)))
+#define UNWRAP_WLR_SCENE_OUTPUT(p)                                               \
+  (TO_P(REF_CALL_1("wlroots types scene", "unwrap-wlr-scene-output", p)))
 #define WRAP_WLR_SCENE_RECT(p)                                                 \
   (REF_CALL_1("wlroots types scene", "wrap-wlr-scene-rect", FROM_P(p)))
 #define UNWRAP_WLR_SCENE_RECT(p)                                               \

@@ -82,7 +82,6 @@
 #include "config.h"
 typedef struct Monitor {
   struct wl_list link;
-  struct wlr_scene_output *scene_output;
   struct wl_list layers[4]; /* layer Client::link */
   unsigned int seltags;
   unsigned int tagset[2];
@@ -641,6 +640,18 @@ client_monitor(void *c ,Monitor *change) {
   }
 }
 
+struct wlr_scene_output*
+monitor_scene_output(Monitor *m, struct wlr_scene_output *o){
+  SCM sm=WRAP_MONITOR(m);
+  SCM s=scm_from_utf8_symbol("scene-output");
+  if (o) {
+    scm_slot_set_x(sm,s,WRAP_WLR_SCENE_OUTPUT(o));
+    return o;
+  } else {
+    return UNWRAP_WLR_SCENE_OUTPUT(scm_slot_ref(sm, s));
+  }
+}
+
 SCM_DEFINE (gwwm_cleanup, "%gwwm-cleanup",0,0,0, () ,"")
 #define D(funcname,args , ...) (funcname(args ,##__VA_ARGS__));; send_log(DEBUG,#funcname " done");
 {
@@ -674,7 +685,7 @@ SCM_DEFINE (cleanupmon,"cleanup-monitor",3,0,0,(SCM sm, SCM slistener ,SCM sdata
   int nmons, i = 0;
 
   wl_list_remove(&m->link);
-  wlr_scene_output_destroy(m->scene_output);
+  wlr_scene_output_destroy(monitor_scene_output(m,NULL));
 
   if ((nmons = wl_list_length(&mons)))
     do /* don't switch to disabled mons */
@@ -869,7 +880,7 @@ SCM_DEFINE (createmon,"create-monitor",2,0,0,(SCM slistener ,SCM sdata),"")
 	 * display, which Wayland clients can see to find out information about the
 	 * output (such as DPI, scale factor, manufacturer, etc).
 	 */
-	m->scene_output = wlr_scene_output_create(gwwm_scene(NULL), wlr_output);
+    monitor_scene_output(m , wlr_scene_output_create(gwwm_scene(NULL), wlr_output));
 	wlr_output_layout_add_auto(gwwm_output_layout(NULL), wlr_output);
     return SCM_UNSPECIFIED;
 }
@@ -1512,10 +1523,10 @@ SCM_DEFINE(rendermon,"render-monitor-notify",3,0,0,(SCM sm,SCM slistener ,SCM sd
 			skip = 1;
 		}
 	}
-	if (!skip && !wlr_scene_output_commit(m->scene_output))
+	if (!skip && !wlr_scene_output_commit(monitor_scene_output(m,NULL)))
 		return SCM_UNSPECIFIED;
 	/* Let clients know a frame has been rendered */
-	wlr_scene_output_send_frame_done(m->scene_output, &now);
+	wlr_scene_output_send_frame_done(monitor_scene_output(m,NULL), &now);
 	m->un_map = 0;
     return SCM_UNSPECIFIED;
 }
@@ -1808,7 +1819,7 @@ SCM_DEFINE(gwwm_updatemon,"update-monitor",2,0,0,(SCM sm,SCM sconfig),""){
   SET_MONITOR_AREA(m, wlr_output_layout_get_box(gwwm_output_layout(NULL),
                                                 MONITOR_WLR_OUTPUT(m)));
   (SET_MONITOR_WINDOW_AREA(m, MONITOR_AREA(m)));
-  wlr_scene_output_set_position(m->scene_output, (MONITOR_AREA(m))->x,
+  wlr_scene_output_set_position(monitor_scene_output(m,NULL), (MONITOR_AREA(m))->x,
                                 (MONITOR_AREA(m))->y);
   /* Calculate the effective monitor geometry to use for clients */
   arrangelayers(sm);

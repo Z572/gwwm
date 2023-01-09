@@ -87,6 +87,7 @@
                                 (.phys-height (monitor-wlr-output m)))
                    #:slot-set! (lambda _ #f)
                    #:getter monitor-physical-height)
+  (scene-output #:accessor monitor-scene-output)
   (wlr-output #:accessor monitor-wlr-output
               #:setter set-.wlr-output!)
   (layouts #:init-value (list #f #f)
