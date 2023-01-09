@@ -860,7 +860,7 @@ SCM_DEFINE (createmon,"create-monitor",2,0,0,(SCM slistener ,SCM sdata),"")
     if (!wlr_output_commit(wlr_output))
       return SCM_UNSPECIFIED;
 
-    REF_CALL_2("ice-9 q", "q-push!", REF_CALL_0("gwwm monitor", "%monitors"), m->scm);
+    REF_CALL_2("ice-9 q", "q-push!", REF_CALL_0("gwwm monitor", "%monitors"),WRAP_MONITOR(m));
 	wl_list_insert(&mons, &m->link);
 
 	/* Adds this to the output layout in the order it was configured in.
