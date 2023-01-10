@@ -1531,21 +1531,6 @@ SCM_DEFINE(rendermon,"render-monitor-notify",3,0,0,(SCM sm,SCM slistener ,SCM sd
     return SCM_UNSPECIFIED;
 }
 
-SCM_DEFINE (requeststartdrag,"requeststartdrag",2,0,0,(SCM slistener ,SCM sdata),"")
-{
-  PRINT_FUNCTION;
-  struct wl_listener *listener=UNWRAP_WL_LISTENER(slistener);
-  void *data=TO_P(sdata);
-  struct wlr_seat_request_start_drag_event *event = data;
-
-	if (wlr_seat_validate_pointer_grab_serial(gwwm_seat(NULL), event->origin,
-			event->serial))
-		wlr_seat_start_pointer_drag(gwwm_seat(NULL), event->drag, event->serial);
-	else
-		wlr_data_source_destroy(event->drag->source);
-    return SCM_UNSPECIFIED;
-}
-
 void resize(Client *c, struct wlr_box geo, int interact) {
   PRINT_FUNCTION
   REF_CALL_3("gwwm client", "client-resize", WRAP_CLIENT(c), SHALLOW_CLONE(WRAP_WLR_BOX(&geo)),

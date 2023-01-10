@@ -27,6 +27,7 @@
   #:use-module (gwwm listener)
   #:use-module (gwwm utils)
   #:use-module (gwwm utils srfi-215)
+  #:use-module (gwwm utils ref)
   #:use-module (wayland display)
   #:use-module (wayland list)
   #:use-module (wayland listener)
@@ -269,6 +270,16 @@ gwwm [options]
                    (run-hook cleanup-keyboard-hook kb)
                    ((@@ (gwwm keyboard) remove-keyboard) kb)))))
 
+(define (request-start-drag listener data)
+  (let* ((event (wrap-wlr-seat-request-start-drag-event data))
+         (seat (~ event 'drag 'seat)))
+    (if (wlr-seat-validate-pointer-grab-serial
+         seat
+         (.origin event)
+         (.serial event))
+        (wlr-seat-start-pointer-drag seat (.drag event) (.serial event))
+        (wlr-data-source-destroy (~ event 'drag 'source)))))
+
 (define (gwwm-setup)
   (gwwm-display (wl-display-create))
   (or (and=> (wlr-backend-autocreate(gwwm-display)) gwwm-backend)
@@ -360,7 +371,7 @@ with pointer focus of the frame event."
                  (let ((event (wrap-wlr-seat-request-set-selection-event data)))
                    (run-hook selection-hook event)
                    (wlr-seat-set-selection (gwwm-seat) (.source event) (.serial event)))))
-  (add-listen* (gwwm-seat) 'request-start-drag requeststartdrag)
+  (add-listen* (gwwm-seat) 'request-start-drag request-start-drag)
   (add-listen* (gwwm-seat) 'request-set-primary-selection setpsel)
   (add-listen* (gwwm-seat)
                'start-drag
