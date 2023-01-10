@@ -395,7 +395,6 @@ with pointer focus of the frame event."
 
                    (add-hook! motion-notify-hook drag-move)
                    (%motionnotify 0)
-                   (add-hook! motion-notify-hook drag-move)
                    (add-listen* icon 'destroy
                                 (lambda (listener data)
                                   (remove-hook! motion-notify-hook drag-move)
