@@ -100,7 +100,6 @@ Monitor* monitor_from_listener(struct wl_listener *listener) {
  const char broken[] = "broken";
  struct wl_list clients; /* tiling order */
  struct wlr_idle_inhibit_manager_v1 *idle_inhibit_mgr;
- struct wlr_input_inhibit_manager *input_inhibit_mgr;
  struct wlr_virtual_keyboard_manager_v1 *virtual_keyboard_mgr;
  Atom netatom[NetLast];
  Atom get_netatom_n(int n){
@@ -1176,48 +1175,6 @@ SCM_DEFINE(inputdevice,"inputdevice",2,0,0,(SCM sl ,SCM d),"")
     return SCM_UNSPECIFIED;
 }
 
-bool
-keybinding(uint32_t mods, xkb_keycode_t keycode)
-{
-  PRINT_FUNCTION
-	/*
-	 * Here we handle compositor keybindings. This is when the compositor is
-	 * processing keys, rather than passing them on to the client for its own
-	 * processing.
-	 */
-  return scm_to_bool(scm_call_2(scm_c_private_ref("gwwm keybind", "keybinding"),
-                                scm_from_uint32(mods),
-                                scm_from_uint32(keycode)));
-}
-
-SCM_DEFINE (keypress,"keypress",3,0,0,(SCM kb, SCM slistener ,SCM sdata),"")
-{
-  PRINT_FUNCTION;
-	/* This event is raised when a key is pressed or released. */
-	struct wlr_event_keyboard_key *event = TO_P(sdata);
-  /* Translate libinput keycode -> xkbcommon */
-	uint32_t keycode = event->keycode + 8;
-	int handled = 0;
-	uint32_t mods = wlr_keyboard_get_modifiers
-      ((UNWRAP_WLR_INPUT_DEVICE
-        (scm_slot_ref(kb, scm_from_utf8_symbol("device"))))->keyboard);
-	/* On _press_ if there is no active screen locker,
-	 * attempt to process a compositor keybinding. */
-	if (!input_inhibit_mgr->active_inhibitor
-			&& event->state == WL_KEYBOARD_KEY_STATE_PRESSED)
-      handled=keybinding(mods, keycode);
-
-	if (!handled) {
-		/* Pass unhandled keycodes along to the client. */
-		wlr_seat_set_keyboard(gwwm_seat(NULL),
-                              (UNWRAP_WLR_INPUT_DEVICE
-                               (scm_slot_ref(kb, scm_from_utf8_symbol("device")))));
-		wlr_seat_keyboard_notify_key(gwwm_seat(NULL), event->time_msec,
-			event->keycode, event->state);
-	}
-    return SCM_UNSPECIFIED;
-}
-
 SCM_DEFINE (destroy_surface_notify,"destroy-surface-notify",3,0,0,
             (SCM c, SCM listener, SCM data),"")
 {
@@ -1635,9 +1592,6 @@ SCM_DEFINE (gwwm_setup,"%gwwm-setup" ,0,0,0,(),"")
 
 	idle_inhibit_mgr = wlr_idle_inhibit_v1_create(gwwm_display(NULL));
 	wl_signal_add(&idle_inhibit_mgr->events.new_inhibitor, &idle_inhibitor_create);
-
-	input_inhibit_mgr = wlr_input_inhibit_manager_create(gwwm_display(NULL));
-
 	/* Use decoration protocols to negotiate server-side decorations */
 	wlr_server_decoration_manager_set_default_mode(
 			wlr_server_decoration_manager_create(gwwm_display(NULL)),

@@ -13,6 +13,7 @@
   #:use-module (wlroots render renderer)
   #:use-module (wlroots types surface)
   #:use-module (wlroots types input-device)
+  #:use-module (wlroots types input-inhibitor)
   #:use-module (wlroots types data-device)
   #:use-module (wlroots types keyboard)
   #:use-module (wlroots types output-management)
@@ -89,6 +90,7 @@
 (define-dy gwwm-activation activation)
 (define-dy gwwm-layer-shell layer-shell)
 (define-dy gwwm-idle idle)
+(define-dy gwwm-input-inhibit-manager input-inhibit-manager)
 (define-once exclusive-focus
   (let ((%o (nothing)))
     (lambda* (#:optional (surface (nothing)))
@@ -261,9 +263,23 @@ gwwm [options]
                  #:destroy-when device)
     (add-listen* (.device device) 'key
                  (lambda (listener data)
-                   (let ((event (wrap-wlr-event-keyboard-key data)))
+                   (let* ((event (wrap-wlr-event-keyboard-key data))
+                          (seat (gwwm-seat))
+                          (keybinding (@@ (gwwm keybind) keybinding)))
                      (run-hook keypress-event-hook kb event)
-                     (keypress kb listener data)))
+
+                     (unless (and (not (.active-inhibitor
+                                        (gwwm-input-inhibit-manager)))
+                                  (= (.state event) 1)
+                                  (keybinding
+                                   (wlr-keyboard-get-modifiers (.device device))
+                                   (+ 8 (.keycode event))))
+                       (wlr-seat-set-keyboard seat device)
+                       (wlr-seat-keyboard-notify-key
+                        seat
+                        (.time-msec event)
+                        (.keycode event)
+                        (.state event)))))
                  #:destroy-when device)
     (add-listen* device 'destroy
                  (lambda (listener data)
@@ -682,6 +698,7 @@ with pointer focus of the frame event."
     )
   (%gwwm-setup-signal)
   (%gwwm-setup-othres)
+  (gwwm-input-inhibit-manager (wlr-input-inhibit-manager-create (gwwm-display)))
   (%gwwm-setup)
   (config-setup)
   (when (config-enable-xwayland? (gwwm-config))
