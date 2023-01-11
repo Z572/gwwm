@@ -1744,34 +1744,6 @@ SCM_DEFINE(unmapnotify,"unmap-notify",3,0,0,(SCM sc,SCM slistener ,SCM sdata),""
     return SCM_UNSPECIFIED;
 }
 
-SCM_DEFINE(gwwm_updatemon,"update-monitor",2,0,0,(SCM sm,SCM sconfig),""){
-
-    Monitor *m=UNWRAP_MONITOR(sm);
-    struct wlr_output_configuration_v1 *config=UNWRAP_WLR_OUTPUT_CONFIGURATION_V1(sconfig);
-  struct wlr_output_configuration_head_v1 *config_head =
-    wlr_output_configuration_head_v1_create(config, MONITOR_WLR_OUTPUT(m));
-
-  /* TODO: move clients off disabled monitors */
-  /* TODO: move focus if current_monitor is disabled */
-
-  /* Get the effective monitor geometry to use for surfaces */
-  SET_MONITOR_AREA(m, wlr_output_layout_get_box(gwwm_output_layout(NULL),
-                                                MONITOR_WLR_OUTPUT(m)));
-  (SET_MONITOR_WINDOW_AREA(m, MONITOR_AREA(m)));
-  wlr_scene_output_set_position(monitor_scene_output(m,NULL), (MONITOR_AREA(m))->x,
-                                (MONITOR_AREA(m))->y);
-  /* Calculate the effective monitor geometry to use for clients */
-  arrangelayers(sm);
-  /* Don't move clients to the left output when plugging monitors */
-  arrange(m);
-
-  config_head->state.enabled = MONITOR_WLR_OUTPUT(m)->enabled;
-  config_head->state.mode = ((MONITOR_WLR_OUTPUT(m))->current_mode);
-  config_head->state.x = MONITOR_AREA(m)->x;
-  config_head->state.y = MONITOR_AREA(m)->y;
-  return SCM_UNSPECIFIED;
-}
-
 void updatetitle_x11(struct wl_listener *listener, void *data)
 {
   Client *c;

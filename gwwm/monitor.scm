@@ -21,6 +21,7 @@
             monitor-wlr-output
             monitor-layouts
             monitor-window-area
+            monitor-scene-output
             monitor-area
             monitor-sellt
             <gwwm-monitor>

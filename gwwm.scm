@@ -238,6 +238,26 @@ gwwm [options]
         (arrange m))
       (focusclient (focustop (current-monitor)) #t))))
 
+(define (update-monitor m config)
+  (let* ((output (monitor-wlr-output m))
+         (config-head (wlr-output-configuration-head-v1-create config output))
+         (box (wlr-output-layout-get-box (gwwm-output-layout) output))
+         (state (.state config-head)))
+    (set! (monitor-area m) box)
+    (set! (monitor-window-area m) (shallow-clone box))
+    (wlr-scene-output-set-position
+     (monitor-scene-output m)
+     (box-x box)
+     (box-y box))
+    (arrangelayers m)
+    (arrange m)
+
+    (modify-instance* state
+      (x (box-x box))
+      (y (box-y box))
+      (enabled (.enabled output))
+      (scale (.scale output)))))
+
 (define (update-monitors listener data)
   (let ((config (wlr-output-configuration-v1-create)))
     (entire-layout-box (wlr-output-layout-get-box (gwwm-output-layout)))
