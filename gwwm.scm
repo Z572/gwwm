@@ -205,19 +205,6 @@ gwwm [options]
 (define-public overlay-layer #f)
 (define-public no-focus-layer #f)
 
-(define* (add-listen* obj symbol proc
-                      #:key
-                      (destroy-when obj)
-                      (remove-when-destroy? #t))
-  (let ((listener (make-wl-listener proc)))
-    (wl-signal-add (get-event-signal obj symbol) listener)
-    (when remove-when-destroy?
-      (wl-signal-add
-       (get-event-signal destroy-when 'destroy)
-       (make-wl-listener
-        (lambda _
-          (wl-list-remove (.link listener))))))))
-
 (define (setmon c m newtag)
   (let ((old (client-monitor c))
         (surface (client-surface c)))
