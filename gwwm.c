@@ -1155,26 +1155,6 @@ incnmaster(const Arg *arg)
   arrange(current_monitor());
 }
 
-SCM_DEFINE(inputdevice,"inputdevice",2,0,0,(SCM sl ,SCM d),"")
-{
-  PRINT_FUNCTION
-  struct wl_listener *listener=UNWRAP_WL_LISTENER(sl);
-  void *data= TO_P(d);
-	/* This event is raised by the backend when a new input device becomes
-	 * available. */
-	struct wlr_input_device *device = data;
-	uint32_t caps;
-	/* We need to let the wlr_seat know what our capabilities are, which is
-	 * communiciated to the client. In dwl we always have a cursor, even if
-	 * there are no pointer devices, so we always include that capability. */
-	/* TODO do we actually require a cursor? */
-	caps = WL_SEAT_CAPABILITY_POINTER;
-	if (!scm_to_bool(scm_zero_p(scm_length(REF_CALL_0("gwwm keyboard", "keyboard-list")))))
-		caps |= WL_SEAT_CAPABILITY_KEYBOARD;
-	wlr_seat_set_capabilities(gwwm_seat(NULL), caps);
-    return SCM_UNSPECIFIED;
-}
-
 SCM_DEFINE (destroy_surface_notify,"destroy-surface-notify",3,0,0,
             (SCM c, SCM listener, SCM data),"")
 {

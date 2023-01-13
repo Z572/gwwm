@@ -20,6 +20,7 @@
   #:use-module (wlroots render allocator)
   #:use-module (system repl server)
   #:use-module (gwwm keymap)
+  #:use-module (gwwm keyboard)
   #:use-module (gwwm i18n)
   #:use-module (gwwm client)
   #:use-module (gwwm monitor)
@@ -30,6 +31,7 @@
   #:use-module (gwwm utils srfi-215)
   #:use-module (gwwm utils ref)
   #:use-module (wayland display)
+  #:use-module (wayland protocol)
   #:use-module (wayland list)
   #:use-module (wayland listener)
   #:use-module (wayland signal)
@@ -53,6 +55,7 @@
   #:use-module (gwwm config)
   #:use-module (gwwm hooks)
   #:use-module (gwwm commands)
+  #:use-module ((bytestructure-class) #:select (bs:enum->integer))
   #:duplicates (merge-generics replace warn-override-core warn last)
   #:export (main))
 
@@ -367,14 +370,27 @@ with pointer focus of the frame event."
                    (run-hook cursor-button-event-hook event)
                    (buttonpress listener data)))
                #:remove-when-destroy? #f)
+  (define (add-seat-capabilitie seat o)
+    (wlr-seat-set-capabilities
+     seat
+     (logior (.capabilities seat)
+             (bs:enum->integer %wl-seat-capability-enum o))))
   (add-listen* (gwwm-backend) 'new-input
                (lambda (listener data)
                  (let ((device (wrap-wlr-input-device data)))
                    (case (.type device)
                      ((WLR_INPUT_DEVICE_KEYBOARD)
-                      (create-keyboard device))
+                      (create-keyboard device)
+                      (unless (zero? (length (keyboard-list)))
+
+                        (add-seat-capabilitie
+                         (gwwm-seat)
+                         'WL_SEAT_CAPABILITY_KEYBOARD)))
                      ((WLR_INPUT_DEVICE_POINTER)
-                      (create-pointer device))
+                      (create-pointer device)
+                      (add-seat-capabilitie
+                       (gwwm-seat)
+                       'WL_SEAT_CAPABILITY_POINTER))
                      ((WLR_INPUT_DEVICE_TOUCH)
                       (send-log WARNING "TODO"))
                      ((WLR_INPUT_DEVICE_SWITCH)
@@ -383,8 +399,7 @@ with pointer focus of the frame event."
                       (send-log WARNING "TODO"))
                      ((WLR_INPUT_DEVICE_TABLET_PAD)
                       (send-log WARNING "TODO"))
-                     (else (send-log WARNING "unknow input device")))
-                   (inputdevice listener data))))
+                     (else (send-log WARNING "unknow input device"))))))
   (add-listen* (gwwm-backend) 'new-output create-monitor)
   (gwwm-xcursor-manager (wlr-xcursor-manager-create #f 24))
   (gwwm-seat (wlr-seat-create (gwwm-display) "seat0"))
