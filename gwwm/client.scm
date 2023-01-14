@@ -73,6 +73,7 @@
             client-do-set-floating
             client-scene-surface
             client-resize-configure-serial
+            client-init-border
             %fstack
             %clients
             %layer-clients

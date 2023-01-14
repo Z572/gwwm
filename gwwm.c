@@ -374,10 +374,11 @@ applyexclusive(struct wlr_box *usable_area,
 	}
 }
 
-void
-applyrules(Client *c)
+
+SCM_DEFINE (applyrules ,"%applyrules" ,1,0,0,(SCM sc),"")
 {
-  PRINT_FUNCTION
+  PRINT_FUNCTION;
+  Client *c=(UNWRAP_CLIENT(sc));
 	/* rule matching */
 	const char *appid, *title;
 	unsigned int i, newtags = 0;
@@ -406,6 +407,7 @@ applyrules(Client *c)
                                                       ? "float-layer"
                                                       : "tile-layer")));
 	setmon(c, mon, newtags);
+    return SCM_UNSPECIFIED;
 }
 
 void
@@ -1171,43 +1173,7 @@ SCM_DEFINE(mapnotify,"map-notify",3,0,0,(SCM sc,SCM slistener ,SCM sdata),"")
 
   /* Called when the surface is mapped, or ready to display on-screen. */
   Client *p, *c = UNWRAP_CLIENT(sc);
-  /* Create scene tree for this client and its border */
-  struct wlr_surface *surface = (CLIENT_SURFACE(c));
-  struct wlr_scene_node *scene_node = CLIENT_SCENE(c);
-
-  (surface)->data = scene_node;
-
-  scene_node->data = client_scene_surface(c, NULL)->data = c;
-  if (client_is_unmanaged(c)) {
-    /* Floating */
-    wlr_scene_node_reparent(scene_node, UNWRAP_WLR_SCENE_NODE(REF("gwwm","float-layer")));
-    wlr_scene_node_set_position(scene_node, client_geom(c)->x + GWWM_BORDERPX(),
-                                client_geom(c)->y + GWWM_BORDERPX());
-    return SCM_UNSPECIFIED;
-  }
-  (scm_call_1(REFP("gwwm client","client-init-border"), WRAP_CLIENT(c)));
-  /* Insert this client into client lists. */
   wl_list_insert(&clients, &c->link);
-  REF_CALL_2("ice-9 q", "q-push!", REF_CALL_0("gwwm client", "%clients"), sc);
-  REF_CALL_2("ice-9 q", "q-push!", REF_CALL_0("gwwm client", "%fstack"), sc);
-
-  /* Set initial monitor, tags, floating status, and focus */
-  if ((p = client_get_parent(c))) {
-    /* Set the same monitor and tags than its parent */
-    CLIENT_SET_FLOATING(c, 1);
-    wlr_scene_node_reparent(scene_node, UNWRAP_WLR_SCENE_NODE(REF("gwwm","float-layer")));
-    /* TODO recheck if !p->mon is possible with wlroots 0.16.0 */
-    setmon(c,
-           (client_monitor(p, NULL)) ? client_monitor(p, NULL)
-                                     : current_monitor(),
-           client_tags(p));
-  } else {
-    applyrules(c);
-  }
-
-  if (CLIENT_IS_FULLSCREEN(c))
-    setfullscreen(c, 1);
-
   client_monitor(c, NULL)->un_map = 1;
   return SCM_UNSPECIFIED;
 }

@@ -122,7 +122,6 @@ void applybounds(Client *c, struct wlr_box *bbox);
 void applyexclusive(struct wlr_box *usable_area, uint32_t anchor,
                     int32_t exclusive, int32_t margin_top, int32_t margin_right,
                     int32_t margin_bottom, int32_t margin_left);
-void applyrules(Client *c);
 void arrange(Monitor *m);
 void arrangelayer(Monitor *m, struct wl_list *list, struct wlr_box *usable_area,
                   int exclusive);
