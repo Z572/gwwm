@@ -1183,24 +1183,12 @@ SCM_DEFINE (gwwm_motionnotify, "%motionnotify" , 1,0,0,
 #define FUNC_NAME s_gwwm_motionnotify
 {
   uint32_t time=scm_to_uint32( stime);
-  PRINT_FUNCTION
+  PRINT_FUNCTION;
 	double sx = 0, sy = 0;
 	Client *c = NULL;
 	struct wlr_surface *surface = NULL;
 	struct wlr_drag_icon *icon;
     struct wlr_cursor *cursor=gwwm_cursor(NULL);
-
-	/* time is 0 in internal calls meant to restore pointer focus. */
-	if (time) {
-      wlr_idle_notify_activity(gwwm_idle(NULL), gwwm_seat(NULL));
-
-		/* Update current_monitor (even while dragging a window) */
-		if (GWWM_SLOPPYFOCUS_P())
-			set_current_monitor(xytomon(cursor->x, cursor->y));
-	}
-
-    scm_c_run_hook(REF("gwwm hooks", "motion-notify-hook"),
-                   scm_list_1(scm_from_uint32(time)));
 
 	if (cursor_mode == CurMove) {
 

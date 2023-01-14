@@ -307,6 +307,15 @@ gwwm [options]
         (wlr-seat-start-pointer-drag seat (.drag event) (.serial event))
         (wlr-data-source-destroy (~ event 'drag 'source)))))
 
+(define* (motionnotify #:optional (time 0))
+  (when (zero? time)
+    (idle-activity))
+  (when (gwwm-sloppyfocus?)
+    (set! (current-monitor) (monitor-at (.x (gwwm-cursor)) (.y (gwwm-cursor)))))
+  (run-hook motion-notify-hook time)
+  (%motionnotify time))
+
+(define (idle-activity . _) (wlr-idle-notify-activity (gwwm-idle) (gwwm-seat)))
 (define (gwwm-setup)
   (gwwm-display (wl-display-create))
   (or (and=> (wlr-backend-autocreate(gwwm-display)) gwwm-backend)
@@ -322,7 +331,7 @@ gwwm [options]
       (begin (send-log ERROR (G_ "gwwm Couldn't create allocator"))
              (exit 1)))
   (gwwm-cursor (wlr-cursor-create))
-  (define (idle-activity . _) (wlr-idle-notify-activity (gwwm-idle) (gwwm-seat)))
+
   (add-listen* (gwwm-cursor) 'axis
                (lambda (listener data)
                  (let ((event (wrap-wlr-event-pointer-axis data)))
@@ -355,14 +364,14 @@ with pointer focus of the frame event."
                                                           (.device event)
                                                           (.delta-x event)
                                                           (.delta-y event))
-                                         (%motionnotify (.time-msec event))))
+                                         (motionnotify (.time-msec event))))
                #:remove-when-destroy? #f)
   (add-listen* (gwwm-cursor) 'motion-absolute
                (lambda (listener data)
                  (let ((event (wrap-wlr-event-pointer-motion-absolute data)))
                    (let-slots event (device x y time-msec)
                      (wlr-cursor-warp-absolute (gwwm-cursor) device x y)
-                     (%motionnotify time-msec))))
+                     (motionnotify time-msec))))
                #:remove-when-destroy? #f)
   (add-listen* (gwwm-cursor) 'button
                (lambda (listener data)
@@ -433,13 +442,13 @@ with pointer focus of the frame event."
                                            (.sy (.surface icon)))))))))
 
                    (add-hook! motion-notify-hook drag-move)
-                   (%motionnotify 0)
+                   (motionnotify)
                    (add-listen* icon 'destroy
                                 (lambda (listener data)
                                   (remove-hook! motion-notify-hook drag-move)
                                   (wlr-scene-node-destroy scene)
                                   (focusclient (current-client) #t)
-                                  (%motionnotify 0))
+                                  (motionnotify))
                                 #:remove-when-destroy? #f))))
   (gwwm-xdg-shell (wlr-xdg-shell-create (gwwm-display)))
   (add-listen* (gwwm-xdg-shell) 'new-surface create-notify)
@@ -552,7 +561,7 @@ with pointer focus of the frame event."
     (wlr-surface-send-enter
      (client-surface c)
      (monitor-wlr-output(client-monitor c)))
-    (%motionnotify 0)))
+    (motionnotify)))
 (define (unmap-layer-client-notify c)
   (lambda (listener data)
     (wlr-scene-node-set-enabled (client-scene c) #f)
@@ -562,7 +571,7 @@ with pointer focus of the frame event."
                   (.focused-surface
                    (.keyboard-state (gwwm-seat))))
       (focusclient (current-client) #f))
-    (%motionnotify 0)))
+    (motionnotify)))
 (define (main)
   (setlocale LC_ALL "")
   (textdomain %gettext-domain)
