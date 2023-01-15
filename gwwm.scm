@@ -57,7 +57,7 @@
   #:use-module (gwwm hooks)
   #:use-module (gwwm commands)
   #:use-module ((bytestructure-class) #:select (bs:enum->integer))
-  #:duplicates (merge-generics replace warn-override-core warn last)
+  #:duplicates (merge-accessors merge-generics replace warn-override-core warn last)
   #:export (main))
 
 (eval-when (expand load eval)
