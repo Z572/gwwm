@@ -732,39 +732,6 @@ createidleinhibitor(struct wl_listener *listener, void *data)
 	checkidleinhibitor(NULL);
 }
 
-SCM_DEFINE(createkeyboard,"%create-keyboard",1,0,0,(SCM sdevice),"")
-{
-  struct wlr_input_device *device=UNWRAP_WLR_INPUT_DEVICE(sdevice);
-  PRINT_FUNCTION;
-	struct xkb_context *context;
-	struct xkb_keymap *keymap;
-    SCM kb=scm_make(scm_list_3(REFP("gwwm keyboard", "<gwwm-keyboard>"),
-                               scm_from_utf8_keyword("device"),
-                               WRAP_WLR_INPUT_DEVICE(device)));
-    scm_c_run_hook(REF("gwwm hooks", "create-keyboard-hook"),
-                   scm_list_1(kb));
-    SCM s_xkb = REF_CALL_1("gwwm config","config-xkb-rules", gwwm_config);
-   #define rf(name) (scm_to_utf8_string(scm_slot_ref(s_xkb, scm_from_utf8_symbol(name))))
-    const struct xkb_rule_names xr = {
-    .rules = rf("rules"),
-      .model = rf("model"),
-      .layout = rf("layout"),
-      .variant = rf("variant"),
-      .options = rf("options")
-      };
-#undef rf
-	/* Prepare an XKB keymap and assign it to the keyboard. */
-	context = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
-	keymap = xkb_keymap_new_from_names(context, &xr,
-		XKB_KEYMAP_COMPILE_NO_FLAGS);
-
-	wlr_keyboard_set_keymap(device->keyboard, keymap);
-	xkb_keymap_unref(keymap);
-	xkb_context_unref(context);
-	wlr_keyboard_set_repeat_info(device->keyboard, (scm_to_int32(REF_CALL_1("gwwm config","config-repeat-rate", gwwm_config))), repeat_delay);
-    return kb;
-}
-
 SCM_DEFINE (createlayersurface,"create-layer-client",2,0,0,(SCM slistener ,SCM sdata),"")
 {
   PRINT_FUNCTION;
@@ -1714,7 +1681,7 @@ virtualkeyboard(struct wl_listener *listener, void *data)
   PRINT_FUNCTION
 	struct wlr_virtual_keyboard_v1 *keyboard = data;
 	struct wlr_input_device *device = &keyboard->input_device;
-	createkeyboard(WRAP_WLR_INPUT_DEVICE(device));
+    scm_call_1(REFP("gwwm","create-keyboard"), WRAP_WLR_INPUT_DEVICE(device));
 }
 
 SCM_DEFINE (gwwm_monitor_tagset, "%monitor-tagset",1, 0,0,

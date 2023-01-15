@@ -20,6 +20,7 @@
   #:use-module (wlroots render allocator)
   #:use-module (system repl server)
   #:use-module ((system foreign ) #:select (make-pointer))
+  #:use-module (xkbcommon xkbcommon)
   #:use-module (gwwm keymap)
   #:use-module (gwwm keyboard)
   #:use-module (gwwm i18n)
@@ -261,7 +262,23 @@ gwwm [options]
     (wlr-output-manager-v1-set-configuration (gwwm-output-manager) config)))
 
 (define (create-keyboard device)
-  (let ((kb (%create-keyboard device)))
+  (let* ((kb (make <gwwm-keyboard> #:device device))
+         (context (xkb-context-new XKB_CONTEXT_NO_FLAGS))
+         (xkb-rule-names (config-xkb-rules (gwwm-config)))
+         (keymap (xkb-keymap-new-from-names
+                  context
+                  xkb-rule-names
+                  XKB_KEYMAP_COMPILE_NO_FLAGS))
+         )
+    (wlr-keyboard-set-keymap (.device device) keymap)
+    (xkb-keymap-unref keymap)
+    (xkb-context-unref context)
+    (wlr-keyboard-set-repeat-info
+     (.device device)
+     (config-repeat-rate (gwwm-config))
+     600)
+
+    (run-hook create-keyboard-hook kb)
     ((@@ (gwwm keyboard) add-keyboard) kb)
     (add-listen* (.device device) 'modifiers
                  (lambda (listener data)

@@ -1,4 +1,5 @@
 (define-module (gwwm config)
+  #:use-module (xkbcommon xkbcommon)
   #:use-module (oop goops)
   #:use-module (oop goops describe)
   #:use-module (gwwm utils)
@@ -39,23 +40,19 @@
         (begin (warn (string-append (G_ "initfile not found:") init-file ))
                (make <gwwm-config>)))))
 
-(define-class <xkb-rules> ()
-  (rules #:init-keyword #:rules #:getter xkb-rults-names-rules #:init-value "")
-  (model #:init-keyword #:model #:getter xkb-rults-names-model)
-  (layout #:init-keyword #:layout #:getter xkb-rults-names-layout)
-  (variant #:init-keyword #:variant #:getter xkb-rults-names-variant)
-  (options #:init-keyword #:options #:getter xkb-rults-names-options))
-
 (define* (make-xkb-rules
           #:optional
-          (layout "")
-          (variant "")
-          #:key (model "")
+          (layout #f)
+          (variant #f)
+          (rules #f)
+          #:key
+          (model "")
           (options '()))
-  (make <xkb-rules>
+  (make <xkb-rule-names>
+    #:model model
     #:layout layout
     #:variant variant
-    #:model model
+    #:rules rules
     #:options (string-join options ",")))
 
 (define gwwm-default-bordercolor (make-color 255/2 255/2 255/2 255))
