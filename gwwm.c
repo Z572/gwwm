@@ -849,23 +849,6 @@ SCM_DEFINE (createmon,"create-monitor",2,0,0,(SCM slistener ,SCM sdata),"")
     return WRAP_MONITOR(m);
 }
 
-SCM_DEFINE(gwwm_new_popup_notify,"new-popup-notify",2,0,0,(SCM sl ,SCM d),"")
-{
-  struct wl_listener *listener=UNWRAP_WL_LISTENER(sl);
-  void *data= TO_P(d);
-  PRINT_FUNCTION;
-  struct wlr_xdg_popup *popup = data;
-  struct wlr_box box;
-  Client *l = toplevel_from_popup(popup);
-  struct wlr_scene_node *node=wlr_scene_xdg_surface_create(popup->parent->data,
-                                                          popup->base);
-  popup->base->surface->data=node;
-  if (!l || !client_monitor(l,NULL))
-    return SCM_UNSPECIFIED;
-  if (!CLIENT_IS_FLOATING(l)) (wlr_scene_node_raise_to_top(node->parent));
-  return SCM_UNSPECIFIED;
-}
-
 SCM_DEFINE(createnotify,"create-notify",2,0,0,(SCM sl ,SCM d),"")
 {
   /* This event is raised when wlr_xdg_shell receives a new xdg surface from a

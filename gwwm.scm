@@ -3,6 +3,7 @@
   #:use-module (oop goops describe)
   #:use-module (ice-9 getopt-long)
   #:use-module (ice-9 q)
+  #:use-module (ice-9 curried-definitions)
   #:use-module (srfi srfi-2)
   #:use-module (srfi srfi-26)
   #:use-module (srfi srfi-19)
@@ -654,22 +655,28 @@ with pointer focus of the frame event."
   (add-hook! create-client-hook
              (lambda (c)
                (send-log DEBUG "client createed" 'CLIENT c)))
-  (define new-popup-notify*
-    (lambda (c)
-      (lambda (listener data)
-        (let* ((popup (wrap-wlr-xdg-popup data)))
-          (add-listen* (.base popup) 'new-popup (new-popup-notify* c))
-          (run-hook create-popup-hook popup)
-          (new-popup-notify listener data)
-          (and-let* ((monitor (client-monitor c))
-                     (geom (shallow-clone
-                            (if (is-a? c <gwwm-layer-client>)
-                                (monitor-area monitor)
-                                (monitor-window-area (client-monitor c))))))
-            (modify-instance* geom
-              (x (- x (box-x (client-geom c))))
-              (y (- y (box-y (client-geom c)))))
-            (wlr-xdg-popup-unconstrain-from-box popup geom))))))
+  (define ((new-popup-notify c) listener data)
+    (let* ((popup (wrap-wlr-xdg-popup data))
+           (node (wlr-scene-xdg-surface-create
+                  (wrap-wlr-scene-node (~ popup 'parent 'data))
+                  (.base popup))))
+      (add-listen* (.base popup) 'new-popup (new-popup-notify c))
+      (run-hook create-popup-hook popup)
+
+      (set! (.data (.surface (.base popup))) (get-pointer node))
+
+      (and-let* (c
+                 (monitor (client-monitor c))
+                 (geom (shallow-clone
+                        (if (is-a? c <gwwm-layer-client>)
+                            (monitor-area monitor)
+                            (monitor-window-area (client-monitor c))))))
+        (unless (client-floating? c)
+          (wlr-scene-node-raise-to-top (.parent node)))
+        (modify-instance* geom
+          (x (- x (box-x (client-geom c))))
+          (y (- y (box-y (client-geom c)))))
+        (wlr-xdg-popup-unconstrain-from-box popup geom))))
 
   (define (set-title-notify c)
     (lambda (listener data)
@@ -707,7 +714,7 @@ with pointer focus of the frame event."
                            (destroy-surface-notify c listener data))
                          #:remove-when-destroy? #f)
             (add-listen* (client-super-surface c) 'new-popup
-                         (new-popup-notify* c))
+                         (new-popup-notify c))
             (add-listen* (wlr-xdg-surface-toplevel (client-super-surface c))
                          'set-title (set-title-notify c)
                          #:destroy-when (client-super-surface c))
