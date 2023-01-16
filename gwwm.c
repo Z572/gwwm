@@ -676,24 +676,14 @@ SCM_DEFINE (gwwm_cleanup, "%gwwm-cleanup",0,0,0, () ,"")
 }
 #undef D
 
-SCM_DEFINE (cleanupmon,"cleanup-monitor",3,0,0,(SCM sm, SCM slistener ,SCM sdata),"")
+SCM_DEFINE (cleanupmon,"%cleanup-monitor",3,0,0,(SCM sm, SCM slistener ,SCM sdata),"")
 {
   PRINT_FUNCTION;
   struct wl_listener *listener=UNWRAP_WL_LISTENER(slistener);
   void *data=TO_P(sdata);
   struct wlr_output *wlr_output = data;
   Monitor *m = UNWRAP_MONITOR(sm);
-  int nmons, i = 0;
-
   wl_list_remove(&m->link);
-  wlr_scene_output_destroy(monitor_scene_output(m,NULL));
-
-  if ((nmons = wl_list_length(&mons)))
-    do /* don't switch to disabled mons */
-      set_current_monitor(
-                          wl_container_of(mons.prev, (current_monitor()), link));
-    while (!(MONITOR_WLR_OUTPUT(current_monitor()))->enabled && i++ < nmons);
-  logout_monitor(sm);
   return SCM_UNSPECIFIED;
 }
 

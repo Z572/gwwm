@@ -4,6 +4,7 @@
   #:use-module (ice-9 getopt-long)
   #:use-module (ice-9 q)
   #:use-module (ice-9 curried-definitions)
+  #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-2)
   #:use-module (srfi srfi-26)
   #:use-module (srfi srfi-19)
@@ -597,6 +598,25 @@ with pointer focus of the frame event."
                    (.keyboard-state (gwwm-seat))))
       (focusclient (current-client) #f))
     (motionnotify)))
+(define ((cleanup-monitor m) listener data)
+  (q-remove! (%monitors) m)
+  (wlr-output-layout-remove
+   (gwwm-output-layout)
+   (monitor-wlr-output m))
+
+  (wlr-scene-output-destroy (monitor-scene-output m))
+  (set! (monitor-scene-output m) #f)
+
+  (%cleanup-monitor m listener data)
+  (let* ((ms (monitor-list))
+         (l (length ms)))
+    (unless (zero? l)
+      (and=> (find (lambda (m)
+                     (.enabled (monitor-wlr-output m))) ms)
+             current-monitor)))
+
+  (focusclient (focustop (current-monitor)) #t)
+  (closemon m))
 (define (main)
   (setlocale LC_ALL "")
   (textdomain %gettext-domain)
@@ -614,14 +634,7 @@ with pointer focus of the frame event."
                             (lambda (listener data)
                               (render-monitor-notify m listener data)))
                (add-listen* (monitor-wlr-output m) 'destroy
-                            (lambda (listener data)
-                              (q-remove! (%monitors) m)
-                              (wlr-output-layout-remove
-                               (gwwm-output-layout)
-                               (monitor-wlr-output m))
-                              (cleanup-monitor m listener data)
-                              (focusclient (focustop (current-monitor)) #t)
-                              (closemon m)))))
+                            (cleanup-monitor m))))
 
   (define (commit-event c)
     (let ((box (client-get-geometry c))
