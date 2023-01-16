@@ -114,13 +114,9 @@ void client_get_size_hints(Client *c, struct wlr_box *max, struct wlr_box *min);
 const char *client_get_title(Client *c);
 Client *client_get_parent(Client *c);
 bool client_is_float_type(Client *c);
-bool client_is_mapped(Client *c);
 bool client_wants_fullscreen(Client *c);
 bool client_is_unmanaged(Client *c);
 void client_notify_enter(struct wlr_surface *s, struct wlr_keyboard *kb);
-void client_send_close(Client *c);
-void client_set_fullscreen(Client *c, bool fullscreen);
-void client_set_tiled(Client *c, uint32_t edges);
 struct wlr_surface *client_surface_at(Client *c, double cx, double cy,
                                       double *sx, double *sy);
 typedef void (*client_iterator_func_t)(Client *c);

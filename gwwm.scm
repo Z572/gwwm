@@ -565,8 +565,8 @@ with pointer focus of the frame event."
         (begin (wlr-scene-node-reparent (client-scene c) float-layer)
                (wlr-scene-node-set-position
                 (client-scene c)
-                (+ (.x (client-geom c)) (gwwm-borderpx))
-                (+ (.y (client-geom c)) (gwwm-borderpx))))
+                (+ (box-x (client-geom c)) (gwwm-borderpx))
+                (+ (box-y (client-geom c)) (gwwm-borderpx))))
         (begin (client-init-border c)
                (q-push! (%clients) c)
                (q-push! (%fstack) c)
@@ -732,7 +732,7 @@ with pointer focus of the frame event."
 
             )
            ((is-a? c <gwwm-x-client>)
-            (add-listen* (client-super-surface c) 'set-app-id
+            (add-listen* (client-super-surface c) 'set-class
                          (lambda (listener data)
                            (set! (client-appid c)
                                  (client-get-appid c)))

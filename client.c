@@ -309,13 +309,6 @@ SCM_DEFINE (gwwm_client_is_float_type_p,"client-is-float-type?",1,0,0,
 #undef FUNC_NAME
 
 bool
-client_is_mapped(Client *c)
-{
-  PRINT_FUNCTION;
-  return scm_to_bool(REF_CALL_1("gwwm client","client-mapped?",(WRAP_CLIENT(c))));
-}
-
-bool
 client_wants_fullscreen(Client *c)
 {
   PRINT_FUNCTION;
@@ -340,27 +333,6 @@ client_notify_enter(struct wlr_surface *s, struct wlr_keyboard *kb)
 				kb->num_keycodes, &kb->modifiers);
 	else
       wlr_seat_keyboard_notify_enter(get_gloabl_seat(), s, NULL, 0, NULL);
-}
-
-void
-client_send_close(Client *c)
-{
-  REF_CALL_1("gwwm client","client-send-close" ,WRAP_CLIENT(c));
-}
-
-void
-client_set_fullscreen(Client *c, bool fullscreen)
-{
-  scm_call_2(REFP("gwwm client","client-do-set-fullscreen"),
-             WRAP_CLIENT(c),
-             scm_from_bool(fullscreen));
-}
-
-void
-client_set_tiled(Client *c, uint32_t edges)
-{
-  PRINT_FUNCTION;
-  REF_CALL_2("gwwm client","client-set-tiled" ,WRAP_CLIENT(c), scm_from_uint32(edges));
 }
 
 struct wlr_surface *
