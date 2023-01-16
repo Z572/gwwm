@@ -837,9 +837,7 @@ SCM_DEFINE (createmon,"create-monitor",2,0,0,(SCM slistener ,SCM sdata),"")
       wlr_x11_output_set_title(wlr_output, "gwwm");
     }
     if (!wlr_output_commit(wlr_output))
-      return SCM_UNSPECIFIED;
-
-    REF_CALL_2("ice-9 q", "q-push!", REF_CALL_0("gwwm monitor", "%monitors"),WRAP_MONITOR(m));
+      return SCM_BOOL_F;
 	wl_list_insert(&mons, &m->link);
 
 	/* Adds this to the output layout in the order it was configured in.
@@ -848,9 +846,7 @@ SCM_DEFINE (createmon,"create-monitor",2,0,0,(SCM slistener ,SCM sdata),"")
 	 * display, which Wayland clients can see to find out information about the
 	 * output (such as DPI, scale factor, manufacturer, etc).
 	 */
-    monitor_scene_output(m , wlr_scene_output_create(gwwm_scene(NULL), wlr_output));
-	wlr_output_layout_add_auto(gwwm_output_layout(NULL), wlr_output);
-    return SCM_UNSPECIFIED;
+    return WRAP_MONITOR(m);
 }
 
 SCM_DEFINE(gwwm_new_popup_notify,"new-popup-notify",2,0,0,(SCM sl ,SCM d),"")
