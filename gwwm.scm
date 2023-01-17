@@ -691,21 +691,23 @@ with pointer focus of the frame event."
           (y (- y (box-y (client-geom c)))))
         (wlr-xdg-popup-unconstrain-from-box popup geom))))
 
-  (define (set-title-notify c)
-    (lambda (listener data)
-      (let ((title (client-title c))
-            (new (client-get-title c)))
-        (set! (client-title c) new )
-        (run-hook update-title-hook c title new))))
+  (define ((set-title-notify c) listener data)
+    (let ((title (client-title c))
+          (new (client-get-title c)))
+      (set! (client-title c) new )
+      (run-hook update-title-hook c title new)))
 
-  (define (request-fullscreen-notify c)
-    (lambda (listener data)
-      (let ((fullscreen? (client-wants-fullscreen? c))
-            (event (wrap-wlr-xdg-toplevel-set-fullscreen-event data)))
-        (if (client-monitor c)
-            (client-do-set-fullscreen c fullscreen?)
-            (set! (client-fullscreen? c) fullscreen?))
-        (run-hook fullscreen-event-hook c event))))
+  (define ((request-fullscreen-notify c) listener data)
+    (let ((fullscreen? (client-wants-fullscreen? c))
+          (event-or-xsurface ((if (client-is-x11? c)
+                                  wrap-wlr-xwayland-surface
+                                  wrap-wlr-xdg-toplevel-set-fullscreen-event)
+
+                              data)))
+      (if (client-monitor c)
+          (client-do-set-fullscreen c fullscreen?)
+          (set! (client-fullscreen? c) fullscreen?))
+      (run-hook fullscreen-event-hook c event-or-xsurface)))
   (add-hook!
    create-client-hook
    (lambda (c)
@@ -749,7 +751,29 @@ with pointer focus of the frame event."
                          (lambda (listener data)
                            (set! (client-appid c)
                                  (client-get-appid c)))
-                         #:destroy-when (client-super-surface c)))
+                         #:destroy-when (client-super-surface c))
+            (add-listen* (client-super-surface c) 'request-activate
+                         (lambda (listener data)
+                           (let ((xsurface (wrap-wlr-xwayland-surface data)))
+                             (when (and (.mapped xsurface)
+                                        (not (client-is-unmanaged? c)))
+                               (wlr-xwayland-surface-activate xsurface #t)))))
+            (add-listen* (client-super-surface c) 'request-configure
+                         (lambda (listener data)
+                           (let ((event (wrap-wlr-xwayland-surface-configure-event data)))
+                             (let-slots event (surface x y width height)
+                               (wlr-xwayland-surface-configure surface x y width height)))))
+            (add-listen* (client-super-surface c) 'set-hints
+                         (lambda (listener data)
+                           (let ((xsurface (wrap-wlr-xwayland-surface data)))
+                             (when (and (.mapped xsurface)
+                                        (.surface xsurface))
+                               (set! (client-urgent? c)
+                                     (.hints-urgency xsurface))))))
+            (add-listen* (client-super-surface c) 'request-fullscreen
+                         (request-fullscreen-notify c))
+            (add-listen* (client-super-surface c) 'set-title
+                         (set-title-notify c)))
            ((is-a? c <gwwm-layer-client>)
             (q-push! (%layer-clients) c)
             (add-listen* (client-super-surface c) 'map

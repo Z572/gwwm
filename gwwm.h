@@ -186,12 +186,9 @@ SCM get_gwwm_config(void);
   (scm_to_utf8_string(                                                         \
       REF_CALL_1("gwwm config", "config-cursor-normal-image", gwwm_config)))
 #ifdef XWAYLAND
-void activatex11(struct wl_listener *listener, void *data);
-void configurex11(struct wl_listener *listener, void *data);
 void createnotifyx11(struct wl_listener *listener, void *data);
 void xwaylandready(struct wl_listener *listener, void *data);
 Atom getatom(xcb_connection_t *xc, const char *name);
-void sethints(struct wl_listener *listener, void *data);
 /* void xwaylandready(struct wl_listener *listener, void *data); */
 Atom get_netatom_n(int n);
 #endif

@@ -1069,21 +1069,6 @@ focustop(Monitor *m)
   return UNWRAP_CLIENT(c);
 }
 
-void
-fullscreennotify_x11(struct wl_listener *listener, void *data)
-{
-  PRINT_FUNCTION;
-  struct wlr_xwayland_surface *surface=data;
-  if (surface->surface) {
-    Client *c = client_from_wlr_surface(surface->surface);
-    if (c)
-      {
-        scm_c_run_hook(REF("gwwm hooks", "fullscreen-event-hook"),
-                       scm_list_2(WRAP_CLIENT(c),WRAP_WLR_XWAYLAND_SURFACE(data)));
-      }
-  }
-
-}
 
 void
 incnmaster(const Arg *arg)
@@ -1614,17 +1599,6 @@ SCM_DEFINE(unmapnotify,"unmap-notify",3,0,0,(SCM sc,SCM slistener ,SCM sdata),""
     return SCM_UNSPECIFIED;
 }
 
-void updatetitle_x11(struct wl_listener *listener, void *data)
-{
-  Client *c;
-  struct wlr_xwayland_surface *xsurface=data;
-  if (xsurface->mapped && xsurface->surface && (c=client_from_wlr_surface(xsurface->surface)))
-    {
-      scm_c_run_hook(REF("gwwm hooks", "update-title-hook"),
-                 scm_list_1(WRAP_CLIENT(c)));
-    }
-}
-
 void
 view(const Arg *arg)
 {
@@ -1768,31 +1742,6 @@ SCM_DEFINE (gwwm_zoom, "zoom",0, 0,0,
 #undef FUNC_NAME
 
 #ifdef XWAYLAND
-void
-activatex11(struct wl_listener *listener, void *data)
-{
-  PRINT_FUNCTION
-  struct wlr_xwayland_surface *xsurface=data;
-  Client *c;
-  if (xsurface->mapped && xsurface->surface &&
-      (c = client_from_wlr_surface(xsurface->surface))
-      && (CLIENT_IS_MANAGED(c)))
-    {
-      /* Only "managed" windows can be activated */
-      wlr_xwayland_surface_activate(wlr_xwayland_surface_from_wlr_surface(CLIENT_SURFACE(c)), 1);
-    }
-}
-
-void
-configurex11(struct wl_listener *listener, void *data)
-{
-  PRINT_FUNCTION;
-  struct wlr_xwayland_surface_configure_event *event = data;
-  wlr_xwayland_surface_configure(event->surface,
-                                 event->x, event->y, event->width, event->height);
-  /* CLIENT_SET_SURFACE(c,event->surface->surface); */
-}
-
 
 void gwwm_i_unfullscreen_all(Client *c){
   PRINT_FUNCTION;
@@ -1819,13 +1768,7 @@ createnotifyx11(struct wl_listener *listener, void *data)
                    WRAP_WLR_XWAYLAND_SURFACE(xwayland_surface));
     scm_c_run_hook(REF("gwwm hooks", "create-client-hook"),
                  scm_list_1(WRAP_CLIENT(c)));
-	/* Listen to the various events it can emit */
-    client_add_listen(c, &xwayland_surface->events.request_activate, activatex11);
-    client_add_listen(c, &xwayland_surface->events.request_configure, configurex11);
 
-    client_add_listen(c,&xwayland_surface->events.set_hints, sethints);
-    client_add_listen(c,&xwayland_surface->events.set_title,updatetitle_x11);
-    client_add_listen(c,&xwayland_surface->events.request_fullscreen,fullscreennotify_x11);
 }
 
 
@@ -1841,21 +1784,6 @@ getatom(xcb_connection_t *xc, const char *name)
 	free(reply);
 
 	return atom;
-}
-
-void
-sethints(struct wl_listener *listener, void *data)
-{
-  PRINT_FUNCTION;
-  struct wlr_xwayland_surface *xsurface=data;
-  Client *c;
-  if (xsurface->mapped && xsurface->surface &&
-      (c = client_from_wlr_surface(xsurface->surface))) {
-
-    if (c != current_client() && CLIENT_SURFACE(c)) {
-      CLIENT_SET_URGENT(c, (wlr_xwayland_surface_from_wlr_surface(CLIENT_SURFACE(c)))->hints_urgency);
-    }
-  }
 }
 
 void
