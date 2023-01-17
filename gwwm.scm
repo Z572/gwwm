@@ -512,6 +512,15 @@ with pointer focus of the frame event."
                          new-xwayland-surface)
           (setenv "DISPLAY" (wlr-xwayland-display-name x)))
         (send-log INFO (G_ "failed to setup XWayland X server, continuing without it.")))))
+
+(define ((unmap-notify* c) listener data)
+  (unmap-notify c listener data)
+  (unless (client-is-unmanaged? c)
+    (setmon c #f 0)
+    (q-remove! (%clients) c)
+    (q-remove! (%fstack) c)
+    (wlr-scene-node-destroy (client-scene c))))
+
 (define (map-notify* c)
   (lambda (listener data)
     (run-hook client-map-event-hook c
@@ -714,14 +723,7 @@ with pointer focus of the frame event."
      (when (is-a? c <gwwm-client>)
        (set! (client-appid c) (client-get-appid c))
        (set! (client-title c) (client-get-title c))
-       (add-listen* (client-super-surface c) 'unmap
-                    (lambda (listener data)
-                      (unmap-notify c listener data)
-                      (unless (client-is-unmanaged? c)
-                        (setmon c #f 0)
-                        (q-remove! (%clients) c)
-                        (q-remove! (%fstack) c)
-                        (wlr-scene-node-destroy (client-scene c)))))
+       (add-listen* (client-super-surface c) 'unmap (unmap-notify* c))
        (add-listen* (client-super-surface c) 'map (map-notify* c)))
      (cond ((is-a? c <gwwm-xdg-client>)
             (add-listen* (client-surface c) 'destroy
