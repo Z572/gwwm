@@ -178,6 +178,12 @@
      (if (q? o) o
          (error "not a q! ~A" o)))))
 
+(define-method (client-wants-fullscreen? (c <gwwm-xdg-client>))
+  (.fullscreen (.requested (wlr-xdg-surface-toplevel (client-super-surface c)))))
+
+(define-method (client-wants-fullscreen? (c <gwwm-x-client>))
+  (.fullscreen (client-super-surface c)))
+
 (define (client-set-fullscreen-bg c)
   (let ((full? (client-fullscreen? c)))
     (if full?

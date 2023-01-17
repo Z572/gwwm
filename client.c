@@ -309,17 +309,6 @@ SCM_DEFINE (gwwm_client_is_float_type_p,"client-is-float-type?",1,0,0,
 #undef FUNC_NAME
 
 bool
-client_wants_fullscreen(Client *c)
-{
-  PRINT_FUNCTION;
-#ifdef XWAYLAND
-	if (client_is_x11(c))
-		return wlr_xwayland_surface_from_wlr_surface(CLIENT_SURFACE(c))->fullscreen;
-#endif
-	return wlr_xdg_surface_from_wlr_surface(CLIENT_SURFACE(c))->toplevel->requested.fullscreen;
-}
-
-bool
 client_is_unmanaged(Client *c)
 {
   return (scm_to_bool(REF_CALL_1("gwwm client","client-is-unmanaged?", WRAP_CLIENT(c))));
@@ -415,14 +404,6 @@ SCM_DEFINE (gwwm_client_get_parent, "client-get-parent" ,1,0,0,
 }
 #undef FUNC_NAME
 
-SCM_DEFINE (gwwm_client_wants_fullscreen_p , "client-wants-fullscreen?",1,0,0,
-            (SCM client), "")
-#define FUNC_NAME s_gwwm_client_wants_fullscreen_p
-{
-  GWWM_ASSERT_CLIENT_OR_FALSE(client ,1);
-  return scm_from_bool(client_wants_fullscreen(UNWRAP_CLIENT(client)));
-}
-#undef FUNC_NAME
 
 struct wlr_scene_rect *
 client_fullscreen_bg(void *c , struct wlr_scene_rect *change) {
