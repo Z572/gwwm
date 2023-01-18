@@ -94,6 +94,8 @@
     #f))
 
 (define (spawn program . args)
+  (for-each (lambda (c) (client-do-set-fullscreen c #f))
+            (client-list (current-monitor)))
   (when (= (primitive-fork) 0)
     (dup2 (port->fdes (current-error-port))
           (port->fdes (current-output-port)))
