@@ -828,36 +828,13 @@ SCM_DEFINE (createmon,"create-monitor",2,0,0,(SCM slistener ,SCM sdata),"")
 
 SCM_DEFINE(createnotify,"create-notify",2,0,0,(SCM sl ,SCM d),"")
 {
-  /* This event is raised when wlr_xdg_shell receives a new xdg surface from a
-   * client, either a toplevel (application window) or popup,
-   * or when wlr_layer_shell receives a new popup from a layer.
-   * If you want to do something tricky with popups you should check if
-   * its parent is wlr_xdg_shell or wlr_layer_shell */
   PRINT_FUNCTION;
   struct wl_listener *listener=UNWRAP_WL_LISTENER(sl);
   void *data= TO_P(d);
-
-	struct wlr_xdg_surface *xdg_surface = data;
-	Client *c;
-
-	if (xdg_surface->role == WLR_XDG_SURFACE_ROLE_POPUP ||
-        xdg_surface->role == WLR_XDG_SURFACE_ROLE_NONE) {
-      return SCM_UNSPECIFIED;
-	}
-
-	/* Allocate a Client for this surface */
-	c = scm_gc_calloc(sizeof(*c), "xdg-client");
-    register_client(c,GWWM_XDG_CLIENT_TYPE);
-    xdg_surface->data = WRAP_CLIENT(c);
-    CLIENT_SET_SURFACE(c ,xdg_surface->surface);
-    scm_slot_set_x(WRAP_CLIENT(c),
-                   scm_from_utf8_symbol("super-surface"),
-                   WRAP_WLR_XDG_SURFACE(xdg_surface));
-    CLIENT_SET_BW(c,GWWM_BORDERPX());
-
-    scm_c_run_hook(REF("gwwm hooks", "create-client-hook"),
-                 scm_list_1(WRAP_CLIENT(c)));
-    return SCM_UNSPECIFIED;
+  struct wlr_xdg_surface *xdg_surface = data;
+  Client *c = scm_gc_calloc(sizeof(*c), "xdg-client");
+  register_client(c,GWWM_XDG_CLIENT_TYPE);
+  return WRAP_CLIENT(c);
 }
 
 
@@ -1082,9 +1059,6 @@ SCM_DEFINE(mapnotify,"map-notify",3,0,0,(SCM sc,SCM slistener ,SCM sdata),"")
   /* Called when the surface is mapped, or ready to display on-screen. */
   Client *p, *c = UNWRAP_CLIENT(sc);
   wl_list_insert(&clients, &c->link);
-  scm_slot_set_x(WRAP_MONITOR(client_monitor(c, NULL)) ,
-                 scm_from_utf8_symbol("un-map"),
-                 SCM_BOOL_T);
   return SCM_UNSPECIFIED;
 }
 
