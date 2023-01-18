@@ -555,7 +555,7 @@ SCM_DEFINE (buttonpress,"buttonpress",2,0,0,(SCM slistener ,SCM sdata),"")
 	switch (event->state) {
 	case WLR_BUTTON_PRESSED:
 		/* Change focus if the button was _pressed_ over a client */
-      xytonode(cursor->x, cursor->y, NULL, &c, NULL, NULL, NULL);
+      c=(UNWRAP_CLIENT(REF_CALL_1("gwwm client", "client-at", REF_CALL_0("gwwm", "gwwm-cursor"))));
 		/* Don't focus unmanaged clients */
 		if (c && !client_is_unmanaged(c))
 			focusclient(c, 1);
@@ -575,8 +575,8 @@ SCM_DEFINE (buttonpress,"buttonpress",2,0,0,(SCM slistener ,SCM sdata),"")
 		/* TODO should reset to the pointer focus's current setcursor */
 		if (cursor_mode != CurNormal) {
           if (cursor_mode == CurResize &&
-              xytonode(cursor->x, cursor->y, NULL, &c, NULL, NULL, NULL) &&
-              (c && !client_is_unmanaged(c)))
+              (c=(UNWRAP_CLIENT(REF_CALL_1("gwwm client", "client-at", REF_CALL_0("gwwm", "gwwm-cursor")))))
+              && (c && !client_is_unmanaged(c)))
             {
               client_set_resizing(c,0);
             }
@@ -1115,8 +1115,9 @@ moveresize(const Arg *arg)
   PRINT_FUNCTION;
   struct wlr_cursor *cursor=gwwm_cursor(NULL);
   if (cursor_mode != CurNormal)
-		return;
-	xytonode(cursor->x, cursor->y, NULL, &grabc, NULL, NULL, NULL);
+    return;
+  grabc=(UNWRAP_CLIENT(REF_CALL_1("gwwm client", "client-at", REF_CALL_0("gwwm", "gwwm-cursor"))));
+
 	if (!grabc || client_is_unmanaged(grabc) || CLIENT_IS_FULLSCREEN(grabc))
 		return;
     SCM sgrabc= WRAP_CLIENT(grabc);
