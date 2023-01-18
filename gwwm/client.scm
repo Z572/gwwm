@@ -76,6 +76,7 @@
             client-scene-surface
             client-resize-configure-serial
             client-init-border
+            client-set-border-color
             %fstack
             %clients
             %layer-clients

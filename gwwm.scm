@@ -449,6 +449,18 @@ with pointer focus of the frame event."
                   (wlr-seat-set-selection (gwwm-seat) (.source event) (.serial event)))))
   (add-listen (gwwm-seat) 'request-start-drag request-start-drag)
   (add-listen (gwwm-seat) 'request-set-primary-selection setpsel)
+  (add-listen (.keyboard-state (gwwm-seat)) 'focus-change
+              (lambda (listener data)
+                (let ((event (wrap-wlr-seat-keyboard-focus-change-event data)))
+                  (and=> (and=> (.old-surface event)
+                                client-from-wlr-surface)
+                         (cut client-set-border-color <>
+                              (config-bordercolor (g-config))))
+                  (and=> (and=> (.new-surface event)
+                                client-from-wlr-surface)
+                         (cut client-set-border-color <>
+                              (config-focuscolor (g-config))))))
+              #:destroy-when (gwwm-seat))
   (add-listen (gwwm-seat)
               'start-drag
               ;; startdrag

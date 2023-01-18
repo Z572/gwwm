@@ -958,7 +958,7 @@ focusclient(Client *c, int lift)
         CLIENT_SET_URGENT(c ,0);
 		client_restack_surface(c);
 
-        CLIENT_SET_BORDER_COLOR(c ,REF_CALL_1("gwwm config", "config-focuscolor", gwwm_config));
+
 	}
 
 	/* Deactivate old client if focus is changing */
@@ -978,10 +978,6 @@ focusclient(Client *c, int lift)
 						))
 				return;
 		} else {
-			Client *w;
-			if ((w = client_from_wlr_surface(old)))
-              {CLIENT_SET_BORDER_COLOR(w,REF_CALL_1("gwwm config", "config-bordercolor", gwwm_config));};
-
 			client_activate_surface(old, 0);
 		}
 	}
