@@ -216,6 +216,7 @@
     (if fullscreen?
         (begin (set! (client-prev-geom c)
                      (shallow-clone (client-geom c)))
+               (wlr-scene-node-raise-to-top (client-scene c))
                (client-resize
                 c
                 (shallow-clone
