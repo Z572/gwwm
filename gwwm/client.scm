@@ -1,5 +1,5 @@
 (define-module (gwwm client)
-  #:autoload (gwwm) (float-layer tile-layer overlay-layer top-layer bottom-layer background-layer)
+  #:autoload (gwwm) (float-layer tile-layer overlay-layer top-layer bottom-layer background-layer gwwm-seat)
   #:autoload (gwwm commands) (arrange)
   #:autoload (gwwm config) (gwwm-borderpx g-config config-fullscreenbg)
   #:duplicates (merge-generics replace warn-override-core warn last)
@@ -16,6 +16,7 @@
   #:use-module (gwwm monitor)
   #:use-module (wayland listener)
   #:use-module (wayland list)
+  #:use-module (wlroots types seat)
   #:use-module (wlroots util box)
   #:use-module (util572 box)
   #:use-module ((system foreign) #:select (pointer-address pointer->scm null-pointer?))
@@ -312,12 +313,8 @@
 
 (define (current-client)
   "return current client or #f."
-  (if (q-empty? (%fstack))
-      #f
-      (let ((c (q-front (%fstack))))
-        (if (visibleon c (current-monitor))
-            c
-            #f))))
+  (and=> (.focused-surface (.keyboard-state (gwwm-seat)))
+         client-from-wlr-surface))
 
 (define-method (client-set-resizing! (c <gwwm-xdg-client>) resizing?)
   (wlr-xdg-toplevel-set-resizing (client-super-surface c) resizing?))
