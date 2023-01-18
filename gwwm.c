@@ -736,7 +736,7 @@ SCM_DEFINE (createlayersurface,"create-layer-client",2,0,0,(SCM slistener ,SCM s
 	CLIENT_SET_SCENE(layersurface,(wlr_layer_surface->surface->data =
                                    wlr_scene_subsurface_tree_create(return_scene_node(wlr_layer_surface->pending.layer),
 			wlr_layer_surface->surface)));
-	CLIENT_SCENE(layersurface)->data = layersurface;
+	CLIENT_SCENE(layersurface)->data = WRAP_CLIENT(layersurface);
 	wl_list_insert(&m->layers[wlr_layer_surface->pending.layer],
 			&layersurface->link);
 
@@ -1561,8 +1561,8 @@ xytonode(double x, double y, struct wlr_surface **psurface,
   PRINT_FUNCTION
 	struct wlr_scene_node *node, *pnode;
 	struct wlr_surface *surface = NULL;
-	Client *c = NULL;
-	Client *l = NULL;
+	SCM c = NULL;
+	SCM l = NULL;
 	char* focus_order[] = {"overlay-layer",
                           "top-layer",
                           "float-layer",
@@ -1577,7 +1577,7 @@ xytonode(double x, double y, struct wlr_surface **psurface,
 			/* Walk the tree to find a node that knows the client */
 			for (pnode = node; pnode && !c; pnode = pnode->parent)
 				c = pnode->data;
-			if (c && CLIENT_IS_LAYER_SHELL(WRAP_CLIENT(c))) {
+			if (c && CLIENT_IS_LAYER_SHELL(c)) {
 				c = NULL;
 				l = pnode->data;
 			}
@@ -1587,8 +1587,8 @@ xytonode(double x, double y, struct wlr_surface **psurface,
 	}
 
 	if (psurface) *psurface = surface;
-	if (pc) *pc = c;
-	if (pl) *pl = l;
+	if (pc && c) *pc = UNWRAP_CLIENT(c);
+	if (pl && l) *pl = UNWRAP_CLIENT(l);
 	return node;
 }
 

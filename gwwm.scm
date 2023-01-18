@@ -595,7 +595,7 @@ with pointer focus of the frame event."
                           (set! (client-resize-configure-serial client) 0)))))))
     (set! (.data (client-surface c))
           (get-pointer (client-scene c)))
-    (let ((p (make-pointer (~ c 'data))))
+    (let ((p (scm->pointer c)))
       (set! (.data (client-scene c)) p)
       (set! (.data (client-scene-surface c)) p))
     (if (client-is-unmanaged? c)
