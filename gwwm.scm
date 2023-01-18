@@ -523,8 +523,20 @@ with pointer focus of the frame event."
         (begin
           (wl-signal-add (get-event-signal x 'ready)
                          xwaylandready)
-          (wl-signal-add (get-event-signal x 'new-surface)
-                         new-xwayland-surface)
+          (add-listen x 'new-surface
+                      (lambda (listener data)
+                        (for-each (lambda (c)
+                                    (when (and (client-fullscreen? c)
+                                               (visibleon c (client-monitor c)))
+                                      (client-do-set-fullscreen c #f)))
+                                  (client-list))
+                        (let* ((xsurface (wrap-wlr-xwayland-surface data))
+                               (c (create-notify/x11 listener data)))
+                          (set! (.data xsurface) (scm->pointer c))
+                          (set! (client-border-width c) (gwwm-borderpx))
+                          (set! (client-super-surface c) xsurface)
+                          (run-hook create-client-hook c)))
+                      #:remove-when-destroy? #f)
           (setenv "DISPLAY" (wlr-xwayland-display-name x)))
         (send-log INFO (G_ "failed to setup XWayland X server, continuing without it.")))))
 
@@ -628,11 +640,12 @@ with pointer focus of the frame event."
         (skip? #f))
     (for-each
      (lambda (c)
-       (let ((serial (client-resize-configure-serial c))
-             (current (.current
-                       (client-super-surface c)))
-             (pending (.pending
-                       (client-super-surface c))))
+       (and-let* ((serial (client-resize-configure-serial c))
+                  ((is-a? c <gwwm-xdg-client>))
+                  (current (.current
+                            (client-super-surface c)))
+                  (pending (.pending
+                            (client-super-surface c))))
          (when (or (and (not (zero? serial))
                         (slot-ref m 'un-map))
                    (not (= (~ pending 'geometry 'width)

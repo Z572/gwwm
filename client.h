@@ -113,7 +113,6 @@ struct wlr_box *client_get_geometry(Client *c);
 const char *client_get_title(Client *c);
 Client *client_get_parent(Client *c);
 bool client_is_float_type(Client *c);
-bool client_wants_fullscreen(Client *c);
 bool client_is_unmanaged(Client *c);
 void client_notify_enter(struct wlr_surface *s, struct wlr_keyboard *kb);
 struct wlr_surface *client_surface_at(Client *c, double cx, double cy,

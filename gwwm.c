@@ -1638,32 +1638,12 @@ SCM_DEFINE (gwwm_zoom, "zoom",0, 0,0,
 
 #ifdef XWAYLAND
 
-void gwwm_i_unfullscreen_all(Client *c){
-  PRINT_FUNCTION;
-  if (CLIENT_IS_FULLSCREEN(c) && visibleon(c, client_monitor(c,NULL)))
-    setfullscreen(c, 0);
-}
-
-void
-createnotifyx11(struct wl_listener *listener, void *data)
+SCM_DEFINE(createnotifyx11,"create-notify/x11",2,0,0,(SCM sl ,SCM d),"")
 {
   PRINT_FUNCTION;
-  struct wlr_xwayland_surface *xwayland_surface = data;
-	Client *c;
-    client_for_each_alives(&gwwm_i_unfullscreen_all);
-
-	/* Allocate a Client for this surface */
-	c = scm_gc_calloc(sizeof(*c),"x-client");
-    register_client(c,GWWM_X_CLIENT_TYPE);
-    xwayland_surface->data = WRAP_CLIENT(c);
-    /* CLIENT_SET_SURFACE(c,xwayland_surface->surface); */
-    CLIENT_SET_BW(c,GWWM_BORDERPX());
-    scm_slot_set_x(WRAP_CLIENT(c),
-                   scm_from_utf8_symbol("super-surface"),
-                   WRAP_WLR_XWAYLAND_SURFACE(xwayland_surface));
-    scm_c_run_hook(REF("gwwm hooks", "create-client-hook"),
-                 scm_list_1(WRAP_CLIENT(c)));
-
+  Client *c = scm_gc_calloc(sizeof(*c),"x-client");
+  register_client(c,GWWM_X_CLIENT_TYPE);
+  return WRAP_CLIENT(c);
 }
 
 
@@ -1730,7 +1710,6 @@ scm_init_gwwm(void)
                   "wl_listener");                                       \
   name->notify = func;                                                  \
   scm_c_define(scm_name, (WRAP_WL_LISTENER(name)));
-  define_listener(new_xwayland_surface,"new-xwayland-surface",createnotifyx11);
   define_listener(xwayland_ready,"xwaylandready",xwaylandready);
 #undef define_listener
   scm_c_define("%c-clients",WRAP_WL_LIST(&clients));
