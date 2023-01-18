@@ -1427,26 +1427,19 @@ tagmon(const Arg *arg)
 	setmon(sel, dirtomon(arg->i), 0);
 }
 
-SCM_DEFINE(gwwm_tile, "%tile", 1, 0, 0, (SCM monitor), "c")
+SCM_DEFINE(gwwm_tile, "%tile", 2, 0, 0, (SCM monitor, SCM sn), "c")
 #define FUNC_NAME s_gwwm_tile
 {
   struct Monitor *m = UNWRAP_MONITOR(monitor);
-  unsigned int i, n = 0, mw, my, ty;
+  int n=scm_to_int(sn);
+  unsigned int i, mw, my, ty;
   Client *c;
-
-  wl_list_for_each(c, &clients, link) if (visibleon(c, m) &&
-                                          !(CLIENT_IS_FLOATING(c)) &&
-                                          !CLIENT_IS_FULLSCREEN(c)) n++;
-  if (n == 0)
-    return SCM_UNSPECIFIED;
-
   if (n > m->nmaster)
     mw = m->nmaster ? (MONITOR_WINDOW_AREA(m))->width * m->mfact : 0;
   else
     mw = (MONITOR_WINDOW_AREA(m))->width;
   i = my = ty = 0;
   wl_list_for_each(c, &clients, link) {
-    /* SCM sc=WRAP_CLIENT(c); */
     if (!visibleon(c, m) || CLIENT_IS_FLOATING(c) || CLIENT_IS_FULLSCREEN(c))
       continue;
     if (i < m->nmaster) {
