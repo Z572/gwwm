@@ -1295,49 +1295,6 @@ quitsignal(int signo)
 	quit(NULL);
 }
 
-
-SCM_DEFINE(rendermon,"render-monitor-notify",3,0,0,(SCM sm,SCM slistener ,SCM sdata),"")
-{
-  struct wl_listener *listener=UNWRAP_WL_LISTENER(slistener);
-  void *data=TO_P(sdata);
-  /* PRINT_FUNCTION */
-  struct wlr_output *wlr_output=data;
-  /* This function is called every time an output is ready to display a frame,
-   * generally at the output's refresh rate (e.g. 60Hz). */
-  Monitor *m = UNWRAP_MONITOR(sm);
-	Client *c;
-	int skip = 0;
-	struct timespec now;
-
-	clock_gettime(CLOCK_MONOTONIC, &now);
-
-	/* Render if no XDG clients have an outstanding resize and are visible on
-	 * this monitor. */
-	/* Checking m->un_map for every client is not optimal but works */
-	wl_list_for_each(c, &clients, link) {
-      if ((client_resize_configure_serial(c) &&
-           scm_to_bool(scm_slot_ref(WRAP_MONITOR(m) ,
-                                    scm_from_utf8_symbol("un-map"))))
-          || ((wlr_surface_is_xdg_surface( CLIENT_SURFACE(c)))
-				&& (wlr_xdg_surface_from_wlr_surface(CLIENT_SURFACE(c))->pending.geometry.width !=
-				wlr_xdg_surface_from_wlr_surface(CLIENT_SURFACE(c))->current.geometry.width
-				|| wlr_xdg_surface_from_wlr_surface(CLIENT_SURFACE(c))->pending.geometry.height !=
-				wlr_xdg_surface_from_wlr_surface(CLIENT_SURFACE(c))->current.geometry.height))) {
-			/* Lie */
-			wlr_surface_send_frame_done(CLIENT_SURFACE(c), &now);
-			skip = 1;
-		}
-	}
-	if (!skip && !wlr_scene_output_commit(monitor_scene_output(m,NULL)))
-		return SCM_UNSPECIFIED;
-	/* Let clients know a frame has been rendered */
-	wlr_scene_output_send_frame_done(monitor_scene_output(m,NULL), &now);
-    scm_slot_set_x(WRAP_MONITOR(m) ,
-                 scm_from_utf8_symbol("un-map"),
-                   SCM_BOOL_F);
-    return SCM_UNSPECIFIED;
-}
-
 void resize(Client *c, struct wlr_box geo, int interact) {
   PRINT_FUNCTION
   REF_CALL_3("gwwm client", "client-resize", WRAP_CLIENT(c), SHALLOW_CLONE(WRAP_WLR_BOX(&geo)),
