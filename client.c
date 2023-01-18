@@ -6,6 +6,7 @@
 #include "libguile/numbers.h"
 #include "libguile/scm.h"
 #include "libguile/symbols.h"
+#include "libguile/values.h"
 #include "string.h"
 #include <stdbool.h>
 #include <stdint.h>
@@ -205,46 +206,6 @@ void client_set_resize_configure_serial(Client *c, uint32_t i)
                           scm_from_utf8_symbol("resize-configure-serial"),scm_from_uint32(i));
 }
 
-
-void
-client_get_size_hints(Client *c, struct wlr_box *max, struct wlr_box *min)
-{
-	struct wlr_xdg_toplevel *toplevel;
-	struct wlr_xdg_toplevel_state *state;
-#ifdef XWAYLAND
-	if (client_is_x11(c)) {
-		struct wlr_xwayland_surface_size_hints *size_hints;
-		size_hints = wlr_xwayland_surface_from_wlr_surface(CLIENT_SURFACE(c))->size_hints;
-		if (size_hints) {
-			max->width = size_hints->max_width;
-			max->height = size_hints->max_height;
-			min->width = size_hints->min_width;
-			min->height = size_hints->min_height;
-		}
-		return;
-	}
-#endif
-	toplevel = wlr_xdg_surface_from_wlr_surface(CLIENT_SURFACE(c))->toplevel;
-	state = &toplevel->current;
-	max->width = state->max_width;
-	max->height = state->max_height;
-	min->width = state->min_width;
-	min->height = state->min_height;
-}
-
-SCM_DEFINE (gwwm_client_get_size_hints,"client-get-size-hints",1,0,0,
-            (SCM c),"")
-#define FUNC_NAME s_gwwm_client_get_size_hints
-{
-  GWWM_ASSERT_CLIENT_OR_FALSE(c ,1);
-  struct wlr_box *min = ecalloc(sizeof(struct wlr_box *));
-  struct wlr_box *max = ecalloc(sizeof(struct wlr_box *));
-  Client *cl =UNWRAP_CLIENT(c);
-  client_get_size_hints(cl, max, min);
-  return scm_values_2(WRAP_WLR_BOX(max),WRAP_WLR_BOX(min));
-}
-#undef FUNC_NAME
-
 const char *
 client_get_title(Client *c)
 {
@@ -272,8 +233,10 @@ client_get_parent(Client *c)
 bool
 client_is_float_type(Client *c)
 {
-	struct wlr_box min = {0}, max = {0};
-	client_get_size_hints(c, &max, &min);
+	struct wlr_box min = {0}, max={0};
+    SCM values=REF_CALL_1("gwwm client","client-get-size-hints" , WRAP_CLIENT(c));
+    max= *(UNWRAP_WLR_BOX(scm_c_value_ref(values, 0)));
+    min= *(UNWRAP_WLR_BOX(scm_c_value_ref(values, 1)));
 
 #ifdef XWAYLAND
 	if (client_is_x11(c)) {

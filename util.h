@@ -130,7 +130,7 @@ void *ecalloc(size_t size);
 #define WRAP_WLR_BOX(p)                                                        \
   (REF_CALL_1("wlroots util box", "wrap-wlr-box", FROM_P(p)))
 #define UNWRAP_WLR_BOX(p)                                                      \
-  (TO_P(REF_CALL_1("wlroots util box", "unwrap-wlr-box", p)))
+  ((struct wlr_box*)(TO_P(REF_CALL_1("wlroots util box", "unwrap-wlr-box", p))))
 #define WRAP_WLR_SURFACE(p)                                                    \
   (REF_CALL_1("wlroots types surface", "wrap-wlr-surface", FROM_P(p)))
 #define UNWRAP_WLR_SURFACE(p)                                                  \

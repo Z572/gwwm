@@ -110,7 +110,6 @@ void client_for_each_surface(Client *c, wlr_surface_iterator_func_t fn,
                              void *data);
 const char *client_get_appid(Client *c);
 struct wlr_box *client_get_geometry(Client *c);
-void client_get_size_hints(Client *c, struct wlr_box *max, struct wlr_box *min);
 const char *client_get_title(Client *c);
 Client *client_get_parent(Client *c);
 bool client_is_float_type(Client *c);

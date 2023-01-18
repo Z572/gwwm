@@ -314,6 +314,18 @@
   "return #t if client is alive, or #f deaded."
   (not (zero? (.data client))))
 
+(define-method (client-get-size-hints (c <gwwm-xdg-client>))
+  (let-slots (.current (wlr-xdg-surface-toplevel (client-super-surface c)))
+      (max-width max-height min-width min-height)
+    (values (make <wlr-box> #:width max-width #:height max-height)
+            (make <wlr-box> #:width min-width #:height min-height))))
+
+(define-method (client-get-size-hints (c <gwwm-x-client>))
+  (let-slots (.size-hints (client-super-surface c))
+      (max-width max-height min-width min-height)
+    (values (make <wlr-box> #:width max-width #:height max-height)
+            (make <wlr-box> #:width min-width #:height min-height))))
+
 (define-method (client-set-tiled c (edges <list>))
   (client-set-tiled c (apply logior edges)))
 
