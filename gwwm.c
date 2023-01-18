@@ -81,7 +81,6 @@
 /* configuration, allows nested code to access above variables */
 #include "config.h"
 typedef struct Monitor {
-  struct wl_list link;
   struct wl_list layers[4]; /* layer Client::link */
   unsigned int seltags;
   unsigned int tagset[2];
@@ -114,8 +113,6 @@ SCM gwwm_config;
 SCM get_gwwm_config(void) {
   return gwwm_config;
 }
-
-struct wl_list mons;
 
 struct wl_listener idle_inhibitor_create = {.notify = createidleinhibitor};
 struct wl_listener idle_inhibitor_destroy = {.notify = destroyidleinhibitor};
@@ -685,7 +682,6 @@ SCM_DEFINE (cleanupmon,"%cleanup-monitor",3,0,0,(SCM sm, SCM slistener ,SCM sdat
   void *data=TO_P(sdata);
   struct wlr_output *wlr_output = data;
   Monitor *m = UNWRAP_MONITOR(sm);
-  wl_list_remove(&m->link);
   return SCM_UNSPECIFIED;
 }
 
@@ -830,8 +826,6 @@ SCM_DEFINE (createmon,"create-monitor",2,0,0,(SCM slistener ,SCM sdata),"")
     }
     if (!wlr_output_commit(wlr_output))
       return SCM_BOOL_F;
-	wl_list_insert(&mons, &m->link);
-
 	/* Adds this to the output layout in the order it was configured in.
 	 *
 	 * The output layout utility automatically adds a wl_output global to the
@@ -1053,7 +1047,7 @@ SCM_DEFINE (gwwm_focusmon ,"focusmon",1,0,0,(SCM a),"" )
 #define FUNC_NAME s_gwwm_focusmon
 {
   PRINT_FUNCTION;
-  int i = 0, nmons = wl_list_length(&mons);
+  int i = 0, nmons = scm_to_int(scm_length((REF_CALL_0("gwwm monitor", "monitor-list"))));
   if (nmons)
     do /* don't switch to disabled mons */
       set_current_monitor(dirtomon(scm_to_int(a)));
@@ -1435,10 +1429,6 @@ SCM_DEFINE (gwwm_setup_othres,"%gwwm-setup-othres",0,0,0,(),"")
 SCM_DEFINE (gwwm_setup,"%gwwm-setup" ,0,0,0,(),"")
 {
     wlr_xdg_output_manager_v1_create(gwwm_display(NULL), gwwm_output_layout(NULL));
-
-	/* Configure a listener to be notified when new outputs are available on the
-	 * backend. */
-	wl_list_init(&mons);
 	/* Set up our client lists and the xdg-shell. The xdg-shell is a
 	 * Wayland protocol which is used for application windows. For more
 	 * detail on shells, refer to the article:
