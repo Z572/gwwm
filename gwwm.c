@@ -397,11 +397,13 @@ SCM_DEFINE (applyrules ,"%applyrules" ,1,0,0,(SCM sc),"")
           CLIENT_SET_FLOATING(c,scm_from_bool(r->isfloating));
 			newtags |= r->tags;
 			i = 0;
-			wl_list_for_each(m, &mons, link)
-				if (r->monitor == i++)
-					mon = m;
-		}
-	}
+            SCM monitor_list=(REF_CALL_0("gwwm monitor", "monitor-list"));
+            int monitor_list_length= scm_to_int(scm_length(monitor_list));
+            for (int i=0;r->monitor==i <= monitor_list_length ; i++){
+              mon=UNWRAP_MONITOR(scm_list_ref(monitor_list, scm_from_int(i)));
+            }
+        }
+    }
 	wlr_scene_node_reparent(CLIENT_SCENE(c),
                             UNWRAP_WLR_SCENE_NODE(REF("gwwm",CLIENT_IS_FLOATING(c)
                                                       ? "float-layer"
