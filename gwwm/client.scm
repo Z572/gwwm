@@ -246,6 +246,15 @@
               (client-get-appid client)
               "*deaded*")))
 
+(define-method (client-get-parent (c <gwwm-xdg-client>))
+  (and=> (.parent (wlr-xdg-surface-toplevel
+                   (client-super-surface c)))
+         (lambda (x) (client-from-wlr-surface (.surface x)))))
+
+(define-method (client-get-parent (c <gwwm-x-client>))
+  (and=> (.parent (client-super-surface c))
+         (lambda (x) (client-from-wlr-surface (.surface x)))))
+
 (define-method (client-get-appid (c <gwwm-xdg-client>))
   (or (and=> (client-super-surface c)
              (lambda (o)

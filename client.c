@@ -197,24 +197,6 @@ client_get_title(Client *c)
   return (scm_to_utf8_string(REF_CALL_1("gwwm client","client-get-title", WRAP_CLIENT(c))));
 }
 
-Client *
-client_get_parent(Client *c)
-{
-  PRINT_FUNCTION;
-#ifdef XWAYLAND
-	if (client_is_x11(c) && wlr_xwayland_surface_from_wlr_surface(CLIENT_SURFACE(c))->parent){
-      return client_from_wlr_surface(wlr_xwayland_surface_from_wlr_surface(CLIENT_SURFACE(c))->parent->surface);
-    }
-#endif
-    PRINT_FUNCTION;
-	if (wlr_surface_is_xdg_surface(CLIENT_SURFACE(c)) && wlr_xdg_surface_from_wlr_surface(CLIENT_SURFACE(c))->toplevel->parent){
-      PRINT_FUNCTION;
-      return client_from_wlr_surface(wlr_xdg_surface_from_wlr_surface(CLIENT_SURFACE(c))->toplevel->parent->surface);
-    }
-
-	return NULL;
-}
-
 bool
 client_is_float_type(Client *c)
 {
@@ -337,21 +319,6 @@ toplevel_from_popup(struct wlr_xdg_popup *popup)
 SCM_DEFINE_PUBLIC (gwwm_client_from_wlr_surface ,"client-from-wlr-surface" ,1,0,0,(SCM surface),""){
   return WRAP_CLIENT(client_from_wlr_surface(UNWRAP_WLR_SURFACE(surface)));
 }
-
-SCM_DEFINE (gwwm_client_get_parent, "client-get-parent" ,1,0,0,
-            (SCM c), "")
-#define FUNC_NAME s_gwwm_client_get_parent
-{
-  GWWM_ASSERT_CLIENT_OR_FALSE(c ,1);
-  Client *cl = UNWRAP_CLIENT(c);
-  Client *p = client_get_parent(cl);
-  if (p) {
-    return WRAP_CLIENT(p);
-  };
-  return SCM_BOOL_F;
-}
-#undef FUNC_NAME
-
 
 struct wlr_scene_rect *
 client_fullscreen_bg(void *c , struct wlr_scene_rect *change) {
