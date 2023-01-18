@@ -458,8 +458,12 @@ with pointer focus of the frame event."
                               (config-bordercolor (g-config))))
                   (and=> (and=> (.new-surface event)
                                 client-from-wlr-surface)
-                         (cut client-set-border-color <>
-                              (config-focuscolor (g-config))))))
+                         (lambda (c)
+                           (q-remove! (%fstack) c)
+                           (q-push! (%fstack) c)
+                           (client-set-border-color
+                            c
+                            (config-focuscolor (g-config)))))))
               #:destroy-when (gwwm-seat))
   (add-listen (gwwm-seat)
               'start-drag

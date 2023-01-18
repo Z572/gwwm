@@ -952,8 +952,6 @@ focusclient(Client *c, int lift)
 		return;
 	/* Put the new client atop the focus stack and select its monitor */
     if (c && !(CLIENT_IS_LAYER_SHELL(sc))) {
-      REF_CALL_2("ice-9 q", "q-remove!", REF_CALL_0("gwwm client", "%fstack"), sc);
-      REF_CALL_2("ice-9 q", "q-push!", REF_CALL_0("gwwm client", "%fstack"), sc);
       set_current_monitor(client_monitor(c,NULL));
         CLIENT_SET_URGENT(c ,0);
 		client_restack_surface(c);
