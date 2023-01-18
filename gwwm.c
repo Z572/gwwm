@@ -70,7 +70,6 @@
 #include <wlr/util/log.h>
 #include <xkbcommon/xkbcommon.h>
 #include "util.h"
-#include "listener.h"
 
 #ifdef XWAYLAND
 #include <X11/Xlib.h>
@@ -91,12 +90,7 @@ typedef struct Monitor {
   SCM scm;
 } Monitor;
 
-Monitor* monitor_from_listener(struct wl_listener *listener) {
-  /* PRINT_FUNCTION; */
-  SCM scm = scm_from_listener(WRAP_WL_LISTENER(listener));
-  return scm_is_false(scm) ? NULL : UNWRAP_MONITOR(scm);
-}
- const char broken[] = "broken";
+const char broken[] = "broken";
  struct wl_list clients; /* tiling order */
  struct wlr_idle_inhibit_manager_v1 *idle_inhibit_mgr;
  struct wlr_virtual_keyboard_manager_v1 *virtual_keyboard_mgr;

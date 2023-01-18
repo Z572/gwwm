@@ -14,7 +14,6 @@
 #include "util.h"
 #include "client.h"
 #include "gwwm.h"
-#include "listener.h"
 #include "wayland-util.h"
 #include <wlr/types/wlr_layer_shell_v1.h>
 SCM find_client(Client *c) {
@@ -35,14 +34,6 @@ unwrap_client_1(SCM o)
   return (TO_P(MAKE_P(a)));
 }
 
-void client_add_listen(void *c, struct wl_signal *signal,
-                       wl_notify_func_t func) {
-  struct wl_listener *listener =
-      UNWRAP_WL_LISTENER((scm_register_gwwm_listener(WRAP_CLIENT(c))));
-  listener->notify = func;
-  wl_signal_add(signal, listener);
-}
-
 void register_client(Client *c, enum gwwm_client_type type) {
   PRINT_FUNCTION;
   char *tp = "<gwwm-xdg-client>";
@@ -61,12 +52,6 @@ void register_client(Client *c, enum gwwm_client_type type) {
                               scm_from_utf8_keyword("data"),
                      scm_pointer_address(FROM_P(c))));
   c->scm=sc;
-}
-
-void *client_from_listener(struct wl_listener *listener) {
-  /* PRINT_FUNCTION; */
-  SCM scm = scm_from_listener(WRAP_WL_LISTENER(listener));
-  return scm_is_false(scm) ? NULL : UNWRAP_CLIENT(scm);
 }
 
 void

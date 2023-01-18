@@ -102,7 +102,7 @@
 (define (visibleon c m)
   ((@@ (gwwm) visibleon) c m))
 
-(define-class <gwwm-base-client> (<listener-manager>)
+(define-class <gwwm-base-client> ()
   (data #:init-keyword #:data
         #:accessor .data
         #:class <hidden-slot>)
@@ -269,7 +269,6 @@
    (client-super-surface c)))
 
 (define-method (logout-client (c <gwwm-base-client>))
-  (remove-listeners c)
   (set! (.data c) 0))
 
 (define-method (client-send-close (c <gwwm-xdg-client>))
