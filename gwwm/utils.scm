@@ -18,7 +18,6 @@
   (lambda (x)
     (syntax-case x ()
       ((_ obj (slot ...) body body* ...)
-       (identifier? #'obj)
        (let* ((slots (map (lambda (o)
                             (syntax-case o ()
                               ((slot-name changed-name)
@@ -28,12 +27,13 @@
                           #'(slot ...))))
          (syntax-case slots ()
            (((name changed) ...)
-            #`(letrec-syntax ((changed
-                               (identifier-syntax
-                                (var (slot-ref obj 'name))
-                                ((set! var val)
-                                 (slot-set! obj 'changed val)))) ...)
-                body body* ...))))))))
+            #`(let ((%obj obj))
+                (letrec-syntax ((changed
+                                 (identifier-syntax
+                                  (var (slot-ref %obj 'name))
+                                  ((set! var val)
+                                   (slot-set! %obj 'changed val)))) ...)
+                  body body* ...)))))))))
 
 (define-syntax modify-instance
   (lambda (x)
