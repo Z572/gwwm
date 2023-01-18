@@ -308,9 +308,12 @@
 (define-method (client-is-unmanaged? (client <gwwm-x-client>))
   (wlr-xwayland-surface-override-redirect (client-super-surface client)))
 
-(define (client-list)
-  "return all clients."
-  (car (%clients)))
+(define* (client-list #:optional (m #f))
+  "return all clients. if provide M, return M's visibleoned clients."
+  (let ((clients (car (%clients))))
+    (if m
+        (filter (cut visibleon <> m) clients)
+        clients)))
 
 (define (current-client)
   "return current client or #f."
