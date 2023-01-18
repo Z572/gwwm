@@ -96,7 +96,8 @@
            #:setter set-.monitor-layouts)
   (sellt #:init-value 0
          #:accessor monitor-sellt
-         #:setter set-.monitor-sellt!))
+         #:setter set-.monitor-sellt!)
+  (un-map #:init-value #f))
 
 (define-method (write (o <gwwm-monitor>) port)
   (format port "#<<gwwm-monitor ~a (~a . ~a) scale: ~a>"

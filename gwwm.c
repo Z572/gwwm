@@ -85,8 +85,6 @@ typedef struct Monitor {
   unsigned int tagset[2];
   double mfact;
   int nmaster;
-  int un_map; /* If a map/unmap happened on this monitor, then this should be
-                 true */
   SCM scm;
 } Monitor;
 
@@ -1085,7 +1083,9 @@ SCM_DEFINE(mapnotify,"map-notify",3,0,0,(SCM sc,SCM slistener ,SCM sdata),"")
   /* Called when the surface is mapped, or ready to display on-screen. */
   Client *p, *c = UNWRAP_CLIENT(sc);
   wl_list_insert(&clients, &c->link);
-  client_monitor(c, NULL)->un_map = 1;
+  scm_slot_set_x(WRAP_MONITOR(client_monitor(c, NULL)) ,
+                 scm_from_utf8_symbol("un-map"),
+                 SCM_BOOL_T);
   return SCM_UNSPECIFIED;
 }
 
@@ -1315,7 +1315,10 @@ SCM_DEFINE(rendermon,"render-monitor-notify",3,0,0,(SCM sm,SCM slistener ,SCM sd
 	 * this monitor. */
 	/* Checking m->un_map for every client is not optimal but works */
 	wl_list_for_each(c, &clients, link) {
-      if ((client_resize_configure_serial(c) && m->un_map) || ((wlr_surface_is_xdg_surface( CLIENT_SURFACE(c)))
+      if ((client_resize_configure_serial(c) &&
+           scm_to_bool(scm_slot_ref(WRAP_MONITOR(m) ,
+                                    scm_from_utf8_symbol("un-map"))))
+          || ((wlr_surface_is_xdg_surface( CLIENT_SURFACE(c)))
 				&& (wlr_xdg_surface_from_wlr_surface(CLIENT_SURFACE(c))->pending.geometry.width !=
 				wlr_xdg_surface_from_wlr_surface(CLIENT_SURFACE(c))->current.geometry.width
 				|| wlr_xdg_surface_from_wlr_surface(CLIENT_SURFACE(c))->pending.geometry.height !=
@@ -1329,7 +1332,9 @@ SCM_DEFINE(rendermon,"render-monitor-notify",3,0,0,(SCM sm,SCM slistener ,SCM sd
 		return SCM_UNSPECIFIED;
 	/* Let clients know a frame has been rendered */
 	wlr_scene_output_send_frame_done(monitor_scene_output(m,NULL), &now);
-	m->un_map = 0;
+    scm_slot_set_x(WRAP_MONITOR(m) ,
+                 scm_from_utf8_symbol("un-map"),
+                   SCM_BOOL_F);
     return SCM_UNSPECIFIED;
 }
 
@@ -1574,8 +1579,9 @@ SCM_DEFINE(unmapnotify,"unmap-notify",3,0,0,(SCM sc,SCM slistener ,SCM sdata),""
 	}
 
 	if (client_monitor(c,NULL))
-		client_monitor(c,NULL)->un_map = 1;
-
+      scm_slot_set_x(WRAP_MONITOR(client_monitor(c, NULL)) ,
+                     scm_from_utf8_symbol("un-map"),
+                     SCM_BOOL_T);
 	if (client_is_unmanaged(c)) {
 		wlr_scene_node_destroy(CLIENT_SCENE(c));
 		return SCM_UNSPECIFIED;
