@@ -1,5 +1,5 @@
 (define-module (gwwm client)
-  #:autoload (gwwm) (float-layer tile-layer)
+  #:autoload (gwwm) (float-layer tile-layer overlay-layer top-layer bottom-layer background-layer)
   #:autoload (gwwm commands) (arrange)
   #:autoload (gwwm config) (gwwm-borderpx g-config config-fullscreenbg)
   #:duplicates (merge-generics replace warn-override-core warn last)
@@ -18,8 +18,9 @@
   #:use-module (wayland list)
   #:use-module (wlroots util box)
   #:use-module (util572 box)
-  #:use-module ((system foreign) #:select (pointer-address))
+  #:use-module ((system foreign) #:select (pointer-address pointer->scm null-pointer?))
   #:use-module (wlroots types xdg-shell)
+  #:use-module (wlroots types cursor)
   #:use-module (gwwm listener)
   #:use-module (gwwm i18n)
   #:use-module (srfi srfi-26)
@@ -44,6 +45,7 @@
             client-get-appid
             client-get-title
             client-alive?
+            client-at
             client=?
             client-get-parent
             client-is-x11?
@@ -317,6 +319,23 @@
   (wlr-xdg-toplevel-set-resizing (client-super-surface c) resizing?))
 (define-method (client-set-resizing! (c <gwwm-x-client>) resizing?)
   *unspecified*)
+
+(define-method (client-at x y)
+  (any (lambda (layer)
+         (let ((node (wlr-scene-node-at layer x y)))
+           (if node
+               (let loop ((node node))
+                 (or (let ((o (and (not (null-pointer? (.data node)))
+                                   (pointer->scm (.data node)))))
+                       (and ((negate (cut is-a? <> <gwwm-layer-client>)) o) o))
+                     (and=> (.parent node) loop)))
+               #f)))
+       (list overlay-layer top-layer
+             float-layer tile-layer
+             bottom-layer background-layer)))
+
+(define-method (client-at (cursor <wlr-cursor>))
+  (client-at (.x cursor) (.y cursor)))
 
 (define (client-alive? client)
   "return #t if client is alive, or #f deaded."
