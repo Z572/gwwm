@@ -725,7 +725,6 @@ SCM_DEFINE (createlayersurface,"create-layer-client",2,0,0,(SCM slistener ,SCM s
 	layersurface = scm_gc_calloc(sizeof(Client),"layer-client");
 
     register_client(layersurface,GWWM_LAYER_CLIENT_TYPE);
-    CLIENT_SET_SURFACE(layersurface,wlr_layer_surface->surface);
     scm_slot_set_x(WRAP_CLIENT(layersurface),
                    scm_from_utf8_symbol("super-surface"),
                    WRAP_WLR_LAYER_SURFACE(wlr_layer_surface));

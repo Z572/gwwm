@@ -113,8 +113,11 @@
            #:accessor client-monitor)
   (super-surface #:init-value #f
                  #:accessor client-super-surface)
-  (surface #:init-value #f
-           #:accessor client-surface)
+  (surface ;; #:init-value #f
+   #:allocation #:virtual
+   #:slot-ref (lambda (obj) (.surface (client-super-surface obj)))
+   #:slot-set! (const #f)
+   #:getter client-surface)
   (scene #:init-value #f
          #:accessor client-scene
          #:setter client-set-scene!))

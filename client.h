@@ -73,12 +73,8 @@ enum gwwm_client_type {
 #define CLIENT_SURFACE(c)                                                      \
   ((struct wlr_surface *)UNWRAP_WLR_SURFACE(                                   \
       REF_CALL_1("gwwm client", "client-surface", WRAP_CLIENT(c))))
-#define CLIENT_SET_SURFACE(c, b)                                               \
-  (scm_call_2(                                                                 \
-      REF_CALL_1("guile", "setter", (REF("gwwm client", "client-surface"))),   \
-      (WRAP_CLIENT(c)), (WRAP_WLR_SURFACE(b))))
 
-#define CLIENT_IS_LAYER_SHELL(cl)                                              \
+#define CLIENT_IS_LAYER_SHELL(cl)                               \
   (SCM_IS_A_P(cl, REFP("gwwm client", "<gwwm-layer-client>")))
 #define CLIENT_IS_XDG_SHELL(cl)                                                \
   (SCM_IS_A_P(cl, REFP("gwwm client", "<gwwm-xdg-client>")))

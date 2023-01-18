@@ -488,7 +488,6 @@ with pointer focus of the frame event."
                     (let ((c (create-notify listener data)))
                       (set! (.data xdg-surface) (scm->pointer c))
                       (set! (client-super-surface c) xdg-surface)
-                      (set! (client-surface c) (.surface xdg-surface))
                       (set! (client-border-width c) (gwwm-borderpx))
                       (run-hook create-client-hook c))))))
   (gwwm-compositor (wlr-compositor-create (gwwm-display) (gwwm-renderer)))
@@ -559,10 +558,7 @@ with pointer focus of the frame event."
       (add-listen (.surface (client-super-surface c)) 'destroy
                   (lambda (listener data)
                     (destroy-surface-notify c listener data))
-                  #:remove-when-destroy? #f)
-      (set! (client-surface c)
-            (wlr-xwayland-surface-surface
-             (client-super-surface c))))
+                  #:remove-when-destroy? #f))
     (set! (client-scene c)
           (.node (wlr-scene-tree-create tile-layer)))
     (set! (client-scene-surface c)
