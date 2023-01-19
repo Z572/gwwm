@@ -804,14 +804,6 @@ SCM_DEFINE (createmon,"create-monitor",2,0,0,(SCM slistener ,SCM sdata),"")
     } else if (wlr_output_is_x11(wlr_output)) {
       wlr_x11_output_set_title(wlr_output, "gwwm");
     }
-    if (!wlr_output_commit(wlr_output))
-      return SCM_BOOL_F;
-	/* Adds this to the output layout in the order it was configured in.
-	 *
-	 * The output layout utility automatically adds a wl_output global to the
-	 * display, which Wayland clients can see to find out information about the
-	 * output (such as DPI, scale factor, manufacturer, etc).
-	 */
     return WRAP_MONITOR(m);
 }
 
