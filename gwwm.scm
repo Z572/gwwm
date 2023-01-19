@@ -641,22 +641,21 @@ with pointer focus of the frame event."
                (map-notify c listener data)
                (slot-set! (client-monitor c) 'un-map #f)))))
 
-(define (map-layer-client-notify c)
-  (lambda (listener data)
-    (wlr-surface-send-enter
-     (client-surface c)
-     (monitor-wlr-output(client-monitor c)))
-    (motionnotify)))
-(define (unmap-layer-client-notify c)
-  (lambda (listener data)
-    (wlr-scene-node-set-enabled (client-scene c) #f)
-    (when (equal? (client-surface c) (exclusive-focus))
-      (exclusive-focus #f))
-    (when (equal? (client-surface c)
-                  (.focused-surface
-                   (.keyboard-state (gwwm-seat))))
-      (focusclient (current-client) #f))
-    (motionnotify)))
+(define ((map-layer-client-notify c) listener data)
+  (wlr-surface-send-enter
+   (client-surface c)
+   (monitor-wlr-output(client-monitor c)))
+  (motionnotify))
+(define ((unmap-layer-client-notify c) listener data)
+  (wlr-scene-node-set-enabled (client-scene c) #f)
+  (when (equal? (client-surface c) (exclusive-focus))
+    (exclusive-focus #f))
+  (when (equal? (client-surface c)
+                (.focused-surface
+                 (.keyboard-state (gwwm-seat))))
+    (focusclient (current-client) #f))
+  (motionnotify))
+
 (define ((render-monitor m) listener data)
   (let ((_ now (clock-gettime 1))
         (skip? #f))
