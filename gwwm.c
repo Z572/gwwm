@@ -666,16 +666,6 @@ SCM_DEFINE (gwwm_cleanup, "%gwwm-cleanup",0,0,0, () ,"")
 }
 #undef D
 
-SCM_DEFINE (cleanupmon,"%cleanup-monitor",3,0,0,(SCM sm, SCM slistener ,SCM sdata),"")
-{
-  PRINT_FUNCTION;
-  struct wl_listener *listener=UNWRAP_WL_LISTENER(slistener);
-  void *data=TO_P(sdata);
-  struct wlr_output *wlr_output = data;
-  Monitor *m = UNWRAP_MONITOR(sm);
-  return SCM_UNSPECIFIED;
-}
-
 SCM_DEFINE (commitlayersurfacenotify,"commit-layer-client-notify",3,0,0,
             (SCM c,SCM slistener ,SCM sdata),"")
 {

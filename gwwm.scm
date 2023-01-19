@@ -682,6 +682,7 @@ with pointer focus of the frame event."
         #f
         (begin (wlr-scene-output-send-frame-done (monitor-scene-output m) now)
                (slot-set! m 'un-map #f)))))
+
 (define ((cleanup-monitor m) listener data)
   (q-remove! (%monitors) m)
   (wlr-output-layout-remove
@@ -690,8 +691,6 @@ with pointer focus of the frame event."
 
   (wlr-scene-output-destroy (monitor-scene-output m))
   (set! (monitor-scene-output m) #f)
-
-  (%cleanup-monitor m listener data)
   (let* ((ms (monitor-list))
          (l (length ms)))
     (unless (zero? l)
@@ -701,6 +700,7 @@ with pointer focus of the frame event."
 
   (focusclient (focustop (current-monitor)) #t)
   (closemon m))
+
 (define (main)
   (setlocale LC_ALL "")
   (textdomain %gettext-domain)
