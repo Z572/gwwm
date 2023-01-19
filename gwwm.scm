@@ -13,6 +13,7 @@
   #:use-module (wlroots util box)
   #:use-module (util572 box )
   #:use-module (ice-9 format)
+  #:use-module (libinput)
   #:use-module (wlroots render renderer)
   #:use-module (wlroots types surface)
   #:use-module (wlroots types input-device)
@@ -42,6 +43,7 @@
   #:use-module (wayland signal)
   #:use-module (wlroots xwayland)
   #:use-module (wlroots backend)
+  #:use-module (wlroots backend libinput)
   #:use-module (wlroots backend wayland)
   #:use-module (wlroots backend x11)
   #:use-module (wlroots types)
@@ -426,6 +428,37 @@ gwwm [options]
                                 #:remove-when-destroy? #f))))))
 
 
+(define non-zero? (negate zero?))
+(define (create-pointer device)
+  (and-let* (((wlr-input-device-is-libinput device))
+             (libinput-device (wlr-libinput-get-device-handle device)))
+    (when (non-zero? (libinput-device-config-tap-get-finger-count libinput-device))
+      (libinput-device-config-tap-set-enabled
+       libinput-device 'LIBINPUT_CONFIG_TAP_ENABLED)
+      (libinput-device-config-tap-set-drag-enabled
+       libinput-device 'LIBINPUT_CONFIG_DRAG_ENABLED)
+      (libinput-device-config-tap-set-drag-lock-enabled
+       libinput-device 'LIBINPUT_CONFIG_DRAG_LOCK_ENABLED))
+    (when (libinput-device-config-scroll-has-natural-scroll libinput-device)
+      (libinput-device-config-scroll-set-natural-scroll-enabled libinput-device 0))
+    (when (libinput-device-config-dwt-is-available libinput-device)
+      (libinput-device-config-dwt-set-enabled libinput-device 'LIBINPUT_CONFIG_DWT_ENABLED))
+    (when (libinput-device-config-left-handed-is-available libinput-device)
+      (libinput-device-config-left-handed-set libinput-device 0))
+    (when (libinput-device-config-middle-emulation-is-available libinput-device)
+      (libinput-device-config-middle-emulation-set-enabled
+       libinput-device 'LIBINPUT_CONFIG_MIDDLE_EMULATION_DISABLED))
+    (unless (= (libinput-device-config-scroll-get-methods libinput-device) 0)
+      (libinput-device-config-scroll-set-method libinput-device 'LIBINPUT_CONFIG_SCROLL_2FG))
+    (unless (= (libinput-device-config-click-get-methods libinput-device) 0)
+      (libinput-device-config-click-set-method libinput-device 'LIBINPUT_CONFIG_CLICK_METHOD_BUTTON_AREAS))
+    (when (non-zero? (libinput-device-config-send-events-get-modes libinput-device ))
+      (libinput-device-config-send-events-set-mode libinput-device
+                                                   LIBINPUT_CONFIG_SEND_EVENTS_ENABLED))
+    (when (libinput-device-config-accel-is-available libinput-device)
+      (libinput-device-config-accel-set-profile libinput-device 'LIBINPUT_CONFIG_ACCEL_PROFILE_ADAPTIVE)
+      (libinput-device-config-accel-set-speed libinput-device 0.0)))
+  (wlr-cursor-attach-input-device (gwwm-cursor) device))
 (define (backend-setup display)
   (define (add-seat-capabilitie seat o)
     (wlr-seat-set-capabilities seat

@@ -16,6 +16,7 @@ you need
 - guile
 - [[https://github.com/Z572/guile-wayland][guile-wayland]]
 - [[https://github.com/Z572/guile-wlroots][guile-wlroots]]
+- [[https://github.com/Z572/guile-libinput][guile-libinput]]
 - [[https://github.com/scheme-requests-for-implementation/srfi-189][srfi-189]]
 - [[https://github.com/Z572/util572][util572]]
 - pkg-config

@@ -805,57 +805,6 @@ SCM_DEFINE(createnotify,"create-notify",2,0,0,(SCM sl ,SCM d),"")
   return WRAP_CLIENT(c);
 }
 
-
-SCM_DEFINE(createpointer,"create-pointer",1,0,0,(SCM sdevice),"")
-{
-  PRINT_FUNCTION;
-  struct wlr_input_device *device=UNWRAP_WLR_INPUT_DEVICE(sdevice);
-
-  scm_c_run_hook(REF("gwwm hooks", "create-pointer-hook"),
-                 scm_list_1(WRAP_WLR_INPUT_DEVICE(device)));
-	if (wlr_input_device_is_libinput(device)) {
-		struct libinput_device *libinput_device =  (struct libinput_device*)
-			wlr_libinput_get_device_handle(device);
-
-		if (libinput_device_config_tap_get_finger_count(libinput_device)) {
-			libinput_device_config_tap_set_enabled(libinput_device, tap_to_click);
-			libinput_device_config_tap_set_drag_enabled(libinput_device, tap_and_drag);
-			libinput_device_config_tap_set_drag_lock_enabled(libinput_device, drag_lock);
-		}
-
-		if (libinput_device_config_scroll_has_natural_scroll(libinput_device))
-			libinput_device_config_scroll_set_natural_scroll_enabled(libinput_device, natural_scrolling);
-
-		if (libinput_device_config_dwt_is_available(libinput_device))
-			libinput_device_config_dwt_set_enabled(libinput_device, disable_while_typing);
-
-		if (libinput_device_config_left_handed_is_available(libinput_device))
-			libinput_device_config_left_handed_set(libinput_device, left_handed);
-
-		if (libinput_device_config_middle_emulation_is_available(libinput_device))
-			libinput_device_config_middle_emulation_set_enabled(libinput_device, middle_button_emulation);
-
-		if (libinput_device_config_scroll_get_methods(libinput_device)
-            != LIBINPUT_CONFIG_SCROLL_NO_SCROLL)
-          libinput_device_config_scroll_set_method (libinput_device, scroll_method);
-		
-		 if (libinput_device_config_click_get_methods(libinput_device)
-             != LIBINPUT_CONFIG_CLICK_METHOD_NONE)
-                        libinput_device_config_click_set_method (libinput_device, click_method);
-
-		if (libinput_device_config_send_events_get_modes(libinput_device))
-			libinput_device_config_send_events_set_mode(libinput_device, send_events_mode);
-
-		if (libinput_device_config_accel_is_available(libinput_device)) {
-			libinput_device_config_accel_set_profile(libinput_device, accel_profile);
-			libinput_device_config_accel_set_speed(libinput_device, accel_speed);
-		}
-	}
-
-	wlr_cursor_attach_input_device(gwwm_cursor(NULL), device);
-    return SCM_UNSPECIFIED;
-}
-
 void
 destroyidleinhibitor(struct wl_listener *listener, void *data)
 {

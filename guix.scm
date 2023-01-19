@@ -143,7 +143,8 @@
                                        "guile-wlroots"
                                        "guile-bytestructures"
                                        "util572"
-                                       "guile-srfi-189")))
+                                       "guile-srfi-189"
+                                       "guile-libinput")))
                           (effective (target-guile-effective-version))
                           (mods (map (lambda (o)
                                        (string-append
@@ -179,7 +180,10 @@
                                   "/util572/guix.scm"))
                   (primitive-load
                    (string-append (dirname (dirname (current-filename)))
-                                  "/guile-wlroots/guix.scm"))))
+                                  "/guile-wlroots/guix.scm"))
+                  (primitive-load
+                   (string-append (dirname (dirname (current-filename)))
+                                  "/guile-libinput/guix.scm"))))
     (synopsis "")
     (description "")
     (home-page "")
