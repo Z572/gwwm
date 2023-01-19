@@ -113,33 +113,15 @@
 (define-dy gwwm-output-manager mgr)
 
 (define (init-global-keybind)
-  (keymap-global-set (kbd (s S space))
+  (keymap-global-set (kbd (s S space)) togglefloating)
+  (keymap-global-set (kbd (s S c)) killclient)
 
-                     togglefloating)
-  (keymap-global-set (kbd (s S c))
-                     killclient)
-
-  (keymap-global-set
-   (kbd (s f))
-   togglefullscreen)
-  (keymap-global-set
-   (kbd (s j))
-   (lambda ()
-     (focusstack 1)))
-  (keymap-global-set
-   (kbd (s k))
-   (lambda ()
-     (focusstack -1)))
-  (keymap-global-set
-   (kbd (s e))
-   (lambda ()
-     (spawn "emacs")))
-  (keymap-global-set
-   (kbd (s Tab))
-   zoom)
-  (keymap-global-set
-   (kbd (s S q))
-   gwwm-quit)
+  (keymap-global-set (kbd (s f)) togglefullscreen)
+  (keymap-global-set (kbd (s j)) (lambda () (focusstack 1)))
+  (keymap-global-set (kbd (s k)) (lambda () (focusstack -1)))
+  (keymap-global-set (kbd (s e)) (lambda () (spawn "emacs")))
+  (keymap-global-set (kbd (s Tab)) zoom)
+  (keymap-global-set (kbd (s S q)) gwwm-quit)
   (for-each (lambda (a)
               (keymap-global-set
                (kbd* `(C M ,(string->symbol (string-append
