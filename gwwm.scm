@@ -436,6 +436,11 @@ gwwm [options]
     (and-let* ((wlr-output (wrap-wlr-output data))
                (m (create-monitor listener data))
                ((wlr-output-init-render wlr-output (gwwm-allocator) (gwwm-renderer)))
+               ((begin (wlr-output-set-mode wlr-output
+                                            (wlr-output-preferred-mode wlr-output))
+                       (wlr-output-enable wlr-output #t)
+                       (wlr-output-enable-adaptive-sync wlr-output #t)
+                       #t))
                ((wlr-output-commit wlr-output)))
       (set! (monitor-wlr-output m) wlr-output)
       (cond ((wlr-output-is-wl wlr-output)
@@ -446,6 +451,11 @@ gwwm [options]
       (set! (monitor-scene-output m)
             (wlr-scene-output-create (gwwm-scene) wlr-output))
       (wlr-output-layout-add-auto (gwwm-output-layout) wlr-output)
+
+      (set! (monitor-layouts m)
+            (make-list 2 tile-layout))
+      (add-listen (monitor-wlr-output m) 'frame (render-monitor m))
+      (add-listen (monitor-wlr-output m) 'destroy (cleanup-monitor m))
       (run-hook create-monitor-hook m)))
   (define (backend/new-input listener data)
     (let ((device (wrap-wlr-input-device data)))
@@ -720,18 +730,6 @@ gwwm [options]
 (define (main)
   (setlocale LC_ALL "")
   (textdomain %gettext-domain)
-
-  (add-hook! create-monitor-hook
-             (lambda (m)
-               (let ((output (monitor-wlr-output m)))
-                 (wlr-output-set-mode output (wlr-output-preferred-mode output))
-                 (wlr-output-enable output #t)
-                 (wlr-output-enable-adaptive-sync (monitor-wlr-output m) #t))
-               (set! (monitor-layouts m)
-                     (make-list 2 tile-layout))
-               (add-listen (monitor-wlr-output m) 'frame (render-monitor m))
-               (add-listen (monitor-wlr-output m) 'destroy (cleanup-monitor m))))
-
   (current-log-callback
    (let ((p (current-error-port)))
      (lambda (msg)
