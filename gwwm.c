@@ -790,20 +790,7 @@ SCM_DEFINE (createmon,"create-monitor",2,0,0,(SCM slistener ,SCM sdata),"")
 	const MonitorRule *r;
 	Monitor *m = wlr_output->data = scm_gc_calloc(sizeof(*m),"monitor");
     register_monitor(m);
-	SET_MONITOR_WLR_OUTPUT(m,wlr_output);
-	wlr_output_init_render(wlr_output, gwwm_allocator(NULL), gwwm_renderer(NULL));
-	/* Initialize monitor state using configured rules */
-	init_monitor(wlr_output);
-	/* The mode is a tuple of (width, height, refresh rate), and each
-	 * monitor supports only a specific set of modes. We just pick the
-	 * monitor's preferred mode; a more sophisticated compositor would let
-	 * the user configure it. */
-    scm_c_run_hook(REF("gwwm hooks", "create-monitor-hook"), scm_list_1(WRAP_MONITOR(m)));
-    if (wlr_output_is_wl(wlr_output)) {
-      wlr_wl_output_set_title(wlr_output, "gwwm");
-    } else if (wlr_output_is_x11(wlr_output)) {
-      wlr_x11_output_set_title(wlr_output, "gwwm");
-    }
+    init_monitor(wlr_output);
     return WRAP_MONITOR(m);
 }
 
