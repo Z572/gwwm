@@ -83,7 +83,6 @@ typedef struct Monitor {
   struct wl_list layers[4]; /* layer Client::link */
   unsigned int seltags;
   unsigned int tagset[2];
-  double mfact;
   SCM scm;
 } Monitor;
 
@@ -767,7 +766,6 @@ init_monitor(struct wlr_output *wlr_output){
 	m->tagset[0] = m->tagset[1] = 2;
 	for (r = monrules; r < END(monrules); r++) {
 		if (!r->name || strstr(wlr_output->name, r->name)) {
-			m->mfact = r->mfact;
 			wlr_output_set_scale(wlr_output, r->scale);
 			wlr_xcursor_manager_load(gwwm_xcursor_manager(NULL), r->scale);
 			wlr_output_set_transform(wlr_output, r->rr);
@@ -1285,49 +1283,6 @@ tagmon(const Arg *arg)
 		return;
 	setmon(sel, dirtomon(arg->i), 0);
 }
-
-SCM_DEFINE(gwwm_tile, "%tile", 2, 0, 0, (SCM monitor, SCM sn), "c")
-#define FUNC_NAME s_gwwm_tile
-{
-  struct Monitor *m = UNWRAP_MONITOR(monitor);
-  int n=scm_to_int(sn);
-  unsigned int i, mw, my, ty;
-  int nmaster =scm_to_int(scm_slot_ref(monitor, scm_from_utf8_symbol("nmaster")));
-  Client *c;
-  if (n > nmaster)
-    mw = nmaster ? (MONITOR_WINDOW_AREA(m))->width * m->mfact : 0;
-  else
-    mw = (MONITOR_WINDOW_AREA(m))->width;
-  i = my = ty = 0;
-  wl_list_for_each(c, &clients, link) {
-    if (!visibleon(c, m) || CLIENT_IS_FLOATING(c) || CLIENT_IS_FULLSCREEN(c))
-      continue;
-    if (i < nmaster) {
-      resize(
-             c,
-             (struct wlr_box){.x = (MONITOR_WINDOW_AREA(m))->x,
-                              .y = (MONITOR_WINDOW_AREA(m))->y + my,
-                              .width = mw,
-                              .height = ((MONITOR_WINDOW_AREA(m))->height - my) /
-                              (MIN(n, nmaster) - i)},
-             0);
-      my += client_geom(c)->height;
-    } else {
-      resize(c,
-             (struct wlr_box){
-               .x = (MONITOR_WINDOW_AREA(m))->x + mw,
-               .y = (MONITOR_WINDOW_AREA(m))->y + ty,
-               .width = (MONITOR_WINDOW_AREA(m))->width - mw,
-               .height = ((MONITOR_WINDOW_AREA(m))->height - ty) / (n - i)},
-             0);
-      ty += client_geom(c)->height;
-    }
-    i++;
-  }
-
-  return SCM_UNSPECIFIED;
-}
-#undef FUNC_NAME
 
 void
 togglefloating(const Arg *arg)
