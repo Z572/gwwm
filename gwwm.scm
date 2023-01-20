@@ -374,7 +374,19 @@ gwwm [options]
 
 (define (seat-setup display)
   (let ((seat (gwwm-seat (wlr-seat-create (gwwm-display) "seat0"))))
-    (add-listen seat 'request-set-cursor setcursor)
+    (add-listen seat 'request-set-cursor
+                (lambda (listener data)
+                  (let ((event (wrap-wlr-seat-pointer-request-set-cursor-event
+                                data)))
+                    (when (setcursor listener data)
+                      (let-slots event (seat-client surface hostpot-x hostpot-y)
+                        (when (equal?
+                               seat-client
+                               (~ seat 'pointer-state 'focused-client))
+                          (wlr-cursor-set-surface (gwwm-cursor)
+                                                  surface
+                                                  hostpot-x
+                                                  hostpot-y)))))))
     (add-listen seat 'request-set-selection
                 (lambda (listener data)
                   (let ((event (wrap-wlr-seat-request-set-selection-event data)))

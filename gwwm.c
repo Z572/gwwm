@@ -1186,25 +1186,9 @@ current_client(void)
 SCM_DEFINE (setcursor,"setcursor",2,0,0,(SCM slistener ,SCM sdata),"")
 {
   PRINT_FUNCTION;
-  struct wl_listener *listener=UNWRAP_WL_LISTENER(slistener);
-  void *data=TO_P(sdata);
-  PRINT_FUNCTION;
-  /* This event is raised by the seat when a client provides a cursor image */
-  struct wlr_seat_pointer_request_set_cursor_event *event = data;
-  struct wlr_cursor *cursor=gwwm_cursor(NULL);
-	/* If we're "grabbing" the cursor, don't use the client's image */
-	/* TODO still need to save the provided surface to restore later */
-	if (cursor_mode != CurNormal)
-		return SCM_UNSPECIFIED;
-	/* This can be sent by any client, so we check to make sure this one is
-	 * actually has pointer focus first. If so, we can tell the cursor to
-	 * use the provided surface as the cursor image. It will set the
-	 * hardware cursor on the output that it's currently on and continue to
-	 * do so as the cursor moves between outputs. */
-	if (event->seat_client == gwwm_seat(NULL)->pointer_state.focused_client)
-		wlr_cursor_set_surface(cursor, event->surface,
-				event->hotspot_x, event->hotspot_y);
-    return SCM_UNSPECIFIED;
+  if (cursor_mode != CurNormal)
+    return SCM_BOOL_F;
+  return SCM_BOOL_T;
 }
 
 void
