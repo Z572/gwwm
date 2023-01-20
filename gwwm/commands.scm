@@ -20,7 +20,8 @@
             setlayout
             arrange
             focusstack
-            tag))
+            tag
+            incmaster))
 
 (define (arrange m)
   (for-each
@@ -63,6 +64,11 @@
     (client-do-set-floating
      client
      (not (client-floating? client)))))
+
+(define* (incmaster num #:optional (m (current-monitor)))
+  (set! (monitor-nmaster m )
+        (max (+ (monitor-nmaster m) num) 0))
+  (arrange m))
 
 (define (focusclient client lift)
   ((@@ (gwwm) focusclient) client lift))

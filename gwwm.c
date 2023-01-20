@@ -84,7 +84,6 @@ typedef struct Monitor {
   unsigned int seltags;
   unsigned int tagset[2];
   double mfact;
-  int nmaster;
   SCM scm;
 } Monitor;
 
@@ -769,7 +768,6 @@ init_monitor(struct wlr_output *wlr_output){
 	for (r = monrules; r < END(monrules); r++) {
 		if (!r->name || strstr(wlr_output->name, r->name)) {
 			m->mfact = r->mfact;
-			m->nmaster = r->nmaster;
 			wlr_output_set_scale(wlr_output, r->scale);
 			wlr_xcursor_manager_load(gwwm_xcursor_manager(NULL), r->scale);
 			wlr_output_set_transform(wlr_output, r->rr);
@@ -942,15 +940,6 @@ focustop(Monitor *m)
   PRINT_FUNCTION;
   SCM c=REF_CALL_1("gwwm commands", "focustop", WRAP_MONITOR(m));
   return UNWRAP_CLIENT(c);
-}
-
-
-void
-incnmaster(const Arg *arg)
-{
-  PRINT_FUNCTION
-  (current_monitor())->nmaster = MAX((current_monitor())->nmaster + arg->i, 0);
-  arrange(current_monitor());
 }
 
 SCM_DEFINE (destroy_surface_notify,"destroy-surface-notify",3,0,0,
@@ -1319,23 +1308,24 @@ SCM_DEFINE(gwwm_tile, "%tile", 2, 0, 0, (SCM monitor, SCM sn), "c")
   struct Monitor *m = UNWRAP_MONITOR(monitor);
   int n=scm_to_int(sn);
   unsigned int i, mw, my, ty;
+  int nmaster =scm_to_int(scm_slot_ref(monitor, scm_from_utf8_symbol("nmaster")));
   Client *c;
-  if (n > m->nmaster)
-    mw = m->nmaster ? (MONITOR_WINDOW_AREA(m))->width * m->mfact : 0;
+  if (n > nmaster)
+    mw = nmaster ? (MONITOR_WINDOW_AREA(m))->width * m->mfact : 0;
   else
     mw = (MONITOR_WINDOW_AREA(m))->width;
   i = my = ty = 0;
   wl_list_for_each(c, &clients, link) {
     if (!visibleon(c, m) || CLIENT_IS_FLOATING(c) || CLIENT_IS_FULLSCREEN(c))
       continue;
-    if (i < m->nmaster) {
+    if (i < nmaster) {
       resize(
              c,
              (struct wlr_box){.x = (MONITOR_WINDOW_AREA(m))->x,
                               .y = (MONITOR_WINDOW_AREA(m))->y + my,
                               .width = mw,
                               .height = ((MONITOR_WINDOW_AREA(m))->height - my) /
-                              (MIN(n, m->nmaster) - i)},
+                              (MIN(n, nmaster) - i)},
              0);
       my += client_geom(c)->height;
     } else {

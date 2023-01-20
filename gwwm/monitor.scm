@@ -24,6 +24,7 @@
             monitor-scene-output
             monitor-area
             monitor-sellt
+            monitor-nmaster
             <gwwm-monitor>
             %monitors))
 
@@ -97,6 +98,7 @@
   (sellt #:init-value 0
          #:accessor monitor-sellt
          #:setter set-.monitor-sellt!)
+  (nmaster #:init-value 1 #:accessor monitor-nmaster)
   (un-map #:init-value #f))
 
 (define-method (write (o <gwwm-monitor>) port)
