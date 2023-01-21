@@ -619,7 +619,15 @@ gwwm [options]
         (send-log INFO (G_ "failed to setup XWayland X server, continuing without it.")))))
 
 (define ((unmap-notify* c) listener data)
-  (unmap-notify c listener data)
+  (when (equal? c (grabc))
+    (cursor-mode 0)
+    (grabc #f))
+  (and=> (client-monitor c)
+         (cut slot-set! <> 'un-map #t))
+  (if (client-is-unmanaged? c)
+      (wlr-scene-node-destroy (client-scene c))
+      (unmap-notify c listener data))
+
   (unless (client-is-unmanaged? c)
     (setmon c #f 0)
     (q-remove! (%clients) c)

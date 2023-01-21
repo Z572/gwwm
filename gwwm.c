@@ -1308,25 +1308,9 @@ SCM_DEFINE(unmapnotify,"unmap-notify",3,0,0,(SCM sc,SCM slistener ,SCM sdata),""
   PRINT_FUNCTION;
   struct wl_listener *listener=UNWRAP_WL_LISTENER(slistener);
   void *data=TO_P(sdata);
-  PRINT_FUNCTION
-	/* Called when the surface is unmapped, and should no longer be shown. */
-	Client *c = UNWRAP_CLIENT(sc);
-	if (c == (UNWRAP_CLIENT(REF_CALL_0("gwwm", "grabc")))) {
-      REF_CALL_1("gwwm","cursor-mode",scm_from_int(CurNormal)) ;
-	    (REF_CALL_1("gwwm", "grabc",SCM_BOOL_F));
-	}
-
-	if (client_monitor(c,NULL))
-      scm_slot_set_x(WRAP_MONITOR(client_monitor(c, NULL)) ,
-                     scm_from_utf8_symbol("un-map"),
-                     SCM_BOOL_T);
-	if (client_is_unmanaged(c)) {
-		wlr_scene_node_destroy(CLIENT_SCENE(c));
-		return SCM_UNSPECIFIED;
-	}
-
-	wl_list_remove(&c->link);
-    return SCM_UNSPECIFIED;
+  Client *c = UNWRAP_CLIENT(sc);
+  wl_list_remove(&c->link);
+  return SCM_UNSPECIFIED;
 }
 
 void
