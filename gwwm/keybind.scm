@@ -37,12 +37,15 @@
 (define (clean-caps mks)
   (& mks (~ WLR_MODIFIER_CAPS)))
 
-(define (keybinding mods sym)
+(define* (keybinding mods sym #:optional (pressed #t))
   (define handle (match-lambda
-                   ((k command)
+                   ((k command release-command)
                     (if (and (= (clean-caps mods)
                                 (clean-caps (apply logior (map parse-modify-key (.modify-keys k)))) )
                              (= sym (ref-key (.key k))))
-                        (begin (command) #t)
+                        (begin (if pressed
+                                   (command)
+                                   (release-command))
+                               #t)
                         #f))))
   (any handle (.keys ((@@ (gwwm) global-keymap)))))

@@ -67,33 +67,43 @@
     ((kl . rest)
      (append (kbd* kl) (apply kbd* rest)))))
 
-(define-method (keymap-set o (ks <list>) d)
+(define-method (keymap-set (o <keymap>) (ks <list>) d . rest)
   (if (> (length ks) 1)
       (warn (G_ "for now, gwwm not support multi key define, ignore others.")))
-  (keymap-set o (car ks) d))
+  (apply keymap-set o (car ks) d rest))
 
 (define-method (keymap-set (keymap <keymap>)
                            (key <key>)
                            (definition <procedure>))
+  (keymap-set keymap key definition (const #t)))
+
+(define-method (keymap-set (keymap <keymap>)
+                           (key <key>)
+                           (definition <procedure>)
+                           (release-procedure <procedure>))
   (->bool (or (and=> (find-key-l key keymap)
-                     (lambda (l) (set-cdr! l (list definition)) #t))
+                     (lambda (l)
+                       (warn (format #f (G_ "replace keybmap definition ~S") l))
+                       (set-cdr! l (list definition release-procedure))
+                       #t))
               (set! (.keys keymap)
-                    (cons (list key definition)
+                    (cons (list key definition release-procedure)
                           (.keys keymap))))))
 
 (define-method (keymap-set (keymap <keymap>)
                            (key <key>)
-                           (f <boolean>) )
+                           (f <boolean>))
   (and=> (and (not f)
               (find-key-l key keymap))
          (lambda (a)
            (->bool (set! (.keys keymap)
                          (delete a (.keys keymap)))))))
 
+
+
+
 (define-method (find-key-l (key <key>) (keymap <keymap>))
-  (find (match-lambda
-          ((k _)
-           (equal? k key)))
+  (find (lambda (o) (equal? (car o) key))
         (.keys keymap)))
 
 (define (find-key-command key keymap)

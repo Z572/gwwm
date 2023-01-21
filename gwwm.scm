@@ -67,14 +67,16 @@
   #:use-module (gwwm commands)
   #:use-module ((bytestructure-class) #:select (bs:enum->integer))
   #:duplicates (merge-accessors merge-generics replace warn-override-core warn last)
-  #:export (main))
+  #:export (main keymap-global-set))
 
 (eval-when (expand load eval)
   (load-extension "libgwwm" "scm_init_gwwm"))
 
 
-(define-public (keymap-global-set key command)
-  (keymap-set (global-keymap) key command))
+(define* (keymap-global-set key command #:optional release-command)
+  (if release-command
+      (keymap-set (global-keymap) key command release-command)
+      (keymap-set (global-keymap) key command)))
 
 (define-syntax-rule (define-dy name objname)
   (begin (define-once name
@@ -292,17 +294,18 @@ gwwm [options]
 
                      (unless (and (not (.active-inhibitor
                                         (gwwm-input-inhibit-manager)))
-                                  (= (.state event) 1)
                                   (keybinding
                                    (wlr-keyboard-get-modifiers (.device device))
-                                   (+ 8 (.keycode event))))
+                                   (+ 8 (.keycode event))
+                                   (eq? (.state event) 'WL_KEYBOARD_KEY_STATE_PRESSED)))
                        (wlr-seat-set-keyboard seat device)
                        (wlr-seat-keyboard-notify-key
                         seat
                         (.time-msec event)
                         (.keycode event)
-                        (.state event)))))
-                 #:destroy-when device)
+                        (if (eq? (.state event) 'WL_KEYBOARD_KEY_STATE_PRESSED)
+                            1 0)))))
+                #:destroy-when device)
     (add-listen device 'destroy
                  (lambda (listener data)
                    (run-hook cleanup-keyboard-hook kb)
