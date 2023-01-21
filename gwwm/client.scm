@@ -346,17 +346,28 @@
   "return #t if client is alive, or #f deaded."
   (not (zero? (.data client))))
 
+(define (%get-size-hints-helper o)
+  (define boxs (list (make <wlr-box>)
+                     (make <wlr-box>)))
+  (and=> o
+         (lambda (o)
+           (let-slots o (max-width max-height min-width min-height)
+             (modify-instance* (first boxs)
+               (width max-width)
+               (height max-height))
+             (modify-instance* (second boxs)
+               (width min-width)
+               (height min-height)))))
+  (unlist boxs))
+
 (define-method (client-get-size-hints (c <gwwm-xdg-client>))
-  (let-slots (.current (wlr-xdg-surface-toplevel (client-super-surface c)))
-      (max-width max-height min-width min-height)
-    (values (make <wlr-box> #:width max-width #:height max-height)
-            (make <wlr-box> #:width min-width #:height min-height))))
+  (%get-size-hints-helper
+   (.current
+    (wlr-xdg-surface-toplevel
+     (client-super-surface c)))))
 
 (define-method (client-get-size-hints (c <gwwm-x-client>))
-  (let-slots (.size-hints (client-super-surface c))
-      (max-width max-height min-width min-height)
-    (values (make <wlr-box> #:width max-width #:height max-height)
-            (make <wlr-box> #:width min-width #:height min-height))))
+  (%get-size-hints-helper (.size-hints (client-super-surface c))))
 
 (define-method (client-set-tiled c (edges <list>))
   (client-set-tiled c (apply logior edges)))
