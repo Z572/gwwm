@@ -201,6 +201,7 @@ gwwm [options]
 (define-public background-layer #f)
 (define-public bottom-layer #f)
 (define-public tile-layer #f)
+(define-public fullscreen-layer #f)
 (define-public float-layer #f)
 (define-public top-layer #f)
 (define-public overlay-layer #f)
@@ -277,39 +278,39 @@ gwwm [options]
     (run-hook create-keyboard-hook kb)
     ((@@ (gwwm keyboard) add-keyboard) kb)
     (add-listen (.device device) 'modifiers
-                 (lambda (listener data)
-                   (let ((wlr-keyboard (wrap-wlr-keyboard data)))
-                     (wlr-seat-set-keyboard
-                      (gwwm-seat) device)
-                     (run-hook modifiers-event-hook kb)
-                     (wlr-seat-keyboard-notify-modifiers
-                      (gwwm-seat) (.modifiers wlr-keyboard))))
-                 #:destroy-when device)
+                (lambda (listener data)
+                  (let ((wlr-keyboard (wrap-wlr-keyboard data)))
+                    (wlr-seat-set-keyboard
+                     (gwwm-seat) device)
+                    (run-hook modifiers-event-hook kb)
+                    (wlr-seat-keyboard-notify-modifiers
+                     (gwwm-seat) (.modifiers wlr-keyboard))))
+                #:destroy-when device)
     (add-listen (.device device) 'key
-                 (lambda (listener data)
-                   (let* ((event (wrap-wlr-event-keyboard-key data))
-                          (seat (gwwm-seat))
-                          (keybinding (@@ (gwwm keybind) keybinding)))
-                     (run-hook keypress-event-hook kb event)
-
-                     (unless (and (not (.active-inhibitor
-                                        (gwwm-input-inhibit-manager)))
-                                  (keybinding
-                                   (wlr-keyboard-get-modifiers (.device device))
-                                   (+ 8 (.keycode event))
-                                   (eq? (.state event) 'WL_KEYBOARD_KEY_STATE_PRESSED)))
-                       (wlr-seat-set-keyboard seat device)
-                       (wlr-seat-keyboard-notify-key
-                        seat
-                        (.time-msec event)
-                        (.keycode event)
-                        (if (eq? (.state event) 'WL_KEYBOARD_KEY_STATE_PRESSED)
-                            1 0)))))
+                (lambda (listener data)
+                  (let* ((event (wrap-wlr-event-keyboard-key data))
+                         (seat (gwwm-seat))
+                         (keybinding (@@ (gwwm keybind) keybinding)))
+                    (run-hook keypress-event-hook kb event)
+                    (unless (and (not (.active-inhibitor
+                                       (gwwm-input-inhibit-manager)))
+                                 (keybinding
+                                  (wlr-keyboard-get-modifiers (.device device))
+                                  (+ 8 (.keycode event))
+                                  (eq? (.state event) 'WL_KEYBOARD_KEY_STATE_PRESSED)
+                                  ))
+                      (wlr-seat-set-keyboard seat device)
+                      (wlr-seat-keyboard-notify-key
+                       seat
+                       (.time-msec event)
+                       (.keycode event)
+                       (if (eq? (.state event) 'WL_KEYBOARD_KEY_STATE_PRESSED)
+                           1 0)))))
                 #:destroy-when device)
     (add-listen device 'destroy
-                 (lambda (listener data)
-                   (run-hook cleanup-keyboard-hook kb)
-                   ((@@ (gwwm keyboard) remove-keyboard) kb)))))
+                (lambda (listener data)
+                  (run-hook cleanup-keyboard-hook kb)
+                  ((@@ (gwwm keyboard) remove-keyboard) kb)))))
 
 (define (request-start-drag listener data)
   (let* ((event (wrap-wlr-seat-request-start-drag-event data))
@@ -585,7 +586,6 @@ gwwm [options]
               (lambda (listener data)
                 (let* ((event (wrap-wlr-xdg-activation-v1-request-activate-event data))
                        (c (client-from-wlr-surface (.surface event))))
-                  (pk 's)
                   (unless (equal? c (current-client))
                     (set! (client-urgent? c) #t)))))
   (gwwm-layer-shell (wlr-layer-shell-v1-create (gwwm-display)))
@@ -779,6 +779,7 @@ gwwm [options]
       (set! background-layer (create))
       (set! bottom-layer (create))
       (set! tile-layer (create))
+      (set! fullscreen-layer (create))
       (set! float-layer (create))
       (set! top-layer (create))
       (set! overlay-layer (create))

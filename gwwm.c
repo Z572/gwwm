@@ -1360,11 +1360,12 @@ xytonode(double x, double y, struct wlr_surface **psurface,
 	char* focus_order[] = {"overlay-layer",
                           "top-layer",
                           "float-layer",
+                          "fullscreen-layer",
                           "tile-layer",
                           "bottom-layer",
                           "background-layer"};
 
-	for (int layer = 0; layer < 5; layer++) {
+	for (int layer = 0; layer < 6; layer++) {
 		if ((node = wlr_scene_node_at(UNWRAP_WLR_SCENE_NODE(REF("gwwm",focus_order[layer])), x, y, nx, ny))) {
 			if (node->type == WLR_SCENE_NODE_SURFACE)
 				surface = wlr_scene_surface_from_node(node)->surface;

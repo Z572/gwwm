@@ -1,5 +1,5 @@
 (define-module (gwwm client)
-  #:autoload (gwwm) (float-layer tile-layer overlay-layer top-layer bottom-layer background-layer gwwm-seat)
+  #:autoload (gwwm) (fullscreen-layer float-layer tile-layer overlay-layer top-layer bottom-layer background-layer gwwm-seat)
   #:autoload (gwwm commands) (arrange)
   #:autoload (gwwm config) (gwwm-borderpx g-config config-fullscreenbg)
   #:duplicates (merge-generics replace warn-override-core warn last)
@@ -209,6 +209,7 @@
 
 (define-method (client-do-set-fullscreen (c <gwwm-client>))
   (client-do-set-fullscreen c (client-fullscreen? c)))
+
 (define-method (client-do-set-fullscreen (c <gwwm-client>) fullscreen?)
   (let ((fullscreen? (->bool fullscreen?)))
     (set! (client-fullscreen? c) fullscreen?)
@@ -216,14 +217,16 @@
     (if fullscreen?
         (begin (set! (client-prev-geom c)
                      (shallow-clone (client-geom c)))
-               (wlr-scene-node-raise-to-top (client-scene c))
+               (wlr-scene-node-reparent (client-scene c) fullscreen-layer)
                (client-resize
                 c
                 (shallow-clone
                  (monitor-area (client-monitor c))) #f))
-        (client-resize c (shallow-clone (client-prev-geom c))))
+        (begin (wlr-scene-node-reparent (client-scene c) tile-layer)
+               (client-resize c (shallow-clone (client-prev-geom c)))))
     (client-set-fullscreen-bg c)
     (arrange (client-monitor c))))
+
 (define-method (client-do-set-fullscreen (client <gwwm-xdg-client>) fullscreen?)
   (next-method)
   (wlr-xdg-toplevel-set-fullscreen (client-super-surface client) fullscreen?))
@@ -336,7 +339,9 @@
                      (and=> (.parent node) loop)))
                #f)))
        (list overlay-layer top-layer
-             float-layer tile-layer
+             float-layer
+             fullscreen-layer
+             tile-layer
              bottom-layer background-layer)))
 
 (define-method (client-at (cursor <wlr-cursor>))
