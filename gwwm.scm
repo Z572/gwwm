@@ -383,11 +383,10 @@ gwwm [options]
                 (lambda (listener data)
                   (let ((event (wrap-wlr-seat-pointer-request-set-cursor-event
                                 data)))
-                    (when (setcursor listener data)
+                    (when (= (cursor-mode) 0)
                       (let-slots event (seat-client surface hostpot-x hostpot-y)
-                        (when (equal?
-                               seat-client
-                               (~ seat 'pointer-state 'focused-client))
+                        (when (equal? seat-client
+                                      (~ seat 'pointer-state 'focused-client))
                           (wlr-cursor-set-surface (gwwm-cursor)
                                                   surface
                                                   hostpot-x

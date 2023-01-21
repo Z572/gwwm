@@ -1182,13 +1182,6 @@ current_client(void)
   return (UNWRAP_CLIENT(c)) ;
 }
 
-SCM_DEFINE (setcursor,"setcursor",2,0,0,(SCM slistener ,SCM sdata),"")
-{
-  PRINT_FUNCTION;
-  if (scm_to_int(REF_CALL_0("gwwm","cursor-mode")) != CurNormal)
-    return SCM_BOOL_F;
-  return SCM_BOOL_T;
-}
 
 void
 setfullscreen(Client *c, int fullscreen)
