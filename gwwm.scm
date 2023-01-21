@@ -127,7 +127,6 @@
   (keymap-global-set (kbd (s j)) (lambda () (focusstack 1)))
   (keymap-global-set (kbd (s k)) (lambda () (focusstack -1)))
   (keymap-global-set (kbd (s e)) (lambda () (spawn "emacs")))
-  (keymap-global-set (kbd (s Tab)) zoom)
   (keymap-global-set (kbd (s S q)) gwwm-quit)
   (for-each (lambda (a)
               (keymap-global-set
@@ -624,9 +623,8 @@ gwwm [options]
     (grabc #f))
   (and=> (client-monitor c)
          (cut slot-set! <> 'un-map #t))
-  (if (client-is-unmanaged? c)
-      (wlr-scene-node-destroy (client-scene c))
-      (unmap-notify c listener data))
+  (when (client-is-unmanaged? c)
+    (wlr-scene-node-destroy (client-scene c)))
 
   (unless (client-is-unmanaged? c)
     (setmon c #f 0)
@@ -709,7 +707,6 @@ gwwm [options]
                             (client-do-set-floating c #t))
                      (%applyrules c)))
                (client-do-set-fullscreen c )
-               (map-notify c listener data)
                (slot-set! (client-monitor c) 'un-map #f)))))
 
 (define ((map-layer-client-notify c) listener data)

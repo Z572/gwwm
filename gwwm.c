@@ -87,7 +87,6 @@ typedef struct Monitor {
 } Monitor;
 
 const char broken[] = "broken";
- struct wl_list clients; /* tiling order */
  struct wlr_idle_inhibit_manager_v1 *idle_inhibit_mgr;
  struct wlr_virtual_keyboard_manager_v1 *virtual_keyboard_mgr;
  Atom netatom[NetLast];
@@ -946,18 +945,6 @@ SCM_DEFINE (destroy_surface_notify,"destroy-surface-notify",3,0,0,
   return SCM_UNSPECIFIED;
 }
 
-SCM_DEFINE(mapnotify,"map-notify",3,0,0,(SCM sc,SCM slistener ,SCM sdata),"")
-{
-  PRINT_FUNCTION;
-  struct wl_listener *listener=UNWRAP_WL_LISTENER(slistener);
-  void *data=TO_P(sdata);
-
-  /* Called when the surface is mapped, or ready to display on-screen. */
-  Client *p, *c = UNWRAP_CLIENT(sc);
-  wl_list_insert(&clients, &c->link);
-  return SCM_UNSPECIFIED;
-}
-
 SCM_DEFINE (gwwm_motionnotify, "%motionnotify" , 1,0,0,
             (SCM stime), "")
 #define FUNC_NAME s_gwwm_motionnotify
@@ -1241,8 +1228,6 @@ SCM_DEFINE (gwwm_setup,"%gwwm-setup" ,0,0,0,(),"")
 	 *
 	 * https://drewdevault.com/2018/07/29/Wayland-shells.html
 	 */
-	wl_list_init(&clients);
-
 	idle_inhibit_mgr = wlr_idle_inhibit_v1_create(gwwm_display(NULL));
 	wl_signal_add(&idle_inhibit_mgr->events.new_inhibitor, &idle_inhibitor_create);
 	/* Use decoration protocols to negotiate server-side decorations */
@@ -1300,16 +1285,6 @@ toggleview(const Arg *arg)
 
 SCM_DEFINE (gwwm_toggleview, "toggleview",1,0,0,(SCM ui),""){
   toggleview(&((Arg){.ui=1 << (scm_to_int(ui))}));
-  return SCM_UNSPECIFIED;
-}
-
-SCM_DEFINE(unmapnotify,"unmap-notify",3,0,0,(SCM sc,SCM slistener ,SCM sdata),"")
-{
-  PRINT_FUNCTION;
-  struct wl_listener *listener=UNWRAP_WL_LISTENER(slistener);
-  void *data=TO_P(sdata);
-  Client *c = UNWRAP_CLIENT(sc);
-  wl_list_remove(&c->link);
   return SCM_UNSPECIFIED;
 }
 
@@ -1411,50 +1386,6 @@ xytonode(double x, double y, struct wlr_surface **psurface,
 	return node;
 }
 
-SCM_DEFINE (gwwm_zoom, "zoom",0, 0,0,
-            () ,
-            "c")
-#define FUNC_NAME s_gwwm_zoom
-{
-  PRINT_FUNCTION
-	Client *c, *sel = current_client();
-	if (!sel
-        || scm_is_false
-        (LAYOUT_PROCEDURE
-         (scm_list_ref
-          (MONITOR_LAYOUTS(current_monitor()),
-           (((scm_call_1(REFP("gwwm monitor","monitor-sellt"),  \
-                               (WRAP_MONITOR(current_monitor())))))))))
-        || (CLIENT_IS_FLOATING(sel)))
-		return SCM_UNSPECIFIED;
-
-	/* Search for the first tiled window that is not sel, marking sel as
-	 * NULL if we pass it along the way */
-	wl_list_for_each(c, &clients, link)
-      if (visibleon(c, current_monitor()) && !CLIENT_IS_FLOATING(c)) {
-			if (c != sel)
-				break;
-			sel = NULL;
-		}
-
-	/* Return if no other tiled window was found */
-	if (&c->link == &clients)
-		return  SCM_UNSPECIFIED;
-
-	/* If we passed sel, move c to the front; otherwise, move sel to the
-	 * front */
-	if (!sel)
-		sel = c;
-	wl_list_remove(&sel->link);
-	wl_list_insert(&clients, &sel->link);
-    REF_CALL_2("ice-9 q", "q-remove!", REF_CALL_0("gwwm client", "%client"), sel->scm);
-    REF_CALL_2("ice-9 q", "q-push!", REF_CALL_0("gwwm client", "%client"), sel->scm);
-	focusclient(sel, 1);
-	arrange(current_monitor());
-  return SCM_UNSPECIFIED;
-}
-#undef FUNC_NAME
-
 #ifdef XWAYLAND
 
 SCM_DEFINE(createnotifyx11,"create-notify/x11",2,0,0,(SCM sl ,SCM d),"")
@@ -1531,7 +1462,6 @@ scm_init_gwwm(void)
   scm_c_define(scm_name, (WRAP_WL_LISTENER(name)));
   define_listener(xwayland_ready,"xwaylandready",xwaylandready);
 #undef define_listener
-  scm_c_define("%c-clients",WRAP_WL_LIST(&clients));
 #ifndef SCM_MAGIC_SNARFER
 #include "gwwm.x"
 #endif
