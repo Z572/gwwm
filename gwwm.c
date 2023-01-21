@@ -95,7 +95,6 @@ const char broken[] = "broken";
    return netatom[n];
  };
  unsigned int cursor_mode;
- Client *grabc;
  int grabcx, grabcy; /* client-relative */
 
 SCM gwwm_config;
@@ -582,7 +581,7 @@ SCM_DEFINE (buttonpress,"buttonpress",2,0,0,(SCM slistener ,SCM sdata),"")
 			cursor_mode = CurNormal;
 			/* Drop the window off on its new monitor */
 		    set_current_monitor(xytomon(cursor->x, cursor->y));
-			setmon(grabc, current_monitor(), 0);
+			setmon((UNWRAP_CLIENT(REF_CALL_0("gwwm", "grabc"))), current_monitor(), 0);
 			return SCM_UNSPECIFIED;
 		}
 		break;
@@ -975,20 +974,20 @@ SCM_DEFINE (gwwm_motionnotify, "%motionnotify" , 1,0,0,
 	if (cursor_mode == CurMove) {
 
 		/* Move the grabbed client to the new position. */
-		resize(grabc, (struct wlr_box){
+		resize((UNWRAP_CLIENT(REF_CALL_0("gwwm", "grabc"))), (struct wlr_box){
             .x = cursor->x - grabcx,
             .y = cursor->y - grabcy,
-			.width = (client_geom(grabc))->width,
-            .height = (client_geom(grabc))->height
+			.width = (client_geom((UNWRAP_CLIENT(REF_CALL_0("gwwm", "grabc")))))->width,
+            .height = (client_geom((UNWRAP_CLIENT(REF_CALL_0("gwwm", "grabc")))))->height
           },
           1);
 		return SCM_UNSPECIFIED;
 	} else if (cursor_mode == CurResize) {
-      resize(grabc, (struct wlr_box){
-          .x = (client_geom(grabc))->x,
-          .y = (client_geom(grabc))->y,
-          .width = cursor->x - client_geom(grabc)->x,
-          .height = cursor->y - client_geom(grabc)->y
+      resize((UNWRAP_CLIENT(REF_CALL_0("gwwm", "grabc"))), (struct wlr_box){
+          .x = (client_geom((UNWRAP_CLIENT(REF_CALL_0("gwwm", "grabc")))))->x,
+          .y = (client_geom((UNWRAP_CLIENT(REF_CALL_0("gwwm", "grabc")))))->y,
+          .width = cursor->x - client_geom((UNWRAP_CLIENT(REF_CALL_0("gwwm", "grabc"))))->x,
+          .height = cursor->y - client_geom((UNWRAP_CLIENT(REF_CALL_0("gwwm", "grabc"))))->y
         }, 1);
 		return SCM_UNSPECIFIED;
 	}
@@ -1014,29 +1013,31 @@ moveresize(const Arg *arg)
   struct wlr_cursor *cursor=gwwm_cursor(NULL);
   if (cursor_mode != CurNormal)
     return;
-  grabc=(UNWRAP_CLIENT(REF_CALL_1("gwwm client", "client-at", REF_CALL_0("gwwm", "gwwm-cursor"))));
+  REF_CALL_1("gwwm","grabc",(REF_CALL_1("gwwm client", "client-at", REF_CALL_0("gwwm", "gwwm-cursor"))));
 
-	if (!grabc || client_is_unmanaged(grabc) || CLIENT_IS_FULLSCREEN(grabc))
+	if (!(UNWRAP_CLIENT(REF_CALL_0("gwwm", "grabc")))
+        || client_is_unmanaged((UNWRAP_CLIENT(REF_CALL_0("gwwm", "grabc"))))
+        || CLIENT_IS_FULLSCREEN((UNWRAP_CLIENT(REF_CALL_0("gwwm", "grabc")))))
 		return;
-    SCM sgrabc= WRAP_CLIENT(grabc);
+    SCM sgrabc= (REF_CALL_0("gwwm", "grabc"));
 	/* Float the window and tell motionnotify to grab it */
-	CLIENT_SET_FLOATING(grabc,1);
+	CLIENT_SET_FLOATING((UNWRAP_CLIENT(REF_CALL_0("gwwm", "grabc"))),1);
 	switch (cursor_mode = arg->ui) {
 	case CurMove:
-		grabcx = cursor->x - client_geom(grabc)->x;
-		grabcy = cursor->y - client_geom(grabc)->y;
+		grabcx = cursor->x - client_geom((UNWRAP_CLIENT(REF_CALL_0("gwwm", "grabc"))))->x;
+		grabcy = cursor->y - client_geom((UNWRAP_CLIENT(REF_CALL_0("gwwm", "grabc"))))->y;
 		wlr_xcursor_manager_set_cursor_image(gwwm_xcursor_manager(NULL), "fleur", cursor);
         arrange(current_monitor());
 		break;
 	case CurResize:
-      client_set_resizing(grabc,1);
+      client_set_resizing((UNWRAP_CLIENT(REF_CALL_0("gwwm", "grabc"))),1);
 		/* Doesn't work for X11 output - the next absolute motion event
 		 * returns the cursor to where it started */
 		wlr_cursor_warp_closest(cursor, NULL,
-                                client_geom(grabc)->x +
-                                client_geom(grabc)->width,
-                                client_geom(grabc)->y
-                                + client_geom(grabc)->height);
+                                client_geom((UNWRAP_CLIENT(REF_CALL_0("gwwm", "grabc"))))->x +
+                                client_geom((UNWRAP_CLIENT(REF_CALL_0("gwwm", "grabc"))))->width,
+                                client_geom((UNWRAP_CLIENT(REF_CALL_0("gwwm", "grabc"))))->y
+                                + client_geom((UNWRAP_CLIENT(REF_CALL_0("gwwm", "grabc"))))->height);
 		wlr_xcursor_manager_set_cursor_image(gwwm_xcursor_manager(NULL),
 				"bottom_right_corner", cursor);
 		break;
@@ -1317,9 +1318,9 @@ SCM_DEFINE(unmapnotify,"unmap-notify",3,0,0,(SCM sc,SCM slistener ,SCM sdata),""
   PRINT_FUNCTION
 	/* Called when the surface is unmapped, and should no longer be shown. */
 	Client *c = UNWRAP_CLIENT(sc);
-	if (c == grabc) {
+	if (c == (UNWRAP_CLIENT(REF_CALL_0("gwwm", "grabc")))) {
 		cursor_mode = CurNormal;
-		grabc = NULL;
+	    (REF_CALL_1("gwwm", "grabc",SCM_BOOL_F));
 	}
 
 	if (client_monitor(c,NULL))
