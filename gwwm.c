@@ -792,7 +792,6 @@ focusclient(Client *c, int lift)
 			client_activate_surface(old, 0);
 		}
 	}
-    scm_call_1(REFP("gwwm", "check-idle-inhibitor"),SCM_BOOL_F);
 	if (!c) {
 		/* With no client, all we have left is to clear focus */
 		wlr_seat_keyboard_notify_clear_focus(gwwm_seat(NULL));

@@ -51,7 +51,6 @@
   #:use-module (wlroots types pointer)
   #:use-module (wlroots types scene)
   #:use-module (wlroots types idle)
-  #:use-module (wlroots types idle-inhibit)
   #:use-module (wlroots types xdg-shell)
   #:use-module (wlroots types cursor)
   #:use-module (wlroots types xcursor)
@@ -107,7 +106,6 @@
 (define-dy gwwm-activation activation)
 (define-dy gwwm-layer-shell layer-shell)
 (define-dy gwwm-idle idle)
-(define-dy gwwm-idle-inhibit idle-inhibit)
 (define-dy gwwm-input-inhibit-manager input-inhibit-manager)
 (define-dy grabc c)
 (define-dy grabcx x)
@@ -364,37 +362,6 @@ gwwm [options]
       ((normal) (%motionnotify time)))))
 
 (define (idle-activity . _) (wlr-idle-notify-activity (gwwm-idle) (gwwm-seat)))
-
-(define (check-idle-inhibitor exclude)
-  (define inhibited #f)
-  (let/ec return
-    (wl-list-for-each
-     (lambda (i)
-       (let* ((c (client-from-wlr-surface (.surface i)) )
-              (w (and exclude (client-from-wlr-surface exclude))))
-         (unless (or (and exclude (not w) ) (equal? c w))
-           (if (or (not c) (visibleon c (client-monitor c )))
-               (set! inhibited #t)
-               (return #t)))))
-     (.inhibitors (gwwm-idle-inhibit))
-     <wlr-idle-inhibitor-v1>
-     'link))
-
-  (wlr-idle-set-enabled
-   (gwwm-idle)
-   #f
-   (not inhibited)))
-(define (idle-inhibit-v1-setup display)
-  (let ((idle-inhibit (gwwm-idle-inhibit (wlr-idle-inhibit-v1-create display))))
-    (add-listen idle-inhibit 'new-inhibitor
-                (lambda (listener data)
-                  (let ((idle-inhibitor (wrap-wlr-idle-inhibitor-v1 data)))
-                    (add-listen idle-inhibitor 'destroy
-                                (lambda (listener data)
-                                  (let ((wlr-surface (wrap-wlr-surface data)))
-                                    (check-idle-inhibitor wlr-surface)))
-                                #:remove-when-destroy? #f)
-                    (check-idle-inhibitor #f))))))
 
 (define (cursor-setup)
   (define ((cursor/button cursor) listener data)
@@ -1034,7 +1001,6 @@ gwwm [options]
   (%gwwm-setup-signal)
   (%gwwm-setup-othres)
   (gwwm-input-inhibit-manager (wlr-input-inhibit-manager-create (gwwm-display)))
-  (idle-inhibit-v1-setup (gwwm-display))
   (%gwwm-setup)
   (config-setup)
   (when (config-enable-xwayland? (gwwm-config))
