@@ -98,10 +98,7 @@ void applyexclusive(struct wlr_box *usable_area, uint32_t anchor,
 void arrange(Monitor *m);
 void arrangelayer(Monitor *m, struct wl_list *list, struct wlr_box *usable_area,
                   int exclusive);
-void checkidleinhibitor(struct wlr_surface *exclude);
-void createidleinhibitor(struct wl_listener *listener, void *data);
 SCM find_monitor(Monitor *m);
-void destroyidleinhibitor(struct wl_listener *listener, void *data);
 Monitor *dirtomon(enum wlr_direction dir);
 void focusclient(Client *c, int lift);
 Client *focustop(Monitor *m);

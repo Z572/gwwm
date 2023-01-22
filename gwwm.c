@@ -87,20 +87,17 @@ typedef struct Monitor {
 } Monitor;
 
 const char broken[] = "broken";
- struct wlr_idle_inhibit_manager_v1 *idle_inhibit_mgr;
- struct wlr_virtual_keyboard_manager_v1 *virtual_keyboard_mgr;
- Atom netatom[NetLast];
- Atom get_netatom_n(int n){
-   return netatom[n];
- };
+struct wlr_virtual_keyboard_manager_v1 *virtual_keyboard_mgr;
+Atom netatom[NetLast];
+Atom get_netatom_n(int n){
+  return netatom[n];
+};
 
 SCM gwwm_config;
 SCM get_gwwm_config(void) {
   return gwwm_config;
 }
 
-struct wl_listener idle_inhibitor_create = {.notify = createidleinhibitor};
-struct wl_listener idle_inhibitor_destroy = {.notify = destroyidleinhibitor};
 struct wl_listener new_virtual_keyboard = {.notify = virtualkeyboard};
 
 bool visibleon(Client *c, Monitor *m) {
@@ -535,26 +532,6 @@ SCM_DEFINE(arrangelayers,"arrangelayers",1,0,0,(SCM sm),"")
     return SCM_UNSPECIFIED;
 }
 
-void
-checkidleinhibitor(struct wlr_surface *exclude)
-{
-  PRINT_FUNCTION
-	Client *c, *w;
-	int inhibited = 0;
-	struct wlr_idle_inhibitor_v1 *inhibitor;
-	wl_list_for_each(inhibitor, &idle_inhibit_mgr->inhibitors, link) {
-		c = client_from_wlr_surface(inhibitor->surface);
-		if (exclude && (!(w = client_from_wlr_surface(exclude)) || w == c))
-			continue;
-		if (!c || visibleon(c, client_monitor(c ,NULL))) {
-			inhibited = 1;
-			break;
-		}
-	}
-
-	wlr_idle_set_enabled(gwwm_idle(NULL), NULL, !inhibited);
-}
-
 Monitor *
 client_monitor(void *c ,Monitor *change) {
   /* PRINT_FUNCTION; */
@@ -628,16 +605,6 @@ SCM_DEFINE (commitlayersurfacenotify,"commit-layer-client-notify",3,0,0,
     if (wlr_layer_surface->current.committed == 0) return SCM_UNSPECIFIED;
 	arrangelayers(WRAP_MONITOR(m));
     return SCM_UNSPECIFIED;
-}
-
-void
-createidleinhibitor(struct wl_listener *listener, void *data)
-{
-  PRINT_FUNCTION;
-	struct wlr_idle_inhibitor_v1 *idle_inhibitor = data;
-	wl_signal_add(&idle_inhibitor->events.destroy, &idle_inhibitor_destroy);
-
-	checkidleinhibitor(NULL);
 }
 
 SCM_DEFINE (createlayersurface,"create-layer-client",2,0,0,(SCM slistener ,SCM sdata),"")
@@ -742,15 +709,6 @@ SCM_DEFINE(createnotify,"create-notify",2,0,0,(SCM sl ,SCM d),"")
   return WRAP_CLIENT(c);
 }
 
-void
-destroyidleinhibitor(struct wl_listener *listener, void *data)
-{
-  PRINT_FUNCTION;
-	/* `data` is the wlr_surface of the idle inhibitor being destroyed,
-	 * at this point the idle inhibitor is still in the list of the manager */
-	checkidleinhibitor(data);
-}
-
 SCM_DEFINE (destroylayersurfacenotify,"destroy-layer-client-notify",3,0,0,(SCM c,SCM slistener ,SCM sdata),"")
 {
   PRINT_FUNCTION;
@@ -834,8 +792,7 @@ focusclient(Client *c, int lift)
 			client_activate_surface(old, 0);
 		}
 	}
-
-	checkidleinhibitor(NULL);
+    scm_call_1(REFP("gwwm", "check-idle-inhibitor"),SCM_BOOL_F);
 	if (!c) {
 		/* With no client, all we have left is to clear focus */
 		wlr_seat_keyboard_notify_clear_focus(gwwm_seat(NULL));
@@ -1092,15 +1049,6 @@ SCM_DEFINE (gwwm_setup_othres,"%gwwm-setup-othres",0,0,0,(),"")
 SCM_DEFINE (gwwm_setup,"%gwwm-setup" ,0,0,0,(),"")
 {
     wlr_xdg_output_manager_v1_create(gwwm_display(NULL), gwwm_output_layout(NULL));
-	/* Set up our client lists and the xdg-shell. The xdg-shell is a
-	 * Wayland protocol which is used for application windows. For more
-	 * detail on shells, refer to the article:
-	 *
-	 * https://drewdevault.com/2018/07/29/Wayland-shells.html
-	 */
-	idle_inhibit_mgr = wlr_idle_inhibit_v1_create(gwwm_display(NULL));
-	wl_signal_add(&idle_inhibit_mgr->events.new_inhibitor, &idle_inhibitor_create);
-	/* Use decoration protocols to negotiate server-side decorations */
 	wlr_server_decoration_manager_set_default_mode(
 			wlr_server_decoration_manager_create(gwwm_display(NULL)),
 			WLR_SERVER_DECORATION_MANAGER_MODE_SERVER);
