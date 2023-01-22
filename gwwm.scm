@@ -111,7 +111,7 @@
 (define-dy grabcy y)
 
 (define-dy cursor-mode m)
-(cursor-mode 0)
+(cursor-mode 'normal)
 
 (define-once exclusive-focus
   (let ((%o (nothing)))
@@ -131,9 +131,9 @@
   (keymap-global-set (kbd (s j)) (lambda () (focusstack 1)))
   (keymap-global-set (kbd (s k)) (lambda () (focusstack -1)))
   (keymap-global-set (kbd (s e)) (lambda () (spawn "emacs")))
-  (keymap-global-set (kbd (s mouse-left)) (lambda () (moveresize 1)))
+  (keymap-global-set (kbd (s mouse-left)) (lambda () (moveresize 'move)))
   (keymap-global-set (kbd (s mouse-middle)) togglefloating)
-  (keymap-global-set (kbd (s mouse-right)) (lambda () (moveresize 2)))
+  (keymap-global-set (kbd (s mouse-right)) (lambda () (moveresize 'resize)))
   (keymap-global-set (kbd (s S q)) gwwm-quit)
   (for-each (lambda (a)
               (keymap-global-set
@@ -335,30 +335,30 @@ gwwm [options]
   (run-hook motion-notify-hook time)
   (let ((cursor (gwwm-cursor)))
     (case (cursor-mode)
-      ((1) (client-resize
-            (grabc)
-            (make <wlr-box>
-              #:x (inexact->exact (round (- (.x cursor) (grabcx))))
-              #:y (inexact->exact (round (- (.y cursor) (grabcy))))
-              #:width (box-width (client-geom (grabc)))
-              #:height (box-height (client-geom (grabc))))
-            #t))
-      ((2) (client-resize
-            (grabc)
-            (make <wlr-box>
-              #:x (box-x (client-geom (grabc)))
-              #:y (box-y (client-geom (grabc)))
-              #:width
-              (inexact->exact
-               (round (- (.x cursor)
-                         (box-x (client-geom (grabc))))))
-              #:height
-              (inexact->exact
-               (round (- (.y cursor)
-                         (box-y (client-geom (grabc)))))))
+      ((move) (client-resize
+               (grabc)
+               (make <wlr-box>
+                 #:x (inexact->exact (round (- (.x cursor) (grabcx))))
+                 #:y (inexact->exact (round (- (.y cursor) (grabcy))))
+                 #:width (box-width (client-geom (grabc)))
+                 #:height (box-height (client-geom (grabc))))
+               #t))
+      ((resize) (client-resize
+                 (grabc)
+                 (make <wlr-box>
+                   #:x (box-x (client-geom (grabc)))
+                   #:y (box-y (client-geom (grabc)))
+                   #:width
+                   (inexact->exact
+                    (round (- (.x cursor)
+                              (box-x (client-geom (grabc))))))
+                   #:height
+                   (inexact->exact
+                    (round (- (.y cursor)
+                              (box-y (client-geom (grabc)))))))
 
-            #t))
-      (else (%motionnotify time)))))
+                 #t))
+      ((normal) (%motionnotify time)))))
 
 (define (idle-activity . _) (wlr-idle-notify-activity (gwwm-idle) (gwwm-seat)))
 
@@ -369,10 +369,10 @@ gwwm [options]
       (idle-activity)
       (run-hook cursor-button-event-hook event)
       (case (cursor-mode)
-        ((0) (and=> (client-at cursor)
-                    (lambda (c)
-                      (unless (client-is-unmanaged? c)
-                        (focusclient c #t))))
+        ((normal) (and=> (client-at cursor)
+                         (lambda (c)
+                           (unless (client-is-unmanaged? c)
+                             (focusclient c #t))))
          (let* ((keyboard (wlr-seat-get-keyboard (gwwm-seat)))
                 (mods (if keyboard (wlr-keyboard-get-modifiers
                                     keyboard) 0)))
@@ -387,7 +387,7 @@ gwwm [options]
               (.state event)))))
         (else => (lambda (o)
                    (unless pressed
-                     (and-let* (((eq? o 2))
+                     (and-let* (((eq? o 'resize))
                                 (c (grabc))
                                 ((not (client-is-unmanaged? c))))
                        (client-set-resizing! c #f))
@@ -395,7 +395,7 @@ gwwm [options]
                       (gwwm-xcursor-manager)
                       (config-cursor-normal-image (gwwm-config))
                       cursor)
-                     (cursor-mode 0)
+                     (cursor-mode 'normal)
                      (set! (current-monitor)
                            (monitor-at (.x cursor) (.y cursor)))
                      (setmon (grabc) (current-monitor) 0)))))))
@@ -447,7 +447,7 @@ gwwm [options]
                 (lambda (listener data)
                   (let ((event (wrap-wlr-seat-pointer-request-set-cursor-event
                                 data)))
-                    (when (= (cursor-mode) 0)
+                    (when (eq? (cursor-mode) 'normal)
                       (let-slots event (seat-client surface hostpot-x hostpot-y)
                         (when (equal? seat-client
                                       (~ seat 'pointer-state 'focused-client))
@@ -683,7 +683,7 @@ gwwm [options]
 
 (define ((unmap-notify* c) listener data)
   (when (equal? c (grabc))
-    (cursor-mode 0)
+    (cursor-mode 'normal)
     (grabc #f))
   (and=> (client-monitor c)
          (cut slot-set! <> 'un-map #t))

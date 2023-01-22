@@ -108,7 +108,7 @@
     #f))
 
 (define (moveresize n)
-  (when (zero?(cursor-mode))
+  (when (eq? (cursor-mode) 'normal)
     (grabc (client-at (gwwm-cursor)))
     (let ((c (grabc))
           (cursor (gwwm-cursor)))
@@ -118,7 +118,7 @@
         (set! (client-floating? c) #t)
         (cursor-mode n)
         (case n
-          ((1)
+          ((move)
            (grabcx (inexact->exact
                     (round (- (.x cursor)
                               (box-x (client-geom c))))))
@@ -129,7 +129,7 @@
             (gwwm-xcursor-manager) "fleur" cursor)
            (arrange (current-monitor)))
           ;; ((0) 'do-nothing)
-          ((2)
+          ((resize)
            (client-set-resizing! c #t)
            (let-slots (client-geom c) (x y width height )
              (wlr-cursor-warp-closest cursor #f
