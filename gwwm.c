@@ -1027,15 +1027,9 @@ pointerfocus(Client *c, struct wlr_surface *surface, double sx, double sy,
 }
 
 void
-quit(const Arg *arg)
-{
-  REF_CALL_0("gwwm commands","gwwm-quit");
-}
-
-void
 quitsignal(int signo)
 {
-	quit(NULL);
+  REF_CALL_0("gwwm commands","gwwm-quit");
 }
 
 Client *
@@ -1045,7 +1039,6 @@ current_client(void)
   SCM c=REF_CALL_0("gwwm client", "current-client");
   return (UNWRAP_CLIENT(c)) ;
 }
-
 
 void
 setfullscreen(Client *c, int fullscreen)
@@ -1130,50 +1123,29 @@ sigchld(int unused)
 		die("can't install SIGCHLD handler:");
 }
 
-void
-tagmon(const Arg *arg)
-{
-  PRINT_FUNCTION
-	Client *sel = current_client();
-	if (!sel)
-		return;
-	setmon(sel, dirtomon(arg->i), 0);
-}
-
-void
-toggleview(const Arg *arg)
-{
-  PRINT_FUNCTION
-  unsigned int newtagset = (current_monitor())->tagset[(current_monitor())->seltags] ^ (arg->ui & TAGMASK);
-
-	if (newtagset) {
-      (current_monitor())->tagset[(current_monitor())->seltags] = newtagset;
-      focusclient(focustop(current_monitor()), 1);
-      arrange(current_monitor());
-	}
-}
-
 SCM_DEFINE (gwwm_toggleview, "toggleview",1,0,0,(SCM ui),""){
-  toggleview(&((Arg){.ui=1 << (scm_to_int(ui))}));
+  PRINT_FUNCTION;
+  unsigned int newtagset = (current_monitor())->tagset[(current_monitor())->seltags] ^ ((1 << (scm_to_int(ui))) & TAGMASK);
+
+  if (newtagset) {
+    (current_monitor())->tagset[(current_monitor())->seltags] = newtagset;
+    focusclient(focustop(current_monitor()), 1);
+    arrange(current_monitor());
+  }
   return SCM_UNSPECIFIED;
 }
 
-void
-view(const Arg *arg)
-{
-  PRINT_FUNCTION
-  if ((arg->ui & TAGMASK) ==
-      current_monitor()->tagset[(current_monitor())->seltags])
-		return;
-  (current_monitor())->seltags ^= 1; /* toggle sel tagset */
-	if (arg->ui & TAGMASK)
-      (current_monitor())->tagset[(current_monitor())->seltags] = arg->ui & TAGMASK;
-	focusclient(focustop(current_monitor()), 1);
-	arrange(current_monitor());
-}
-
 SCM_DEFINE (gwwm_view, "view",1,0,0,(SCM ui),""){
-  view(&((Arg){.ui=1 << (scm_to_int(ui))}));
+  int n=(1 << (scm_to_int(ui)));
+  PRINT_FUNCTION;
+  if ((n & TAGMASK) ==
+      current_monitor()->tagset[(current_monitor())->seltags])
+    return SCM_UNSPECIFIED;
+  (current_monitor())->seltags ^= 1; /* toggle sel tagset */
+  if (n & TAGMASK)
+    (current_monitor())->tagset[(current_monitor())->seltags] = n & TAGMASK;
+  focusclient(focustop(current_monitor()), 1);
+  arrange(current_monitor());
   return SCM_UNSPECIFIED;
 }
 

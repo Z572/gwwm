@@ -35,13 +35,6 @@ enum {
 }; /* EWMH atoms */
 #endif
 
-typedef union {
-  int i;
-  unsigned int ui;
-  float f;
-  const void *v;
-} Arg;
-
 typedef struct {
   uint32_t singular_anchor;
   uint32_t anchor_triplet;
@@ -115,17 +108,12 @@ Client *focustop(Monitor *m);
 void maplayersurfacenotify(struct wl_listener *listener, void *data);
 void pointerfocus(Client *c, struct wlr_surface *surface, double sx, double sy,
                   uint32_t time);
-void quit(const Arg *arg);
 void quitsignal(int signo);
 Client *current_client(void);
 void setfullscreen(Client *c, int fullscreen);
 void setmon(Client *c, Monitor *m, unsigned int newtags);
 void sigchld(int unused);
-void tagmon(const Arg *arg);
 void logout_monitor(SCM m);
-
-void toggleview(const Arg *arg);
-void view(const Arg *arg);
 void virtualkeyboard(struct wl_listener *listener, void *data);
 struct wlr_scene_node *xytonode(double x, double y,
                                 struct wlr_surface **psurface, Client **pc,
