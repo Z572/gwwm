@@ -363,8 +363,6 @@ SCM_DEFINE (applyrules ,"%applyrules" ,1,0,0,(SCM sc),"")
 	unsigned int i, newtags = 0;
 	const Rule *r;
 	Monitor *mon = current_monitor(), *m;
-
-    CLIENT_SET_FLOATING(c,client_is_float_type(c));
 	if (!(appid = client_get_appid(c)))
 		appid = broken;
 	if (!(title = client_get_title(c)))

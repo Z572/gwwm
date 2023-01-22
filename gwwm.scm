@@ -709,6 +709,10 @@ gwwm [options]
     (q-remove! (%fstack) c)
     (wlr-scene-node-destroy (client-scene c))))
 
+(define (apply-rules c)
+  (client-set-floating! c (client-is-float-type? c))
+  (%applyrules c))
+
 (define (map-notify* c)
   (lambda (listener data)
     (run-hook client-map-event-hook c
@@ -782,7 +786,7 @@ gwwm [options]
                                           (current-monitor))
                                     (client-tags parent))
                             (client-do-set-floating c #t))
-                     (%applyrules c)))
+                     (apply-rules c)))
                (client-do-set-fullscreen c )
                (slot-set! (client-monitor c) 'un-map #f)))))
 
