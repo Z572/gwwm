@@ -442,6 +442,18 @@ gwwm [options]
     (add-listen cursor 'button (cursor/button cursor)
                 #:remove-when-destroy? #f)))
 
+(define (client-activate-surface surface activate?)
+  (cond ((and (wlr-surface-is-xdg-surface surface)
+              (wlr-xdg-surface-from-wlr-surface surface)
+              (eq? (.role (wlr-xdg-surface-from-wlr-surface surface))
+                   'WLR_XDG_SURFACE_ROLE_TOPLEVEL))
+         (wlr-xdg-toplevel-set-activated
+          (wlr-xdg-surface-from-wlr-surface surface)
+          activate? ))
+        ((and (wlr-surface-is-xwayland-surface surface)
+              (wlr-xwayland-surface-from-wlr-surface surface))
+         => (cut wlr-xwayland-surface-activate <> activate?))))
+
 (define (seat-setup display)
   (let ((seat (gwwm-seat (wlr-seat-create (gwwm-display) "seat0"))))
     (add-listen seat 'request-set-cursor

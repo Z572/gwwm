@@ -101,7 +101,6 @@ struct wlr_scene_rect *client_fullscreen_bg(void *c,
                                             struct wlr_scene_rect *change);
 bool client_is_x11(Client *c);
 Client *client_from_wlr_surface(struct wlr_surface *s);
-void client_activate_surface(struct wlr_surface *s, int activated);
 void client_for_each_surface(Client *c, wlr_surface_iterator_func_t fn,
                              void *data);
 const char *client_get_appid(Client *c);

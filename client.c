@@ -90,24 +90,6 @@ client_from_wlr_surface(struct wlr_surface *s)
 	return NULL;
 }
 
-/* The others */
-void
-client_activate_surface(struct wlr_surface *s, int activated)
-{
-	struct wlr_xdg_surface *surface;
-#ifdef XWAYLAND
-	struct wlr_xwayland_surface *xsurface;
-	if (wlr_surface_is_xwayland_surface(s)
-			&& (xsurface = wlr_xwayland_surface_from_wlr_surface(s))) {
-		wlr_xwayland_surface_activate(xsurface, activated);
-		return;
-	}
-#endif
-	if (wlr_surface_is_xdg_surface(s)
-			&& (surface = wlr_xdg_surface_from_wlr_surface(s))
-			&& surface->role == WLR_XDG_SURFACE_ROLE_TOPLEVEL)
-		wlr_xdg_toplevel_set_activated(surface, activated);
-}
 
 void client_for_each_alives(client_iterator_func_t fn){
   SCM l=REF_CALL_0("gwwm client", "client-list");

@@ -789,8 +789,8 @@ focusclient(Client *c, int lift)
 						))
 				return;
 		} else {
-			client_activate_surface(old, 0);
-		}
+          scm_call_2(REFP("gwwm", "client-activate-surface"), WRAP_WLR_SURFACE(old), scm_from_bool(0));
+        }
 	}
 	if (!c) {
 		/* With no client, all we have left is to clear focus */
@@ -801,8 +801,8 @@ focusclient(Client *c, int lift)
 	/* Have a client, so focus its top-level wlr_surface */
 	client_notify_enter(CLIENT_SURFACE(c), wlr_seat_get_keyboard(gwwm_seat(NULL)));
 
-	/* Activate the new client */
-	client_activate_surface(CLIENT_SURFACE(c), 1);
+    /* Activate the new client */
+    scm_call_2(REFP("gwwm", "client-activate-surface"), WRAP_WLR_SURFACE(CLIENT_SURFACE(c)), scm_from_bool(1));
 }
 
 SCM_DEFINE (gwwm_focusclient, "focusclient" ,2,0,0,(SCM client,SCM lift),"")
