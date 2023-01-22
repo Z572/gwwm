@@ -93,7 +93,6 @@ const char broken[] = "broken";
  Atom get_netatom_n(int n){
    return netatom[n];
  };
- int grabcx, grabcy; /* client-relative */
 
 SCM gwwm_config;
 SCM get_gwwm_config(void) {
@@ -961,8 +960,8 @@ SCM_DEFINE (gwwm_motionnotify, "%motionnotify" , 1,0,0,
 
 		/* Move the grabbed client to the new position. */
 		resize((UNWRAP_CLIENT(REF_CALL_0("gwwm", "grabc"))), (struct wlr_box){
-            .x = cursor->x - grabcx,
-            .y = cursor->y - grabcy,
+            .x = cursor->x - (scm_to_int(REF_CALL_0("gwwm", "grabcx"))),
+            .y = cursor->y - (scm_to_int(REF_CALL_0("gwwm", "grabcy"))),
 			.width = (client_geom((UNWRAP_CLIENT(REF_CALL_0("gwwm", "grabc")))))->width,
             .height = (client_geom((UNWRAP_CLIENT(REF_CALL_0("gwwm", "grabc")))))->height
           },
@@ -996,39 +995,7 @@ void
 moveresize(const Arg *arg)
 {
   PRINT_FUNCTION;
-  struct wlr_cursor *cursor=gwwm_cursor(NULL);
-  if (scm_to_int(REF_CALL_0("gwwm","cursor-mode")) != CurNormal)
-    return;
-  REF_CALL_1("gwwm","grabc",(REF_CALL_1("gwwm client", "client-at", REF_CALL_0("gwwm", "gwwm-cursor"))));
-
-	if (!(UNWRAP_CLIENT(REF_CALL_0("gwwm", "grabc")))
-        || client_is_unmanaged((UNWRAP_CLIENT(REF_CALL_0("gwwm", "grabc"))))
-        || CLIENT_IS_FULLSCREEN((UNWRAP_CLIENT(REF_CALL_0("gwwm", "grabc")))))
-		return;
-    SCM sgrabc= (REF_CALL_0("gwwm", "grabc"));
-	/* Float the window and tell motionnotify to grab it */
-	CLIENT_SET_FLOATING((UNWRAP_CLIENT(REF_CALL_0("gwwm", "grabc"))),1);
-    REF_CALL_1("gwwm","cursor-mode",scm_from_int(arg->ui));
-	switch (scm_to_int(REF_CALL_0("gwwm","cursor-mode"))) {
-	case CurMove:
-		grabcx = cursor->x - client_geom((UNWRAP_CLIENT(REF_CALL_0("gwwm", "grabc"))))->x;
-		grabcy = cursor->y - client_geom((UNWRAP_CLIENT(REF_CALL_0("gwwm", "grabc"))))->y;
-		wlr_xcursor_manager_set_cursor_image(gwwm_xcursor_manager(NULL), "fleur", cursor);
-        arrange(current_monitor());
-		break;
-	case CurResize:
-      client_set_resizing((UNWRAP_CLIENT(REF_CALL_0("gwwm", "grabc"))),1);
-		/* Doesn't work for X11 output - the next absolute motion event
-		 * returns the cursor to where it started */
-		wlr_cursor_warp_closest(cursor, NULL,
-                                client_geom((UNWRAP_CLIENT(REF_CALL_0("gwwm", "grabc"))))->x +
-                                client_geom((UNWRAP_CLIENT(REF_CALL_0("gwwm", "grabc"))))->width,
-                                client_geom((UNWRAP_CLIENT(REF_CALL_0("gwwm", "grabc"))))->y
-                                + client_geom((UNWRAP_CLIENT(REF_CALL_0("gwwm", "grabc"))))->height);
-		wlr_xcursor_manager_set_cursor_image(gwwm_xcursor_manager(NULL),
-				"bottom_right_corner", cursor);
-		break;
-	}
+  REF_CALL_1("gwwm commands", "moveresize", scm_from_int(arg->ui));
 }
 
 

@@ -1,13 +1,20 @@
 (define-module (gwwm commands)
+  #:autoload (gwwm) (cursor-mode gwwm-xcursor-manager grabc grabcx grabcy gwwm-cursor)
+  #:use-module (oop goops)
   #:use-module (wlroots backend session)
   #:use-module (wlroots types scene)
+  #:use-module (wlroots types cursor)
+  #:use-module (wlroots types xcursor)
   #:use-module (wayland display)
   #:use-module (srfi srfi-26)
   #:use-module (ice-9 control)
   #:use-module (gwwm config)
+  #:use-module (util572 box)
+  #:use-module (gwwm utils)
   #:use-module (gwwm monitor)
   #:use-module (gwwm layout)
   #:use-module (gwwm client)
+  #:duplicates (merge-accessors merge-generics replace warn-override-core warn last)
   #:export (spawn
             chvt
             killclient
@@ -21,6 +28,7 @@
             arrange
             focusstack
             tag
+            moveresize
             incmaster))
 
 (define (arrange m)
@@ -98,6 +106,37 @@
                   (return c)))
               (car (%fstack)))
     #f))
+
+(define (moveresize n)
+  (when (zero?(cursor-mode))
+    (grabc (client-at (gwwm-cursor)))
+    (let ((c (grabc))
+          (cursor (gwwm-cursor)))
+      (when (and c
+                 (not (client-is-unmanaged? c ))
+                 (not (client-fullscreen? c)))
+        (set! (client-floating? c) #t)
+        (cursor-mode n)
+        (case n
+          ((1)
+           (grabcx (inexact->exact
+                    (round (- (.x cursor)
+                              (box-x (client-geom c))))))
+           (grabcy (inexact->exact
+                    (round (- (.y cursor)
+                              (box-y (client-geom c))))))
+           (wlr-xcursor-manager-set-cursor-image
+            (gwwm-xcursor-manager) "fleur" cursor)
+           (arrange (current-monitor)))
+          ;; ((0) 'do-nothing)
+          ((2)
+           (client-set-resizing! c #t)
+           (let-slots (client-geom c) (x y width height )
+             (wlr-cursor-warp-closest cursor #f
+                                      (+ x width)
+                                      (+ y height)))
+           (wlr-xcursor-manager-set-cursor-image (gwwm-xcursor-manager)
+                                                 "bottom_right_corner" cursor)))))))
 
 (define (spawn program . args)
   (for-each (lambda (c) (client-do-set-fullscreen c #f))

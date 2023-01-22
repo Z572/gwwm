@@ -107,6 +107,8 @@
 (define-dy gwwm-idle idle)
 (define-dy gwwm-input-inhibit-manager input-inhibit-manager)
 (define-dy grabc c)
+(define-dy grabcx x)
+(define-dy grabcy y)
 
 (define-dy cursor-mode m)
 (cursor-mode 0)
