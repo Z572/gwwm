@@ -1,10 +1,3 @@
-/* appearance */
-
-  /* border pixel of windows */
-
-static const float rootcolor[]      = {0.3, 0.3, 0.3, 1.0};
-/* static const float bordercolor[]    = {0.5, 0.5, 0.5, 1.0}; */
-
 /* tagging */
 static const char *tags[] = { "1", "2", "3", "4", "5", "6", "7", "8", "9" };
 
@@ -25,15 +18,6 @@ static const MonitorRule monrules[] = {
 	/* defaults */
 	{ NULL,       0.55, 1,      1,    WL_OUTPUT_TRANSFORM_NORMAL },
 };
-
-/* keyboard */
-/* static const struct xkb_rule_names xkb_rules = { */
-/* 	/\* can specify fields: rules, model, layout, variant, options *\/ */
-/* 	/\* example: */
-/* 	.options = "ctrl:nocaps", */
-/* 	*\/ */
-/* 	.options = NULL, */
-/* }; */
 
 /* static const int repeat_rate = 25; */
 static const int repeat_delay = 600;
@@ -74,11 +58,3 @@ LIBINPUT_CONFIG_ACCEL_PROFILE_ADAPTIVE
 */
 static const enum libinput_config_accel_profile accel_profile = LIBINPUT_CONFIG_ACCEL_PROFILE_ADAPTIVE;
 static const double accel_speed = 0.0;
-
-/* If you want to use the windows key change this to WLR_MODIFIER_LOGO */
-#define MODKEY WLR_MODIFIER_LOGO
-static const Button buttons[] = {
-	{ MODKEY, BTN_LEFT,   moveresize,     {.ui = CurMove} },
-	{ MODKEY, BTN_MIDDLE, togglefloating, {0} },
-	{ MODKEY, BTN_RIGHT,  moveresize,     {.ui = CurResize} },
-};

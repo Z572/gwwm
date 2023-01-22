@@ -915,14 +915,6 @@ SCM_DEFINE (gwwm_motionnotify, "%motionnotify" , 1,0,0,
 }
 #undef FUNC_NAME
 
-void
-moveresize(const Arg *arg)
-{
-  PRINT_FUNCTION;
-  REF_CALL_1("gwwm commands", "moveresize", scm_from_int(arg->ui));
-}
-
-
 SCM_DEFINE(gwwm_outputmgrapplyortest,"output-manager-apply-or-test",2,0,0,
            (SCM sconfig,SCM test_p),"")
 {
@@ -1046,12 +1038,6 @@ quitsignal(int signo)
 	quit(NULL);
 }
 
-void resize(Client *c, struct wlr_box geo, int interact) {
-  PRINT_FUNCTION
-  REF_CALL_3("gwwm client", "client-resize", WRAP_CLIENT(c), SHALLOW_CLONE(WRAP_WLR_BOX(&geo)),
-             scm_from_bool(interact));
-}
-
 Client *
 current_client(void)
 {
@@ -1155,13 +1141,6 @@ tagmon(const Arg *arg)
 }
 
 void
-togglefloating(const Arg *arg)
-{
-  PRINT_FUNCTION;
-  REF_CALL_0("gwwm commands" ,"togglefloating");
-}
-
-void
 toggleview(const Arg *arg)
 {
   PRINT_FUNCTION
@@ -1230,14 +1209,6 @@ SCM_DEFINE (gwwm_monitor_seltags, "%monitor-seltags",1, 0,0,
   return (scm_from_unsigned_integer((UNWRAP_MONITOR(m))->seltags));
 }
 #undef FUNC_NAME
-
-Monitor *
-xytomon(double x, double y)
-{
-  PRINT_FUNCTION
-  SCM o=(REF_CALL_2("gwwm monitor","monitor-at",scm_from_double(x),scm_from_double(y)));
-  return scm_is_false(o) ? NULL : (UNWRAP_MONITOR(o));
-}
 
 struct wlr_scene_node *
 xytonode(double x, double y, struct wlr_surface **psurface,

@@ -25,18 +25,6 @@
 #define LISTEN(E, L, H) wl_signal_add((E), ((L)->notify = (H), (L)))
 typedef struct Client Client;
 typedef struct Monitor Monitor;
-/* enums */
-enum { CurNormal, CurMove, CurResize }; /* cursor */
-/* enum { */
-/*   LyrBg, */
-/*   LyrBottom, */
-/*   LyrTop, */
-/*   LyrOverlay, */
-/*   LyrTile, */
-/*   LyrFloat, */
-/*   LyrNoFocus, */
-/*   NUM_LAYERS */
-/* }; /\* scene layers *\/ */
 #ifdef XWAYLAND
 enum {
   NetWMWindowTypeDialog,
@@ -53,13 +41,6 @@ typedef union {
   float f;
   const void *v;
 } Arg;
-
-typedef struct {
-  unsigned int mod;
-  unsigned int button;
-  void (*func)(const Arg *);
-  const Arg arg;
-} Button;
 
 typedef struct {
   uint32_t singular_anchor;
@@ -118,7 +99,6 @@ typedef struct {
 /* function declarations */
 Monitor *current_monitor();
 Monitor *client_monitor(void *c, Monitor *change);
-void applybounds(Client *c, struct wlr_box *bbox);
 void applyexclusive(struct wlr_box *usable_area, uint32_t anchor,
                     int32_t exclusive, int32_t margin_top, int32_t margin_right,
                     int32_t margin_bottom, int32_t margin_left);
@@ -126,48 +106,27 @@ void arrange(Monitor *m);
 void arrangelayer(Monitor *m, struct wl_list *list, struct wlr_box *usable_area,
                   int exclusive);
 void checkidleinhibitor(struct wlr_surface *exclude);
-void commitnotify(struct wl_listener *listener, void *data);
 void createidleinhibitor(struct wl_listener *listener, void *data);
 SCM find_monitor(Monitor *m);
-void create_touch(struct wlr_input_device *device);
-void create_tablet_tool(struct wlr_input_device *device);
-void create_tablet_pad(struct wlr_input_device *device);
-void create_switch(struct wlr_input_device *device);
 void destroyidleinhibitor(struct wl_listener *listener, void *data);
 Monitor *dirtomon(enum wlr_direction dir);
 void focusclient(Client *c, int lift);
-void focusmon(const Arg *arg);
-void focusstack(const Arg *arg);
 Client *focustop(Monitor *m);
-void fullscreennotify(struct wl_listener *listener, void *data);
-void incnmaster(const Arg *arg);
-bool keybinding(uint32_t mods, xkb_keycode_t keycode);
 void maplayersurfacenotify(struct wl_listener *listener, void *data);
-void moveresize(const Arg *arg);
 void pointerfocus(Client *c, struct wlr_surface *surface, double sx, double sy,
                   uint32_t time);
 void quit(const Arg *arg);
 void quitsignal(int signo);
-void resize(Client *c, struct wlr_box geo, int interact);
 Client *current_client(void);
 void setfullscreen(Client *c, int fullscreen);
-void setlayout(const Arg *arg);
-Monitor* monitor_from_listener(struct wl_listener *listener);
-void setmfact(const Arg *arg);
 void setmon(Client *c, Monitor *m, unsigned int newtags);
 void sigchld(int unused);
-void spawn(const Arg *arg);
-void tag(const Arg *arg);
 void tagmon(const Arg *arg);
 void logout_monitor(SCM m);
-void togglefloating(const Arg *arg);
 
 void toggleview(const Arg *arg);
-void updatetitle(struct wl_listener *listener, void *data);
-void set_layersurface_geom(Client *c , struct wlr_box* box);
 void view(const Arg *arg);
 void virtualkeyboard(struct wl_listener *listener, void *data);
-Monitor *xytomon(double x, double y);
 struct wlr_scene_node *xytonode(double x, double y,
                                 struct wlr_surface **psurface, Client **pc,
                                 Client **pl, double *nx, double *ny);
