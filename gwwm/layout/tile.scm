@@ -38,7 +38,9 @@
                                   (/ (box-height window-box)
                                      (length cls))) 'x))))))
            (p nmaster-clients nmaster-box)
-           (p other-clients other-box)))))))
+           (p other-clients (if (zero? nmaster)
+                                window-box
+                                other-box))))))))
 
 (define tile-layout
   (make <layout>
