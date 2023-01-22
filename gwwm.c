@@ -591,9 +591,6 @@ SCM_DEFINE (commitlayersurfacenotify,"commit-layer-client-notify",3,0,0,
   Client *layersurface = UNWRAP_CLIENT(c);
 	struct wlr_layer_surface_v1 *wlr_layer_surface = wlr_layer_surface_v1_from_wlr_surface(CLIENT_SURFACE(layersurface));
     Monitor *m=client_monitor(layersurface,NULL);
-	if (!m)
-		return SCM_UNSPECIFIED;
-
 	if (return_scene_node(wlr_layer_surface->current.layer) != CLIENT_SCENE(layersurface)) {
 		wlr_scene_node_reparent(CLIENT_SCENE(layersurface),
                                 return_scene_node(wlr_layer_surface->current.layer));
@@ -601,9 +598,6 @@ SCM_DEFINE (commitlayersurfacenotify,"commit-layer-client-notify",3,0,0,
 		wl_list_insert(&m->layers[wlr_layer_surface->current.layer],
 				&layersurface->link);
 	}
-
-    if (wlr_layer_surface->current.committed == 0) return SCM_UNSPECIFIED;
-	arrangelayers(WRAP_MONITOR(m));
     return SCM_UNSPECIFIED;
 }
 

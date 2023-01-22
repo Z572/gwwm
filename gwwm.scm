@@ -990,7 +990,13 @@ gwwm [options]
                         #:remove-when-destroy? #f)
             (add-listen (.surface (client-super-surface c)) 'commit
                         (lambda (listener data)
-                          (commit-layer-client-notify c listener data)))
+                          (and-let* ((m (client-monitor c)))
+                            (commit-layer-client-notify c listener data)
+                            (unless (zero?
+                                     (~ (client-super-surface c)
+                                        'current
+                                        'committed))
+                              (arrangelayers m)))))
             (add-listen (client-super-surface c) 'destroy
                         (lambda (listener data)
                           (q-remove! (%layer-clients) c)
