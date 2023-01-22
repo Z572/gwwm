@@ -535,61 +535,6 @@ SCM_DEFINE(arrangelayers,"arrangelayers",1,0,0,(SCM sm),"")
     return SCM_UNSPECIFIED;
 }
 
-SCM_DEFINE (buttonpress,"buttonpress",2,0,0,(SCM slistener ,SCM sdata),"")
-{
-  PRINT_FUNCTION;
-  struct wl_listener *listener=UNWRAP_WL_LISTENER(slistener);
-  void *data=TO_P(sdata);
-  struct wlr_event_pointer_button *event = data;
-    struct wlr_cursor *cursor=gwwm_cursor(NULL);
-	struct wlr_keyboard *keyboard;
-	uint32_t mods;
-	Client *c;
-	const Button *b;
-	switch (event->state) {
-	case WLR_BUTTON_PRESSED:
-		/* Change focus if the button was _pressed_ over a client */
-      c=(UNWRAP_CLIENT(REF_CALL_1("gwwm client", "client-at", REF_CALL_0("gwwm", "gwwm-cursor"))));
-		/* Don't focus unmanaged clients */
-		if (c && !client_is_unmanaged(c))
-			focusclient(c, 1);
-
-		keyboard = wlr_seat_get_keyboard(gwwm_seat(NULL));
-		mods = keyboard ? wlr_keyboard_get_modifiers(keyboard) : 0;
-		for (b = buttons; b < END(buttons); b++) {
-			if (CLEANMASK(mods) == CLEANMASK(b->mod) &&
-					event->button == b->button && b->func) {
-				b->func(&b->arg);
-				return SCM_UNSPECIFIED;
-			}
-		}
-		break;
-	case WLR_BUTTON_RELEASED:
-		/* If you released any buttons, we exit interactive move/resize mode. */
-		/* TODO should reset to the pointer focus's current setcursor */
-      if (scm_to_int(REF_CALL_0("gwwm","cursor-mode")) != CurNormal) {
-          if (scm_to_int(REF_CALL_0("gwwm","cursor-mode")) == CurResize &&
-              (c=(UNWRAP_CLIENT(REF_CALL_1("gwwm client", "client-at", REF_CALL_0("gwwm", "gwwm-cursor")))))
-              && (c && !client_is_unmanaged(c)))
-            {
-              client_set_resizing(c,0);
-            }
-          wlr_xcursor_manager_set_cursor_image(gwwm_xcursor_manager(NULL), GWWM_CURSOR_NORMAL_IMAGE(), cursor);
-			REF_CALL_1("gwwm","cursor-mode",scm_from_int(CurNormal));
-			/* Drop the window off on its new monitor */
-		    set_current_monitor(xytomon(cursor->x, cursor->y));
-			setmon((UNWRAP_CLIENT(REF_CALL_0("gwwm", "grabc"))), current_monitor(), 0);
-			return SCM_UNSPECIFIED;
-		}
-		break;
-	}
-	/* If the event wasn't handled by the compositor, notify the client with
-	 * pointer focus that a button press has occurred */
-	wlr_seat_pointer_notify_button(gwwm_seat(NULL),
-			event->time_msec, event->button, event->state);
-    return SCM_UNSPECIFIED;
-}
-
 void
 checkidleinhibitor(struct wlr_surface *exclude)
 {

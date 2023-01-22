@@ -230,3 +230,12 @@
 (define-public key-XF86MonBrightnessCycle   251)
 (define-public key-XF86WWAN                 254)
 (define-public key-XF86RFKill               255)
+
+(define-public key-mouse-left        280)
+(define-public key-mouse-right       281)
+(define-public key-mouse-middle      282)
+(define-public key-mouse-side        283)
+(define-public key-mouse-extra       284)
+(define-public key-mouse-forward     285)
+(define-public key-mouse-back        286)
+(define-public key-mouse-task        287)

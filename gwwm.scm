@@ -131,6 +131,9 @@
   (keymap-global-set (kbd (s j)) (lambda () (focusstack 1)))
   (keymap-global-set (kbd (s k)) (lambda () (focusstack -1)))
   (keymap-global-set (kbd (s e)) (lambda () (spawn "emacs")))
+  (keymap-global-set (kbd (s mouse-left)) (lambda () (moveresize 1)))
+  (keymap-global-set (kbd (s mouse-middle)) togglefloating)
+  (keymap-global-set (kbd (s mouse-right)) (lambda () (moveresize 2)))
   (keymap-global-set (kbd (s S q)) gwwm-quit)
   (for-each (lambda (a)
               (keymap-global-set
@@ -360,8 +363,44 @@ gwwm [options]
 (define (idle-activity . _) (wlr-idle-notify-activity (gwwm-idle) (gwwm-seat)))
 
 (define (cursor-setup)
-  (let ((cursor (gwwm-cursor (wlr-cursor-create))))
+  (define ((cursor/button cursor) listener data)
+    (let* ((event (wrap-wlr-event-pointer-button data))
+           (pressed (eq? (.state event) 'WLR_BUTTON_PRESSED)))
+      (idle-activity)
+      (run-hook cursor-button-event-hook event)
+      (case (cursor-mode)
+        ((0) (and=> (client-at cursor)
+                    (lambda (c)
+                      (unless (client-is-unmanaged? c)
+                        (focusclient c #t))))
+         (let* ((keyboard (wlr-seat-get-keyboard (gwwm-seat)))
+                (mods (if keyboard (wlr-keyboard-get-modifiers
+                                    keyboard) 0)))
+           (unless ((@@ (gwwm keybind) keybinding)
+                    mods
+                    (+ 8 (.button event))
+                    pressed)
+             (wlr-seat-pointer-notify-button
+              (gwwm-seat)
+              (.time-msec event)
+              (.button event)
+              (.state event)))))
+        (else => (lambda (o)
+                   (unless pressed
+                     (and-let* (((eq? o 2))
+                                (c (grabc))
+                                ((not (client-is-unmanaged? c))))
+                       (client-set-resizing! c #f))
+                     (wlr-xcursor-manager-set-cursor-image
+                      (gwwm-xcursor-manager)
+                      (config-cursor-normal-image (gwwm-config))
+                      cursor)
+                     (cursor-mode 0)
+                     (set! (current-monitor)
+                           (monitor-at (.x cursor) (.y cursor)))
+                     (setmon (grabc) (current-monitor) 0)))))))
 
+  (let ((cursor (gwwm-cursor (wlr-cursor-create))))
     (add-listen cursor 'axis
                 (lambda (listener data)
                   (let ((event (wrap-wlr-event-pointer-axis data)))
@@ -399,12 +438,7 @@ gwwm [options]
                       (wlr-cursor-warp-absolute cursor device x y)
                       (motionnotify time-msec))))
                 #:remove-when-destroy? #f)
-    (add-listen cursor 'button
-                (lambda (listener data)
-                  (let ((event (wrap-wlr-event-pointer-button data)))
-                    (idle-activity)
-                    (run-hook cursor-button-event-hook event)
-                    (buttonpress listener data)))
+    (add-listen cursor 'button (cursor/button cursor)
                 #:remove-when-destroy? #f)))
 
 (define (seat-setup display)
