@@ -956,27 +956,6 @@ SCM_DEFINE (gwwm_motionnotify, "%motionnotify" , 1,0,0,
 	struct wlr_drag_icon *icon;
     struct wlr_cursor *cursor=gwwm_cursor(NULL);
 
-	if (scm_to_int(REF_CALL_0("gwwm","cursor-mode")) == CurMove) {
-
-		/* Move the grabbed client to the new position. */
-		resize((UNWRAP_CLIENT(REF_CALL_0("gwwm", "grabc"))), (struct wlr_box){
-            .x = cursor->x - (scm_to_int(REF_CALL_0("gwwm", "grabcx"))),
-            .y = cursor->y - (scm_to_int(REF_CALL_0("gwwm", "grabcy"))),
-			.width = (client_geom((UNWRAP_CLIENT(REF_CALL_0("gwwm", "grabc")))))->width,
-            .height = (client_geom((UNWRAP_CLIENT(REF_CALL_0("gwwm", "grabc")))))->height
-          },
-          1);
-		return SCM_UNSPECIFIED;
-	} else if (scm_to_int(REF_CALL_0("gwwm","cursor-mode")) == CurResize) {
-      resize((UNWRAP_CLIENT(REF_CALL_0("gwwm", "grabc"))), (struct wlr_box){
-          .x = (client_geom((UNWRAP_CLIENT(REF_CALL_0("gwwm", "grabc")))))->x,
-          .y = (client_geom((UNWRAP_CLIENT(REF_CALL_0("gwwm", "grabc")))))->y,
-          .width = cursor->x - client_geom((UNWRAP_CLIENT(REF_CALL_0("gwwm", "grabc"))))->x,
-          .height = cursor->y - client_geom((UNWRAP_CLIENT(REF_CALL_0("gwwm", "grabc"))))->y
-        }, 1);
-		return SCM_UNSPECIFIED;
-	}
-
 	/* Find the client under the pointer and send the event along. */
 	xytonode(cursor->x, cursor->y, &surface, &c, NULL, &sx, &sy);
 

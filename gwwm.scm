@@ -330,7 +330,32 @@ gwwm [options]
   (when (gwwm-sloppyfocus?)
     (set! (current-monitor) (monitor-at (.x (gwwm-cursor)) (.y (gwwm-cursor)))))
   (run-hook motion-notify-hook time)
-  (%motionnotify time))
+  (let ((cursor (gwwm-cursor)))
+    (case (cursor-mode)
+      ((1) (client-resize
+            (grabc)
+            (make <wlr-box>
+              #:x (inexact->exact (round (- (.x cursor) (grabcx))))
+              #:y (inexact->exact (round (- (.y cursor) (grabcy))))
+              #:width (box-width (client-geom (grabc)))
+              #:height (box-height (client-geom (grabc))))
+            #t))
+      ((2) (client-resize
+            (grabc)
+            (make <wlr-box>
+              #:x (box-x (client-geom (grabc)))
+              #:y (box-y (client-geom (grabc)))
+              #:width
+              (inexact->exact
+               (round (- (.x cursor)
+                         (box-x (client-geom (grabc))))))
+              #:height
+              (inexact->exact
+               (round (- (.y cursor)
+                         (box-y (client-geom (grabc)))))))
+
+            #t))
+      (else (%motionnotify time)))))
 
 (define (idle-activity . _) (wlr-idle-notify-activity (gwwm-idle) (gwwm-seat)))
 
