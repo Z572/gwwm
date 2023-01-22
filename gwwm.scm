@@ -131,6 +131,8 @@
   (keymap-global-set (kbd (s f)) togglefullscreen)
   (keymap-global-set (kbd (s j)) (lambda () (focusstack 1)))
   (keymap-global-set (kbd (s k)) (lambda () (focusstack -1)))
+  (keymap-global-set (kbd (s bracketleft)) (lambda () (incmaster -1)))
+  (keymap-global-set (kbd (s bracketright)) (lambda () (incmaster 1)))
   (keymap-global-set (kbd (s e)) (lambda () (spawn "emacs")))
   (keymap-global-set (kbd (s mouse-left)) (lambda () (moveresize 'move)))
   (keymap-global-set (kbd (s mouse-middle)) togglefloating)
