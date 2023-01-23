@@ -69,27 +69,6 @@ client_is_x11(Client *c)
   return (scm_to_bool(REF_CALL_1("gwwm client","client-is-x11?", WRAP_CLIENT(c))));
 }
 
-Client *
-client_from_wlr_surface(struct wlr_surface *s)
-{
-	struct wlr_xdg_surface *surface;
-
-#ifdef XWAYLAND
-	struct wlr_xwayland_surface *xsurface;
-	if (s && wlr_surface_is_xwayland_surface(s)
-			&& (xsurface = wlr_xwayland_surface_from_wlr_surface(s)))
-		return UNWRAP_CLIENT(xsurface->data);
-#endif
-	if (s && wlr_surface_is_xdg_surface(s)
-			&& (surface = wlr_xdg_surface_from_wlr_surface(s))
-			&& surface->role == WLR_XDG_SURFACE_ROLE_TOPLEVEL)
-		return UNWRAP_CLIENT(surface->data);
-
-	if (s && wlr_surface_is_subsurface(s))
-		return client_from_wlr_surface(wlr_surface_get_root_surface(s));
-	return NULL;
-}
-
 void
 client_for_each_surface(Client *c, wlr_surface_iterator_func_t fn, void *data)
 {
@@ -282,8 +261,23 @@ toplevel_from_popup(struct wlr_xdg_popup *popup)
 	}
 }
 
-SCM_DEFINE_PUBLIC (gwwm_client_from_wlr_surface ,"client-from-wlr-surface" ,1,0,0,(SCM surface),""){
-  return WRAP_CLIENT(client_from_wlr_surface(UNWRAP_WLR_SURFACE(surface)));
+SCM_DEFINE_PUBLIC (gwwm_client_from_wlr_surface ,"client-from-wlr-surface" ,1,0,0,(SCM ss),"")
+{
+  struct wlr_surface *s=UNWRAP_WLR_SURFACE(ss);
+  struct wlr_xdg_surface *surface;
+  if (s) {
+  if (wlr_surface_is_xdg_surface(s)
+      && (surface = wlr_xdg_surface_from_wlr_surface(s))
+      && surface->role == WLR_XDG_SURFACE_ROLE_TOPLEVEL)
+    return surface->data;
+  struct wlr_xwayland_surface *xsurface;
+  if (wlr_surface_is_xwayland_surface(s)
+      && (xsurface = wlr_xwayland_surface_from_wlr_surface(s)))
+    return xsurface->data;
+  if (wlr_surface_is_subsurface(s))
+    return gwwm_client_from_wlr_surface(WRAP_WLR_SURFACE(wlr_surface_get_root_surface(s)));
+  }
+  return SCM_BOOL_F;
 }
 
 struct wlr_scene_rect *
