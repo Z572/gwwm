@@ -51,7 +51,6 @@
             client-get-parent
             client-is-x11?
             client-is-unmanaged?
-            client-type
             client-is-float-type?
             client-send-close
             client-set-tiled
@@ -150,8 +149,6 @@
 (define-class <gwwm-x-client> (<gwwm-client>))
 (define-class <gwwm-xdg-client> (<gwwm-client>))
 
-(define-method (client-type (c <gwwm-base-client>))
-  (class-of c))
 (define-method (client-mapped? (c <gwwm-xdg-client>))
   (wlr-xdg-surface-mapped? (client-super-surface c)))
 (define-method (client-mapped? (c <gwwm-x-client>))
