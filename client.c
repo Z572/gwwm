@@ -90,16 +90,6 @@ client_from_wlr_surface(struct wlr_surface *s)
 	return NULL;
 }
 
-
-void client_for_each_alives(client_iterator_func_t fn){
-  SCM l=REF_CALL_0("gwwm client", "client-list");
-  int n=scm_to_int(scm_length(l));
-  for (int i=0;i < n; i++){
-    fn(UNWRAP_CLIENT(scm_list_ref(l, scm_from_int(i))));
-  }
-;
-}
-
 void
 client_for_each_surface(Client *c, wlr_surface_iterator_func_t fn, void *data)
 {
