@@ -98,7 +98,6 @@ void applyexclusive(struct wlr_box *usable_area, uint32_t anchor,
 void arrange(Monitor *m);
 SCM find_monitor(Monitor *m);
 Monitor *dirtomon(enum wlr_direction dir);
-void focusclient(Client *c, int lift);
 Client *focustop(Monitor *m);
 void maplayersurfacenotify(struct wl_listener *listener, void *data);
 void pointerfocus(Client *c, struct wlr_surface *surface, double sx, double sy,

@@ -215,6 +215,8 @@ gwwm [options]
 (define-public overlay-layer #f)
 (define-public no-focus-layer #f)
 
+(define-public (focusclient client lift)
+  (%focusclient client lift))
 (define (setmon c m newtag)
   (let ((old (client-monitor c))
         (surface (client-surface c)))

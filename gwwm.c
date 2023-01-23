@@ -500,7 +500,7 @@ SCM_DEFINE(arrange_interactive_layer,"arrange-interactive-layer",1,0,0,(SCM sm),
       if (lsurface->current.keyboard_interactive ==
           ZWLR_LAYER_SURFACE_V1_KEYBOARD_INTERACTIVITY_EXCLUSIVE) {
         /* Deactivate the focused client. */
-        focusclient(NULL, 0);
+        REF_CALL_2("gwwm","focusclient",SCM_BOOL_F, SCM_BOOL_F);
 
         exclusive_focus(WRAP_WLR_SURFACE(surface));
         client_notify_enter(exclusive_focus(NULL), wlr_seat_get_keyboard(gwwm_seat(NULL)));
@@ -716,22 +716,25 @@ SCM_DEFINE (gwwm_dirtomon ,"dirtomon" ,1,0,0,(SCM dir),"")
 }
 #undef  FUNC_NAME
 
-void
-focusclient(Client *c, int lift)
+SCM_DEFINE (gwwm_focusclient, "%focusclient" ,2,0,0,(SCM client,SCM slift),"")
+#define FUNC_NAME s_gwwm_focusclient
 {
+  GWWM_ASSERT_CLIENT_OR_FALSE(client ,1);
+  Client *c= UNWRAP_CLIENT(client);
+  bool lift=scm_to_bool(slift);
   PRINT_FUNCTION;
   struct wlr_surface *old = gwwm_seat(NULL)->keyboard_state.focused_surface;
   SCM sc=WRAP_CLIENT(c);
 	/* Do not focus clients if a layer surface is focused */
   if (exclusive_focus(NULL))
-		return;
+		return SCM_UNSPECIFIED;
 
 	/* Raise client in stacking order if requested */
 	if (c && lift)
 		wlr_scene_node_raise_to_top(CLIENT_SCENE(c));
 
     if (c && CLIENT_SURFACE(c) == old)
-		return;
+		return SCM_UNSPECIFIED;
 	/* Put the new client atop the focus stack and select its monitor */
     if (c && !(CLIENT_IS_LAYER_SHELL(sc))) {
       set_current_monitor(client_monitor(c,NULL));
@@ -756,7 +759,7 @@ focusclient(Client *c, int lift)
 						wlr_layer_surface->current.layer == ZWLR_LAYER_SHELL_V1_LAYER_TOP ||
 						wlr_layer_surface->current.layer == ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY
 						))
-				return;
+				return SCM_UNSPECIFIED;
 		} else {
           scm_call_2(REFP("gwwm", "client-activate-surface"), WRAP_WLR_SURFACE(old), scm_from_bool(0));
         }
@@ -764,7 +767,7 @@ focusclient(Client *c, int lift)
 	if (!c) {
 		/* With no client, all we have left is to clear focus */
 		wlr_seat_keyboard_notify_clear_focus(gwwm_seat(NULL));
-		return;
+		return SCM_UNSPECIFIED;
 	}
 
 	/* Have a client, so focus its top-level wlr_surface */
@@ -772,14 +775,6 @@ focusclient(Client *c, int lift)
 
     /* Activate the new client */
     scm_call_2(REFP("gwwm", "client-activate-surface"), WRAP_WLR_SURFACE(CLIENT_SURFACE(c)), scm_from_bool(1));
-}
-
-SCM_DEFINE (gwwm_focusclient, "focusclient" ,2,0,0,(SCM client,SCM lift),"")
-#define FUNC_NAME s_gwwm_focusclient
-{
-  GWWM_ASSERT_CLIENT_OR_FALSE(client ,1);
-  Client *c= UNWRAP_CLIENT(client);
-  focusclient(c, scm_to_bool(lift));
   return SCM_UNSPECIFIED;
 }
 #undef FUNC_NAME
@@ -793,7 +788,7 @@ SCM_DEFINE (gwwm_focusmon ,"focusmon",1,0,0,(SCM a),"" )
     do /* don't switch to disabled mons */
       set_current_monitor(dirtomon(scm_to_int(a)));
     while (!MONITOR_WLR_OUTPUT(current_monitor())->enabled && i++ < nmons);
-  focusclient(focustop(current_monitor()), 1);
+  REF_CALL_2("gwwm","focusclient",WRAP_CLIENT(focustop(current_monitor())), SCM_BOOL_T);
   return SCM_UNSPECIFIED;
 }
 #undef FUNC_NAME
@@ -930,7 +925,7 @@ pointerfocus(Client *c, struct wlr_surface *surface, double sx, double sy,
 	int internal_call = !time;
 
 	if (GWWM_SLOPPYFOCUS_P() && !internal_call && c && !client_is_unmanaged(c))
-		focusclient(c, 0);
+      REF_CALL_2("gwwm","focusclient",WRAP_CLIENT(c), SCM_BOOL_F);
 
 	/* If surface is NULL, clear pointer focus */
 	if (!surface) {
@@ -1045,7 +1040,7 @@ SCM_DEFINE (gwwm_toggleview, "toggleview",1,0,0,(SCM ui),""){
 
   if (newtagset) {
     (current_monitor())->tagset[(current_monitor())->seltags] = newtagset;
-    focusclient(focustop(current_monitor()), 1);
+    REF_CALL_2("gwwm","focusclient",WRAP_CLIENT(focustop(current_monitor())), SCM_BOOL_T);
     arrange(current_monitor());
   }
   return SCM_UNSPECIFIED;
@@ -1060,7 +1055,7 @@ SCM_DEFINE (gwwm_view, "view",1,0,0,(SCM ui),""){
   (current_monitor())->seltags ^= 1; /* toggle sel tagset */
   if (n & TAGMASK)
     (current_monitor())->tagset[(current_monitor())->seltags] = n & TAGMASK;
-  focusclient(focustop(current_monitor()), 1);
+  REF_CALL_2("gwwm","focusclient",WRAP_CLIENT(focustop(current_monitor())), SCM_BOOL_T);
   arrange(current_monitor());
   return SCM_UNSPECIFIED;
 }
