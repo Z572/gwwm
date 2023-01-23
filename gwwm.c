@@ -99,18 +99,16 @@ SCM get_gwwm_config(void) {
 
 struct wl_listener new_virtual_keyboard = {.notify = virtualkeyboard};
 
-bool visibleon(Client *c, Monitor *m) {
-  return ((m) && (client_monitor(c, NULL) == (m)) &&
-          (client_tags(c) & (m)->tagset[(m)->seltags]));
-}
-
-SCM_DEFINE_PUBLIC(gwwm_visibleon, "visibleon", 2, 0, 0, (SCM c, SCM m), "")
+SCM_DEFINE_PUBLIC(gwwm_visibleon, "visibleon", 2, 0, 0, (SCM sc, SCM sm), "")
 #define FUNC_NAME s_gwwm_visibleon
 {
-  GWWM_ASSERT_CLIENT_OR_FALSE(c ,1);
+  GWWM_ASSERT_CLIENT_OR_FALSE(sc ,1);
   PRINT_FUNCTION
-  Client *s =(UNWRAP_CLIENT(c));
-  bool a = (visibleon(s,(struct Monitor*)(UNWRAP_MONITOR(m))));
+  Client *c =(UNWRAP_CLIENT(sc));
+  Monitor *m=(UNWRAP_MONITOR(sm));
+  bool a = ((m)
+            && (client_monitor(c, NULL) == (m))
+            && (client_tags(c) & (m)->tagset[(m)->seltags]));
   return scm_from_bool(a);
 }
 #undef FUNC_NAME
