@@ -684,6 +684,7 @@ SCM_DEFINE (destroylayersurfacenotify,"destroy-layer-client-notify",3,0,0,(SCM c
   void *data=TO_P(sdata);
   Client *layersurface = UNWRAP_CLIENT(c);
   wl_list_remove(&layersurface->link);
+  logout_client(UNWRAP_CLIENT(c));
   return SCM_UNSPECIFIED;
 }
 

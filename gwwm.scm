@@ -722,7 +722,8 @@ gwwm [options]
     (setmon c #f 0)
     (q-remove! (%clients) c)
     (q-remove! (%fstack) c)
-    (wlr-scene-node-destroy (client-scene c))))
+    (wlr-scene-node-destroy (client-scene c))
+    (set! (client-scene c) #f)))
 
 (define (apply-rules c)
   (client-set-floating! c (client-is-float-type? c))
@@ -735,11 +736,6 @@ gwwm [options]
                    wrap-wlr-xwayland-surface
                    wrap-wlr-xdg-surface)
                data))
-    (when (client-is-x11? c)
-      (add-listen (.surface (client-super-surface c)) 'destroy
-                  (lambda (listener data)
-                    (destroy-surface-notify c listener data))
-                  #:remove-when-destroy? #f))
     (set! (client-scene c)
           (.node (wlr-scene-tree-create tile-layer)))
     (set! (client-scene-surface c)
@@ -949,7 +945,7 @@ gwwm [options]
        (add-listen (client-super-surface c) 'unmap (unmap-notify* c))
        (add-listen (client-super-surface c) 'map (map-notify* c)))
      (cond ((is-a? c <gwwm-xdg-client>)
-            (add-listen (client-surface c) 'destroy
+            (add-listen (client-super-surface c) 'destroy
                         (lambda (listener data)
                           (destroy-surface-notify c listener data))
                         #:remove-when-destroy? #f)
@@ -972,6 +968,10 @@ gwwm [options]
 
             )
            ((is-a? c <gwwm-x-client>)
+            (add-listen (client-super-surface c) 'destroy
+                        (lambda (listener data)
+                          (destroy-surface-notify c #f #f))
+                        #:remove-when-destroy? #f)
             (add-listen (client-super-surface c) 'set-class
                         (lambda (listener data)
                           (set! (client-appid c)
@@ -1003,10 +1003,6 @@ gwwm [options]
             (q-push! (%layer-clients) c)
             (add-listen (client-super-surface c) 'map
                         (map-layer-client-notify c))
-            (add-listen (client-surface c) 'destroy
-                        (lambda (listener data)
-                          (destroy-surface-notify c listener data))
-                        #:remove-when-destroy? #f)
             (add-listen (.surface (client-super-surface c)) 'commit
                         (lambda (listener data)
                           (and-let* ((m (client-monitor c)))
@@ -1020,7 +1016,6 @@ gwwm [options]
                         (lambda (listener data)
                           (q-remove! (%layer-clients) c)
                           (destroy-layer-client-notify c listener data)
-                          (wlr-scene-node-destroy (client-scene c))
                           (and=> (client-monitor c) arrangelayers))
                         #:remove-when-destroy? #f)
             (add-listen (client-super-surface c) 'unmap
