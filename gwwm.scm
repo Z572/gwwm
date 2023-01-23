@@ -235,6 +235,16 @@ gwwm [options]
         (arrange m))
       (focusclient (focustop (current-monitor)) #t))))
 
+(define (arrangelayers m)
+  (let* ((l (reverse (slot-ref m 'layers)))
+         (box (shallow-clone (monitor-area m))))
+    (for-each (cut arrangelayer m <> box #t) l)
+    (unless (equal? box (monitor-window-area m))
+      (set! (monitor-window-area m) (shallow-clone box))
+      (arrange m))
+    (for-each (cut arrangelayer m <> box #f) l)
+    (arrange-interactive-layer m)))
+
 (define (update-monitor m config)
   (let* ((output (monitor-wlr-output m))
          (config-head (wlr-output-configuration-head-v1-create config output))

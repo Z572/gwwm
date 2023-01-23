@@ -466,26 +466,33 @@ void arrange_l(Client *layersurface,Monitor *m, struct wlr_box *usable_area, int
   }
 }
 
-void
-arrangelayer(Monitor *m, struct wl_list *list, struct wlr_box *usable_area, int exclusive)
+SCM_DEFINE(arrangelayer,"arrangelayer",4,0,0,(SCM sm,SCM sl,SCM box,SCM exclusive),"")
 {
-  PRINT_FUNCTION
-	Client *layersurface;
+  Client *layersurface;
+  struct wl_list *list=(UNWRAP_WL_LIST(sl));
+  struct wlr_box *usable_area=(UNWRAP_WLR_BOX(box));
+  bool b=scm_to_bool(exclusive);
+  Monitor *m=(UNWRAP_MONITOR(sm));
+  wl_list_for_each(layersurface, list, link) {
+    arrange_l(layersurface, m, usable_area,b);
+  }
 
-	wl_list_for_each(layersurface, list, link) {
-      arrange_l(layersurface, m, usable_area,exclusive);
-    }
+  return SCM_UNSPECIFIED;
 }
 
-void arrange_interactive_layer(Monitor *m) {
+SCM_DEFINE(arrange_interactive_layer,"arrange-interactive-layer",1,0,0,(SCM sm),"")
+{
   Client *layersurface;
   uint32_t layers_above_shell[] = {
     ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY,
     ZWLR_LAYER_SHELL_V1_LAYER_TOP,
   };
   for (size_t i = 0; i < LENGTH(layers_above_shell); i++) {
-    wl_list_for_each_reverse(layersurface, (UNWRAP_WL_LIST(scm_list_ref(scm_slot_ref(WRAP_MONITOR(m), scm_from_utf8_symbol("layers")),
-                                                                        scm_from_size_t(layers_above_shell[i])))),
+    wl_list_for_each_reverse(layersurface,
+                             (UNWRAP_WL_LIST
+                              (scm_list_ref
+                               (scm_slot_ref(sm, scm_from_utf8_symbol("layers")),
+                                scm_from_size_t(layers_above_shell[i])))),
                              link) {
       struct wlr_surface *surface = CLIENT_SURFACE(layersurface);
       struct wlr_layer_surface_v1 *lsurface =
@@ -499,35 +506,11 @@ void arrange_interactive_layer(Monitor *m) {
 
         exclusive_focus(WRAP_WLR_SURFACE(surface));
         client_notify_enter(exclusive_focus(NULL), wlr_seat_get_keyboard(gwwm_seat(NULL)));
-        return;
+        return SCM_UNSPECIFIED;
       }
     }
   }
-}
-
-SCM_DEFINE(arrangelayers,"arrangelayers",1,0,0,(SCM sm),"")
-{
-  Monitor *m=UNWRAP_MONITOR(sm);
-  PRINT_FUNCTION
-	int i;
-	struct wlr_box usable_area = *MONITOR_AREA(m);
-
-	/* Arrange exclusive surfaces from top->bottom */
-	for (i = 3; i >= 0; i--)
-      arrangelayer(m, ((UNWRAP_WL_LIST(scm_list_ref(scm_slot_ref(WRAP_MONITOR(m), scm_from_utf8_symbol("layers")),scm_from_int(i))))), &usable_area, 1);
-
-	if (memcmp(&usable_area, MONITOR_WINDOW_AREA(m), sizeof(struct wlr_box))) {
-      (SET_MONITOR_WINDOW_AREA(m, &usable_area));
-		arrange(m);
-	}
-
-	/* Arrange non-exlusive surfaces from top->bottom */
-	for (i = 3; i >= 0; i--)
-		arrangelayer(m, ((UNWRAP_WL_LIST(scm_list_ref(scm_slot_ref(WRAP_MONITOR(m), scm_from_utf8_symbol("layers")),scm_from_int(i))))), &usable_area, 0);
-
-	/* Find topmost keyboard interactive layer, if such a layer exists */
-    arrange_interactive_layer(m);
-    return SCM_UNSPECIFIED;
+  return SCM_UNSPECIFIED;
 }
 
 Monitor *
@@ -632,7 +615,7 @@ SCM_DEFINE (createlayersurface,"create-layer-client",2,0,0,(SCM slistener ,SCM s
 	 */
 	old_state = wlr_layer_surface->current;
 	wlr_layer_surface->current = wlr_layer_surface->pending;
-	arrangelayers(WRAP_MONITOR(m));
+    scm_call_1(REFP("gwwm", "arrangelayers"),WRAP_MONITOR(m));
 	wlr_layer_surface->current = old_state;
 
     scm_c_run_hook(REF("gwwm hooks", "create-client-hook"),
