@@ -80,7 +80,6 @@
 /* configuration, allows nested code to access above variables */
 #include "config.h"
 typedef struct Monitor {
-  struct wl_list layers[4]; /* layer Client::link */
   unsigned int seltags;
   unsigned int tagset[2];
   SCM scm;
@@ -485,7 +484,8 @@ void arrange_interactive_layer(Monitor *m) {
     ZWLR_LAYER_SHELL_V1_LAYER_TOP,
   };
   for (size_t i = 0; i < LENGTH(layers_above_shell); i++) {
-    wl_list_for_each_reverse(layersurface, &m->layers[layers_above_shell[i]],
+    wl_list_for_each_reverse(layersurface, (UNWRAP_WL_LIST(scm_list_ref(scm_slot_ref(WRAP_MONITOR(m), scm_from_utf8_symbol("layers")),
+                                                                        scm_from_size_t(layers_above_shell[i])))),
                              link) {
       struct wlr_surface *surface = CLIENT_SURFACE(layersurface);
       struct wlr_layer_surface_v1 *lsurface =
@@ -514,7 +514,7 @@ SCM_DEFINE(arrangelayers,"arrangelayers",1,0,0,(SCM sm),"")
 
 	/* Arrange exclusive surfaces from top->bottom */
 	for (i = 3; i >= 0; i--)
-		arrangelayer(m, &m->layers[i], &usable_area, 1);
+      arrangelayer(m, ((UNWRAP_WL_LIST(scm_list_ref(scm_slot_ref(WRAP_MONITOR(m), scm_from_utf8_symbol("layers")),scm_from_int(i))))), &usable_area, 1);
 
 	if (memcmp(&usable_area, MONITOR_WINDOW_AREA(m), sizeof(struct wlr_box))) {
       (SET_MONITOR_WINDOW_AREA(m, &usable_area));
@@ -523,7 +523,7 @@ SCM_DEFINE(arrangelayers,"arrangelayers",1,0,0,(SCM sm),"")
 
 	/* Arrange non-exlusive surfaces from top->bottom */
 	for (i = 3; i >= 0; i--)
-		arrangelayer(m, &m->layers[i], &usable_area, 0);
+		arrangelayer(m, ((UNWRAP_WL_LIST(scm_list_ref(scm_slot_ref(WRAP_MONITOR(m), scm_from_utf8_symbol("layers")),scm_from_int(i))))), &usable_area, 0);
 
 	/* Find topmost keyboard interactive layer, if such a layer exists */
     arrange_interactive_layer(m);
@@ -593,7 +593,7 @@ SCM_DEFINE (commitlayersurfacenotify,"commit-layer-client-notify",3,0,0,
 		wlr_scene_node_reparent(CLIENT_SCENE(layersurface),
                                 return_scene_node(wlr_layer_surface->current.layer));
 		wl_list_remove(&layersurface->link);
-		wl_list_insert(&m->layers[wlr_layer_surface->current.layer],
+		wl_list_insert(((UNWRAP_WL_LIST(scm_list_ref(scm_slot_ref(WRAP_MONITOR(m), scm_from_utf8_symbol("layers")),scm_from_int(wlr_layer_surface->current.layer))))),
 				&layersurface->link);
 	}
     return SCM_UNSPECIFIED;
@@ -624,7 +624,7 @@ SCM_DEFINE (createlayersurface,"create-layer-client",2,0,0,(SCM slistener ,SCM s
                                    wlr_scene_subsurface_tree_create(return_scene_node(wlr_layer_surface->pending.layer),
 			wlr_layer_surface->surface)));
 	CLIENT_SCENE(layersurface)->data = WRAP_CLIENT(layersurface);
-	wl_list_insert(&m->layers[wlr_layer_surface->pending.layer],
+	wl_list_insert(((UNWRAP_WL_LIST(scm_list_ref(scm_slot_ref(WRAP_MONITOR(m), scm_from_utf8_symbol("layers")),scm_from_int(wlr_layer_surface->pending.layer))))),
 			&layersurface->link);
 
 	/* Temporarily set the layer's current state to pending
@@ -661,8 +661,6 @@ void
 init_monitor(struct wlr_output *wlr_output){
   const MonitorRule *r;
   Monitor *m = wlr_output->data;
-  for (size_t i = 0; i < LENGTH(m->layers); i++)
-		wl_list_init(&m->layers[i]);
 	m->tagset[0] = m->tagset[1] = 2;
 	for (r = monrules; r < END(monrules); r++) {
 		if (!r->name || strstr(wlr_output->name, r->name)) {

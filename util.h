@@ -36,7 +36,7 @@ void *ecalloc(size_t size);
 #define WRAP_WL_LISTENER(p)                                       \
   (REF_CALL_1("wayland listener", "wrap-wl-listener", FROM_P(p)))
 #define UNWRAP_WL_LIST(p)                                       \
-  (TO_P(REF_CALL_1("wayland list", "unwrap-wl-list", p)))
+  ((struct wl_list*)(TO_P(REF_CALL_1("wayland list", "unwrap-wl-list", p))))
 #define WRAP_WL_LIST(p)                                       \
   (REF_CALL_1("wayland list", "wrap-wl-list", FROM_P(p)))
 #define UNWRAP_WL_SIGNAL(p)                                       \

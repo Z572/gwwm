@@ -2,6 +2,7 @@
   #:use-module (srfi srfi-1)
   #:use-module (ice-9 q)
   #:use-module (oop goops)
+  #:use-module (wayland list)
   #:use-module (wlroots types output)
   #:use-module (wlroots types output-layout)
   #:autoload (system foreign) (pointer-address)
@@ -99,6 +100,12 @@
   (sellt #:init-value 0
          #:accessor monitor-sellt
          #:setter set-.monitor-sellt!)
+  (layers #:init-thunk
+          (lambda ()
+            (list (make-wl-list)
+                  (make-wl-list)
+                  (make-wl-list)
+                  (make-wl-list))))
   (nmaster #:init-value 1 #:accessor monitor-nmaster)
   (mfact #:init-value 1/2 #:accessor monitor-mfact)
   (un-map #:init-value #f))
