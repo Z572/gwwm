@@ -675,7 +675,10 @@ gwwm [options]
                   (unless (equal? c (current-client))
                     (set! (client-urgent? c) #t)))))
   (gwwm-layer-shell (wlr-layer-shell-v1-create (gwwm-display)))
-  (add-listen (gwwm-layer-shell) 'new-surface create-layer-client)
+  (add-listen (gwwm-layer-shell) 'new-surface
+              (lambda (listener data)
+                (let ((c (create-layer-client listener data)))
+                  (run-hook create-client-hook c))))
   (gwwm-idle (wlr-idle-create (gwwm-display)))
   (gwwm-output-layout (wlr-output-layout-create))
   (add-listen (gwwm-output-layout) 'change update-monitors)

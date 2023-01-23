@@ -617,10 +617,7 @@ SCM_DEFINE (createlayersurface,"create-layer-client",2,0,0,(SCM slistener ,SCM s
 	wlr_layer_surface->current = wlr_layer_surface->pending;
     scm_call_1(REFP("gwwm", "arrangelayers"),WRAP_MONITOR(m));
 	wlr_layer_surface->current = old_state;
-
-    scm_c_run_hook(REF("gwwm hooks", "create-client-hook"),
-                 scm_list_1(WRAP_CLIENT(layersurface)));
-    return SCM_UNSPECIFIED;
+    return WRAP_CLIENT(layersurface);
 }
 
 void
