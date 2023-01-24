@@ -151,7 +151,7 @@
 (define-class <gwwm-xdg-client> (<gwwm-client>))
 
 (define-method (client-mapped? (c <gwwm-xdg-client>))
-  (wlr-xdg-surface-mapped? (client-super-surface c)))
+  (.mapped (client-super-surface c)))
 (define-method (client-mapped? (c <gwwm-x-client>))
   (wlr-xwayland-surface-mapped? (client-super-surface c)))
 (define client-is-fullscreen? client-fullscreen?)
@@ -267,7 +267,7 @@
 (define-method (client-get-appid (c <gwwm-xdg-client>))
   (or (and=> (client-super-surface c)
              (lambda (o)
-               (wlr-xdg-toplevel-appid
+               (.app-id
                 (wlr-xdg-surface-toplevel
                  o))))
       "*unknow*"))
@@ -278,7 +278,7 @@
       "*unknow*"))
 
 (define-method (client-get-title (c <gwwm-xdg-client>))
-  (wlr-xdg-toplevel-title
+  (.title
    (wlr-xdg-surface-toplevel
     (client-super-surface c))))
 
