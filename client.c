@@ -86,19 +86,6 @@ client_get_appid(Client *c)
   return scm_to_utf8_string(REF_CALL_1("gwwm client", "client-get-appid",(WRAP_CLIENT(c))));
 }
 
-struct wlr_scene_node *
-client_scene_surface(Client *c, struct wlr_scene_node *surface) {
-  SCM s;
-  SCM scm_c= WRAP_CLIENT(c);
-  if (surface) {
-    s=WRAP_WLR_SCENE_NODE(surface);
-    scm_slot_set_x(scm_c,scm_from_utf8_symbol("scene-surface"),s);
-    return surface;
-  } else {
-    s=scm_slot_ref(scm_c,scm_from_utf8_symbol("scene-surface"));
-    return scm_is_false(s) ? NULL : UNWRAP_WLR_SCENE_NODE(s);
-}
-}
 int
 client_tags(Client *c) {
   return exp2(scm_to_int(scm_slot_ref(WRAP_CLIENT(c),scm_from_utf8_symbol("tags"))));
@@ -106,20 +93,6 @@ client_tags(Client *c) {
 void set_client_tags(Client *c,int tags) {
   scm_slot_set_x(WRAP_CLIENT(c), scm_from_utf8_symbol("tags"), scm_from_int(log2(tags)));
   /* c->tags=tags; */
-}
-
-struct wlr_box*
-client_get_geometry(Client *c)
-{
-  return UNWRAP_WLR_BOX (REF_CALL_1("gwwm client", "client-get-geometry", WRAP_CLIENT(c)));
-}
-
-struct wlr_box* client_geom(void *c)
-{
-  /* PRINT_FUNCTION; */
-  SCM sc=WRAP_CLIENT(c);
-  SCM sbox=scm_slot_ref(sc,scm_from_utf8_symbol("geom"));
-  return scm_is_false(sbox) ? NULL : UNWRAP_WLR_BOX(sbox);
 }
 
 void set_client_geom(Client *c , struct wlr_box* box)
@@ -130,17 +103,6 @@ void set_client_geom(Client *c , struct wlr_box* box)
                           (box) ? SHALLOW_CLONE(WRAP_WLR_BOX(box)) : SCM_BOOL_F);
 }
 
-
-uint32_t client_resize_configure_serial(Client *c)
-{
-  return scm_to_uint32(scm_slot_ref(WRAP_CLIENT(c),scm_from_utf8_symbol("resize-configure-serial")));
-}
-
-void client_set_resize_configure_serial(Client *c, uint32_t i)
-{
-  scm_slot_set_x(WRAP_CLIENT(c),
-                          scm_from_utf8_symbol("resize-configure-serial"),scm_from_uint32(i));
-}
 
 const char *
 client_get_title(Client *c)
@@ -216,49 +178,27 @@ client_surface_at(Client *c, double cx, double cy, double *sx, double *sy)
 	return wlr_xdg_surface_surface_at(wlr_xdg_surface_from_wlr_surface(CLIENT_SURFACE(c)), cx, cy, sx, sy);
 }
 
-void
-client_restack_surface(Client *c)
-{
-#ifdef XWAYLAND
-	if (client_is_x11(c))
-		wlr_xwayland_surface_restack(wlr_xwayland_surface_from_wlr_surface(CLIENT_SURFACE(c)), NULL,
-				XCB_STACK_MODE_ABOVE);
-#endif
-	return;
-}
-void
-client_set_resizing(Client *c,bool resizing)
-{
-  REF_CALL_2("gwwm client","client-set-resizing!" ,WRAP_CLIENT(c), scm_from_bool(resizing));
-}
+SCM_DEFINE_PUBLIC(gwwm_client_from_popup,"client-from-popup",1,0,0,(SCM spopup),"" ){
+  struct wlr_xdg_popup *popup=UNWRAP_WLR_XDG_POPUP(spopup);
+  struct wlr_xdg_surface *surface = popup->base;
 
-SCM_DEFINE_PUBLIC(gwwm_client_from_popup,"client-from-popup",1,0,0,(SCM popup),"" ){
-  Client *c=toplevel_from_popup(UNWRAP_WLR_XDG_POPUP(popup));
-  return c? WRAP_CLIENT(c): SCM_BOOL_F;
-}
+  while (true) {
+    switch (surface->role) {
+    case WLR_XDG_SURFACE_ROLE_POPUP:
+      if (wlr_surface_is_layer_surface(surface->popup->parent))
+        return (wlr_layer_surface_v1_from_wlr_surface(surface->popup->parent)->data);
+      else if (!wlr_surface_is_xdg_surface(surface->popup->parent))
+        return NULL;
 
-
-Client *
-toplevel_from_popup(struct wlr_xdg_popup *popup)
-{
-	struct wlr_xdg_surface *surface = popup->base;
-
-	while (1) {
-		switch (surface->role) {
-		case WLR_XDG_SURFACE_ROLE_POPUP:
-			if (wlr_surface_is_layer_surface(surface->popup->parent))
-				return UNWRAP_CLIENT(wlr_layer_surface_v1_from_wlr_surface(surface->popup->parent)->data);
-			else if (!wlr_surface_is_xdg_surface(surface->popup->parent))
-				return NULL;
-
-			surface = wlr_xdg_surface_from_wlr_surface(surface->popup->parent);
-			break;
-		case WLR_XDG_SURFACE_ROLE_TOPLEVEL:
-				return UNWRAP_CLIENT(surface->data);
-		case WLR_XDG_SURFACE_ROLE_NONE:
-			return NULL;
-		}
-	}
+      surface = wlr_xdg_surface_from_wlr_surface(surface->popup->parent);
+      break;
+    case WLR_XDG_SURFACE_ROLE_TOPLEVEL:
+      return (surface->data);
+    case WLR_XDG_SURFACE_ROLE_NONE:
+      return SCM_BOOL_F;
+    }
+  }
+  return SCM_BOOL_F;
 }
 
 SCM_DEFINE_PUBLIC (gwwm_client_from_wlr_surface ,"client-from-wlr-surface" ,1,0,0,(SCM ss),"")
@@ -278,21 +218,6 @@ SCM_DEFINE_PUBLIC (gwwm_client_from_wlr_surface ,"client-from-wlr-surface" ,1,0,
     return gwwm_client_from_wlr_surface(WRAP_WLR_SURFACE(wlr_surface_get_root_surface(s)));
   }
   return SCM_BOOL_F;
-}
-
-struct wlr_scene_rect *
-client_fullscreen_bg(void *c , struct wlr_scene_rect *change) {
-  PRINT_FUNCTION;
-  SCM o;
-  SCM sc=WRAP_CLIENT(c);
-  if (change) {
-    o=WRAP_WLR_SCENE_RECT(change);
-    scm_slot_set_x(sc,scm_from_utf8_symbol("fullscreen-bg"),o);
-    return change;
-  } else {
-    o=scm_slot_ref(sc, scm_from_utf8_symbol("fullscreen-bg"));
-    return scm_is_false(o)? NULL : UNWRAP_WLR_SCENE_RECT(o);
-  }
 }
 
 SCM_DEFINE_PUBLIC (gwwm_client_from_list,"gwwm-client-from-link",1,0,0,(SCM slink),""){

@@ -92,33 +92,24 @@ typedef struct Client {
 
 Client *unwrap_client_1(SCM o);
 SCM find_client(Client *c);
-void client_set_resize_configure_serial(Client *c, uint32_t i);
-uint32_t client_resize_configure_serial(Client *c);
 void register_client(Client *c, enum gwwm_client_type type);
 void logout_client(Client *c);
 struct wlr_scene_rect *client_border_n(Client *c, int n);
-struct wlr_scene_rect *client_fullscreen_bg(void *c,
-                                            struct wlr_scene_rect *change);
 bool client_is_x11(Client *c);
 void client_for_each_surface(Client *c, wlr_surface_iterator_func_t fn,
                              void *data);
 const char *client_get_appid(Client *c);
-struct wlr_box *client_get_geometry(Client *c);
 const char *client_get_title(Client *c);
 bool client_is_float_type(Client *c);
 bool client_is_unmanaged(Client *c);
 void client_notify_enter(struct wlr_surface *s, struct wlr_keyboard *kb);
 struct wlr_surface *client_surface_at(Client *c, double cx, double cy,
                                       double *sx, double *sy);
-void client_restack_surface(Client *c);
 void *client_from_listener(struct wl_listener *listener);
 void client_add_listen(void *c ,struct wl_signal *signal, wl_notify_func_t func);
 int client_tags(Client *c);
 void set_client_tags(Client *c,int tags);
-void client_set_resizing(Client *c, bool resizing);
-Client* toplevel_from_popup(struct wlr_xdg_popup *popup);
-struct wlr_box* client_geom(void *c);
+
 void set_client_geom(Client *c , struct wlr_box* box);
-struct wlr_scene_node *client_scene_surface(Client *c, struct wlr_scene_node *surface);
 
 #endif
