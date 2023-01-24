@@ -2,6 +2,7 @@
  * See LICENSE file for copyright and license details.
  */
 #include "libguile/boolean.h"
+#include "libguile/eq.h"
 #include "libguile/eval.h"
 #include "libguile/foreign.h"
 #include "libguile/gc.h"
@@ -104,11 +105,13 @@ SCM_DEFINE_PUBLIC(gwwm_visibleon, "visibleon", 2, 0, 0, (SCM sc, SCM sm), "")
 {
   GWWM_ASSERT_CLIENT_OR_FALSE(sc ,1);
   PRINT_FUNCTION
-  Client *c =(UNWRAP_CLIENT(sc));
-  Monitor *m=(UNWRAP_MONITOR(sm));
-  bool a = ((m)
-            && (client_monitor(c, NULL) == (m))
-            && (client_tags(c) & (m)->tagset[(m)->seltags]));
+  bool a = (scm_is_true(sm)
+            && SCM_EQ_P(REF_CALL_1("gwwm client", "client-monitor", sc), sm)
+            && (((int)exp2(scm_to_int(scm_slot_ref(sc,scm_from_utf8_symbol("tags")))))
+
+                & scm_to_int(scm_list_ref(scm_call_1(REFP("gwwm","%monitor-tagset"),sm),
+                                          scm_call_1(REFP("gwwm","%monitor-seltags"),sm)))));
+
   return scm_from_bool(a);
 }
 #undef FUNC_NAME
