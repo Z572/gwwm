@@ -77,6 +77,7 @@
             client-resize-configure-serial
             client-init-border
             client-set-border-color
+            client-restack-surface
             %fstack
             %clients
             %layer-clients
@@ -378,6 +379,11 @@
   (wlr-xdg-toplevel-set-tiled
    (client-super-surface c)
    edges))
+
+(define-method (client-restack-surface c)
+  *unspecified*)
+(define-method (client-restack-surface (c <gwwm-x-client>))
+  (wlr-xwayland-surface-restack (client-super-surface c) #f 0))
 
 (define-method (client-set-tiled (c <gwwm-x-client>) edges)
   *unspecified*)

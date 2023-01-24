@@ -716,69 +716,6 @@ SCM_DEFINE (gwwm_dirtomon ,"dirtomon" ,1,0,0,(SCM dir),"")
 }
 #undef  FUNC_NAME
 
-SCM_DEFINE (gwwm_focusclient, "%focusclient" ,2,0,0,(SCM client,SCM slift),"")
-#define FUNC_NAME s_gwwm_focusclient
-{
-  GWWM_ASSERT_CLIENT_OR_FALSE(client ,1);
-  Client *c= UNWRAP_CLIENT(client);
-  bool lift=scm_to_bool(slift);
-  PRINT_FUNCTION;
-  struct wlr_surface *old = gwwm_seat(NULL)->keyboard_state.focused_surface;
-  SCM sc=WRAP_CLIENT(c);
-	/* Do not focus clients if a layer surface is focused */
-  if (exclusive_focus(NULL))
-		return SCM_UNSPECIFIED;
-
-	/* Raise client in stacking order if requested */
-	if (c && lift)
-		wlr_scene_node_raise_to_top(CLIENT_SCENE(c));
-
-    if (c && CLIENT_SURFACE(c) == old)
-		return SCM_UNSPECIFIED;
-	/* Put the new client atop the focus stack and select its monitor */
-    if (c && !(CLIENT_IS_LAYER_SHELL(sc))) {
-      set_current_monitor(client_monitor(c,NULL));
-        CLIENT_SET_URGENT(c ,0);
-		client_restack_surface(c);
-
-
-	}
-
-	/* Deactivate old client if focus is changing */
-	if (old && (!c || CLIENT_SURFACE(c) != old)) {
-		/* If an overlay is focused, don't focus or activate the client,
-		 * but only update its position in fstack to render its border with focuscolor
-		 * and focus it after the overlay is closed.
-		 * It's probably pointless to check if old is a layer surface
-		 * since it can't be anything else at this point. */
-		if (wlr_surface_is_layer_surface(old)) {
-			struct wlr_layer_surface_v1 *wlr_layer_surface =
-				wlr_layer_surface_v1_from_wlr_surface(old);
-
-			if (wlr_layer_surface->mapped && (
-						wlr_layer_surface->current.layer == ZWLR_LAYER_SHELL_V1_LAYER_TOP ||
-						wlr_layer_surface->current.layer == ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY
-						))
-				return SCM_UNSPECIFIED;
-		} else {
-          scm_call_2(REFP("gwwm", "client-activate-surface"), WRAP_WLR_SURFACE(old), scm_from_bool(0));
-        }
-	}
-	if (!c) {
-		/* With no client, all we have left is to clear focus */
-		wlr_seat_keyboard_notify_clear_focus(gwwm_seat(NULL));
-		return SCM_UNSPECIFIED;
-	}
-
-	/* Have a client, so focus its top-level wlr_surface */
-	client_notify_enter(CLIENT_SURFACE(c), wlr_seat_get_keyboard(gwwm_seat(NULL)));
-
-    /* Activate the new client */
-    scm_call_2(REFP("gwwm", "client-activate-surface"), WRAP_WLR_SURFACE(CLIENT_SURFACE(c)), scm_from_bool(1));
-  return SCM_UNSPECIFIED;
-}
-#undef FUNC_NAME
-
 SCM_DEFINE (gwwm_focusmon ,"focusmon",1,0,0,(SCM a),"" )
 #define FUNC_NAME s_gwwm_focusmon
 {

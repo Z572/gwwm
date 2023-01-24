@@ -215,8 +215,40 @@ gwwm [options]
 (define-public overlay-layer #f)
 (define-public no-focus-layer #f)
 
-(define-public (focusclient client lift)
-  (%focusclient client lift))
+(define (surface-notify-enter s kb)
+  (wlr-seat-keyboard-notify-enter
+   (gwwm-seat)
+   s
+   (and kb (.keycodes kb) )
+   (if kb (.num-keycodes kb) 0)
+   (and kb(.modifiers kb))))
+
+(define-public (focusclient c lift)
+  (let/ec return
+    (unless (exclusive-focus)
+      (when (and c lift)
+        (wlr-scene-node-raise-to-top (client-scene c)))
+      (let ((old (~ (gwwm-seat) 'keyboard-state 'focused-surface)))
+        (unless (and c (equal? (client-surface c) old))
+          ;; is difference
+          (when (is-a? c <gwwm-client>)
+            (set! (current-monitor) (client-monitor c))
+            (set! (client-urgent? c) 0)
+            (client-restack-surface c))
+
+          (when (and old (or (not c) (not (equal? (client-surface c) old))))
+            (if (wlr-surface-is-layer-surface old)
+                (let ((l (wlr-layer-surface-v1-from-wlr-surface old)))
+                  (if (and (.mapped l)
+                           (member (~ l 'current 'layer) '(2 3)))
+                      (return)))
+                (client-activate-surface old #f)))
+          (if c
+              (begin (surface-notify-enter (client-surface c)
+                                           (wlr-seat-get-keyboard (gwwm-seat)))
+                     (client-activate-surface (client-surface c) #t ))
+              (wlr-seat-keyboard-notify-clear-focus (gwwm-seat))))))))
+
 (define (setmon c m newtag)
   (let ((old (client-monitor c))
         (surface (client-surface c)))
