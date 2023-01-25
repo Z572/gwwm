@@ -404,9 +404,10 @@ arrange(Monitor *m)
   REF_CALL_1("gwwm commands","arrange",(WRAP_MONITOR(m)));
 }
 
-void arrange_l(Client *layersurface,Monitor *m, struct wlr_box *usable_area, int exclusive) {
+void arrange_l(Client *layersurface,SCM m, struct wlr_box *usable_area, int exclusive) {
 
-  struct wlr_box *full_area = MONITOR_AREA(m);
+  struct wlr_box *full_area = ((struct wlr_box *)(UNWRAP_WLR_BOX(
+      REF_CALL_1("gwwm monitor", "monitor-area", m))));
   struct wlr_layer_surface_v1 *wlr_layer_surface =
       wlr_layer_surface_v1_from_wlr_surface(CLIENT_SURFACE(layersurface));
   struct wlr_layer_surface_v1_state *state = &wlr_layer_surface->current;
@@ -482,9 +483,8 @@ SCM_DEFINE(arrangelayer,"arrangelayer",4,0,0,(SCM sm,SCM sl,SCM box,SCM exclusiv
   struct wl_list *list=(UNWRAP_WL_LIST(sl));
   struct wlr_box *usable_area=(UNWRAP_WLR_BOX(box));
   bool b=scm_to_bool(exclusive);
-  Monitor *m=(UNWRAP_MONITOR(sm));
   wl_list_for_each(layersurface, list, link) {
-    arrange_l(layersurface, m, usable_area,b);
+    arrange_l(layersurface, sm, usable_area,b);
   }
 
   return SCM_UNSPECIFIED;
