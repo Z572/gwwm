@@ -990,7 +990,7 @@ SCM_DEFINE (gwwm_toggleview, "toggleview",1,0,0,(SCM ui),""){
   if (newtagset) {
     (current_monitor())->tagset[(current_monitor())->seltags] = newtagset;
     REF_CALL_2("gwwm","focusclient",WRAP_CLIENT(focustop(current_monitor())), SCM_BOOL_T);
-    arrange(current_monitor());
+    REF_CALL_1("gwwm commands","arrange",(WRAP_MONITOR(current_monitor())));
   }
   return SCM_UNSPECIFIED;
 }
@@ -1005,7 +1005,7 @@ SCM_DEFINE (gwwm_view, "view",1,0,0,(SCM ui),""){
   if (n & TAGMASK)
     (current_monitor())->tagset[(current_monitor())->seltags] = n & TAGMASK;
   REF_CALL_2("gwwm","focusclient",WRAP_CLIENT(focustop(current_monitor())), SCM_BOOL_T);
-  arrange(current_monitor());
+  REF_CALL_1("gwwm commands","arrange",(WRAP_MONITOR(current_monitor())));
   return SCM_UNSPECIFIED;
 }
 
