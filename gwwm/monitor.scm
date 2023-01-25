@@ -130,7 +130,7 @@
          wlr-output->monitor))
 
 (define (dirtomon dir)
-  (define p (compose pointer->scm .data))
+  (define p wlr-output->monitor)
   (let* ((m (current-monitor))
          (area (monitor-area m)))
     (or
@@ -149,7 +149,7 @@
              (monitor-wlr-output m)
              (box-x area)
              (box-y area))
-            pointer->scm)
+            p)
      m)))
 
 (define-method (equal? (o1 <gwwm-monitor>)
