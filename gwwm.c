@@ -80,10 +80,6 @@
 #include "client.h"
 /* configuration, allows nested code to access above variables */
 #include "config.h"
-typedef struct Monitor {
-  /* unsigned int tagset[2]; */
-  SCM scm;
-} Monitor;
 
 const char broken[] = "broken";
 struct wlr_virtual_keyboard_manager_v1 *virtual_keyboard_mgr;
@@ -262,24 +258,6 @@ SCM_DEFINE (gwwm_c_config, "gwwm-config",0, 0,0,
 }
 #undef FUNC_NAME
 
-/* compile-time check if all tags fit into an unsigned int bit array. */
-struct NumTags { char limitexceeded[LENGTH(tags) > 31 ? -1 : 1]; };
-
-/* function implementations */
-Monitor *
-current_monitor(){
-  PRINT_FUNCTION
-  SCM o=(REF_CALL_0("gwwm monitor", "current-monitor"));
-  return scm_is_false(o) ? NULL: UNWRAP_MONITOR(o);
-/* _current_monitor; */
-}
-void
-set_current_monitor(Monitor *m){
-  PRINT_FUNCTION
-  /* _current_monitor=m; */
-  scm_call_1(REFP("gwwm monitor","set-current-monitor"),WRAP_MONITOR(m));
-}
-
 void
 applyexclusive(struct wlr_box *usable_area,
 		uint32_t anchor, int32_t exclusive,
@@ -379,12 +357,6 @@ SCM_DEFINE (applyrules ,"%applyrules" ,1,0,0,(SCM sc),"")
              scm_from_unsigned_integer(newtags));
 
   return SCM_UNSPECIFIED;
-}
-
-void
-arrange(Monitor *m)
-{
-  REF_CALL_1("gwwm commands","arrange",(WRAP_MONITOR(m)));
 }
 
 void arrange_l(Client *layersurface,SCM m, struct wlr_box *usable_area, int exclusive) {
@@ -506,33 +478,6 @@ SCM_DEFINE(arrange_interactive_layer,"arrange-interactive-layer",1,0,0,(SCM sm),
   return SCM_UNSPECIFIED;
 }
 
-Monitor *
-client_monitor(void *c ,Monitor *change) {
-  /* PRINT_FUNCTION; */
-  SCM m;
-  SCM sc=WRAP_CLIENT(c);
-  if (change) {
-    m=WRAP_MONITOR(change);
-    scm_slot_set_x(sc,scm_from_utf8_symbol("monitor"),m);
-    return change;
-  } else {
-    m=REF_CALL_1("gwwm client", "client-monitor", sc);
-    return scm_is_false(m)? NULL : UNWRAP_MONITOR(m);
-  }
-}
-
-struct wlr_scene_output*
-monitor_scene_output(Monitor *m, struct wlr_scene_output *o){
-  SCM sm=WRAP_MONITOR(m);
-  SCM s=scm_from_utf8_symbol("scene-output");
-  if (o) {
-    scm_slot_set_x(sm,s,WRAP_WLR_SCENE_OUTPUT(o));
-    return o;
-  } else {
-    return UNWRAP_WLR_SCENE_OUTPUT(scm_slot_ref(sm, s));
-  }
-}
-
 SCM_DEFINE (gwwm_cleanup, "%gwwm-cleanup",0,0,0, () ,"")
 #define D(funcname,args , ...) (funcname(args ,##__VA_ARGS__));; send_log(DEBUG,#funcname " done");
 {
@@ -556,84 +501,76 @@ SCM_DEFINE (gwwm_cleanup, "%gwwm-cleanup",0,0,0, () ,"")
 }
 #undef D
 
-SCM_DEFINE (commitlayersurfacenotify,"commit-layer-client-notify",3,0,0,
-            (SCM c,SCM slistener ,SCM sdata),"")
-{
+SCM_DEFINE(commitlayersurfacenotify, "commit-layer-client-notify", 3, 0, 0,
+           (SCM c, SCM slistener, SCM sdata), "") {
   PRINT_FUNCTION;
-  struct wl_listener *listener=UNWRAP_WL_LISTENER(slistener);
-  void *data=TO_P(sdata);
+  struct wl_listener *listener = UNWRAP_WL_LISTENER(slistener);
+  void *data = TO_P(sdata);
   Client *layersurface = UNWRAP_CLIENT(c);
-	struct wlr_layer_surface_v1 *wlr_layer_surface = wlr_layer_surface_v1_from_wlr_surface(CLIENT_SURFACE(layersurface));
-    Monitor *m=client_monitor(layersurface,NULL);
-	if (return_scene_node(wlr_layer_surface->current.layer) != CLIENT_SCENE(layersurface)) {
-		wlr_scene_node_reparent(CLIENT_SCENE(layersurface),
-                                return_scene_node(wlr_layer_surface->current.layer));
-		wl_list_remove(&layersurface->link);
-		wl_list_insert(((UNWRAP_WL_LIST(scm_list_ref(scm_slot_ref(WRAP_MONITOR(m), scm_from_utf8_symbol("layers")),scm_from_int(wlr_layer_surface->current.layer))))),
-				&layersurface->link);
-	}
-    return SCM_UNSPECIFIED;
+  struct wlr_layer_surface_v1 *wlr_layer_surface =
+      wlr_layer_surface_v1_from_wlr_surface(CLIENT_SURFACE(layersurface));
+  SCM m = REF_CALL_1("gwwm client", "client-monitor", c);
+  if (return_scene_node(wlr_layer_surface->current.layer) !=
+      CLIENT_SCENE(layersurface)) {
+    wlr_scene_node_reparent(
+        CLIENT_SCENE(layersurface),
+        return_scene_node(wlr_layer_surface->current.layer));
+    wl_list_remove(&layersurface->link);
+    wl_list_insert(((UNWRAP_WL_LIST(scm_list_ref(
+                       scm_slot_ref(m, scm_from_utf8_symbol("layers")),
+                       scm_from_int(wlr_layer_surface->current.layer))))),
+                   &layersurface->link);
+  }
+  return SCM_UNSPECIFIED;
 }
 
-SCM_DEFINE (createlayersurface,"create-layer-client",2,0,0,(SCM slistener ,SCM sdata),"")
-{
+SCM_DEFINE(createlayersurface, "create-layer-client", 2, 0, 0,
+           (SCM slistener, SCM sdata), "") {
   PRINT_FUNCTION;
-  struct wl_listener *listener=UNWRAP_WL_LISTENER(slistener);
-  void *data=TO_P(sdata);
-	struct wlr_layer_surface_v1 *wlr_layer_surface = data;
-	Client *layersurface;
-	struct wlr_layer_surface_v1_state old_state;
-	if (!wlr_layer_surface->output) {
-      wlr_layer_surface->output = MONITOR_WLR_OUTPUT(current_monitor());
-	}
-	layersurface = scm_gc_calloc(sizeof(Client),"layer-client");
+  struct wl_listener *listener = UNWRAP_WL_LISTENER(slistener);
+  void *data = TO_P(sdata);
+  struct wlr_layer_surface_v1 *wlr_layer_surface = data;
+  Client *layersurface;
+  struct wlr_layer_surface_v1_state old_state;
+  if (!wlr_layer_surface->output) {
+    wlr_layer_surface->output = ((struct wlr_output *)(UNWRAP_WLR_OUTPUT(
+        scm_call_1(REFP("gwwm monitor", "monitor-wlr-output"),
+                   (REF_CALL_0("gwwm monitor", "current-monitor"))))));
+  }
+  layersurface = scm_gc_calloc(sizeof(Client), "layer-client");
 
-    register_client(layersurface,GWWM_LAYER_CLIENT_TYPE);
-    scm_slot_set_x(WRAP_CLIENT(layersurface),
-                   scm_from_utf8_symbol("super-surface"),
-                   WRAP_WLR_LAYER_SURFACE(wlr_layer_surface));
-    Monitor *m=wlr_layer_surface->output->data;
-    client_monitor(layersurface,m);
-	wlr_layer_surface->data = WRAP_CLIENT(layersurface);
+  register_client(layersurface, GWWM_LAYER_CLIENT_TYPE);
+  scm_slot_set_x(WRAP_CLIENT(layersurface),
+                 scm_from_utf8_symbol("super-surface"),
+                 WRAP_WLR_LAYER_SURFACE(wlr_layer_surface));
+  SCM m = wlr_layer_surface->output->data;
+  scm_slot_set_x(WRAP_CLIENT(layersurface), scm_from_utf8_symbol("monitor"), m);
+  wlr_layer_surface->data = WRAP_CLIENT(layersurface);
 
-	CLIENT_SET_SCENE(layersurface,(wlr_layer_surface->surface->data =
-                                   wlr_scene_subsurface_tree_create(return_scene_node(wlr_layer_surface->pending.layer),
-			wlr_layer_surface->surface)));
-	CLIENT_SCENE(layersurface)->data = WRAP_CLIENT(layersurface);
-	wl_list_insert(((UNWRAP_WL_LIST(scm_list_ref(scm_slot_ref(WRAP_MONITOR(m), scm_from_utf8_symbol("layers")),scm_from_int(wlr_layer_surface->pending.layer))))),
-			&layersurface->link);
+  CLIENT_SET_SCENE(
+      layersurface,
+      (wlr_layer_surface->surface->data = wlr_scene_subsurface_tree_create(
+           return_scene_node(wlr_layer_surface->pending.layer),
+           wlr_layer_surface->surface)));
+  CLIENT_SCENE(layersurface)->data = WRAP_CLIENT(layersurface);
+  wl_list_insert(((UNWRAP_WL_LIST(scm_list_ref(
+                     scm_slot_ref(m, scm_from_utf8_symbol("layers")),
+                     scm_from_int(wlr_layer_surface->pending.layer))))),
+                 &layersurface->link);
 
-	/* Temporarily set the layer's current state to pending
-	 * so that we can easily arrange it
-	 */
-	old_state = wlr_layer_surface->current;
-	wlr_layer_surface->current = wlr_layer_surface->pending;
-    scm_call_1(REFP("gwwm", "arrangelayers"),WRAP_MONITOR(m));
-	wlr_layer_surface->current = old_state;
-    return WRAP_CLIENT(layersurface);
-}
-
-void
-register_monitor(Monitor *m) {
-  PRINT_FUNCTION;
-  SCM sm=(scm_call_3(REF("oop goops", "make"), REF("gwwm monitor", "<gwwm-monitor>"),
-                     scm_from_utf8_keyword("data"), scm_pointer_address(FROM_P(m))));
-  m->scm=sm;
-}
-
-SCM
-find_monitor(Monitor *m) {
-  return (m && m->scm) ? m->scm : SCM_BOOL_F;
-}
-
-void
-logout_monitor(SCM m){
+  /* Temporarily set the layer's current state to pending
+   * so that we can easily arrange it
+   */
+  old_state = wlr_layer_surface->current;
+  wlr_layer_surface->current = wlr_layer_surface->pending;
+  scm_call_1(REFP("gwwm", "arrangelayers"), m);
+  wlr_layer_surface->current = old_state;
+  return WRAP_CLIENT(layersurface);
 }
 
 void
 init_monitor(struct wlr_output *wlr_output){
   const MonitorRule *r;
-  Monitor *m = wlr_output->data;
 	for (r = monrules; r < END(monrules); r++) {
 		if (!r->name || strstr(wlr_output->name, r->name)) {
 			wlr_output_set_scale(wlr_output, r->scale);
@@ -654,10 +591,10 @@ SCM_DEFINE (createmon,"create-monitor",2,0,0,(SCM slistener ,SCM sdata),"")
   void *data=TO_P(sdata);
 	struct wlr_output *wlr_output = data;
 	const MonitorRule *r;
-	Monitor *m = wlr_output->data = scm_gc_calloc(sizeof(*m),"monitor");
-    register_monitor(m);
+    SCM sm=(scm_call_1(REF("oop goops", "make"), REF("gwwm monitor", "<gwwm-monitor>")));
+    wlr_output->data = sm;
     init_monitor(wlr_output);
-    return WRAP_MONITOR(m);
+    return sm;
 }
 
 SCM_DEFINE(createnotify,"create-notify",2,0,0,(SCM sl ,SCM d),"")
@@ -691,7 +628,11 @@ SCM_DEFINE (gwwm_focusmon ,"focusmon",1,0,0,(SCM a),"" )
     do /* don't switch to disabled mons */
       scm_call_1(REFP("gwwm monitor","set-current-monitor"),
                  REF_CALL_1("gwwm monitor" ,"dirtomon",a));
-    while (!MONITOR_WLR_OUTPUT(current_monitor())->enabled && i++ < nmons);
+    while (!((struct wlr_output *)
+                                   (UNWRAP_WLR_OUTPUT(scm_call_1
+                                                      (REFP("gwwm monitor", "monitor-wlr-output"),
+                                                       (REF_CALL_0("gwwm monitor", "current-monitor"))))))->enabled
+           && i++ < nmons);
   REF_CALL_2("gwwm","focusclient",
              REF_CALL_1("gwwm commands", "focustop",
                         (REF_CALL_0("gwwm monitor", "current-monitor"))),

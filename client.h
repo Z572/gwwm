@@ -83,7 +83,6 @@ enum gwwm_client_type {
 #define CLIENT_SET_BORDER_COLOR(c, color)                                      \
   scm_call_2(REFP("gwwm client", "client-set-border-color"), WRAP_CLIENT(c),   \
              color)
-typedef struct Monitor Monitor;
 typedef struct Client {
   /* Must keep these three elements in this order */
   struct wl_list link;

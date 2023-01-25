@@ -54,7 +54,6 @@
                          get-current-monitor
                          set-current-monitor))
 (define-class <gwwm-monitor> ()
-  (data #:init-keyword #:data #:accessor .data #:class <hidden-slot>)
   (name #:allocation #:virtual
         #:slot-ref (lambda (m) (.name (monitor-wlr-output m)))
         #:slot-set! (lambda _ #f)
@@ -129,10 +128,9 @@
   (and=> (wlr-output-layout-output-at
           ((@@ (gwwm) gwwm-output-layout)) x y)
          (lambda (o)
-           (let ((b (pointer-address
-                     (.data o))))
-             (find (lambda (m) (= (.data m) b))
-                   (monitor-list))))))
+           (let ((b (.data o)))
+             (pointer->scm b)))))
+
 (define (dirtomon dir)
   (define p (compose pointer->scm .data))
   (let* ((m (current-monitor))

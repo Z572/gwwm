@@ -24,7 +24,6 @@
 #define TAGMASK ((1 << LENGTH(tags)) - 1)
 #define LISTEN(E, L, H) wl_signal_add((E), ((L)->notify = (H), (L)))
 typedef struct Client Client;
-typedef struct Monitor Monitor;
 #ifdef XWAYLAND
 enum {
   NetWMWindowTypeDialog,
@@ -90,16 +89,9 @@ typedef struct {
 } Rule;
 
 /* function declarations */
-Monitor *current_monitor();
-Monitor *client_monitor(void *c, Monitor *change);
 void applyexclusive(struct wlr_box *usable_area, uint32_t anchor,
                     int32_t exclusive, int32_t margin_top, int32_t margin_right,
                     int32_t margin_bottom, int32_t margin_left);
-void arrange(Monitor *m);
-SCM find_monitor(Monitor *m);
-Monitor *dirtomon(enum wlr_direction dir);
-Client *focustop(Monitor *m);
-void maplayersurfacenotify(struct wl_listener *listener, void *data);
 void pointerfocus(Client *c, struct wlr_surface *surface, double sx, double sy,
                   uint32_t time);
 void quitsignal(int signo);
