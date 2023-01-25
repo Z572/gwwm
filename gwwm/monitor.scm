@@ -108,6 +108,7 @@
                   (make-wl-list))))
   (nmaster #:init-value 1 #:accessor monitor-nmaster)
   (mfact #:init-value 1/2 #:accessor monitor-mfact)
+  (seltags #:init-value 0)
   (un-map #:init-value #f))
 
 (define-method (write (o <gwwm-monitor>) port)

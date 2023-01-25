@@ -264,7 +264,7 @@ gwwm [options]
         (set! (client-tags c)
               (if (zero? newtag)
                   (list-ref (%monitor-tagset m)
-                            (%monitor-seltags m))
+                            (slot-ref m 'seltags))
                   newtag))
         (arrange m))
       (focusclient (focustop (current-monitor)) #t))))
