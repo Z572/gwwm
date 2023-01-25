@@ -1,11 +1,16 @@
 (define-module (gwwm monitor)
+  #:autoload (gwwm) (gwwm-output-layout)
   #:use-module (srfi srfi-1)
   #:use-module (ice-9 q)
   #:use-module (oop goops)
+  #:use-module (util572 box)
   #:use-module (wayland list)
+  #:use-module (wlroots types)
   #:use-module (wlroots types output)
   #:use-module (wlroots types output-layout)
+  #:use-module ((system foreign) #:select (pointer->scm))
   #:autoload (system foreign) (pointer-address)
+  #:use-module (bytestructure-class)
   #:export (current-monitor
             monitor-name
             monitor-description
@@ -27,6 +32,7 @@
             monitor-sellt
             monitor-nmaster
             monitor-mfact
+            dirtomon
             <gwwm-monitor>
             %monitors))
 
@@ -109,6 +115,7 @@
   (nmaster #:init-value 1 #:accessor monitor-nmaster)
   (mfact #:init-value 1/2 #:accessor monitor-mfact)
   (seltags #:init-value 0)
+  (tagset #:init-thunk (lambda () (list 1 1)))
   (un-map #:init-value #f))
 
 (define-method (write (o <gwwm-monitor>) port)
@@ -126,6 +133,29 @@
                      (.data o))))
              (find (lambda (m) (= (.data m) b))
                    (monitor-list))))))
+(define (dirtomon dir)
+  (define p (compose pointer->scm .data))
+  (let* ((m (current-monitor))
+         (area (monitor-area m)))
+    (or
+     (and=> (wlr-output-layout-adjacent-output
+             (gwwm-output-layout)
+             (bs:enum->integer %wlr-direction-enum dir)
+             (monitor-wlr-output m)
+             (box-x area)
+             (box-y area))
+            p)
+     (and=> (wlr-output-layout-farthest-output
+             (gwwm-output-layout)
+             (logxor (bs:enum->integer %wlr-direction-enum
+                                       dir) 12 ;; dir ^ (WLR_DIRECTION_LEFT|WLR_DIRECTION_RIGHT)
+                                       )
+             (monitor-wlr-output m)
+             (box-x area)
+             (box-y area))
+            pointer->scm)
+     m)))
+
 (define-method (equal? (o1 <gwwm-monitor>)
                        (o2 <gwwm-monitor>))
   (monitor=? o1 o2))

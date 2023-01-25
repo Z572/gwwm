@@ -81,7 +81,7 @@
 /* configuration, allows nested code to access above variables */
 #include "config.h"
 typedef struct Monitor {
-  unsigned int tagset[2];
+  /* unsigned int tagset[2]; */
   SCM scm;
 } Monitor;
 
@@ -98,25 +98,6 @@ SCM get_gwwm_config(void) {
 }
 
 struct wl_listener new_virtual_keyboard = {.notify = virtualkeyboard};
-
-SCM_DEFINE_PUBLIC(gwwm_visibleon, "visibleon", 2, 0, 0, (SCM sc, SCM sm), "")
-#define FUNC_NAME s_gwwm_visibleon
-{
-  GWWM_ASSERT_CLIENT_OR_FALSE(sc, 1);
-  PRINT_FUNCTION
-  bool a =
-      (scm_is_true(sm) &&
-       SCM_EQ_P(REF_CALL_1("gwwm client", "client-monitor", sc), sm) &&
-       (((int)exp2(scm_to_int(scm_slot_ref(sc, scm_from_utf8_symbol("tags")))))
-
-        & scm_to_int(scm_list_ref
-                     (scm_call_1(REFP("gwwm", "%monitor-tagset"), sm),
-                      scm_slot_ref(REF_CALL_0("gwwm monitor", "current-monitor"),
-                                   scm_from_utf8_symbol("seltags"))))));
-
-  return scm_from_bool(a);
-}
-#undef FUNC_NAME
 
 #define define_wlr_v(module ,v) struct wlr_ ##v * gwwm_##v          \
   (struct wlr_##v* var)                                             \
@@ -395,7 +376,7 @@ SCM_DEFINE (applyrules ,"%applyrules" ,1,0,0,(SCM sc),"")
   scm_call_3(REFP("gwwm", "setmon"),
              sc,
              sm,
-             scm_from_unsigned_integer(exp(newtags)));
+             scm_from_unsigned_integer(newtags));
 
   return SCM_UNSPECIFIED;
 }
@@ -653,7 +634,6 @@ void
 init_monitor(struct wlr_output *wlr_output){
   const MonitorRule *r;
   Monitor *m = wlr_output->data;
-	m->tagset[0] = m->tagset[1] = 2;
 	for (r = monrules; r < END(monrules); r++) {
 		if (!r->name || strstr(wlr_output->name, r->name)) {
 			wlr_output_set_scale(wlr_output, r->scale);
@@ -702,34 +682,6 @@ SCM_DEFINE (destroylayersurfacenotify,"destroy-layer-client-notify",3,0,0,(SCM c
   return SCM_UNSPECIFIED;
 }
 
-Monitor *
-dirtomon(enum wlr_direction dir)
-{
-  PRINT_FUNCTION
-	struct wlr_output *next;
-	if ((next = wlr_output_layout_adjacent_output
-         (gwwm_output_layout(NULL),
-          dir, MONITOR_WLR_OUTPUT(current_monitor()),
-          MONITOR_AREA((current_monitor()))->x,
-          MONITOR_AREA((current_monitor()))->y)))
-		return next->data;
-	if ((next = wlr_output_layout_farthest_output
-         (gwwm_output_layout(NULL),
-          dir ^ (WLR_DIRECTION_LEFT|WLR_DIRECTION_RIGHT),
-          MONITOR_WLR_OUTPUT(current_monitor()),
-          MONITOR_AREA((current_monitor()))->x,
-          MONITOR_AREA((current_monitor()))->y)))
-		return next->data;
-	return current_monitor();
-}
-
-SCM_DEFINE (gwwm_dirtomon ,"dirtomon" ,1,0,0,(SCM dir),"")
-  #define FUNC_NAME s_gwwm_dirtomon
-{
-  return WRAP_MONITOR(dirtomon(scm_to_int(dir)));
-}
-#undef  FUNC_NAME
-
 SCM_DEFINE (gwwm_focusmon ,"focusmon",1,0,0,(SCM a),"" )
 #define FUNC_NAME s_gwwm_focusmon
 {
@@ -737,7 +689,8 @@ SCM_DEFINE (gwwm_focusmon ,"focusmon",1,0,0,(SCM a),"" )
   int i = 0, nmons = scm_to_int(scm_length((REF_CALL_0("gwwm monitor", "monitor-list"))));
   if (nmons)
     do /* don't switch to disabled mons */
-      set_current_monitor(dirtomon(scm_to_int(a)));
+      scm_call_1(REFP("gwwm monitor","set-current-monitor"),
+                 REF_CALL_1("gwwm monitor" ,"dirtomon",a));
     while (!MONITOR_WLR_OUTPUT(current_monitor())->enabled && i++ < nmons);
   REF_CALL_2("gwwm","focusclient",
              REF_CALL_1("gwwm commands", "focustop",
@@ -955,48 +908,6 @@ sigchld(int unused)
 		die("can't install SIGCHLD handler:");
 }
 
-SCM_DEFINE(gwwm_toggleview, "toggleview", 1, 0, 0, (SCM ui), "") {
-  PRINT_FUNCTION;
-  unsigned int newtagset =
-    (current_monitor())
-    ->tagset[(scm_to_int(scm_slot_ref(REF_CALL_0("gwwm monitor", "current-monitor"),
-                                      scm_from_utf8_symbol("seltags"))))] ^
-    ((1 << (scm_to_int(ui))) & TAGMASK);
-
-  if (newtagset) {
-    (current_monitor())->tagset[(scm_to_int(scm_slot_ref(REF_CALL_0("gwwm monitor", "current-monitor"),
-                                                         scm_from_utf8_symbol("seltags"))))] = newtagset;
-    REF_CALL_2("gwwm", "focusclient",
-               REF_CALL_1("gwwm commands", "focustop",
-                          REF_CALL_0("gwwm monitor", "current-monitor")),
-               SCM_BOOL_T);
-    REF_CALL_1("gwwm commands", "arrange", REF_CALL_0("gwwm monitor", "current-monitor"));
-  }
-  return SCM_UNSPECIFIED;
-}
-
-SCM_DEFINE (gwwm_view, "view",1,0,0,(SCM ui),""){
-  int n=(1 << (scm_to_int(ui)));
-  PRINT_FUNCTION;
-  if ((n & TAGMASK) ==
-      current_monitor()->tagset[(scm_to_int(scm_slot_ref(REF_CALL_0("gwwm monitor", "current-monitor"),
-                                      scm_from_utf8_symbol("seltags"))))])
-    return SCM_UNSPECIFIED;
-  (scm_slot_set_x(REF_CALL_0("gwwm monitor", "current-monitor"),
-                  scm_from_utf8_symbol("seltags"),
-                  (scm_from_int(scm_to_int(scm_slot_ref(REF_CALL_0("gwwm monitor", "current-monitor"),
-                                                        scm_from_utf8_symbol("seltags")))  ^ 1))));
-  if (n & TAGMASK)
-    (current_monitor())->tagset[(scm_to_int(scm_slot_ref(REF_CALL_0("gwwm monitor", "current-monitor"),
-                                      scm_from_utf8_symbol("seltags"))))] = n & TAGMASK;
-  REF_CALL_2("gwwm","focusclient",
-             REF_CALL_1("gwwm commands", "focustop",
-                        (REF_CALL_0("gwwm monitor", "current-monitor"))),
-             SCM_BOOL_T);
-  REF_CALL_1("gwwm commands","arrange",(WRAP_MONITOR(current_monitor())));
-  return SCM_UNSPECIFIED;
-}
-
 void
 virtualkeyboard(struct wl_listener *listener, void *data)
 {
@@ -1005,21 +916,6 @@ virtualkeyboard(struct wl_listener *listener, void *data)
 	struct wlr_input_device *device = &keyboard->input_device;
     scm_call_1(REFP("gwwm","create-keyboard"), WRAP_WLR_INPUT_DEVICE(device));
 }
-
-SCM_DEFINE (gwwm_monitor_tagset, "%monitor-tagset",1, 0,0,
-            (SCM m) ,
-            "return M's tagset.")
-#define FUNC_NAME s_gwwm_monitor_tagset
-{
-  Monitor *rm=UNWRAP_MONITOR(m);
-  SCM a= scm_make_list(scm_from_int(0), SCM_UNSPECIFIED);
-  for (size_t i = 0; i < LENGTH((rm)->tagset); i++)
-    {
-      a=scm_cons(scm_from_unsigned_integer((rm)->tagset[i]),a);
-    };
-  return a;
-}
-#undef FUNC_NAME
 
 struct wlr_scene_node *
 xytonode(double x, double y, struct wlr_surface **psurface,

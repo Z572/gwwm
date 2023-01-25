@@ -29,7 +29,8 @@
             focusstack
             tag
             moveresize
-            incmaster))
+            incmaster
+            view))
 
 (define (arrange m)
   (for-each
@@ -50,6 +51,13 @@
     (focusclient (focustop (current-monitor)) #t)
     (arrange (current-monitor))))
 
+(define (view i)
+  (let ((m(current-monitor)))
+    (unless (= i (list-ref (slot-ref m 'tagset) (slot-ref m 'seltags)))
+      (slot-set! m 'seltags (if (= 1 (slot-ref m 'seltags)) 0 1))
+      (list-set! (slot-ref m 'tagset)  (slot-ref m 'seltags) i)
+      (focusclient (focustop (current-monitor)) #t)
+      (arrange (current-monitor)))))
 (define* (togglefullscreen #:optional (client (current-client)))
   (when client
     ((@@ (gwwm client) client-do-set-fullscreen)

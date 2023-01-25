@@ -104,7 +104,11 @@
 (define-method (client-set-border-color c (color <rgba-color>))
   #t)
 (define (visibleon c m)
-  ((@@ (gwwm) visibleon) c m))
+  (and m
+       (equal? (client-monitor c) m)
+       (= (client-tags c)
+          (list-ref (slot-ref m 'tagset)
+                    (slot-ref m 'seltags)))))
 
 (define-class <gwwm-base-client> ()
   (data #:init-keyword #:data
