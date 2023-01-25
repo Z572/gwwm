@@ -20,7 +20,6 @@
             monitor-refresh
             monitor-physical-width
             monitor-physical-height
-            monitor=?
             monitor-at
             monitor-wlr-output
             monitor-layouts
@@ -151,11 +150,3 @@
              (box-y area))
             p)
      m)))
-
-(define-method (equal? (o1 <gwwm-monitor>)
-                       (o2 <gwwm-monitor>))
-  (monitor=? o1 o2))
-
-(define-method (monitor=? (o1 <gwwm-monitor>)
-                          (o2 <gwwm-monitor>))
-  (equal? (.data o1) (.data o2)))
