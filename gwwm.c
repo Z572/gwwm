@@ -739,18 +739,13 @@ SCM_DEFINE (gwwm_focusmon ,"focusmon",1,0,0,(SCM a),"" )
     do /* don't switch to disabled mons */
       set_current_monitor(dirtomon(scm_to_int(a)));
     while (!MONITOR_WLR_OUTPUT(current_monitor())->enabled && i++ < nmons);
-  REF_CALL_2("gwwm","focusclient",WRAP_CLIENT(focustop(current_monitor())), SCM_BOOL_T);
+  REF_CALL_2("gwwm","focusclient",
+             REF_CALL_1("gwwm commands", "focustop",
+                        (REF_CALL_0("gwwm monitor", "current-monitor"))),
+             SCM_BOOL_T);
   return SCM_UNSPECIFIED;
 }
 #undef FUNC_NAME
-
-Client *
-focustop(Monitor *m)
-{
-  PRINT_FUNCTION;
-  SCM c=REF_CALL_1("gwwm commands", "focustop", WRAP_MONITOR(m));
-  return UNWRAP_CLIENT(c);
-}
 
 SCM_DEFINE (destroy_surface_notify,"destroy-surface-notify",3,0,0,
             (SCM c, SCM listener, SCM data),"")
@@ -903,31 +898,6 @@ quitsignal(int signo)
   REF_CALL_0("gwwm commands","gwwm-quit");
 }
 
-Client *
-current_client(void)
-{
-  PRINT_FUNCTION;
-  SCM c=REF_CALL_0("gwwm client", "current-client");
-  return (UNWRAP_CLIENT(c)) ;
-}
-
-void
-setfullscreen(Client *c, int fullscreen)
-{
-  PRINT_FUNCTION;
-  REF_CALL_2("gwwm client", "client-do-set-fullscreen", WRAP_CLIENT(c), scm_from_bool(fullscreen));
-}
-
-void
-setmon(Client *c, Monitor *m, unsigned int newtags)
-{
-  PRINT_FUNCTION;
-  scm_call_3(REFP("gwwm", "setmon"),
-             WRAP_CLIENT(c),
-             WRAP_MONITOR(m),
-             scm_from_unsigned_integer(exp(newtags)));
-}
-
 SCM_DEFINE (setpsel,"setpsel",2,0,0,(SCM slistener ,SCM sdata),"")
 {
   PRINT_FUNCTION;
@@ -995,10 +965,12 @@ SCM_DEFINE(gwwm_toggleview, "toggleview", 1, 0, 0, (SCM ui), "") {
 
   if (newtagset) {
     (current_monitor())->tagset[(scm_to_int(scm_slot_ref(REF_CALL_0("gwwm monitor", "current-monitor"),
-                                      scm_from_utf8_symbol("seltags"))))] = newtagset;
-    REF_CALL_2("gwwm", "focusclient", WRAP_CLIENT(focustop(current_monitor())),
+                                                         scm_from_utf8_symbol("seltags"))))] = newtagset;
+    REF_CALL_2("gwwm", "focusclient",
+               REF_CALL_1("gwwm commands", "focustop",
+                          REF_CALL_0("gwwm monitor", "current-monitor")),
                SCM_BOOL_T);
-    REF_CALL_1("gwwm commands", "arrange", (WRAP_MONITOR(current_monitor())));
+    REF_CALL_1("gwwm commands", "arrange", REF_CALL_0("gwwm monitor", "current-monitor"));
   }
   return SCM_UNSPECIFIED;
 }
@@ -1017,7 +989,10 @@ SCM_DEFINE (gwwm_view, "view",1,0,0,(SCM ui),""){
   if (n & TAGMASK)
     (current_monitor())->tagset[(scm_to_int(scm_slot_ref(REF_CALL_0("gwwm monitor", "current-monitor"),
                                       scm_from_utf8_symbol("seltags"))))] = n & TAGMASK;
-  REF_CALL_2("gwwm","focusclient",WRAP_CLIENT(focustop(current_monitor())), SCM_BOOL_T);
+  REF_CALL_2("gwwm","focusclient",
+             REF_CALL_1("gwwm commands", "focustop",
+                        (REF_CALL_0("gwwm monitor", "current-monitor"))),
+             SCM_BOOL_T);
   REF_CALL_1("gwwm commands","arrange",(WRAP_MONITOR(current_monitor())));
   return SCM_UNSPECIFIED;
 }

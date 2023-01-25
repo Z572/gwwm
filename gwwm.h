@@ -103,9 +103,6 @@ void maplayersurfacenotify(struct wl_listener *listener, void *data);
 void pointerfocus(Client *c, struct wlr_surface *surface, double sx, double sy,
                   uint32_t time);
 void quitsignal(int signo);
-Client *current_client(void);
-void setfullscreen(Client *c, int fullscreen);
-void setmon(Client *c, Monitor *m, unsigned int newtags);
 void sigchld(int unused);
 void logout_monitor(SCM m);
 void virtualkeyboard(struct wl_listener *listener, void *data);
