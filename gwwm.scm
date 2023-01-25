@@ -605,7 +605,9 @@ gwwm [options]
                                         %wl-seat-capability-enum o))))
   (define (backend/new-output listener data)
     (let* ((wlr-output (wrap-wlr-output data))
-           (m (create-monitor listener data)))
+           (m (make <gwwm-monitor>)))
+      (set! (wlr-output->monitor wlr-output) m)
+      (init-output wlr-output)
       (when (and (wlr-output-init-render wlr-output (gwwm-allocator) (gwwm-renderer))
                  (begin (wlr-output-set-mode wlr-output
                                              (wlr-output-preferred-mode wlr-output))

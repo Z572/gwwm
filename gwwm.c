@@ -543,7 +543,7 @@ SCM_DEFINE(createlayersurface, "create-layer-client", 2, 0, 0,
   scm_slot_set_x(WRAP_CLIENT(layersurface),
                  scm_from_utf8_symbol("super-surface"),
                  WRAP_WLR_LAYER_SURFACE(wlr_layer_surface));
-  SCM m = wlr_layer_surface->output->data;
+  SCM m =  REF_CALL_1("gwwm monitor","wlr-output->monitor",WRAP_WLR_OUTPUT(wlr_layer_surface->output));
   scm_slot_set_x(WRAP_CLIENT(layersurface), scm_from_utf8_symbol("monitor"), m);
   wlr_layer_surface->data = WRAP_CLIENT(layersurface);
 
@@ -568,33 +568,19 @@ SCM_DEFINE(createlayersurface, "create-layer-client", 2, 0, 0,
   return WRAP_CLIENT(layersurface);
 }
 
-void
-init_monitor(struct wlr_output *wlr_output){
-  const MonitorRule *r;
-	for (r = monrules; r < END(monrules); r++) {
-		if (!r->name || strstr(wlr_output->name, r->name)) {
-			wlr_output_set_scale(wlr_output, r->scale);
-			wlr_xcursor_manager_load(gwwm_xcursor_manager(NULL), r->scale);
-			wlr_output_set_transform(wlr_output, r->rr);
-			break;
-		}
-	}
-}
-
-SCM_DEFINE (createmon,"create-monitor",2,0,0,(SCM slistener ,SCM sdata),"")
+SCM_DEFINE (init_output,"init-output",1,0,0,(SCM swlr_output),"")
 {
-	/* This event is raised by the backend when a new output (aka a display or
-	 * monitor) becomes available. */
-
-  PRINT_FUNCTION;
-  struct wl_listener *listener=UNWRAP_WL_LISTENER(slistener);
-  void *data=TO_P(sdata);
-	struct wlr_output *wlr_output = data;
-	const MonitorRule *r;
-    SCM sm=(scm_call_1(REF("oop goops", "make"), REF("gwwm monitor", "<gwwm-monitor>")));
-    wlr_output->data = sm;
-    init_monitor(wlr_output);
-    return sm;
+  struct wlr_output *wlr_output=UNWRAP_WLR_OUTPUT(swlr_output);
+  const MonitorRule *r;
+  for (r = monrules; r < END(monrules); r++) {
+    if (!r->name || strstr(wlr_output->name, r->name)) {
+      wlr_output_set_scale(wlr_output, r->scale);
+      wlr_xcursor_manager_load(gwwm_xcursor_manager(NULL), r->scale);
+      wlr_output_set_transform(wlr_output, r->rr);
+      break;
+    }
+  }
+  return SCM_UNSPECIFIED;
 }
 
 SCM_DEFINE(createnotify,"create-notify",2,0,0,(SCM sl ,SCM d),"")

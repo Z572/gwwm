@@ -8,8 +8,6 @@
   #:use-module (wlroots types)
   #:use-module (wlroots types output)
   #:use-module (wlroots types output-layout)
-  #:use-module ((system foreign) #:select (pointer->scm))
-  #:autoload (system foreign) (pointer-address)
   #:use-module (bytestructure-class)
   #:export (current-monitor
             monitor-name
@@ -34,8 +32,10 @@
             monitor-mfact
             dirtomon
             <gwwm-monitor>
-            %monitors))
+            %monitors
+            wlr-output->monitor))
 
+(define-once wlr-output->monitor (make-object-property))
 (define-once %monitors
   (make-parameter
    (make-q)
@@ -126,10 +126,8 @@
 
 (define (monitor-at x y)
   (and=> (wlr-output-layout-output-at
-          ((@@ (gwwm) gwwm-output-layout)) x y)
-         (lambda (o)
-           (let ((b (.data o)))
-             (pointer->scm b)))))
+          (gwwm-output-layout) x y)
+         wlr-output->monitor))
 
 (define (dirtomon dir)
   (define p (compose pointer->scm .data))
