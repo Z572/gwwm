@@ -947,7 +947,7 @@ gwwm [options]
                         (if (is-a? c <gwwm-layer-client>)
                             (monitor-area monitor)
                             (monitor-window-area (client-monitor c))))))
-        (unless (client-floating? c)
+        (unless (or (is-a? c <gwwm-layer-client>) (client-floating? c))
           (wlr-scene-node-raise-to-top (.parent node)))
         (modify-instance* geom
           (x (- x (box-x (client-geom c))))
@@ -1038,6 +1038,8 @@ gwwm [options]
             (q-push! (%layer-clients) c)
             (add-listen (client-super-surface c) 'map
                         (map-layer-client-notify c))
+            (add-listen (client-super-surface c) 'new-popup
+                        (new-popup-notify c))
             (add-listen (.surface (client-super-surface c)) 'commit
                         (lambda (listener data)
                           (and-let* ((m (client-monitor c)))
