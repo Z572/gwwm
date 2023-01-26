@@ -72,10 +72,8 @@
 #include <xkbcommon/xkbcommon.h>
 #include "util.h"
 
-#ifdef XWAYLAND
 #include <X11/Xlib.h>
 #include <wlr/xwayland.h>
-#endif
 #include "gwwm.h"
 #include "client.h"
 /* configuration, allows nested code to access above variables */
@@ -730,8 +728,6 @@ xytonode(double x, double y, struct wlr_surface **psurface,
   return node;
 }
 
-#ifdef XWAYLAND
-
 Atom
 getatom(xcb_connection_t *xc, const char *name)
 {
@@ -778,7 +774,6 @@ xwaylandready(struct wl_listener *listener,void *data)
 	xcb_disconnect(xc);
     return;
 }
-#endif
 
 SCM_DEFINE (config_setup,"%config-setup" ,0,0,0,(),"")
 {

@@ -6,7 +6,6 @@
 #include <stdarg.h>
 #include <string.h>
 void die(const char *fmt, ...);
-void *ecalloc(size_t size);
 
 #define REF(A, B) (scm_c_public_ref(A, B))
 #define REFP(A, B) (scm_c_private_ref(A, B))
@@ -145,13 +144,10 @@ void *ecalloc(size_t size);
   (REF_CALL_1("wlroots render renderer", "wrap-wlr-renderer", FROM_P(p)))
 #define UNWRAP_WLR_RENDERER(p)                                                  \
   (TO_P(REF_CALL_1("wlroots render renderer", "unwrap-wlr-renderer", p)))
-
 #define WRAP_WLR_ALLOCATOR(p)                                             \
   (REF_CALL_1("wlroots render allocator", "wrap-wlr-allocator", FROM_P(p)))
 #define UNWRAP_WLR_ALLOCATOR(p)                                                  \
   (TO_P(REF_CALL_1("wlroots render allocator", "unwrap-wlr-allocator", p)))
-
-
 #define WRAP_WLR_IDLE(p)                                                       \
   (REF_CALL_1("wlroots types idle", "wrap-wlr-idle", FROM_P(p)))
 #define UNWRAP_WLR_IDLE(p)                                                     \
@@ -168,10 +164,6 @@ void *ecalloc(size_t size);
                    p)))
 #define LAYOUT_PROCEDURE(l) (REF_CALL_1("gwwm layout", "layout-procedure", l))
 #define INNER_MONITOR_HASH_TABLE REFP("gwwm monitor", "%monitors")
-#define MAKE_MONITOR(o)                                                        \
-  (scm_call_3(REF("oop goops", "make"), REF("gwwm monitor", "<gwwm-monitor>"), \
-              scm_from_utf8_keyword("data"), FROM_P(o)))
-/* #define SEND_LOG(o ...) */
 #define send_log(v, b, ...) _send_log(#v, b, ##__VA_ARGS__, "/0")
 #define PRINT_FUNCTION send_log(DEBUG, __FUNCTION__);
 #define GWWM_ASSERT_CLIENT_OR_FALSE(client, position)                          \

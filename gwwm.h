@@ -24,7 +24,6 @@
 #define TAGMASK ((1 << LENGTH(tags)) - 1)
 #define LISTEN(E, L, H) wl_signal_add((E), ((L)->notify = (H), (L)))
 typedef struct Client Client;
-#ifdef XWAYLAND
 enum {
   NetWMWindowTypeDialog,
   NetWMWindowTypeSplash,
@@ -32,7 +31,6 @@ enum {
   NetWMWindowTypeUtility,
   NetLast
 }; /* EWMH atoms */
-#endif
 
 typedef struct {
   uint32_t singular_anchor;
@@ -41,36 +39,6 @@ typedef struct {
   int *negative_axis;
   int margin;
 } Edge;
-
-#define WRAP_MONITOR(o) find_monitor(o)
-#define UNWRAP_MONITOR(o)                                                      \
-  (struct Monitor *)(TO_P(MAKE_P(scm_call_1(REFP("gwwm monitor", ".data"), o))))
-#define MONITOR_WLR_OUTPUT(m)                                                  \
-  (struct wlr_output *)(UNWRAP_WLR_OUTPUT(scm_call_1(                          \
-      REFP("gwwm monitor", "monitor-wlr-output"), (WRAP_MONITOR(m)))))
-#define MONITOR_LAYOUTS(m)                                                     \
-  (REF_CALL_1("gwwm monitor", "monitor-layouts", (WRAP_MONITOR(m))))
-#define MONITOR_SELLT(m)                                                       \
-  scm_to_int((                                                                 \
-      (scm_call_1(REFP("gwwm monitor", "monitor-sellt"), (WRAP_MONITOR(m))))))
-#define SET_MONITOR_WLR_OUTPUT(m, o)                                           \
-  scm_call_2(REFP("gwwm monitor", "set-.wlr-output!"), (WRAP_MONITOR(m)),      \
-             WRAP_WLR_OUTPUT(o))
-#define SET_MONITOR_SELLT(m, o)                                                \
-  scm_call_2(REFP("gwwm monitor", "set-.monitor-sellt!"), (WRAP_MONITOR(m)),   \
-             scm_from_int(o))
-#define MONITOR_WINDOW_AREA(m)                                                 \
-  (struct wlr_box *)(UNWRAP_WLR_BOX(                                           \
-      REF_CALL_1("gwwm monitor", "monitor-window-area", (WRAP_MONITOR(m)))))
-#define SET_MONITOR_WINDOW_AREA(m, o)                                          \
-  scm_call_2(REFP("gwwm monitor", "set-.window-area!"), (WRAP_MONITOR(m)),     \
-             REF_CALL_1("oop goops","shallow-clone",WRAP_WLR_BOX(o)))
-#define MONITOR_AREA(m)                                                        \
-  ((struct wlr_box *)(UNWRAP_WLR_BOX(                                          \
-      REF_CALL_1("gwwm monitor", "monitor-area", (WRAP_MONITOR(m))))))
-#define SET_MONITOR_AREA(m, o)                                                 \
-  scm_call_2(REFP("gwwm monitor", "set-.area!"), (WRAP_MONITOR(m)),            \
-             WRAP_WLR_BOX(o))
 
 typedef struct {
   const char *name;
@@ -115,11 +83,9 @@ SCM get_gwwm_config(void);
 #define GWWM_CURSOR_NORMAL_IMAGE()                                             \
   (scm_to_utf8_string(                                                         \
       REF_CALL_1("gwwm config", "config-cursor-normal-image", gwwm_config)))
-#ifdef XWAYLAND
+
 void xwaylandready(struct wl_listener *listener, void *data);
 Atom getatom(xcb_connection_t *xc, const char *name);
 /* void xwaylandready(struct wl_listener *listener, void *data); */
 Atom get_netatom_n(int n);
-#endif
-
 #endif // GWWM_H
