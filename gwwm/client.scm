@@ -6,6 +6,8 @@
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-2)
   #:use-module (wlroots types scene)
+  #:use-module (wlroots types surface)
+  #:use-module (wlroots types compositor)
   #:use-module (wlroots types layer-shell)
   #:use-module (ice-9 q)
   #:use-module (ice-9 control)
@@ -78,6 +80,7 @@
             client-init-border
             client-set-border-color
             client-restack-surface
+            client-from-wlr-surface
             %fstack
             %clients
             %layer-clients
@@ -391,6 +394,21 @@
 
 (define-method (client-set-tiled (c <gwwm-x-client>) edges)
   *unspecified*)
+
+(define (client-from-wlr-surface s)
+  (if s
+      (or (and-let* (((wlr-surface-is-xdg-surface s))
+                     (surface (wlr-xdg-surface-from-wlr-surface s))
+                     ((eq? (.role surface) 'WLR_XDG_SURFACE_ROLE_TOPLEVEL)))
+            (pointer->scm (.data surface)))
+          (and-let* (((wlr-surface-is-xwayland-surface s))
+                     (surface (wlr-xwayland-surface-from-wlr-surface s)))
+            (pointer->scm (.data surface)))
+          (if (wlr-surface-is-subsurface s)
+              (client-from-wlr-surface
+               (wlr-surface-get-root-surface s))
+              #f))
+      #f))
 
 (define-method (client-get-geometry (c <gwwm-xdg-client>))
   (wlr-xdg-surface-get-geometry (client-super-surface c)))

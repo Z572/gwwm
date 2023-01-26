@@ -175,25 +175,6 @@ SCM_DEFINE_PUBLIC(gwwm_client_from_popup,"client-from-popup",1,0,0,(SCM spopup),
   return SCM_BOOL_F;
 }
 
-SCM_DEFINE_PUBLIC (gwwm_client_from_wlr_surface ,"client-from-wlr-surface" ,1,0,0,(SCM ss),"")
-{
-  struct wlr_surface *s=UNWRAP_WLR_SURFACE(ss);
-  struct wlr_xdg_surface *surface;
-  if (s) {
-  if (wlr_surface_is_xdg_surface(s)
-      && (surface = wlr_xdg_surface_from_wlr_surface(s))
-      && surface->role == WLR_XDG_SURFACE_ROLE_TOPLEVEL)
-    return surface->data;
-  struct wlr_xwayland_surface *xsurface;
-  if (wlr_surface_is_xwayland_surface(s)
-      && (xsurface = wlr_xwayland_surface_from_wlr_surface(s)))
-    return xsurface->data;
-  if (wlr_surface_is_subsurface(s))
-    return gwwm_client_from_wlr_surface(WRAP_WLR_SURFACE(wlr_surface_get_root_surface(s)));
-  }
-  return SCM_BOOL_F;
-}
-
 SCM_DEFINE_PUBLIC (gwwm_client_from_list,"gwwm-client-from-link",1,0,0,(SCM slink),""){
   struct wl_list *link=UNWRAP_WL_LIST(slink);
   Client *c;
