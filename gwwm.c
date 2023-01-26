@@ -171,28 +171,6 @@ struct wlr_surface* exclusive_focus(SCM surface){
   }
 }
 
-static struct wlr_scene_node *return_scene_node(enum zwlr_layer_shell_v1_layer n){
-  char* s="";
-  switch (n){
-  case ZWLR_LAYER_SHELL_V1_LAYER_BACKGROUND:
-    s="background-layer";
-    break;
-  case ZWLR_LAYER_SHELL_V1_LAYER_BOTTOM:
-    s="bottom-layer";
-    break;
-  case ZWLR_LAYER_SHELL_V1_LAYER_TOP:
-    s="top-layer";
-    break;
-  case ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY:
-    s="overlay-layer";
-    break;
-  default:
-    send_log(ERROR, "UNKNOW!!! enum zwlr_layer_shell_v1_layer!");
-    exit(1);
-  }
-  return UNWRAP_WLR_SCENE_NODE(REF("gwwm",s));
-}
-
 struct wlr_xdg_shell *gwwm_xdg_shell(struct wlr_xdg_shell *var) {
   SCM b;
   const char *m = "wlroots types xdg-shell";
@@ -359,12 +337,12 @@ SCM_DEFINE (applyrules ,"%applyrules" ,1,0,0,(SCM sc),"")
   return SCM_UNSPECIFIED;
 }
 
-void arrange_l(Client *layersurface,SCM m, struct wlr_box *usable_area, int exclusive) {
+void arrange_l(SCM layersurface,SCM m, struct wlr_box *usable_area, int exclusive) {
 
   struct wlr_box *full_area = ((struct wlr_box *)(UNWRAP_WLR_BOX(
       REF_CALL_1("gwwm monitor", "monitor-area", m))));
   struct wlr_layer_surface_v1 *wlr_layer_surface =
-      wlr_layer_surface_v1_from_wlr_surface(CLIENT_SURFACE(layersurface));
+    UNWRAP_WLR_LAYER_SURFACE(scm_slot_ref(layersurface, scm_from_utf8_symbol("super-surface")));
   struct wlr_layer_surface_v1_state *state = &wlr_layer_surface->current;
   struct wlr_box bounds;
   struct wlr_box box = {.width = state->desired_width,
@@ -420,13 +398,13 @@ void arrange_l(Client *layersurface,SCM m, struct wlr_box *usable_area, int excl
       wlr_layer_surface_v1_destroy(wlr_layer_surface);
       /* continue; */
     } else {
-      set_client_geom(layersurface, &box);
-
+      scm_slot_set_x(layersurface,scm_from_utf8_symbol("geom"), SHALLOW_CLONE(WRAP_WLR_BOX(&box)));
       if (state->exclusive_zone > 0)
         applyexclusive(usable_area, state->anchor, state->exclusive_zone,
                        state->margin.top, state->margin.right,
                        state->margin.bottom, state->margin.left);
-      wlr_scene_node_set_position(CLIENT_SCENE(layersurface), box.x, box.y);
+      wlr_scene_node_set_position((UNWRAP_WLR_SCENE_NODE(
+      REF_CALL_1("gwwm client", "client-scene", layersurface))), box.x, box.y);
       wlr_layer_surface_v1_configure(wlr_layer_surface, box.width, box.height);
     }
   }
@@ -435,10 +413,9 @@ void arrange_l(Client *layersurface,SCM m, struct wlr_box *usable_area, int excl
 SCM_DEFINE(arrange_layer_client,"arrange-layer-client",4,0,0,(SCM c,SCM sm,SCM box,SCM exclusive),"")
 {
 
-  Client *layersurface=UNWRAP_CLIENT(c);
   struct wlr_box *usable_area=(UNWRAP_WLR_BOX(box));
   bool b=scm_to_bool(exclusive);
-  arrange_l(layersurface, sm, usable_area,b);
+  arrange_l(c, sm, usable_area,b);
   return SCM_UNSPECIFIED;
 }
 
@@ -473,13 +450,7 @@ SCM_DEFINE(createlayersurface, "create-layer-client", 2, 0, 0,
   struct wlr_layer_surface_v1 *wlr_layer_surface = data;
   Client *layersurface;
   struct wlr_layer_surface_v1_state old_state;
-  if (!wlr_layer_surface->output) {
-    wlr_layer_surface->output = ((struct wlr_output *)(UNWRAP_WLR_OUTPUT(
-        scm_call_1(REFP("gwwm monitor", "monitor-wlr-output"),
-                   (REF_CALL_0("gwwm monitor", "current-monitor"))))));
-  }
   layersurface = scm_gc_calloc(sizeof(Client), "layer-client");
-
   register_client(layersurface, GWWM_LAYER_CLIENT_TYPE);
   return WRAP_CLIENT(layersurface);
 }
@@ -513,7 +484,7 @@ SCM_DEFINE(createnotify,"create-notify",2,0,0,(SCM sl ,SCM d),"")
 SCM_DEFINE (destroylayersurfacenotify,"destroy-layer-client-notify",3,0,0,(SCM c,SCM slistener ,SCM sdata),"")
 {
   PRINT_FUNCTION;
-  logout_client(UNWRAP_CLIENT(c));
+  scm_call_1(REFP("gwwm client","logout-client") ,c);
   return SCM_UNSPECIFIED;
 }
 
@@ -543,7 +514,7 @@ SCM_DEFINE (destroy_surface_notify,"destroy-surface-notify",3,0,0,
             (SCM c, SCM listener, SCM data),"")
 {
   PRINT_FUNCTION;
-  logout_client(UNWRAP_CLIENT(c));
+  scm_call_1(REFP("gwwm client","logout-client") ,c);
   return SCM_UNSPECIFIED;
 }
 
@@ -554,7 +525,7 @@ SCM_DEFINE (gwwm_motionnotify, "%motionnotify" , 1,0,0,
   uint32_t time=scm_to_uint32( stime);
   PRINT_FUNCTION;
 	double sx = 0, sy = 0;
-	Client *c = NULL;
+	SCM c = NULL;
 	struct wlr_surface *surface = NULL;
 	struct wlr_drag_icon *icon;
     struct wlr_cursor *cursor=gwwm_cursor(NULL);
@@ -655,15 +626,18 @@ SCM_DEFINE(gwwm_outputmgrapplyortest,"output-manager-apply-or-test",2,0,0,
 }
 
 void
-pointerfocus(Client *c, struct wlr_surface *surface, double sx, double sy,
+pointerfocus(SCM c, struct wlr_surface *surface, double sx, double sy,
 		uint32_t time)
 {
   PRINT_FUNCTION
 	struct timespec now;
 	int internal_call = !time;
 
-	if (GWWM_SLOPPYFOCUS_P() && !internal_call && c && !client_is_unmanaged(c))
-      REF_CALL_2("gwwm","focusclient",WRAP_CLIENT(c), SCM_BOOL_F);
+	if (GWWM_SLOPPYFOCUS_P()
+        && !internal_call
+        && (scm_is_true(c))
+        && !(scm_to_bool(REF_CALL_1("gwwm client","client-is-unmanaged?", c))))
+      REF_CALL_2("gwwm","focusclient",c, SCM_BOOL_F);
 
 	/* If surface is NULL, clear pointer focus */
 	if (!surface) {
@@ -758,41 +732,41 @@ virtualkeyboard(struct wl_listener *listener, void *data)
 
 struct wlr_scene_node *
 xytonode(double x, double y, struct wlr_surface **psurface,
-		Client **pc, Client **pl, double *nx, double *ny)
+         SCM *pc, SCM *pl, double *nx, double *ny)
 {
-  PRINT_FUNCTION
-	struct wlr_scene_node *node, *pnode;
-	struct wlr_surface *surface = NULL;
-	SCM c = NULL;
-	SCM l = NULL;
-	char* focus_order[] = {"overlay-layer",
-                          "top-layer",
-                          "float-layer",
-                          "fullscreen-layer",
-                          "tile-layer",
-                          "bottom-layer",
-                          "background-layer"};
+  PRINT_FUNCTION;
+  struct wlr_scene_node *node, *pnode;
+  struct wlr_surface *surface = NULL;
+  SCM c = NULL;
+  SCM l = NULL;
+  char* focus_order[] = {"overlay-layer",
+                         "top-layer",
+                         "float-layer",
+                         "fullscreen-layer",
+                         "tile-layer",
+                         "bottom-layer",
+                         "background-layer"};
 
-	for (int layer = 0; layer < 6; layer++) {
-		if ((node = wlr_scene_node_at(UNWRAP_WLR_SCENE_NODE(REF("gwwm",focus_order[layer])), x, y, nx, ny))) {
-			if (node->type == WLR_SCENE_NODE_SURFACE)
-				surface = wlr_scene_surface_from_node(node)->surface;
-			/* Walk the tree to find a node that knows the client */
-			for (pnode = node; pnode && !c; pnode = pnode->parent)
-				c = pnode->data;
-			if (c && CLIENT_IS_LAYER_SHELL(c)) {
-				c = NULL;
-				l = pnode->data;
-			}
-		}
-		if (surface)
-			break;
-	}
+  for (int layer = 0; layer < 6; layer++) {
+    if ((node = wlr_scene_node_at(UNWRAP_WLR_SCENE_NODE(REF("gwwm",focus_order[layer])), x, y, nx, ny))) {
+      if (node->type == WLR_SCENE_NODE_SURFACE)
+        surface = wlr_scene_surface_from_node(node)->surface;
+      /* Walk the tree to find a node that knows the client */
+      for (pnode = node; pnode && !c; pnode = pnode->parent)
+        c = pnode->data;
+      if (c && CLIENT_IS_LAYER_SHELL(c)) {
+        c = NULL;
+        l = pnode->data;
+      }
+    }
+    if (surface)
+      break;
+  }
 
-	if (psurface) *psurface = surface;
-	if (pc && c) *pc = UNWRAP_CLIENT(c);
-	if (pl && l) *pl = UNWRAP_CLIENT(l);
-	return node;
+  if (psurface) *psurface = surface;
+  if (pc) *pc = c ? c: SCM_BOOL_F;
+  if (pl) *pl = l ? l: SCM_BOOL_F;
+  return node;
 }
 
 #ifdef XWAYLAND

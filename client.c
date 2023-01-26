@@ -63,93 +63,76 @@ logout_client(Client *c){
   /* free(c); */
 }
 
-bool
-client_is_x11(Client *c)
-{
-  return (scm_to_bool(REF_CALL_1("gwwm client","client-is-x11?", WRAP_CLIENT(c))));
-}
-
-void set_client_geom(Client *c , struct wlr_box* box)
-{
-  PRINT_FUNCTION;
-  SCM sc=WRAP_CLIENT(c);
-  scm_slot_set_x(sc,scm_from_utf8_symbol("geom"),
-                          (box) ? SHALLOW_CLONE(WRAP_WLR_BOX(box)) : SCM_BOOL_F);
-}
-
-
-const char *
-client_get_title(Client *c)
-{
-  return (scm_to_utf8_string(REF_CALL_1("gwwm client","client-get-title", WRAP_CLIENT(c))));
-}
-
-bool
-client_is_float_type(Client *c)
-{
-	struct wlr_box min = {0}, max={0};
-    SCM values=REF_CALL_1("gwwm client","client-get-size-hints" , WRAP_CLIENT(c));
-    max= *(UNWRAP_WLR_BOX(scm_c_value_ref(values, 0)));
-    min= *(UNWRAP_WLR_BOX(scm_c_value_ref(values, 1)));
-
-#ifdef XWAYLAND
-	if (client_is_x11(c)) {
-		struct wlr_xwayland_surface *surface = wlr_xwayland_surface_from_wlr_surface(CLIENT_SURFACE(c));
-		if (surface->modal)
-			return 1;
-
-		for (size_t i = 0; i < surface->window_type_len; i++)
-          if (surface->window_type[i] == get_netatom_n(NetWMWindowTypeDialog)
-              || surface->window_type[i] == get_netatom_n(NetWMWindowTypeSplash)
-              || surface->window_type[i] == get_netatom_n(NetWMWindowTypeToolbar)
-              || surface->window_type[i] == get_netatom_n(NetWMWindowTypeUtility))
-				return 1;
-
-		return ((min.width > 0 || min.height > 0 || max.width > 0 || max.height > 0)
-			&& (min.width == max.width || min.height == max.height))
-			|| wlr_xwayland_surface_from_wlr_surface(CLIENT_SURFACE(c))->parent;
-	}
-#endif
-
-	return ((min.width > 0 || min.height > 0 || max.width > 0 || max.height > 0)
-		&& (min.width == max.width || min.height == max.height))
-		|| wlr_xdg_surface_from_wlr_surface(CLIENT_SURFACE(c))->toplevel->parent;
-}
 
 SCM_DEFINE (gwwm_client_is_float_type_p,"client-is-float-type?",1,0,0,
             (SCM c),"")
 #define FUNC_NAME s_gwwm_client_is_float_type_p
 {
   GWWM_ASSERT_CLIENT_OR_FALSE(c ,1);
-  return scm_from_bool(client_is_float_type(UNWRAP_CLIENT(c)));
+    struct wlr_box min = {0}, max = {0};
+  SCM values =
+      REF_CALL_1("gwwm client", "client-get-size-hints", c);
+  max = *(UNWRAP_WLR_BOX(scm_c_value_ref(values, 0)));
+  min = *(UNWRAP_WLR_BOX(scm_c_value_ref(values, 1)));
+
+  if (scm_to_bool(
+          REF_CALL_1("gwwm client", "client-is-x11?", c))) {
+    struct wlr_xwayland_surface *surface =
+        wlr_xwayland_surface_from_wlr_surface(UNWRAP_WLR_SURFACE(
+            REF_CALL_1("gwwm client", "client-surface", c)));
+    if (surface->modal)
+      return scm_from_bool(1);
+
+    for (size_t i = 0; i < surface->window_type_len; i++)
+      if (surface->window_type[i] == get_netatom_n(NetWMWindowTypeDialog) ||
+          surface->window_type[i] == get_netatom_n(NetWMWindowTypeSplash) ||
+          surface->window_type[i] == get_netatom_n(NetWMWindowTypeToolbar) ||
+          surface->window_type[i] == get_netatom_n(NetWMWindowTypeUtility))
+        return scm_from_bool(1);
+
+    return scm_from_bool(((min.width > 0 || min.height > 0 || max.width > 0 ||
+             max.height > 0) &&
+            (min.width == max.width || min.height == max.height)) ||
+           wlr_xwayland_surface_from_wlr_surface(
+               ((struct wlr_surface *)((scm_to_pointer(
+                   (scm_call_1((scm_c_public_ref("wlroots types surface",
+                                                 "unwrap-wlr-surface")),
+                               (scm_call_1((scm_c_public_ref("gwwm client",
+                                                             "client-surface")),
+                                           c)))))))))->parent);
+  }
+
+  return scm_from_bool(((min.width > 0 || min.height > 0 || max.width > 0 ||
+           max.height > 0) &&
+          (min.width == max.width || min.height == max.height)) ||
+         wlr_xdg_surface_from_wlr_surface(
+             (scm_to_pointer(
+                 (scm_call_1(scm_c_public_ref("wlroots types surface",
+                                               "unwrap-wlr-surface"),
+                             (scm_call_1(scm_c_public_ref("gwwm client",
+                                                           "client-surface"),
+                                         c)))))))
+             ->toplevel->parent);
+
 }
 #undef FUNC_NAME
 
-bool
-client_is_unmanaged(Client *c)
-{
-  return (scm_to_bool(REF_CALL_1("gwwm client","client-is-unmanaged?", WRAP_CLIENT(c))));
-}
-
-void
-client_notify_enter(struct wlr_surface *s, struct wlr_keyboard *kb)
-{
-	if (kb)
-      wlr_seat_keyboard_notify_enter(get_gloabl_seat(), s, kb->keycodes,
-				kb->num_keycodes, &kb->modifiers);
-	else
-      wlr_seat_keyboard_notify_enter(get_gloabl_seat(), s, NULL, 0, NULL);
-}
-
-struct wlr_surface *
-client_surface_at(Client *c, double cx, double cy, double *sx, double *sy)
-{
-#ifdef XWAYLAND
-	if (client_is_x11(c))
-		return wlr_surface_surface_at(CLIENT_SURFACE(c),
-				cx, cy, sx, sy);
-#endif
-	return wlr_xdg_surface_surface_at(wlr_xdg_surface_from_wlr_surface(CLIENT_SURFACE(c)), cx, cy, sx, sy);
+struct wlr_surface *client_surface_at(SCM c, double cx, double cy,
+                                      double *sx, double *sy) {
+  if (scm_to_bool(REF_CALL_1("gwwm client", "client-is-x11?", c)))
+    return wlr_surface_surface_at(
+        (scm_to_pointer((scm_call_1(
+            (scm_c_public_ref("wlroots types surface", "unwrap-wlr-surface")),
+            (scm_call_1((scm_c_public_ref("gwwm client", "client-surface")),
+                        c)))))),
+        cx, cy, sx, sy);
+  return wlr_xdg_surface_surface_at(
+      wlr_xdg_surface_from_wlr_surface(
+          (scm_to_pointer((scm_call_1(
+              (scm_c_public_ref("wlroots types surface", "unwrap-wlr-surface")),
+              (scm_call_1((scm_c_public_ref("gwwm client", "client-surface")),
+                          c))))))),
+      cx, cy, sx, sy);
 }
 
 SCM_DEFINE_PUBLIC(gwwm_client_from_popup,"client-from-popup",1,0,0,(SCM spopup),"" ){

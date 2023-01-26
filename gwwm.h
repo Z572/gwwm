@@ -92,15 +92,15 @@ typedef struct {
 void applyexclusive(struct wlr_box *usable_area, uint32_t anchor,
                     int32_t exclusive, int32_t margin_top, int32_t margin_right,
                     int32_t margin_bottom, int32_t margin_left);
-void pointerfocus(Client *c, struct wlr_surface *surface, double sx, double sy,
+void pointerfocus(SCM c, struct wlr_surface *surface, double sx, double sy,
                   uint32_t time);
 void quitsignal(int signo);
 void sigchld(int unused);
 void logout_monitor(SCM m);
 void virtualkeyboard(struct wl_listener *listener, void *data);
 struct wlr_scene_node *xytonode(double x, double y,
-                                struct wlr_surface **psurface, Client **pc,
-                                Client **pl, double *nx, double *ny);
+                                struct wlr_surface **psurface, SCM *pc,
+                                SCM *pl, double *nx, double *ny);
 struct wlr_seat *get_gloabl_seat(void);
 SCM get_gwwm_config(void);
 #define GWWM_BORDERPX()                                                        \

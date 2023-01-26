@@ -735,6 +735,9 @@ gwwm [options]
               (lambda (listener data)
                 (let* ((layer-surface (wrap-wlr-layer-surface-v1 data))
                        (c (create-layer-client listener data)))
+                  (unless (.output layer-surface)
+                    (set! (.output layer-surface)
+                          (monitor-wlr-output (current-monitor))))
                   (pk  'layer (~ layer-surface 'pending 'layer))
                   (let ((node (wlr-scene-subsurface-tree-create
                                (return-scene-node (~ layer-surface 'pending 'layer))

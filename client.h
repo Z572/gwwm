@@ -91,22 +91,7 @@ Client *unwrap_client_1(SCM o);
 SCM find_client(Client *c);
 void register_client(Client *c, enum gwwm_client_type type);
 void logout_client(Client *c);
-struct wlr_scene_rect *client_border_n(Client *c, int n);
-bool client_is_x11(Client *c);
-void client_for_each_surface(Client *c, wlr_surface_iterator_func_t fn,
-                             void *data);
-const char *client_get_appid(Client *c);
-const char *client_get_title(Client *c);
-bool client_is_float_type(Client *c);
-bool client_is_unmanaged(Client *c);
-void client_notify_enter(struct wlr_surface *s, struct wlr_keyboard *kb);
-struct wlr_surface *client_surface_at(Client *c, double cx, double cy,
+struct wlr_surface *client_surface_at(SCM c, double cx, double cy,
                                       double *sx, double *sy);
-void *client_from_listener(struct wl_listener *listener);
-void client_add_listen(void *c ,struct wl_signal *signal, wl_notify_func_t func);
-int client_tags(Client *c);
-void set_client_tags(Client *c,int tags);
-
-void set_client_geom(Client *c , struct wlr_box* box);
 
 #endif
