@@ -1019,6 +1019,8 @@ gwwm [options]
   (add-hook!
    create-client-hook
    (lambda (c)
+     (add-listen (client-super-surface c) 'destroy
+                 (lambda _  (set! (client-alive? c) #f)))
      (when (is-a? c <gwwm-client>)
        (set! (client-appid c) (client-get-appid c))
        (set! (client-title c) (client-get-title c))

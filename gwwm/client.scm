@@ -126,7 +126,8 @@
    #:getter client-surface)
   (scene #:init-value #f
          #:accessor client-scene
-         #:setter client-set-scene!))
+         #:setter client-set-scene!)
+  (alive? #:init-value #t #:accessor client-alive?))
 
 (define-class <gwwm-client> (<gwwm-base-client>)
   (appid #:accessor client-appid)
@@ -337,11 +338,6 @@
 
 (define-method (client-at (cursor <wlr-cursor>))
   (client-at (.x cursor) (.y cursor)))
-
-(define (client-alive? client)
-  "return #t if client is alive, or #f deaded."
-  ;; TODO
-  #t)
 
 (define (%get-size-hints-helper o)
   (define boxs (list (make <wlr-box>)
