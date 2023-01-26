@@ -620,7 +620,9 @@ gwwm [options]
                                         %wl-seat-capability-enum o))))
   (define (backend/new-output listener data)
     (let* ((wlr-output (wrap-wlr-output data))
-           (m (make <gwwm-monitor>)))
+           (m (make <gwwm-monitor>
+                #:wlr-output wlr-output
+                #:layouts (make-list 2 tile-layout))))
       (set! (wlr-output->monitor wlr-output) m)
       (init-output wlr-output)
       (when (and (wlr-output-init-render wlr-output (gwwm-allocator) (gwwm-renderer))
@@ -630,7 +632,6 @@ gwwm [options]
                         (wlr-output-enable-adaptive-sync wlr-output #t)
                         #t)
                  (wlr-output-commit wlr-output))
-        (set! (monitor-wlr-output m) wlr-output)
         (cond ((wlr-output-is-wl wlr-output)
                (wlr-wl-output-set-title wlr-output "gwwm/wayland"))
               ((wlr-output-is-x11 wlr-output)
@@ -639,9 +640,6 @@ gwwm [options]
         (set! (monitor-scene-output m)
               (wlr-scene-output-create (gwwm-scene) wlr-output))
         (wlr-output-layout-add-auto (gwwm-output-layout) wlr-output)
-
-        (set! (monitor-layouts m)
-              (make-list 2 tile-layout))
         (add-listen (monitor-wlr-output m) 'frame (render-monitor m))
         (add-listen (monitor-wlr-output m) 'destroy (cleanup-monitor m))
         (run-hook create-monitor-hook m))))
@@ -716,9 +714,9 @@ gwwm [options]
                 (let ((xdg-surface (wrap-wlr-xdg-surface data)))
                   (when (eq? (.role xdg-surface)
                              'WLR_XDG_SURFACE_ROLE_TOPLEVEL)
-                    (let ((c (make <gwwm-xdg-client>)))
+                    (let ((c (make <gwwm-xdg-client>
+                               #:super-surface xdg-surface)))
                       (set! (.data xdg-surface) (scm->pointer c))
-                      (set! (client-super-surface c) xdg-surface)
                       (set! (client-border-width c) (gwwm-borderpx))
                       (run-hook create-client-hook c))))))
   (gwwm-compositor (wlr-compositor-create (gwwm-display) (gwwm-renderer)))

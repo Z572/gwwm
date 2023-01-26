@@ -118,8 +118,9 @@
   (monitor #:init-value #f
            #:accessor client-monitor)
   (super-surface #:init-value #f
-                 #:accessor client-super-surface)
-  (surface ;; #:init-value #f
+                 #:accessor client-super-surface
+                 #:init-keyword #:super-surface)
+  (surface
    #:allocation #:virtual
    #:slot-ref (lambda (obj) (.surface (client-super-surface obj)))
    #:slot-set! (const #f)
@@ -423,6 +424,7 @@
 
 (define-method (client-set-size! (c <gwwm-xdg-client>) width height)
   (wlr-xdg-toplevel-set-size (client-super-surface c) width height))
+
 (define-method (client-set-size! (c <gwwm-x-client>) width height)
   (wlr-xwayland-surface-configure (client-super-surface c)
                                   (box-x (client-geom c))

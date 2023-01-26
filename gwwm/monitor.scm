@@ -97,10 +97,12 @@
                    #:getter monitor-physical-height)
   (scene-output #:accessor monitor-scene-output)
   (wlr-output #:accessor monitor-wlr-output
-              #:setter set-.wlr-output!)
+              #:setter set-.wlr-output!
+              #:init-keyword #:wlr-output)
   (layouts #:init-value (list #f #f)
            #:accessor monitor-layouts
-           #:setter set-.monitor-layouts)
+           #:setter set-.monitor-layouts
+           #:init-keyword #:layouts)
   (sellt #:init-value 0
          #:accessor monitor-sellt
          #:setter set-.monitor-sellt!)
