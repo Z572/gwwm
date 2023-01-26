@@ -557,14 +557,6 @@ SCM_DEFINE(createlayersurface, "create-layer-client", 2, 0, 0,
                      scm_slot_ref(m, scm_from_utf8_symbol("layers")),
                      scm_from_int(wlr_layer_surface->pending.layer))))),
                  &layersurface->link);
-
-  /* Temporarily set the layer's current state to pending
-   * so that we can easily arrange it
-   */
-  old_state = wlr_layer_surface->current;
-  wlr_layer_surface->current = wlr_layer_surface->pending;
-  scm_call_1(REFP("gwwm", "arrangelayers"), m);
-  wlr_layer_surface->current = old_state;
   return WRAP_CLIENT(layersurface);
 }
 

@@ -712,7 +712,15 @@ gwwm [options]
   (gwwm-layer-shell (wlr-layer-shell-v1-create (gwwm-display)))
   (add-listen (gwwm-layer-shell) 'new-surface
               (lambda (listener data)
-                (let ((c (create-layer-client listener data)))
+                (let* ((c (create-layer-client listener data))
+                       (layer-surface (client-super-surface c))
+                       (old-state (~ layer-surface 'current))
+                       (new-state (~ layer-surface 'pending)))
+                  ;; Temporarily set the layer's current state to pending
+                  ;; so that we can easily arrange it
+                  (set! (.current layer-surface) new-state)
+                  (arrangelayers (wlr-output->monitor (.output layer-surface)))
+                  (set! (.current layer-surface) old-state)
                   (run-hook create-client-hook c))))
   (gwwm-idle (wlr-idle-create (gwwm-display)))
   (gwwm-output-layout (wlr-output-layout-create))
