@@ -14,6 +14,32 @@
                    modify-instance
                    modify-instance*))
 
+(define (get-slot-getter obj sym)
+  (let* ((class (class-of obj))
+         (def (class-slot-definition class sym))
+         (get (or (and=> (slot-definition-getter def)
+                         (lambda (gett)
+                           (lambda ()(gett obj))))
+                  (and=> (slot-definition-accessor def)
+                         (lambda (gett)
+                           (lambda () (gett obj))))
+                  (lambda () (slot-ref obj sym)))))
+    get))
+
+(define (get-slot-set obj sym)
+  (let* ((class (class-of obj))
+         (def (class-slot-definition class sym))
+         (set (or (and=> (slot-definition-setter def)
+                         (lambda (set-f)
+                           (lambda (var)
+                             (set-f obj var))))
+                  (and=> (slot-definition-accessor def)
+                         (lambda (set-f)
+                           (lambda (var)
+                             (set! (set-f obj) var))))
+                  (lambda (val) (slot-set! obj sym val)))))
+    set))
+
 (define-syntax let-slots
   (lambda (x)
     (syntax-case x ()
@@ -27,13 +53,18 @@
                           #'(slot ...))))
          (syntax-case slots ()
            (((name changed) ...)
-            #`(let ((%obj obj))
-                (letrec-syntax ((changed
-                                 (identifier-syntax
-                                  (var (slot-ref %obj 'name))
-                                  ((set! var val)
-                                   (slot-set! %obj 'changed val)))) ...)
-                  body body* ...)))))))))
+            (with-syntax (((%get ...) (generate-temporaries #'(name ...)))
+                          ((%set ...) (generate-temporaries #'(name ...))))
+              #`(let ((%obj obj))
+                  (let ((%get (get-slot-getter %obj 'name)) ...
+                        (%set (get-slot-set %obj 'name)) ...)
+                    (letrec-syntax
+                        ((changed
+                          (identifier-syntax
+                           (var (%get))
+                           ((set! var val)
+                            (%set val)))) ...)
+                      body body* ...)))))))))))
 
 (define-syntax modify-instance
   (lambda (x)
@@ -62,7 +93,6 @@
            (let-slots obj* (slot-name ...)
              (let ((out (begin sexp ...)))
                (set! slot-name out)) ...))))))
-;; (define-syntax-rule (modify-slots))
 
 (define* (string-split-length s length)
   (let loop ((s s))
