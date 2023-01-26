@@ -193,7 +193,7 @@ gwwm [options]
 (define (closemon m)
   (for-each (lambda (c)
               (let ((geom (client-geom c)))
-                (when (and (client-is-floating? c)
+                (when (and (client-floating? c)
                            (> (box-x geom)
                               (box-width (monitor-area m))))
                   (client-resize c (modify-instance geom
@@ -804,7 +804,7 @@ gwwm [options]
     (set! (client-scene c) #f)))
 
 (define (apply-rules c)
-  (client-set-floating! c (client-is-float-type? c))
+  (set! (client-floating? c) (client-is-float-type? c))
   (%applyrules c))
 
 (define (map-notify* c)

@@ -36,14 +36,8 @@
             current-client
             client-get-geometry
             client-floating?
-            client-set-floating!
-            client-is-floating?
             client-fullscreen?
-            client-is-fullscreen?
-            client-set-fullscreen!
             client-urgent?
-            client-is-urgent?
-            client-set-urgent!
             client-list
             client-get-appid
             client-get-title
@@ -64,7 +58,6 @@
             client-set-scene!
             client-monitor
             client-border-width
-            client-set-border-width!
             client-get-size-hints
             client-tags
             client-surface
@@ -160,8 +153,6 @@
   (.mapped (client-super-surface c)))
 (define-method (client-mapped? (c <gwwm-x-client>))
   (wlr-xwayland-surface-mapped? (client-super-surface c)))
-(define client-is-fullscreen? client-fullscreen?)
-(define client-set-border-width! (setter client-border-width))
 
 (define-method (client-init-border (c <gwwm-client>))
   (send-log DEBUG (G_ "client init border") 'c c)
@@ -238,12 +229,6 @@
   (next-method)
   (wlr-xwayland-surface-set-fullscreen (client-super-surface client)
                                        fullscreen?))
-
-(define client-set-fullscreen! (setter client-fullscreen?))
-(define client-is-floating? client-floating?)
-(define client-set-floating! (setter client-floating?))
-(define client-is-urgent? client-urgent?)
-(define client-set-urgent! (setter client-urgent?))
 
 (define-method (client-do-set-floating (c <gwwm-client>) floating?)
   (when (client-fullscreen? c)
@@ -402,8 +387,9 @@
                   (wlr-xwayland-surface-y s)
                   (wlr-xwayland-surface-width s)
                   (wlr-xwayland-surface-height s))))
+
 (define-method (applybounds (c <gwwm-client>) geom)
-  (unless (client-is-fullscreen? c)
+  (unless (client-fullscreen? c)
     (let ((_ min* (client-get-size-hints c))
           (bw (client-border-width c))
           (box (client-geom c)))
