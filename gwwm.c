@@ -432,49 +432,13 @@ void arrange_l(Client *layersurface,SCM m, struct wlr_box *usable_area, int excl
   }
 }
 
-SCM_DEFINE(arrangelayer,"arrangelayer",4,0,0,(SCM sm,SCM sl,SCM box,SCM exclusive),"")
+SCM_DEFINE(arrange_layer_client,"arrange-layer-client",4,0,0,(SCM c,SCM sm,SCM box,SCM exclusive),"")
 {
-  Client *layersurface;
-  struct wl_list *list=(UNWRAP_WL_LIST(sl));
+
+  Client *layersurface=UNWRAP_CLIENT(c);
   struct wlr_box *usable_area=(UNWRAP_WLR_BOX(box));
   bool b=scm_to_bool(exclusive);
-  wl_list_for_each(layersurface, list, link) {
-    arrange_l(layersurface, sm, usable_area,b);
-  }
-
-  return SCM_UNSPECIFIED;
-}
-
-SCM_DEFINE(arrange_interactive_layer,"arrange-interactive-layer",1,0,0,(SCM sm),"")
-{
-  Client *layersurface;
-  uint32_t layers_above_shell[] = {
-    ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY,
-    ZWLR_LAYER_SHELL_V1_LAYER_TOP,
-  };
-  for (size_t i = 0; i < LENGTH(layers_above_shell); i++) {
-    wl_list_for_each_reverse(layersurface,
-                             (UNWRAP_WL_LIST
-                              (scm_list_ref
-                               (scm_slot_ref(sm, scm_from_utf8_symbol("layers")),
-                                scm_from_size_t(layers_above_shell[i])))),
-                             link) {
-      struct wlr_surface *surface = CLIENT_SURFACE(layersurface);
-      struct wlr_layer_surface_v1 *lsurface =
-        TO_P(REF_CALL_1("wlroots types","get-pointer",
-                        scm_slot_ref(WRAP_CLIENT(layersurface),
-                                     scm_from_utf8_symbol("super-surface"))));
-      if (lsurface->current.keyboard_interactive ==
-          ZWLR_LAYER_SURFACE_V1_KEYBOARD_INTERACTIVITY_EXCLUSIVE) {
-        /* Deactivate the focused client. */
-        REF_CALL_2("gwwm","focusclient",SCM_BOOL_F, SCM_BOOL_F);
-
-        exclusive_focus(WRAP_WLR_SURFACE(surface));
-        client_notify_enter(exclusive_focus(NULL), wlr_seat_get_keyboard(gwwm_seat(NULL)));
-        return SCM_UNSPECIFIED;
-      }
-    }
-  }
+  arrange_l(layersurface, sm, usable_area,b);
   return SCM_UNSPECIFIED;
 }
 
@@ -501,29 +465,6 @@ SCM_DEFINE (gwwm_cleanup, "%gwwm-cleanup",0,0,0, () ,"")
 }
 #undef D
 
-SCM_DEFINE(commitlayersurfacenotify, "commit-layer-client-notify", 3, 0, 0,
-           (SCM c, SCM slistener, SCM sdata), "") {
-  PRINT_FUNCTION;
-  struct wl_listener *listener = UNWRAP_WL_LISTENER(slistener);
-  void *data = TO_P(sdata);
-  Client *layersurface = UNWRAP_CLIENT(c);
-  struct wlr_layer_surface_v1 *wlr_layer_surface =
-      wlr_layer_surface_v1_from_wlr_surface(CLIENT_SURFACE(layersurface));
-  SCM m = REF_CALL_1("gwwm client", "client-monitor", c);
-  if (return_scene_node(wlr_layer_surface->current.layer) !=
-      CLIENT_SCENE(layersurface)) {
-    wlr_scene_node_reparent(
-        CLIENT_SCENE(layersurface),
-        return_scene_node(wlr_layer_surface->current.layer));
-    wl_list_remove(&layersurface->link);
-    wl_list_insert(((UNWRAP_WL_LIST(scm_list_ref(
-                       scm_slot_ref(m, scm_from_utf8_symbol("layers")),
-                       scm_from_int(wlr_layer_surface->current.layer))))),
-                   &layersurface->link);
-  }
-  return SCM_UNSPECIFIED;
-}
-
 SCM_DEFINE(createlayersurface, "create-layer-client", 2, 0, 0,
            (SCM slistener, SCM sdata), "") {
   PRINT_FUNCTION;
@@ -540,11 +481,6 @@ SCM_DEFINE(createlayersurface, "create-layer-client", 2, 0, 0,
   layersurface = scm_gc_calloc(sizeof(Client), "layer-client");
 
   register_client(layersurface, GWWM_LAYER_CLIENT_TYPE);
-  SCM m=REF_CALL_1("gwwm monitor","wlr-output->monitor",WRAP_WLR_OUTPUT(wlr_layer_surface->output));
-  wl_list_insert(((UNWRAP_WL_LIST(scm_list_ref(
-                     scm_slot_ref(m, scm_from_utf8_symbol("layers")),
-                     scm_from_int(wlr_layer_surface->pending.layer))))),
-                 &layersurface->link);
   return WRAP_CLIENT(layersurface);
 }
 
@@ -577,10 +513,6 @@ SCM_DEFINE(createnotify,"create-notify",2,0,0,(SCM sl ,SCM d),"")
 SCM_DEFINE (destroylayersurfacenotify,"destroy-layer-client-notify",3,0,0,(SCM c,SCM slistener ,SCM sdata),"")
 {
   PRINT_FUNCTION;
-  struct wl_listener *listener=UNWRAP_WL_LISTENER(slistener);
-  void *data=TO_P(sdata);
-  Client *layersurface = UNWRAP_CLIENT(c);
-  wl_list_remove(&layersurface->link);
   logout_client(UNWRAP_CLIENT(c));
   return SCM_UNSPECIFIED;
 }

@@ -268,6 +268,21 @@ gwwm [options]
         (arrange m))
       (focusclient (focustop (current-monitor)) #t))))
 
+(define (arrange-interactive-layer m)
+  (let* ((layers (slot-ref m 'layers)))
+    (any (lambda (c)
+           (let* ((surface (client-surface c))
+                  (lsurface (client-super-surface c)))
+             (if (= 1 (~ lsurface 'current 'keyboard-interactive))
+                 (begin (focusclient #f #f)
+                        (exclusive-focus surface)
+                        (surface-notify-enter surface (wlr-seat-get-keyboard (gwwm-seat)))
+                        #t)
+                 #f)))
+         (append (car (list-ref layers 3)) (car (list-ref layers 2))))))
+(define (arrangelayer m q-list box exclusive?)
+  (for-each (cut arrange-layer-client <> m box exclusive?)
+            (car q-list)))
 (define (arrangelayers m)
   (let* ((l (reverse (slot-ref m 'layers)))
          (box (shallow-clone (monitor-area m))))
@@ -730,6 +745,9 @@ gwwm [options]
                   (set! (client-monitor c) (wlr-output->monitor (.output layer-surface)))
                   (set! (.data (client-scene c)) (scm->pointer c))
                   (set! (.data layer-surface) (scm->pointer c))
+                  (q-push! (list-ref (slot-ref (client-monitor c) 'layers)
+                                     (~ layer-surface 'pending 'layer))
+                           c)
                   ;; Temporarily set the layer's current state to pending
                   ;; so that we can easily arrange it
                   (let ((old-state (~ layer-surface 'current))
@@ -1067,16 +1085,31 @@ gwwm [options]
                         (new-popup-notify c))
             (add-listen (.surface (client-super-surface c)) 'commit
                         (lambda (listener data)
-                          (and-let* ((m (client-monitor c)))
-                            (commit-layer-client-notify c listener data)
+                          (and-let* ((m (client-monitor c))
+                                     (layer-surface (client-super-surface c)))
+                            (unless (equal? (return-scene-node (~ layer-surface 'current 'layer))
+                                            (client-scene c))
+                              (for-each (cut q-remove! <> c)
+                                        (slot-ref m 'layers))
+                              (wlr-scene-node-reparent
+                               (client-scene c)
+                               (return-scene-node
+                                (~ layer-surface 'current 'layer)))
+                              (q-push! (list-ref
+                                        (slot-ref m 'layers)
+                                        (~ layer-surface 'current 'layer))
+                                       c))
+                            ;; (commit-layer-client-notify c listener data)
                             (unless (zero?
-                                     (~ (client-super-surface c)
+                                     (~ layer-surface
                                         'current
                                         'committed))
                               (arrangelayers m)))))
             (add-listen (client-super-surface c) 'destroy
                         (lambda (listener data)
                           (q-remove! (%layer-clients) c)
+                          (for-each (cut q-remove! <> c)
+                                    (slot-ref (client-monitor c) 'layers))
                           (destroy-layer-client-notify c listener data)
                           (and=> (client-monitor c) arrangelayers))
                         #:remove-when-destroy? #f)

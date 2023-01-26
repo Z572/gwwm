@@ -175,12 +175,6 @@ SCM_DEFINE_PUBLIC(gwwm_client_from_popup,"client-from-popup",1,0,0,(SCM spopup),
   return SCM_BOOL_F;
 }
 
-SCM_DEFINE_PUBLIC (gwwm_client_from_list,"gwwm-client-from-link",1,0,0,(SCM slink),""){
-  struct wl_list *link=UNWRAP_WL_LIST(slink);
-  Client *c;
-  return WRAP_CLIENT(wl_container_of(link->next, c, link));
-}
-
 void
 scm_init_gwwm_client(void)
 {
