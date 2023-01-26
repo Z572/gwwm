@@ -540,19 +540,7 @@ SCM_DEFINE(createlayersurface, "create-layer-client", 2, 0, 0,
   layersurface = scm_gc_calloc(sizeof(Client), "layer-client");
 
   register_client(layersurface, GWWM_LAYER_CLIENT_TYPE);
-  scm_slot_set_x(WRAP_CLIENT(layersurface),
-                 scm_from_utf8_symbol("super-surface"),
-                 WRAP_WLR_LAYER_SURFACE(wlr_layer_surface));
-  SCM m =  REF_CALL_1("gwwm monitor","wlr-output->monitor",WRAP_WLR_OUTPUT(wlr_layer_surface->output));
-  scm_slot_set_x(WRAP_CLIENT(layersurface), scm_from_utf8_symbol("monitor"), m);
-  wlr_layer_surface->data = WRAP_CLIENT(layersurface);
-
-  CLIENT_SET_SCENE(
-      layersurface,
-      (wlr_layer_surface->surface->data = wlr_scene_subsurface_tree_create(
-           return_scene_node(wlr_layer_surface->pending.layer),
-           wlr_layer_surface->surface)));
-  CLIENT_SCENE(layersurface)->data = WRAP_CLIENT(layersurface);
+  SCM m=REF_CALL_1("gwwm monitor","wlr-output->monitor",WRAP_WLR_OUTPUT(wlr_layer_surface->output));
   wl_list_insert(((UNWRAP_WL_LIST(scm_list_ref(
                      scm_slot_ref(m, scm_from_utf8_symbol("layers")),
                      scm_from_int(wlr_layer_surface->pending.layer))))),

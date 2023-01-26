@@ -673,6 +673,12 @@ gwwm [options]
                   (let ((config (wrap-wlr-output-configuration-v1 data)))
                     (output-manager-apply-or-test config #t))))))
 
+(define (return-scene-node n)
+  (case n
+    ((0) background-layer)
+    ((1) bottom-layer)
+    ((2) top-layer)
+    ((3) overlay-layer)))
 (define (gwwm-setup)
   (gwwm-display (wl-display-create))
   (backend-setup (gwwm-display))
@@ -712,15 +718,26 @@ gwwm [options]
   (gwwm-layer-shell (wlr-layer-shell-v1-create (gwwm-display)))
   (add-listen (gwwm-layer-shell) 'new-surface
               (lambda (listener data)
-                (let* ((c (create-layer-client listener data))
-                       (layer-surface (client-super-surface c))
-                       (old-state (~ layer-surface 'current))
-                       (new-state (~ layer-surface 'pending)))
+                (let* ((layer-surface (wrap-wlr-layer-surface-v1 data))
+                       (c (create-layer-client listener data)))
+                  (pk  'layer (~ layer-surface 'pending 'layer))
+                  (let ((node (wlr-scene-subsurface-tree-create
+                               (return-scene-node (~ layer-surface 'pending 'layer))
+                               (.surface layer-surface))))
+                    (set! (client-scene c) node)
+                    (set! (.data (.surface layer-surface)) (unwrap-wlr-scene-node node)))
+                  (set! (client-super-surface c) layer-surface)
+                  (set! (client-monitor c) (wlr-output->monitor (.output layer-surface)))
+                  (set! (.data (client-scene c)) (scm->pointer c))
+                  (set! (.data layer-surface) (scm->pointer c))
                   ;; Temporarily set the layer's current state to pending
                   ;; so that we can easily arrange it
-                  (set! (.current layer-surface) new-state)
-                  (arrangelayers (wlr-output->monitor (.output layer-surface)))
-                  (set! (.current layer-surface) old-state)
+                  (let ((old-state (~ layer-surface 'current))
+                        (new-state (~ layer-surface 'pending)))
+                    (set! (.current layer-surface) new-state)
+                    (arrangelayers (wlr-output->monitor (.output layer-surface)))
+                    (set! (.current layer-surface) old-state))
+
                   (run-hook create-client-hook c))))
   (gwwm-idle (wlr-idle-create (gwwm-display)))
   (gwwm-output-layout (wlr-output-layout-create))
