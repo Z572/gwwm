@@ -442,19 +442,6 @@ SCM_DEFINE (gwwm_cleanup, "%gwwm-cleanup",0,0,0, () ,"")
 }
 #undef D
 
-SCM_DEFINE(createlayersurface, "create-layer-client", 2, 0, 0,
-           (SCM slistener, SCM sdata), "") {
-  PRINT_FUNCTION;
-  struct wl_listener *listener = UNWRAP_WL_LISTENER(slistener);
-  void *data = TO_P(sdata);
-  struct wlr_layer_surface_v1 *wlr_layer_surface = data;
-  Client *layersurface;
-  struct wlr_layer_surface_v1_state old_state;
-  layersurface = scm_gc_calloc(sizeof(Client), "layer-client");
-  register_client(layersurface, GWWM_LAYER_CLIENT_TYPE);
-  return WRAP_CLIENT(layersurface);
-}
-
 SCM_DEFINE (init_output,"init-output",1,0,0,(SCM swlr_output),"")
 {
   struct wlr_output *wlr_output=UNWRAP_WLR_OUTPUT(swlr_output);
@@ -467,24 +454,6 @@ SCM_DEFINE (init_output,"init-output",1,0,0,(SCM swlr_output),"")
       break;
     }
   }
-  return SCM_UNSPECIFIED;
-}
-
-SCM_DEFINE(createnotify,"create-notify",2,0,0,(SCM sl ,SCM d),"")
-{
-  PRINT_FUNCTION;
-  struct wl_listener *listener=UNWRAP_WL_LISTENER(sl);
-  void *data= TO_P(d);
-  struct wlr_xdg_surface *xdg_surface = data;
-  Client *c = scm_gc_calloc(sizeof(*c), "xdg-client");
-  register_client(c,GWWM_XDG_CLIENT_TYPE);
-  return WRAP_CLIENT(c);
-}
-
-SCM_DEFINE (destroylayersurfacenotify,"destroy-layer-client-notify",3,0,0,(SCM c,SCM slistener ,SCM sdata),"")
-{
-  PRINT_FUNCTION;
-  scm_call_1(REFP("gwwm client","logout-client") ,c);
   return SCM_UNSPECIFIED;
 }
 
@@ -509,14 +478,6 @@ SCM_DEFINE (gwwm_focusmon ,"focusmon",1,0,0,(SCM a),"" )
   return SCM_UNSPECIFIED;
 }
 #undef FUNC_NAME
-
-SCM_DEFINE (destroy_surface_notify,"destroy-surface-notify",3,0,0,
-            (SCM c, SCM listener, SCM data),"")
-{
-  PRINT_FUNCTION;
-  scm_call_1(REFP("gwwm client","logout-client") ,c);
-  return SCM_UNSPECIFIED;
-}
 
 SCM_DEFINE (gwwm_motionnotify, "%motionnotify" , 1,0,0,
             (SCM stime), "")
@@ -770,15 +731,6 @@ xytonode(double x, double y, struct wlr_surface **psurface,
 }
 
 #ifdef XWAYLAND
-
-SCM_DEFINE(createnotifyx11,"create-notify/x11",2,0,0,(SCM sl ,SCM d),"")
-{
-  PRINT_FUNCTION;
-  Client *c = scm_gc_calloc(sizeof(*c),"x-client");
-  register_client(c,GWWM_X_CLIENT_TYPE);
-  return WRAP_CLIENT(c);
-}
-
 
 Atom
 getatom(xcb_connection_t *xc, const char *name)

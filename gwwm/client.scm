@@ -114,9 +114,6 @@
                     (slot-ref m 'seltags)))))
 
 (define-class <gwwm-base-client> ()
-  (data #:init-keyword #:data
-        #:accessor .data
-        #:class <hidden-slot>)
   (geom #:accessor client-geom)
   (monitor #:init-value #f
            #:accessor client-monitor)
@@ -169,7 +166,6 @@
   (define scene (client-scene c))
   (define (create)
     (let ((rect (wlr-scene-rect-create scene 0 0 (make-rgba-color 0 0 0 0))))
-      ;;(set! (.data (.node rect)))
       rect))
   (set! (client-borders c)  (list (create) (create) (create) (create)))
   (client-set-tiled c (list 1 2 4 8))
@@ -293,20 +289,10 @@
   (wlr-xwayland-surface-title
    (client-super-surface c)))
 
-(define-method (logout-client (c <gwwm-base-client>))
-  (set! (.data c) 0))
-
 (define-method (client-send-close (c <gwwm-xdg-client>))
   (wlr-xdg-toplevel-send-close (client-super-surface c)))
 (define-method (client-send-close (c <gwwm-x-client>))
   (wlr-xwayland-surface-close (client-super-surface c)))
-
-(define-method (equal? (o1 <gwwm-base-client>)
-                       (o2 <gwwm-base-client>))
-  (client=? o1 o2))
-
-(define-method (client=? (c1 <gwwm-base-client>) (c2 <gwwm-base-client>))
-  (equal? (.data c1) (.data c2)))
 
 (define (client-is-x11? client)
   (is-a? client <gwwm-x-client>))
@@ -354,7 +340,8 @@
 
 (define (client-alive? client)
   "return #t if client is alive, or #f deaded."
-  (not (zero? (.data client))))
+  ;; TODO
+  #t)
 
 (define (%get-size-hints-helper o)
   (define boxs (list (make <wlr-box>)

@@ -716,8 +716,7 @@ gwwm [options]
                 (let ((xdg-surface (wrap-wlr-xdg-surface data)))
                   (when (eq? (.role xdg-surface)
                              'WLR_XDG_SURFACE_ROLE_TOPLEVEL)
-
-                    (let ((c (create-notify listener data)))
+                    (let ((c (make <gwwm-xdg-client>)))
                       (set! (.data xdg-surface) (scm->pointer c))
                       (set! (client-super-surface c) xdg-surface)
                       (set! (client-border-width c) (gwwm-borderpx))
@@ -734,7 +733,7 @@ gwwm [options]
   (add-listen (gwwm-layer-shell) 'new-surface
               (lambda (listener data)
                 (let* ((layer-surface (wrap-wlr-layer-surface-v1 data))
-                       (c (create-layer-client listener data)))
+                       (c (make <gwwm-layer-client>)))
                   (unless (.output layer-surface)
                     (set! (.output layer-surface)
                           (monitor-wlr-output (current-monitor))))
@@ -781,7 +780,7 @@ gwwm [options]
                                       (client-do-set-fullscreen c #f)))
                                   (client-list))
                         (let* ((xsurface (wrap-wlr-xwayland-surface data))
-                               (c (create-notify/x11 listener data)))
+                               (c (make <gwwm-x-client>)))
                           (set! (.data xsurface) (scm->pointer c))
                           (set! (client-border-width c) (gwwm-borderpx))
                           (set! (client-super-surface c) xsurface)
@@ -1026,10 +1025,6 @@ gwwm [options]
        (add-listen (client-super-surface c) 'unmap (unmap-notify* c))
        (add-listen (client-super-surface c) 'map (map-notify* c)))
      (cond ((is-a? c <gwwm-xdg-client>)
-            (add-listen (client-super-surface c) 'destroy
-                        (lambda (listener data)
-                          (destroy-surface-notify c listener data))
-                        #:remove-when-destroy? #f)
             (add-listen (client-super-surface c) 'new-popup
                         (new-popup-notify c))
             (add-listen (wlr-xdg-surface-toplevel (client-super-surface c))
@@ -1045,14 +1040,8 @@ gwwm [options]
             (add-listen (wlr-xdg-surface-toplevel (client-super-surface c))
                         'request-fullscreen
                         (request-fullscreen-notify c)
-                        #:destroy-when (client-surface c))
-
-            )
+                        #:destroy-when (client-surface c)))
            ((is-a? c <gwwm-x-client>)
-            (add-listen (client-super-surface c) 'destroy
-                        (lambda (listener data)
-                          (destroy-surface-notify c #f #f))
-                        #:remove-when-destroy? #f)
             (add-listen (client-super-surface c) 'set-class
                         (lambda (listener data)
                           (set! (client-appid c)
@@ -1113,7 +1102,6 @@ gwwm [options]
                           (q-remove! (%layer-clients) c)
                           (for-each (cut q-remove! <> c)
                                     (slot-ref (client-monitor c) 'layers))
-                          (destroy-layer-client-notify c listener data)
                           (and=> (client-monitor c) arrangelayers))
                         #:remove-when-destroy? #f)
             (add-listen (client-super-surface c) 'unmap

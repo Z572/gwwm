@@ -16,53 +16,6 @@
 #include "gwwm.h"
 #include "wayland-util.h"
 #include <wlr/types/wlr_layer_shell_v1.h>
-SCM find_client(Client *c) {
-  return (c) ? c->scm : SCM_BOOL_F;
-}
-
-Client*
-unwrap_client_1(SCM o)
-{
-  if (scm_is_false(o)) {
-    return NULL;
-  }
-  SCM a=scm_slot_ref(o, scm_from_utf8_symbol("data"));
-  if (scm_to_bool(scm_zero_p(a))) {
-    scm_error(scm_misc_error_key,"unwrap-client","client is delated" ,SCM_EOL,SCM_EOL);
-    return NULL;
-  }
-  return (TO_P(MAKE_P(a)));
-}
-
-void register_client(Client *c, enum gwwm_client_type type) {
-  PRINT_FUNCTION;
-  char *tp = "<gwwm-xdg-client>";
-  switch (type) {
-  case GWWM_LAYER_CLIENT_TYPE:
-    tp = "<gwwm-layer-client>";
-    break;
-  case GWWM_XDG_CLIENT_TYPE:
-    tp = "<gwwm-xdg-client>";
-    break;
-  case GWWM_X_CLIENT_TYPE:
-    tp = "<gwwm-x-client>";
-    break;
-  }
-  SCM sc=(scm_call_3(REF("oop goops", "make"), REF("gwwm client", tp),
-                              scm_from_utf8_keyword("data"),
-                     scm_pointer_address(FROM_P(c))));
-  c->scm=sc;
-}
-
-void
-logout_client(Client *c){
-  PRINT_FUNCTION;
-  SCM sc=WRAP_CLIENT(c);
-  scm_call_1(REFP("gwwm client","logout-client") ,sc);
-  c->scm=NULL;
-  /* free(c); */
-}
-
 
 SCM_DEFINE (gwwm_client_is_float_type_p,"client-is-float-type?",1,0,0,
             (SCM c),"")

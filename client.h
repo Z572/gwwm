@@ -7,19 +7,7 @@
 #include <wlr/types/wlr_surface.h>
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/util/box.h>
-/*
- * Attempt to consolidate unavoidable suck into one file, away from dwl.c.  This
- * file is not meant to be pretty.  We use a .h file with static inline
- * functions instead of a separate .c module, or function pointers like sway, so
- * that they will simply compile out if the chosen #defines leave them unused.
- */
 
-/* Leave these functions first; they're used in the others */
-enum gwwm_client_type {
-  GWWM_XDG_CLIENT_TYPE,
-  GWWM_X_CLIENT_TYPE,
-  GWWM_LAYER_CLIENT_TYPE
-};
 #define GWWM_BORDERCOLOR()                                                     \
   (TO_P(REF_CALL_1(                                                            \
       "gwwm color", "color->pointer",                                          \
@@ -37,9 +25,6 @@ enum gwwm_client_type {
 #define MAKE_CLIENT(o)                                                         \
   (scm_call_3(REF("oop goops", "make"), REF("gwwm client", "<gwwm-client>"),   \
               scm_from_utf8_keyword("data"), FROM_P(o)))
-
-#define WRAP_CLIENT(o) find_client(o)
-#define UNWRAP_CLIENT(o) unwrap_client_1(o)
 
 #define CLIENT_IS_FULLSCREEN(c)                                                \
   scm_to_bool(REF_CALL_1("gwwm client", "client-fullscreen?", WRAP_CLIENT(c)))
@@ -83,14 +68,7 @@ enum gwwm_client_type {
 #define CLIENT_SET_BORDER_COLOR(c, color)                                      \
   scm_call_2(REFP("gwwm client", "client-set-border-color"), WRAP_CLIENT(c),   \
              color)
-typedef struct Client {
-  SCM scm;
-} Client;
 
-Client *unwrap_client_1(SCM o);
-SCM find_client(Client *c);
-void register_client(Client *c, enum gwwm_client_type type);
-void logout_client(Client *c);
 struct wlr_surface *client_surface_at(SCM c, double cx, double cy,
                                       double *sx, double *sy);
 
