@@ -1,5 +1,5 @@
 (define-module (gwwm commands)
-  #:autoload (gwwm) (cursor-mode gwwm-xcursor-manager grabc grabcx grabcy gwwm-cursor)
+  #:autoload (gwwm) (cursor-mode gwwm-xcursor-manager grabc grabcx grabcy gwwm-cursor float-layer)
   #:use-module (oop goops)
   #:use-module (wlroots backend session)
   #:use-module (wlroots types scene)
@@ -121,7 +121,7 @@
           (cursor (gwwm-cursor)))
       (when (and c
                  (not (client-fullscreen? c)))
-        (set! (client-floating? c) #t)
+        (client-do-set-floating c #t)
         (cursor-mode n)
         (case n
           ((move)
