@@ -21,7 +21,7 @@
             monitor-physical-width
             monitor-physical-height
             monitor-at
-            monitor-wlr-output
+            monitor-output
             monitor-layouts
             monitor-window-area
             monitor-scene-output
@@ -54,7 +54,7 @@
                          set-current-monitor))
 (define-class <gwwm-monitor> ()
   (name #:allocation #:virtual
-        #:slot-ref (lambda (m) (.name (monitor-wlr-output m)))
+        #:slot-ref (lambda (m) (.name (monitor-output m)))
         #:slot-set! (lambda _ #f)
         #:getter monitor-name)
   (area #:accessor monitor-area
@@ -62,41 +62,41 @@
   (window-area #:accessor monitor-window-area
                #:setter set-.window-area!)
   (description #:allocation #:virtual
-               #:slot-ref (lambda (m) (.description (monitor-wlr-output m)))
+               #:slot-ref (lambda (m) (.description (monitor-output m)))
                #:slot-set! (lambda _ #f)
                #:getter monitor-description)
   (enabled? #:allocation #:virtual
-            #:slot-ref (lambda (m) (.enabled (monitor-wlr-output m)))
+            #:slot-ref (lambda (m) (.enabled (monitor-output m)))
             #:slot-set! (lambda _ #f)
             #:getter monitor-enabled?)
   (width  #:allocation #:virtual
-          #:slot-ref (lambda (m) (.width (monitor-wlr-output m)))
+          #:slot-ref (lambda (m) (.width (monitor-output m)))
           #:slot-set! (lambda _ #f)
           #:getter monitor-width)
   (height #:allocation #:virtual
-          #:slot-ref (lambda (m) (.height (monitor-wlr-output m)))
+          #:slot-ref (lambda (m) (.height (monitor-output m)))
           #:slot-set! (lambda _ #f)
           #:getter monitor-height)
   (scale #:allocation #:virtual
-         #:slot-ref (lambda (m) (.scale (monitor-wlr-output m)))
+         #:slot-ref (lambda (m) (.scale (monitor-output m)))
          #:slot-set! (lambda _ #f)
          #:getter monitor-scale)
   (refresh #:allocation #:virtual
-           #:slot-ref (lambda (m) (.refresh (monitor-wlr-output m)))
+           #:slot-ref (lambda (m) (.refresh (monitor-output m)))
            #:slot-set! (lambda _ #f)
            #:getter monitor-refresh)
   (physical-width #:allocation #:virtual
                   #:slot-ref (lambda (m)
-                               (.phys-width (monitor-wlr-output m)))
+                               (.phys-width (monitor-output m)))
                   #:slot-set! (lambda _ #f)
                   #:getter monitor-physical-width)
   (physical-height #:allocation #:virtual
                    #:slot-ref (lambda (m)
-                                (.phys-height (monitor-wlr-output m)))
+                                (.phys-height (monitor-output m)))
                    #:slot-set! (lambda _ #f)
                    #:getter monitor-physical-height)
   (scene-output #:accessor monitor-scene-output)
-  (wlr-output #:accessor monitor-wlr-output
+  (wlr-output #:accessor monitor-output
               #:setter set-.wlr-output!
               #:init-keyword #:wlr-output)
   (layouts #:init-value (list #f #f)
@@ -138,7 +138,7 @@
      (and=> (wlr-output-layout-adjacent-output
              (gwwm-output-layout)
              (bs:enum->integer %wlr-direction-enum dir)
-             (monitor-wlr-output m)
+             (monitor-output m)
              (box-x area)
              (box-y area))
             p)
@@ -147,7 +147,7 @@
              (logxor (bs:enum->integer %wlr-direction-enum
                                        dir) 12 ;; dir ^ (WLR_DIRECTION_LEFT|WLR_DIRECTION_RIGHT)
                                        )
-             (monitor-wlr-output m)
+             (monitor-output m)
              (box-x area)
              (box-y area))
             p)

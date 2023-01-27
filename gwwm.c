@@ -466,7 +466,7 @@ SCM_DEFINE (gwwm_focusmon ,"focusmon",1,0,0,(SCM a),"" )
                  REF_CALL_1("gwwm monitor" ,"dirtomon",a));
     while (!((struct wlr_output *)
                                    (UNWRAP_WLR_OUTPUT(scm_call_1
-                                                      (REFP("gwwm monitor", "monitor-wlr-output"),
+                                                      (REFP("gwwm monitor", "monitor-output"),
                                                        (REF_CALL_0("gwwm monitor", "current-monitor"))))))->enabled
            && i++ < nmons);
   REF_CALL_2("gwwm","focusclient",

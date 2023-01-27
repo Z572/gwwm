@@ -255,11 +255,11 @@ gwwm [options]
       (set! (client-monitor c) m)
       (when old
         (wlr-surface-send-leave surface
-                                (monitor-wlr-output old))
+                                (monitor-output old))
         (arrange old))
       (when m
         (client-resize c (client-geom c) #f)
-        (wlr-surface-send-enter surface (monitor-wlr-output m))
+        (wlr-surface-send-enter surface (monitor-output m))
         (set! (client-tags c)
               (if (zero? newtag)
                   (list-ref (slot-ref m 'tagset)
@@ -294,7 +294,7 @@ gwwm [options]
     (arrange-interactive-layer m)))
 
 (define (update-monitor m config)
-  (let* ((output (monitor-wlr-output m))
+  (let* ((output (monitor-output m))
          (config-head (wlr-output-configuration-head-v1-create config output))
          (box (wlr-output-layout-get-box (gwwm-output-layout) output))
          (state (.state config-head)))
@@ -318,7 +318,7 @@ gwwm [options]
     (entire-layout-box (wlr-output-layout-get-box (gwwm-output-layout)))
     (for-each (cut update-monitor <> config) (monitor-list))
     (and-let* ((m (current-monitor))
-               ((.enabled (monitor-wlr-output m))))
+               ((.enabled (monitor-output m))))
       (for-each (lambda (c)
                   (when (and (not (client-monitor c)) (client-mapped? c))
                     (setmon c m (client-tags c)))) (client-list)))
@@ -640,8 +640,8 @@ gwwm [options]
         (set! (monitor-scene-output m)
               (wlr-scene-output-create (gwwm-scene) wlr-output))
         (wlr-output-layout-add-auto (gwwm-output-layout) wlr-output)
-        (add-listen (monitor-wlr-output m) 'frame (render-monitor m))
-        (add-listen (monitor-wlr-output m) 'destroy (cleanup-monitor m))
+        (add-listen (monitor-output m) 'frame (render-monitor m))
+        (add-listen (monitor-output m) 'destroy (cleanup-monitor m))
         (run-hook create-monitor-hook m))))
   (define (backend/new-input listener data)
     (let ((device (wrap-wlr-input-device data)))
@@ -734,7 +734,7 @@ gwwm [options]
                        (c (make <gwwm-layer-client>)))
                   (unless (.output layer-surface)
                     (set! (.output layer-surface)
-                          (monitor-wlr-output (current-monitor))))
+                          (monitor-output (current-monitor))))
                   (pk  'layer (~ layer-surface 'pending 'layer))
                   (let ((node (wlr-scene-subsurface-tree-create
                                (return-scene-node (~ layer-surface 'pending 'layer))
@@ -882,7 +882,7 @@ gwwm [options]
 (define ((map-layer-client-notify c) listener data)
   (wlr-surface-send-enter
    (client-surface c)
-   (monitor-wlr-output(client-monitor c)))
+   (monitor-output(client-monitor c)))
   (motionnotify))
 (define ((unmap-layer-client-notify c) listener data)
   (wlr-scene-node-set-enabled (client-scene c) #f)
@@ -925,7 +925,7 @@ gwwm [options]
   (q-remove! (%monitors) m)
   (wlr-output-layout-remove
    (gwwm-output-layout)
-   (monitor-wlr-output m))
+   (monitor-output m))
 
   (wlr-scene-output-destroy (monitor-scene-output m))
   (set! (monitor-scene-output m) #f)
@@ -933,7 +933,7 @@ gwwm [options]
          (l (length ms)))
     (unless (zero? l)
       (and=> (find (lambda (m)
-                     (.enabled (monitor-wlr-output m))) ms)
+                     (.enabled (monitor-output m))) ms)
              current-monitor)))
 
   (focusclient (focustop (current-monitor)) #t)
