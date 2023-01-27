@@ -21,7 +21,7 @@
   #:use-module (wlroots types seat)
   #:use-module (wlroots util box)
   #:use-module (util572 box)
-  #:use-module ((system foreign) #:select (pointer-address pointer->scm null-pointer?))
+  #:use-module ((system foreign) #:select (pointer->scm null-pointer?))
   #:use-module (wlroots types xdg-shell)
   #:use-module (wlroots types cursor)
   #:use-module (gwwm listener)
@@ -74,6 +74,7 @@
             client-set-border-color
             client-restack-surface
             client-from-wlr-surface
+            super-surface->client
             %fstack
             %clients
             %layer-clients
@@ -81,6 +82,8 @@
             <gwwm-x-client>
             <gwwm-xdg-client>
             <gwwm-layer-client>))
+
+(define-once super-surface->client (make-object-property))
 
 (define %layer-clients
   (make-parameter
@@ -369,12 +372,12 @@
 (define (client-from-wlr-surface s)
   (if s
       (or (and-let* (((wlr-surface-is-xdg-surface s))
-                     (surface (wlr-xdg-surface-from-wlr-surface s))
-                     ((eq? (.role surface) 'WLR_XDG_SURFACE_ROLE_TOPLEVEL)))
-            (pointer->scm (.data surface)))
+                     (super-surface (wlr-xdg-surface-from-wlr-surface s))
+                     ((eq? (.role super-surface) 'WLR_XDG_SURFACE_ROLE_TOPLEVEL)))
+            (super-surface->client super-surface))
           (and-let* (((wlr-surface-is-xwayland-surface s))
-                     (surface (wlr-xwayland-surface-from-wlr-surface s)))
-            (pointer->scm (.data surface)))
+                     (super-surface (wlr-xwayland-surface-from-wlr-surface s)))
+            (super-surface->client super-surface))
           (if (wlr-surface-is-subsurface s)
               (client-from-wlr-surface
                (wlr-surface-get-root-surface s))
