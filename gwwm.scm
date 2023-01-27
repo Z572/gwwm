@@ -941,6 +941,23 @@ gwwm [options]
       (set! overlay-layer (create))
       (set! no-focus-layer (create)))))
 
+(define (pointerfocus c surface sx sy time)
+  (let ((internal-call (not time)))
+    (when (and c (config-sloppyfocus? (gwwm-config)) (not internal-call))
+      (focusclient c #f))
+    (if surface
+        (let* ((_ now (clock-gettime 1))
+               (time (+ (* 1000 (.tv-sec now)) (/ (.tv-nsec now) 1000000))))
+          (wlr-seat-pointer-notify-enter (gwwm-seat) surface sx sy)
+          (wlr-seat-pointer-notify-motion (gwwm-seat)
+                                          (if (zero? time)
+                                              (let ((_ now (clock-gettime 1)))
+                                                (+ (* 1000 (.tv-sec now)) (/ (.tv-nsec now) 1000000)))
+                                              (round time))
+                                          sx
+                                          sy))
+        (wlr-seat-pointer-notify-clear-focus (gwwm-seat)))))
+
 (define (main)
   (setlocale LC_ALL "")
   (textdomain %gettext-domain)

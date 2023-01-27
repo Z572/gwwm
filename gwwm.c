@@ -498,7 +498,7 @@ SCM_DEFINE (gwwm_motionnotify, "%motionnotify" , 1,0,0,
 	if (!surface && time)
       wlr_xcursor_manager_set_cursor_image(gwwm_xcursor_manager(NULL), GWWM_CURSOR_NORMAL_IMAGE(), cursor);
 
-	pointerfocus(c, surface, sx, sy, time);
+    scm_call_5(REFP("gwwm", "pointerfocus"), c, WRAP_WLR_SURFACE(surface), scm_from_int(sx), scm_from_int(sy), scm_from_uint32(time));
   return SCM_UNSPECIFIED;
 }
 #undef FUNC_NAME
@@ -582,39 +582,6 @@ SCM_DEFINE(gwwm_outputmgrapplyortest,"output-manager-apply-or-test",2,0,0,
 		wlr_output_configuration_v1_send_failed(config);
 	wlr_output_configuration_v1_destroy(config);
     return SCM_UNSPECIFIED;
-}
-
-void
-pointerfocus(SCM c, struct wlr_surface *surface, double sx, double sy,
-		uint32_t time)
-{
-  PRINT_FUNCTION
-	struct timespec now;
-	int internal_call = !time;
-
-	if (GWWM_SLOPPYFOCUS_P()
-        && !internal_call
-        && (scm_is_true(c))
-        && !(scm_to_bool(REF_CALL_1("gwwm client","client-is-unmanaged?", c))))
-      REF_CALL_2("gwwm","focusclient",c, SCM_BOOL_F);
-
-	/* If surface is NULL, clear pointer focus */
-	if (!surface) {
-		wlr_seat_pointer_notify_clear_focus(gwwm_seat(NULL));
-		return;
-	}
-
-	if (internal_call) {
-		clock_gettime(CLOCK_MONOTONIC, &now);
-		time = now.tv_sec * 1000 + now.tv_nsec / 1000000;
-	}
-
-	/* Let the client know that the mouse cursor has entered one
-	 * of its surfaces, and make keyboard focus follow if desired.
-	 * wlroots makes this a no-op if surface is already focused */
-	wlr_seat_pointer_notify_enter(gwwm_seat(NULL), surface, sx, sy);
-	wlr_seat_pointer_notify_motion(gwwm_seat(NULL), time, sx, sy);
-
 }
 
 void
