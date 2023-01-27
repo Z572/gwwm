@@ -109,7 +109,8 @@
 (define-class <gwwm-base-client> ()
   (geom #:accessor client-geom)
   (monitor #:init-value #f
-           #:accessor client-monitor)
+           #:accessor client-monitor
+           #:init-keyword #:monitor)
   (super-surface #:init-value #f
                  #:accessor client-super-surface
                  #:init-keyword #:super-surface)
@@ -120,7 +121,8 @@
    #:getter client-surface)
   (scene #:init-value #f
          #:accessor client-scene
-         #:setter client-set-scene!)
+         #:setter client-set-scene!
+         #:init-keyword #:scene)
   (alive? #:init-value #t #:accessor client-alive?))
 
 (define-class <gwwm-client> (<gwwm-base-client>)
