@@ -121,7 +121,6 @@
     (let ((c (grabc))
           (cursor (gwwm-cursor)))
       (when (and c
-                 (not (client-is-unmanaged? c ))
                  (not (client-fullscreen? c)))
         (set! (client-floating? c) #t)
         (cursor-mode n)

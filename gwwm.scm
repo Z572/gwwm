@@ -432,8 +432,7 @@ gwwm [options]
       (case (cursor-mode)
         ((normal) (and=> (client-at cursor)
                          (lambda (c)
-                           (unless (client-is-unmanaged? c)
-                             (focusclient c #t))))
+                           (focusclient c #t)))
          (let* ((keyboard (wlr-seat-get-keyboard (gwwm-seat)))
                 (mods (if keyboard (wlr-keyboard-get-modifiers
                                     keyboard) 0)))
@@ -449,8 +448,7 @@ gwwm [options]
         (else => (lambda (o)
                    (unless pressed
                      (and-let* (((eq? o 'resize))
-                                (c (grabc))
-                                ((not (client-is-unmanaged? c))))
+                                (c (grabc)))
                        (client-set-resizing! c #f))
                      (wlr-xcursor-manager-set-cursor-image
                       (gwwm-xcursor-manager)
@@ -793,15 +791,12 @@ gwwm [options]
     (grabc #f))
   (and=> (client-monitor c)
          (cut slot-set! <> 'un-map #t))
-  (when (client-is-unmanaged? c)
-    (wlr-scene-node-destroy (client-scene c)))
 
-  (unless (client-is-unmanaged? c)
-    (setmon c #f 0)
-    (q-remove! (%clients) c)
-    (q-remove! (%fstack) c)
-    (wlr-scene-node-destroy (client-scene c))
-    (set! (client-scene c) #f)))
+  (setmon c #f 0)
+  (q-remove! (%clients) c)
+  (q-remove! (%fstack) c)
+  (wlr-scene-node-destroy (client-scene c))
+  (set! (client-scene c) #f))
 
 (define (apply-rules c)
   (set! (client-floating? c) (client-is-float-type? c))
@@ -859,25 +854,19 @@ gwwm [options]
     (let ((p (scm->pointer c)))
       (set! (.data (client-scene c)) p)
       (set! (.data (client-scene-surface c)) p))
-    (if (client-is-unmanaged? c)
-        (begin (wlr-scene-node-reparent (client-scene c) float-layer)
-               (wlr-scene-node-set-position
-                (client-scene c)
-                (+ (box-x (client-geom c)) (gwwm-borderpx))
-                (+ (box-y (client-geom c)) (gwwm-borderpx))))
-        (begin (client-init-border c)
-               (q-push! (%clients) c)
-               (q-push! (%fstack) c)
+    (begin (client-init-border c)
+           (q-push! (%clients) c)
+           (q-push! (%fstack) c)
 
-               (let ((parent (client-get-parent c)))
-                 (if parent
-                     (begin (setmon c (or (client-monitor parent)
-                                          (current-monitor))
-                                    (client-tags parent))
-                            (client-do-set-floating c #t))
-                     (apply-rules c)))
-               (client-do-set-fullscreen c )
-               (slot-set! (client-monitor c) 'un-map #f)))))
+           (let ((parent (client-get-parent c)))
+             (if parent
+                 (begin (setmon c (or (client-monitor parent)
+                                      (current-monitor))
+                                (client-tags parent))
+                        (client-do-set-floating c #t))
+                 (apply-rules c)))
+           (client-do-set-fullscreen c )
+           (slot-set! (client-monitor c) 'un-map #f))))
 
 (define ((map-layer-client-notify c) listener data)
   (wlr-surface-send-enter
@@ -1050,8 +1039,7 @@ gwwm [options]
             (add-listen (client-super-surface c) 'request-activate
                         (lambda (listener data)
                           (let ((xsurface (wrap-wlr-xwayland-surface data)))
-                            (when (and (.mapped xsurface)
-                                       (not (client-is-unmanaged? c)))
+                            (when (.mapped xsurface)
                               (wlr-xwayland-surface-activate xsurface #t)))))
             (add-listen (client-super-surface c) 'request-configure
                         (lambda (listener data)
