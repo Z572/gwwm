@@ -15,8 +15,7 @@
   #:use-module (gwwm layout)
   #:use-module (gwwm client)
   #:duplicates (merge-accessors merge-generics replace warn-override-core warn last)
-  #:export (spawn
-            chvt
+  #:export (chvt
             killclient
             togglefullscreen
             togglefloating
@@ -144,15 +143,6 @@
                                       (+ y height)))
            (wlr-xcursor-manager-set-cursor-image (gwwm-xcursor-manager)
                                                  "bottom_right_corner" cursor)))))))
-
-(define (spawn program . args)
-  (for-each (lambda (c) (client-do-set-fullscreen c #f))
-            (client-list (current-monitor)))
-  (when (= (primitive-fork) 0)
-    (dup2 (port->fdes (current-error-port))
-          (port->fdes (current-output-port)))
-    (setsid)
-    (apply execlp program program args)))
 
 (define* (killclient #:optional (client (current-client)))
   (and=> client client-send-close))

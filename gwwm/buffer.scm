@@ -23,7 +23,7 @@
 ;; (cairo-rectangle cr 4 0 30 20)
 ;; (cairo-fill cr)
 ;; (cairo-surface-flush target)
-;; (spawn "emacs")
+;; (spawn "emacs" '("emacs"))
 ;; (sleep 2)
 ;; (wlr-scene-buffer-create (client-scene (car (client-list)))
 ;;                          (cairo-buffer-base buf))

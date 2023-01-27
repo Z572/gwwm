@@ -57,7 +57,7 @@ simple example
                (gwwm hooks)
                (gwwm color))
   ;;; win+d
-  (keymap-global-set (kbd (s d)) (lambda () (spawn "firefox")))
+  (keymap-global-set (kbd (s d)) (lambda () (spawn "firefox" '("firefox"))))
   (gwwm
    (borderpx 1)
    (sloppyfocus? #t)
