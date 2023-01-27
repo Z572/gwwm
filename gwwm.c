@@ -290,51 +290,6 @@ applyexclusive(struct wlr_box *usable_area,
 	}
 }
 
-
-SCM_DEFINE (applyrules ,"%applyrules" ,1,0,0,(SCM sc),"")
-{
-  PRINT_FUNCTION;
-  /* rule matching */
-  const char *appid, *title;
-  unsigned int i=0, newtags = 0;
-  const Rule *r;
-  SCM sm=(REF_CALL_0("gwwm monitor", "current-monitor"));
-  if (!(appid = scm_to_utf8_string(REF_CALL_1("gwwm client", "client-get-appid",sc))))
-    appid = broken;
-  if (!(title = (scm_to_utf8_string(REF_CALL_1("gwwm client","client-get-title", sc)))))
-    title = broken;
-
-  for (r = rules; r < END(rules); r++) {
-    if ((!r->title || strstr(title, r->title))
-        && (!r->id || strstr(appid, r->id))) {
-      (REF_CALL_2("gwwm client", "client-set-floating!", sc,
-                  scm_from_bool(r->isfloating)));
-      newtags |= r->tags;
-      i = 0;
-      SCM monitor_list=(REF_CALL_0("gwwm monitor", "monitor-list"));
-      int monitor_list_length= scm_to_int(scm_length(monitor_list));
-      for (int i=0;r->monitor==i <= monitor_list_length ; i++){
-        sm=scm_list_ref(monitor_list, scm_from_int(i));
-      }
-    }
-  }
-  wlr_scene_node_reparent((UNWRAP_WLR_SCENE_NODE
-                           (REF_CALL_1("gwwm client", "client-scene", sc))),
-                          (UNWRAP_WLR_SCENE_NODE
-                           (REF("gwwm",
-                                scm_to_bool
-                                (REF_CALL_1
-                                 ("gwwm client", "client-floating?", sc))
-                                ? "float-layer"
-                                : "tile-layer"))));
-  scm_call_3(REFP("gwwm", "setmon"),
-             sc,
-             sm,
-             scm_from_unsigned_integer(newtags));
-
-  return SCM_UNSPECIFIED;
-}
-
 void arrange_l(SCM layersurface,SCM m, struct wlr_box *usable_area, int exclusive) {
 
   struct wlr_box *full_area = ((struct wlr_box *)(UNWRAP_WLR_BOX(

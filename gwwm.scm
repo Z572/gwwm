@@ -798,10 +798,6 @@ gwwm [options]
   (wlr-scene-node-destroy (client-scene c))
   (set! (client-scene c) #f))
 
-(define (apply-rules c)
-  (set! (client-floating? c) (client-is-float-type? c))
-  (%applyrules c))
-
 (define (map-notify* c)
   (lambda (listener data)
     (run-hook client-map-event-hook c
@@ -864,7 +860,13 @@ gwwm [options]
                                       (current-monitor))
                                 (client-tags parent))
                         (client-do-set-floating c #t))
-                 (apply-rules c)))
+                 (begin
+                   (set! (client-floating? c) (client-is-float-type? c))
+                   (wlr-scene-node-reparent (client-scene c)
+                                            (if
+                                             (client-floating? c) float-layer tile-layer))
+                   (setmon c (current-monitor) 0)
+                   )))
            (client-do-set-fullscreen c )
            (slot-set! (client-monitor c) 'un-map #f))))
 
