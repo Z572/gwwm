@@ -861,12 +861,8 @@ gwwm [options]
                                 (client-tags parent))
                         (client-do-set-floating c #t))
                  (begin
-                   (set! (client-floating? c) (client-is-float-type? c))
-                   (wlr-scene-node-reparent (client-scene c)
-                                            (if
-                                             (client-floating? c) float-layer tile-layer))
                    (setmon c (current-monitor) 0)
-                   )))
+                   (client-do-set-floating c (client-is-float-type? c)))))
            (client-do-set-fullscreen c )
            (slot-set! (client-monitor c) 'un-map #f))))
 
