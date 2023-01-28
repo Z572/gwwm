@@ -463,11 +463,6 @@
 (define-method (client-resize (c <gwwm-client>) geo)
   (client-resize c geo #f))
 
-(define-method (client-resize (c <gwwm-client>)
-                              (geo <list>)
-                              interact?)
-  (client-resize c (list->wlr-box geo) interact?))
-
 (define-method (client-set-title-notify (c <gwwm-client>))
   (lambda (listener data)
     (let ((title (client-title c))
