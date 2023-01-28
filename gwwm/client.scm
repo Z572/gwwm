@@ -78,7 +78,7 @@
             super-surface->client
 
             client-set-title-notify
-
+            client-commit-notify
             %fstack
             %clients
             %layer-clients
@@ -473,3 +473,32 @@
                 'client c
                 'old title
                 'new (client-title c)))))
+
+(define-method (client-commit-notify (c <gwwm-client>))
+  (lambda (a b)
+    (let ((box (client-get-geometry c))
+          (m (client-monitor c)))
+      (when (and m (not (box-empty? box))
+                 (or (not (= (box-width box)
+                             (- (box-width (client-geom c))
+                                (* 2 (client-border-width c)))))
+                     (not (= (box-height box)
+                             (- (box-height (client-geom c))
+                                (* 2 (client-border-width c)))))))
+        (arrange m)))
+    (run-hook surface-commit-event-hook c)))
+
+(define-method (client-commit-notify (c <gwwm-xdg-client>))
+  (let ((next (next-method c)))
+    (lambda (listener data)
+      (next listener data)
+      (let ((serial (client-resize-configure-serial c))
+            (current (.current (client-super-surface c)))
+            (pending (.pending (client-super-surface c))))
+        (when (and (not (zero? serial))
+                   (or (<= serial (.configure-serial current))
+                       (and (= (box-width (.geometry current))
+                               (box-width (.geometry pending)))
+                            (= (box-height (.geometry current))
+                               (box-height (.geometry pending))))))
+          (set! (client-resize-configure-serial c) 0))))))
