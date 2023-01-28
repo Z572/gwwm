@@ -1001,12 +1001,6 @@ gwwm [options]
           (y (- y (box-y (client-geom c)))))
         (wlr-xdg-popup-unconstrain-from-box popup geom))))
 
-  (define ((set-title-notify c) listener data)
-    (let ((title (client-title c))
-          (new (client-get-title c)))
-      (set! (client-title c) new )
-      (run-hook update-title-hook c title new)))
-
   (define ((request-fullscreen-notify c) listener data)
     (let ((fullscreen? (client-wants-fullscreen? c))
           (event-or-xsurface ((if (client-is-x11? c)
@@ -1032,7 +1026,7 @@ gwwm [options]
             (add-listen (client-super-surface c) 'new-popup
                         (new-popup-notify c))
             (add-listen (wlr-xdg-surface-toplevel (client-super-surface c))
-                        'set-title (set-title-notify c)
+                        'set-title (client-set-title-notify c)
                         #:destroy-when (client-super-surface c))
 
             (add-listen (wlr-xdg-surface-toplevel (client-super-surface c))
@@ -1071,7 +1065,7 @@ gwwm [options]
             (add-listen (client-super-surface c) 'request-fullscreen
                         (request-fullscreen-notify c))
             (add-listen (client-super-surface c) 'set-title
-                        (set-title-notify c)))
+                        (client-set-title-notify c)))
            ((is-a? c <gwwm-layer-client>)
             (q-push! (%layer-clients) c)
             (add-listen (client-super-surface c) 'map

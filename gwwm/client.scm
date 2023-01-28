@@ -16,6 +16,7 @@
   #:use-module (util572 color)
   #:use-module (wlroots xwayland)
   #:use-module (gwwm monitor)
+  #:use-module (gwwm hooks)
   #:use-module (wayland listener)
   #:use-module (wayland list)
   #:use-module (wlroots types seat)
@@ -75,6 +76,9 @@
             client-restack-surface
             client-from-wlr-surface
             super-surface->client
+
+            client-set-title-notify
+
             %fstack
             %clients
             %layer-clients
@@ -463,3 +467,14 @@
                               (geo <list>)
                               interact?)
   (client-resize c (list->wlr-box geo) interact?))
+
+(define-method (client-set-title-notify (c <gwwm-client>))
+  (lambda (listener data)
+    (let ((title (client-title c))
+          (new (client-get-title c)))
+      (set! (client-title c) new)
+      (run-hook update-title-hook c title new)
+      (send-log DEBUG (G_ "Client change title.")
+                'client c
+                'old title
+                'new (client-title c)))))
