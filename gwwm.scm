@@ -884,11 +884,7 @@ gwwm [options]
 
 (define ((cleanup-monitor m) listener data)
   (q-remove! (%monitors) m)
-  (wlr-output-layout-remove
-   (gwwm-output-layout)
-   (monitor-output m))
-
-  (wlr-scene-output-destroy (monitor-scene-output m))
+  (wlr-output-layout-remove (gwwm-output-layout) (monitor-output m))
   (set! (monitor-scene-output m) #f)
   (let* ((ms (monitor-list))
          (l (length ms)))
@@ -1089,6 +1085,7 @@ gwwm [options]
   (set-current-module (resolve-module '(guile-user)))
   (setup-server)
   (setup-socket)
+  (wlr-scene-attach-output-layout (gwwm-scene) (gwwm-output-layout))
   ;; Start the backend. This will enumerate outputs and inputs, become the DRM
   ;; master, etc
   (if (wlr-backend-start (gwwm-backend))
