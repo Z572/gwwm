@@ -12,7 +12,6 @@
             config-lockfullscreen?
             config-bordercolor
             config-focuscolor
-            config-fullscreenbg
             config-cursor-normal-image
             config-repeat-rate
             config-enable-xwayland?
@@ -66,9 +65,6 @@
   (cursor-normal-image #:init-value "right_ptr"
                        #:init-keyword #:cursor-normal-image
                        #:accessor config-cursor-normal-image)
-  (fullscreenbg #:init-value (make-color 0 0 0 255)
-                #:init-keyword #:fullscreenbg
-                #:accessor config-fullscreenbg)
   (xkb-rules #:init-value (make-xkb-rules) #:init-keyword #:xkb-rules #:accessor config-xkb-rules )
   (lockfullscreen? #:init-value #t #:init-keyword #:lockfullscreen? #:accessor config-lockfullscreen? )
   (bordercolor #:init-value gwwm-default-bordercolor #:init-keyword

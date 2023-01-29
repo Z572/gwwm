@@ -1,7 +1,7 @@
 (define-module (gwwm client)
   #:autoload (gwwm) (fullscreen-layer float-layer tile-layer overlay-layer top-layer bottom-layer background-layer gwwm-seat)
   #:autoload (gwwm commands) (arrange)
-  #:autoload (gwwm config) (gwwm-borderpx g-config config-fullscreenbg)
+  #:autoload (gwwm config) (gwwm-borderpx g-config)
   #:duplicates (merge-generics replace warn-override-core warn last)
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-2)
@@ -138,8 +138,6 @@
              #:accessor client-floating?)
   (fullscreen? #:init-value #f
                #:accessor client-fullscreen?)
-  (fullscreen-bg #:init-value #f
-                 #:accessor client-fullscreen-bg)
   (urgent? #:init-value #f
            #:accessor client-urgent?)
   (title #:accessor client-title)
@@ -194,22 +192,6 @@
 (define-method (client-wants-fullscreen? (c <gwwm-x-client>))
   (.fullscreen (client-super-surface c)))
 
-(define (client-set-fullscreen-bg c)
-  (let ((full? (client-fullscreen? c)))
-    (if full?
-        (unless (client-fullscreen-bg c)
-          (let ((bg (wlr-scene-rect-create (client-scene c)
-                                           (box-width (client-geom c))
-                                           (box-height (client-geom c))
-                                           (config-fullscreenbg (g-config)))))
-            (set! (client-fullscreen-bg c) bg)
-            (wlr-scene-node-lower-to-bottom (.node bg))))
-
-        (when (client-fullscreen-bg c)
-          (let ((bg (client-fullscreen-bg c)))
-            (wlr-scene-node-destroy (.node bg))
-            (set! (client-fullscreen-bg c) #f))))))
-
 (define-method (client-do-set-fullscreen (c <gwwm-client>))
   (client-do-set-fullscreen c (client-fullscreen? c)))
 
@@ -227,7 +209,7 @@
                  (monitor-area (client-monitor c))) #f))
         (begin (wlr-scene-node-reparent (client-scene c) tile-layer)
                (client-resize c (shallow-clone (client-prev-geom c)))))
-    (client-set-fullscreen-bg c)
+    (run-hook client-fullscreen-hook c fullscreen?)
     (arrange (client-monitor c))))
 
 (define-method (client-do-set-fullscreen (client <gwwm-xdg-client>) fullscreen?)

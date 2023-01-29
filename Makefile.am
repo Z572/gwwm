@@ -78,6 +78,7 @@ nobase_guilemodule_DATA = gwwm.scm \
 		gwwm/keys.scm    \
 		gwwm/listener.scm    \
 		gwwm/commands.scm \
+		gwwm/packages/fullscreen-bg.scm \
 		gwwm/configuration.scm \
 		gwwm/config.scm
 
