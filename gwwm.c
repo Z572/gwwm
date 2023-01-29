@@ -437,7 +437,7 @@ SCM_DEFINE (gwwm_motionnotify, "%motionnotify" , 1,0,0,
 #define FUNC_NAME s_gwwm_motionnotify
 {
   uint32_t time=scm_to_uint32( stime);
-  PRINT_FUNCTION;
+  /* PRINT_FUNCTION; */
 	double sx = 0, sy = 0;
 	SCM c = NULL;
 	struct wlr_surface *surface = NULL;
@@ -615,7 +615,7 @@ struct wlr_scene_node *
 xytonode(double x, double y, struct wlr_surface **psurface,
          SCM *pc, SCM *pl, double *nx, double *ny)
 {
-  PRINT_FUNCTION;
+  /* PRINT_FUNCTION; */
   struct wlr_scene_node *node, *pnode;
   struct wlr_surface *surface = NULL;
   SCM c = NULL;

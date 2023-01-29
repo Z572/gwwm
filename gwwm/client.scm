@@ -1,5 +1,5 @@
 (define-module (gwwm client)
-  #:autoload (gwwm) (fullscreen-layer float-layer tile-layer overlay-layer top-layer bottom-layer background-layer gwwm-seat)
+  #:autoload (gwwm) (fullscreen-layer float-layer tile-layer overlay-layer top-layer bottom-layer background-layer  gwwm-seat arrangelayers)
   #:autoload (gwwm commands) (arrange)
   #:autoload (gwwm config) (gwwm-borderpx g-config)
   #:duplicates (merge-generics replace warn-override-core warn last)
@@ -79,9 +79,12 @@
 
             client-set-title-notify
             client-commit-notify
+            client-destroy-notify
+
             %fstack
             %clients
             %layer-clients
+            <gwwm-base-client>
             <gwwm-client>
             <gwwm-x-client>
             <gwwm-xdg-client>
@@ -444,6 +447,27 @@
 
 (define-method (client-resize (c <gwwm-client>) geo)
   (client-resize c geo #f))
+
+(define-method (client-destroy-notify (c <gwwm-base-client>))
+  (lambda (listener data)
+    ;; remove scene
+    (wlr-scene-node-destroy (client-scene c))
+    (set! (client-scene c) #f)
+    (run-hook client-destroy-hook c)
+    ;; mark it destroyed.
+    (set! (client-alive? c) #f)))
+
+(define-method (client-destroy-notify (c <gwwm-layer-client>))
+  (let ((next (next-method c)))
+    (lambda (listener data)
+      (q-remove! (%layer-clients) c)
+      (for-each (cut q-remove! <> c)
+                (slot-ref (client-monitor c) 'layers))
+
+      (next listener data)
+
+      (and=> (client-monitor c) arrangelayers))))
+
 
 (define-method (client-set-title-notify (c <gwwm-client>))
   (lambda (listener data)

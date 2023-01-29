@@ -283,7 +283,8 @@ gwwm [options]
 (define (arrangelayer m q-list box exclusive?)
   (for-each (cut arrange-layer-client <> m box exclusive?)
             (car q-list)))
-(define (arrangelayers m)
+
+(define-public (arrangelayers m)
   (let* ((l (reverse (slot-ref m 'layers)))
          (box (shallow-clone (monitor-area m))))
     (for-each (cut arrangelayer m <> box #t) l)
@@ -795,8 +796,7 @@ gwwm [options]
   (setmon c #f 0)
   (q-remove! (%clients) c)
   (q-remove! (%fstack) c)
-  (wlr-scene-node-destroy (client-scene c))
-  (set! (client-scene c) #f))
+  (wlr-scene-node-set-enabled (client-scene c) #f))
 
 (define (map-notify* c)
   (lambda (listener data)
@@ -990,9 +990,7 @@ gwwm [options]
    create-client-hook
    (lambda (c)
      (add-listen (client-super-surface c) 'destroy
-                 (lambda _
-                   (run-hook client-destroy-hook c)
-                   (set! (client-alive? c) #f)))
+                 (client-destroy-notify c))
      (when (is-a? c <gwwm-client>)
        (set! (client-appid c) (client-get-appid c))
        (set! (client-title c) (client-get-title c))
@@ -1064,19 +1062,11 @@ gwwm [options]
                                         (slot-ref m 'layers)
                                         (~ layer-surface 'current 'layer))
                                        c))
-                            ;; (commit-layer-client-notify c listener data)
                             (unless (zero?
                                      (~ layer-surface
                                         'current
                                         'committed))
                               (arrangelayers m)))))
-            (add-listen (client-super-surface c) 'destroy
-                        (lambda (listener data)
-                          (q-remove! (%layer-clients) c)
-                          (for-each (cut q-remove! <> c)
-                                    (slot-ref (client-monitor c) 'layers))
-                          (and=> (client-monitor c) arrangelayers))
-                        #:remove-when-destroy? #f)
             (add-listen (client-super-surface c) 'unmap
                         (unmap-layer-client-notify c))))))
   (parse-command-line)
