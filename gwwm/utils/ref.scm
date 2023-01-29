@@ -47,8 +47,8 @@
 
 (define-method (ref* o field)
   (ref o field))
-(define-method (ref* o filed . filed+)
-  (apply ref* (ref o filed) filed+))
+(define-method (ref* o field . field+)
+  (apply ref* (ref o field) field+))
 
 (define-method (ref (o <string>) field)
   (string-ref o field))
