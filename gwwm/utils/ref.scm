@@ -50,6 +50,11 @@
 (define-method (ref* o field . field+)
   (apply ref* (ref o field) field+))
 
+(define-method (set* . fields)
+  (let ((reversed-fields (reverse fields)))
+    (set! (ref (apply ref* (reverse (cdr (cdr reversed-fields))))
+               (car (cdr reversed-fields)) )
+          (car reversed-fields))))
 (define-method (ref (o <string>) field)
   (string-ref o field))
 
