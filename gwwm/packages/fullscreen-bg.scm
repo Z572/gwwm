@@ -35,7 +35,7 @@
 (define (add-bg/maybe c)
   (unless (client-bg c)
     (let ((bg (wlr-scene-rect-create
-               (client-scene c)
+               (.node (client-scene c))
                (box-width (client-geom c))
                (box-height (client-geom c))
                (fullscreen-bg-color))))

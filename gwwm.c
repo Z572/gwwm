@@ -35,7 +35,6 @@
 #include <wlr/backend.h>
 #include <wlr/backend/libinput.h>
 #include <wlr/backend/wayland.h>
-#include <wlr/backend/x11.h>
 #include <wlr/render/allocator.h>
 #include <wlr/render/wlr_renderer.h>
 #include <wlr/types/wlr_compositor.h>
@@ -61,7 +60,6 @@
 #include <wlr/types/wlr_screencopy_v1.h>
 #include <wlr/types/wlr_seat.h>
 #include <wlr/types/wlr_server_decoration.h>
-#include <wlr/types/wlr_viewporter.h>
 #include <wlr/types/wlr_virtual_keyboard_v1.h>
 #include <wlr/types/wlr_xcursor_manager.h>
 #include <wlr/types/wlr_xdg_activation_v1.h>
@@ -356,8 +354,9 @@ void arrange_l(SCM layersurface,SCM m, struct wlr_box *usable_area, int exclusiv
         applyexclusive(usable_area, state->anchor, state->exclusive_zone,
                        state->margin.top, state->margin.right,
                        state->margin.bottom, state->margin.left);
-      wlr_scene_node_set_position((UNWRAP_WLR_SCENE_NODE(
-      REF_CALL_1("gwwm client", "client-scene", layersurface))), box.x, box.y);
+      wlr_scene_node_set_position((UNWRAP_WLR_SCENE_NODE
+                                   (REF_CALL_1("wlroots types scene",".node",
+                                               REF_CALL_1("gwwm client", "client-scene", layersurface)))), box.x, box.y);
       wlr_layer_surface_v1_configure(wlr_layer_surface, box.width, box.height);
     }
   }
@@ -574,7 +573,6 @@ SCM_DEFINE (gwwm_setup_othres,"%gwwm-setup-othres",0,0,0,(),"")
 	wlr_data_device_manager_create(gwwm_display(NULL));
 	wlr_gamma_control_manager_v1_create(gwwm_display(NULL));
 	wlr_primary_selection_v1_device_manager_create(gwwm_display(NULL));
-	wlr_viewporter_create(gwwm_display(NULL));
     return SCM_UNSPECIFIED;
 }
 SCM_DEFINE (gwwm_setup,"%gwwm-setup" ,0,0,0,(),"")
@@ -607,7 +605,7 @@ virtualkeyboard(struct wl_listener *listener, void *data)
 {
   PRINT_FUNCTION
 	struct wlr_virtual_keyboard_v1 *keyboard = data;
-	struct wlr_input_device *device = &keyboard->input_device;
+	struct wlr_input_device *device = &keyboard->keyboard.base;
     scm_call_1(REFP("gwwm","create-keyboard"), WRAP_WLR_INPUT_DEVICE(device));
 }
 
@@ -629,11 +627,11 @@ xytonode(double x, double y, struct wlr_surface **psurface,
                          "background-layer"};
 
   for (int layer = 0; layer < 6; layer++) {
-    if ((node = wlr_scene_node_at(UNWRAP_WLR_SCENE_NODE(REF("gwwm",focus_order[layer])), x, y, nx, ny))) {
-      if (node->type == WLR_SCENE_NODE_SURFACE)
-        surface = wlr_scene_surface_from_node(node)->surface;
+    if ((node = wlr_scene_node_at(UNWRAP_WLR_SCENE_NODE(REF_CALL_1("wlroots types scene",".node",REF("gwwm",focus_order[layer]))), x, y, nx, ny))) {
+      if (node->type == WLR_SCENE_NODE_BUFFER)
+        surface = (wlr_scene_surface_from_buffer(wlr_scene_buffer_from_node(node)))->surface;
       /* Walk the tree to find a node that knows the client */
-      for (pnode = node; pnode && !c; pnode = pnode->parent)
+      for (pnode = node; pnode && !c; pnode = &pnode->parent->node)
         c = pnode->data;
       if (c && CLIENT_IS_LAYER_SHELL(c)) {
         c = NULL;

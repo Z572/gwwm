@@ -48,7 +48,7 @@ SCM_DEFINE (gwwm_client_is_float_type_p,"client-is-float-type?",1,0,0,
             (min.width == max.width || min.height == max.height)) ||
            wlr_xwayland_surface_from_wlr_surface(
                ((struct wlr_surface *)((scm_to_pointer(
-                   (scm_call_1((scm_c_public_ref("wlroots types surface",
+                   (scm_call_1((scm_c_public_ref("wlroots types compositor",
                                                  "unwrap-wlr-surface")),
                                (scm_call_1((scm_c_public_ref("gwwm client",
                                                              "client-surface")),
@@ -60,7 +60,7 @@ SCM_DEFINE (gwwm_client_is_float_type_p,"client-is-float-type?",1,0,0,
           (min.width == max.width || min.height == max.height)) ||
          wlr_xdg_surface_from_wlr_surface(
              (scm_to_pointer(
-                 (scm_call_1(scm_c_public_ref("wlroots types surface",
+                 (scm_call_1(scm_c_public_ref("wlroots types compositor",
                                                "unwrap-wlr-surface"),
                              (scm_call_1(scm_c_public_ref("gwwm client",
                                                            "client-surface"),

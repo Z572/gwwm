@@ -28,80 +28,125 @@
   (package
     (inherit libdrm)
     (name "libdrm")
-    (version "2.4.110")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append
-                    "https://dri.freedesktop.org/libdrm/libdrm-"
-                    version ".tar.xz"))
-              (sha256
-               (base32
-                "0dwpry9m5l27dlhq48j4bsiqwm0247cxdqwv3b7ddmkynk2f9kpf"))))))
-(define wayland-next
-  (package
-    (inherit wayland)
-    (name "wayland")
-    (version "1.20.0")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "https://wayland.freedesktop.org/releases/"
-                                  name "-" version ".tar.xz"))
-              (sha256
-               (base32
-                "09c7rpbwavjg4y16mrfa57gk5ix6rnzpvlnv1wp7fnbh9hak985q"))))))
-(define wayland-protocols-next
-  (package
-    (inherit wayland-protocols)
-    (name "wayland-protocols")
-    (version "1.25")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append
-                    "https://wayland.freedesktop.org/releases/"
-                    "wayland-protocols-" version ".tar.xz"))
-              (sha256
-               (base32
-                "0q0laxdvf8p8b7ks2cbpqf6q0rwrjycqrp8pf8rxm86hk5qhzzzi"))))
-    (inputs
-     (modify-inputs (package-inputs wayland-protocols)
-                    (replace "wayland" wayland-next)))))
-(define libinput-next
-  (package
-    (inherit libinput)
-    (version "1.19.4")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "https://freedesktop.org/software/libinput/"
-                                  "libinput-" version ".tar.xz"))
-              (sha256
-               (base32
-                "0h5lz54rrl48bhi3vki6s08m6rn2h62rlf08dhgchdm9nmqaaczz"))))))
-(define wlroots-next
-  (package
-    (inherit wlroots)
-    (name "wlroots")
-    (version "0.15.1")
+    (version "2.4.114")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://gitlab.freedesktop.org/wlroots/wlroots")
+             (url "https://gitlab.freedesktop.org/mesa/drm")
+             (commit (string-append "libdrm-" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1vxfha0anvxf2i1lirh0m35avkv9rdmhd5c3s6fp6g432963vgrh"))))))
+
+(define wayland-next
+  (package
+    (inherit wayland)
+    (name "wayland")
+    (version "1.21.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://gitlab.freedesktop.org/wayland/wayland")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "00s73nhi3sc48l426jdlqwpclg41kx1hv0yk4yxhbzw19gqpfm1h"))))
-    (arguments (substitute-keyword-arguments (package-arguments wlroots)
-                 ((#:configure-flags flags ''())
-                  `(cons "-Dbackends=['drm','libinput','x11']" ,flags))))
+        (base32 "0fwad6w5jm32c04wh4gca7d1ixdj4b9dnsiy1h6qd9nxs0w47wwy"))))))
 
-    (propagated-inputs
-     (modify-inputs (package-propagated-inputs wlroots)
-                    (prepend libdrm-next libglvnd xcb-util-renderutil)
-                    (replace "wayland" wayland-next)
-                    (replace "libinput-minimal" libinput-next)
-                    (replace "wayland-protocols" wayland-protocols-next)))))
+(define wayland-protocols-next
+  (package
+    (inherit wayland-protocols)
+    (name "wayland-protocols")
+    (version "1.31")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://gitlab.freedesktop.org/wayland/wayland-protocols")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0kpyvnzlwfj9d57v43z5fhk7fliz6224m4hw1xj425c8vrjbw0nx"))))
+    (inputs
+     (modify-inputs (package-inputs wayland-protocols)
+                    (replace "wayland" wayland-next)))))
 
-;; public package, used for 'guix system vm' test
+(define libinput-next
+  (package
+    (inherit libinput)
+    (name "libinput")
+    (version "1.22.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://gitlab.freedesktop.org/libinput/libinput")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "17a5qlym2d6lg2j8fdpxda9k7x5zr35flb4wlj1bz7h0mnkh8326"))))))
+(define freshup-wayland-protocols
+  (package-input-rewriting/spec
+   `(("libdrm" . ,(const libdrm-next))
+     ("libinput-minimal" . ,(const libinput-next))
+     ("wayland" . ,(const wayland-next))
+     ("wayland-protocols" . ,(const wayland-protocols-next)))))
+
+(define wlroots-next
+  (freshup-wayland-protocols
+   (package
+     (inherit wlroots)
+     (name "wlroots")
+     (version "0.16.0")
+     (source
+      (origin
+        (method git-fetch)
+        (uri (git-reference
+              (url "https://gitlab.freedesktop.org/wlroots/wlroots")
+              (commit version)))
+        (file-name (git-file-name name version))
+        (sha256
+         (base32 "18rfr3wfm61dv9w8m4xjz4gzq2v3k5vx35ymbi1cggkgbk3lbc4k"))))
+     (arguments (substitute-keyword-arguments (package-arguments wlroots)
+                  ;; ((#:configure-flags flags ''())
+                  ;;  `(cons* "-Dbackends=['drm','libinput']" ,flags))
+                  ((#:phases phases)
+                   #~(modify-phases #$phases
+                       (add-before 'configure 'sub-hwdata
+                         (lambda* (#:key native-inputs inputs #:allow-other-keys)
+                           (substitute* "backend/drm/meson.build"
+                             (("/usr/share/hwdata/pnp.ids")
+                              (search-input-file (or native-inputs inputs)
+                                                 "share/hwdata/pnp.ids")))
+                           (substitute* "xwayland/server.c"
+                             (("Xwayland")
+                              (search-input-file (or native-inputs inputs)
+                                                 "bin/Xwayland")))))))))
+
+     (propagated-inputs
+      (modify-inputs (package-propagated-inputs wlroots)
+        (prepend (list hwdata "pnp") ;libdrm-next
+                                        ;libglvnd
+                 ;; xcb-util-renderutil
+                 ;; ((options->transformation
+                 ;;   '((with-version . "vulkan-headers=1.3.240")))
+                 ;;  vulkan-headers)
+                 )
+        ;; (replace "wayland" wayland-next)
+        ;; (replace "libinput-minimal" libinput-next)
+        ;; (replace "wayland-protocols" wayland-protocols-next)
+        ))
+     )))
+
+(define freshup-wlroots
+  (package-input-rewriting/spec
+   `(("libdrm" . ,(const libdrm-next))
+     ("libinput-minimal" . ,(const libinput-next))
+     ("wayland" . ,(const wayland-next))
+     ("wayland-protocols" . ,(const wayland-protocols-next))
+     ("wlroots" . ,(const wlroots-next)))))
+
 (define-public gwwm
   (package
     (name "gwwm")
@@ -144,6 +189,7 @@
                                        "guile-bytestructures"
                                        "util572"
                                        "guile-srfi-189"
+                                       "guile-xkbcommon"
                                        "guile-libinput")))
                           (effective (target-guile-effective-version))
                           (mods (map (lambda (o)
@@ -180,6 +226,9 @@
                                   "/util572/guix.scm"))
                   (primitive-load
                    (string-append (dirname (dirname (current-filename)))
+                                  "/guile-xkbcommon/guix.scm"))
+                  (primitive-load
+                   (string-append (dirname (dirname (current-filename)))
                                   "/guile-wlroots/guix.scm"))
                   (primitive-load
                    (string-append (dirname (dirname (current-filename)))
@@ -189,4 +238,4 @@
     (home-page "")
     (license license:gpl3+)))
 
-gwwm
+(freshup-wlroots gwwm)

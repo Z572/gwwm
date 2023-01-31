@@ -131,9 +131,9 @@ void die(const char *fmt, ...);
 #define UNWRAP_WLR_BOX(p)                                                      \
   ((struct wlr_box*)(TO_P(REF_CALL_1("wlroots util box", "unwrap-wlr-box", p))))
 #define WRAP_WLR_SURFACE(p)                                                    \
-  (REF_CALL_1("wlroots types surface", "wrap-wlr-surface", FROM_P(p)))
+  (REF_CALL_1("wlroots types compositor", "wrap-wlr-surface", FROM_P(p)))
 #define UNWRAP_WLR_SURFACE(p)                                                  \
-  (TO_P(REF_CALL_1("wlroots types surface", "unwrap-wlr-surface", p)))
+  (TO_P(REF_CALL_1("wlroots types compositor", "unwrap-wlr-surface", p)))
 
 #define WRAP_WLR_LAYER_SURFACE(p)                                                    \
   (REF_CALL_1("wlroots types layer-shell", "wrap-wlr-layer-surface-v1", FROM_P(p)))

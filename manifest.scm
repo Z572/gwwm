@@ -1,4 +1,4 @@
-(primitive-load (string-append (dirname (current-filename))"/guix.scm") )
+
 (use-modules (guix profiles))
 (use-modules
  (srfi srfi-1)
@@ -8,4 +8,6 @@
 
 (concatenate-manifests (list (specifications->manifest
                               (list "gdb" "guile:debug"))
-                             (package->development-manifest gwwm)))
+
+                             (package->development-manifest
+                              (primitive-load (string-append (dirname (current-filename))"/guix.scm") ))))

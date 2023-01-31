@@ -6,8 +6,8 @@
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-2)
   #:use-module (wlroots types scene)
-  #:use-module (wlroots types surface)
   #:use-module (wlroots types compositor)
+  #:use-module (wlroots types subcompositor)
   #:use-module (wlroots types layer-shell)
   #:use-module (ice-9 q)
   #:use-module (ice-9 control)
@@ -22,13 +22,11 @@
   #:use-module (wlroots types seat)
   #:use-module (wlroots util box)
   #:use-module (util572 box)
-  #:use-module ((system foreign) #:select (pointer->scm null-pointer?))
   #:use-module (wlroots types xdg-shell)
   #:use-module (wlroots types cursor)
   #:use-module (gwwm listener)
   #:use-module (gwwm i18n)
   #:use-module (srfi srfi-26)
-  #:use-module (srfi srfi-17)
   #:use-module (gwwm utils srfi-215)
   #:use-module (oop goops)
   #:use-module (oop goops describe)
@@ -76,7 +74,7 @@
             client-restack-surface
             client-from-wlr-surface
             super-surface->client
-
+            scene-node->client
             client-set-title-notify
             client-commit-notify
             client-destroy-notify
@@ -91,7 +89,6 @@
             <gwwm-layer-client>))
 
 (define-once super-surface->client (make-object-property))
-
 (define %layer-clients
   (make-parameter
    (make-q)
@@ -117,7 +114,9 @@
                     (slot-ref m 'seltags)))))
 
 (define-class <gwwm-base-client> ()
-  (geom #:accessor client-geom)
+  (geom #:accessor client-geom
+        #:init-thunk (lambda ()
+                       (make <wlr-box>)))
   (monitor #:init-value #f
            #:accessor client-monitor
            #:init-keyword #:monitor)
@@ -133,6 +132,9 @@
          #:accessor client-scene
          #:setter client-set-scene!
          #:init-keyword #:scene)
+  (scene-surface #:accessor client-scene-surface
+                 #:init-keyword #:scene-surface
+                 #:init-value #f)
   (alive? #:init-value #t #:accessor client-alive?))
 
 (define-class <gwwm-client> (<gwwm-base-client>)
@@ -147,13 +149,30 @@
   (tags #:init-value 0 #:accessor client-tags)
   (border-width #:init-value 1 #:accessor client-border-width)
   (prev-geom #:accessor client-prev-geom)
-  (scene-surface #:accessor client-scene-surface #:init-value #f)
+
   (resize-configure-serial #:accessor client-resize-configure-serial #:init-value #f))
+
+(define-once %scene-node->client (make-object-property))
+(define-method (scene-node->client (node <wlr-scene-node>))
+  (%scene-node->client node))
+(define-method ((setter scene-node->client) (node <wlr-scene-node>) (c <gwwm-base-client>))
+  (set! (%scene-node->client node) c))
 
 (define client-borders (make-object-property))
 (define-method (client-set-border-color (c <gwwm-client>) (color <rgba-color>))
   (for-each (lambda (b) (wlr-scene-rect-set-color b color))
             (client-borders c)))
+;; (define-public (client-is-render-on-monitor c m)
+;;   (let ((mo (monitor-output m)))
+;;     (let/ec return
+;;       (and (.enabled (.node (client-scene c)))
+;;            (wl-list-for-each
+;;             (lambda (o list) (when (eq? (.output o) mo)
+;;                                (return #t)))
+;;             (.current-outputs (client-surface c))
+;;             <wlr-surface-output> 'link)
+;;            )
+;;       #f)))
 (define-class <gwwm-layer-client> (<gwwm-base-client>))
 
 (define-class <gwwm-x-client> (<gwwm-client>))
@@ -199,25 +218,27 @@
   (client-do-set-fullscreen c (client-fullscreen? c)))
 
 (define-method (client-do-set-fullscreen (c <gwwm-client>) fullscreen?)
+  (send-log DEBUG (G_ "client do fullscreen") 'client c 'fullscreen? fullscreen?)
   (let ((fullscreen? (->bool fullscreen?)))
     (set! (client-fullscreen? c) fullscreen?)
     (set! (client-border-width c) (if fullscreen? 0 (gwwm-borderpx)))
     (if fullscreen?
         (begin (set! (client-prev-geom c)
                      (shallow-clone (client-geom c)))
-               (wlr-scene-node-reparent (client-scene c) fullscreen-layer)
+               (wlr-scene-node-reparent (.node (client-scene c)) (.node fullscreen-layer))
                (client-resize
                 c
                 (shallow-clone
                  (monitor-area (client-monitor c))) #f))
-        (begin (wlr-scene-node-reparent (client-scene c) tile-layer)
+        (begin (wlr-scene-node-reparent (.node (client-scene c)) (.node tile-layer))
                (client-resize c (shallow-clone (client-prev-geom c)))))
     (run-hook client-fullscreen-hook c fullscreen?)
     (arrange (client-monitor c))))
 
 (define-method (client-do-set-fullscreen (client <gwwm-xdg-client>) fullscreen?)
   (next-method)
-  (wlr-xdg-toplevel-set-fullscreen (client-super-surface client) fullscreen?))
+  (wlr-xdg-toplevel-set-fullscreen
+   (wlr-xdg-surface-toplevel (client-super-surface client)) fullscreen?))
 
 (define-method (client-do-set-fullscreen (client <gwwm-x-client>) fullscreen?)
   (next-method)
@@ -225,11 +246,16 @@
                                        fullscreen?))
 
 (define-method (client-do-set-floating (c <gwwm-client>) floating?)
+  (send-log DEBUG (G_ "client do floating") 'client c )
   (when (client-fullscreen? c)
     (client-do-set-fullscreen c #f))
   (set! (client-floating? c) floating?)
-  (wlr-scene-node-reparent (client-scene c)
-                           (if (client-floating? c) float-layer tile-layer))
+  (pk 'b-r)
+  (wlr-scene-node-reparent (.node (client-scene c))
+                           (if (client-floating? c)
+                               (.node float-layer)
+                               (.node tile-layer)))
+  (pk 'a-r)
   (arrange (client-monitor c)))
 
 (define-method (write (client <gwwm-client>) port)
@@ -271,7 +297,7 @@
    (client-super-surface c)))
 
 (define-method (client-send-close (c <gwwm-xdg-client>))
-  (wlr-xdg-toplevel-send-close (client-super-surface c)))
+  (wlr-xdg-toplevel-send-close (wlr-xdg-surface-toplevel(client-super-surface c))))
 (define-method (client-send-close (c <gwwm-x-client>))
   (wlr-xwayland-surface-close (client-super-surface c)))
 
@@ -296,19 +322,20 @@
          client-from-wlr-surface))
 
 (define-method (client-set-resizing! (c <gwwm-xdg-client>) resizing?)
-  (wlr-xdg-toplevel-set-resizing (client-super-surface c) resizing?))
+  (wlr-xdg-toplevel-set-resizing (wlr-xdg-surface-toplevel (client-super-surface c)) resizing?))
 (define-method (client-set-resizing! (c <gwwm-x-client>) resizing?)
   *unspecified*)
 
 (define-method (client-at x y)
+  (pk 'client-at)
   (any (lambda (layer)
-         (let ((node (wlr-scene-node-at layer x y)))
+         (let ((node (pk 'nod(wlr-scene-node-at (.node layer) x y))))
            (if node
                (let loop ((node node))
-                 (or (let ((o (and (not (null-pointer? (.data node)))
-                                   (pointer->scm (.data node)))))
+                 (or (let ((o (scene-node->client node)))
                        (and ((negate (cut is-a? <> <gwwm-layer-client>)) o) o))
-                     (and=> (.parent node) loop)))
+                     (and=> (pk 'node (and=> (pk 'parent(.parent (pk 'bb node))) .node))
+                            loop)))
                #f)))
        (list overlay-layer top-layer
              float-layer
@@ -347,7 +374,7 @@
 
 (define-method (client-set-tiled (c <gwwm-xdg-client>) (edges <integer>))
   (wlr-xdg-toplevel-set-tiled
-   (client-super-surface c)
+   (wlr-xdg-surface-toplevel (client-super-surface c))
    edges))
 
 (define-method (client-restack-surface c)
@@ -403,7 +430,7 @@
               (set! (box-x box) yy)))))))
 
 (define-method (client-set-size! (c <gwwm-xdg-client>) width height)
-  (wlr-xdg-toplevel-set-size (client-super-surface c) width height))
+  (wlr-xdg-toplevel-set-size (wlr-xdg-surface-toplevel (client-super-surface c)) width height))
 
 (define-method (client-set-size! (c <gwwm-x-client>) width height)
   (wlr-xwayland-surface-configure (client-super-surface c)
@@ -418,13 +445,15 @@
          (heigh (box-height geom))
          (width (box-width geom))
          (borders (client-borders c)))
+    (pk 'borders borders)
     (wlr-scene-rect-set-size (list-ref borders 0) width bw)
     (wlr-scene-rect-set-size (list-ref borders 1) width bw)
     (wlr-scene-rect-set-size (list-ref borders 2) bw (- heigh (* 2 bw)))
     (wlr-scene-rect-set-size (list-ref borders 3) bw (- heigh (* 2 bw)))
     (wlr-scene-node-set-position (.node (list-ref borders 1)) 0 (- heigh bw ) )
     (wlr-scene-node-set-position (.node (list-ref borders 2)) 0 bw )
-    (wlr-scene-node-set-position (.node (list-ref borders 3)) (- width bw) bw )))
+    (wlr-scene-node-set-position (.node (list-ref borders 3)) (- width bw) bw )
+    (pk 'borders borders)))
 
 (define-method (client-resize (c <gwwm-client>) geo (interact? <boolean>))
   (set! (client-geom c) geo)
@@ -437,21 +466,20 @@
          (geom (client-geom c))
          (heigh (box-height geom))
          (width (box-width geom)))
-    (wlr-scene-node-set-position (client-scene c) (box-x geo) (box-y geo))
-    (wlr-scene-node-set-position (client-scene-surface c) bw bw)
+    (wlr-scene-node-set-position (.node (client-scene c)) (box-x geo) (box-y geo))
+    (wlr-scene-node-set-position (.node (client-scene-surface c)) bw bw)
     (client-resize-border c)
     (set! (client-resize-configure-serial c)
           (client-set-size! c
                             (- width (* 2 bw))
-                            (- heigh (* 2 bw))))))
+                            (- heigh (* 2 bw))))
+    (pk 'resize)))
 
 (define-method (client-resize (c <gwwm-client>) geo)
   (client-resize c geo #f))
 
 (define-method (client-destroy-notify (c <gwwm-base-client>))
   (lambda (listener data)
-    ;; remove scene
-    (wlr-scene-node-destroy (client-scene c))
     (set! (client-scene c) #f)
     (run-hook client-destroy-hook c)
     ;; mark it destroyed.
@@ -463,9 +491,8 @@
       (q-remove! (%layer-clients) c)
       (for-each (cut q-remove! <> c)
                 (slot-ref (client-monitor c) 'layers))
-
+      (pk 'remove-l)
       (next listener data)
-
       (and=> (client-monitor c) arrangelayers))))
 
 
@@ -495,6 +522,7 @@
     (run-hook surface-commit-event-hook c)))
 
 (define-method (client-commit-notify (c <gwwm-xdg-client>))
+  (pk 'client-commit-notify)
   (let ((next (next-method c)))
     (lambda (listener data)
       (next listener data)
