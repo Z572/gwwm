@@ -84,9 +84,8 @@ Atom get_netatom_n(int n){
   return netatom[n];
 };
 
-SCM gwwm_config;
 SCM get_gwwm_config(void) {
-  return gwwm_config;
+  return REF_CALL_0("gwwm","gwwm-config");
 }
 
 struct wl_listener new_virtual_keyboard = {.notify = virtualkeyboard};
@@ -222,15 +221,6 @@ gwwm_output_layout(struct wlr_output_layout *o) {
     return scm_is_false(d) ? NULL : UNWRAP_WLR_OUTPUT_LAYOUT(d);
   }
 }
-
-SCM_DEFINE (gwwm_c_config, "gwwm-config",0, 0,0,
-            () ,
-            "c")
-#define FUNC_NAME s_gwwm_c_config
-{
-  return gwwm_config;
-}
-#undef FUNC_NAME
 
 void
 applyexclusive(struct wlr_box *usable_area,
@@ -572,7 +562,6 @@ SCM_DEFINE (gwwm_setup_othres,"%gwwm-setup-othres",0,0,0,(),"")
 	wlr_data_control_manager_v1_create(gwwm_display(NULL));
 	wlr_data_device_manager_create(gwwm_display(NULL));
 	wlr_gamma_control_manager_v1_create(gwwm_display(NULL));
-	wlr_primary_selection_v1_device_manager_create(gwwm_display(NULL));
     return SCM_UNSPECIFIED;
 }
 SCM_DEFINE (gwwm_setup,"%gwwm-setup" ,0,0,0,(),"")
@@ -634,8 +623,8 @@ xytonode(double x, double y, struct wlr_surface **psurface,
       for (pnode = node; pnode && !c; pnode = &pnode->parent->node)
         c = pnode->data;
       if (c && CLIENT_IS_LAYER_SHELL(c)) {
+        l = c;
         c = NULL;
-        l = pnode->data;
       }
     }
     if (surface)
@@ -694,13 +683,6 @@ xwaylandready(struct wl_listener *listener,void *data)
 	xcb_disconnect(xc);
     return;
 }
-
-SCM_DEFINE (config_setup,"%config-setup" ,0,0,0,(),"")
-{
-  gwwm_config = (REF_CALL_0("gwwm config","load-init-file"));
-  return SCM_UNSPECIFIED;
-}
-
 
 void
 scm_init_gwwm(void)

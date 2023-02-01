@@ -47,12 +47,12 @@
           #:key
           (model "")
           (options '()))
-  (make <xkb-rule-names>
-    #:model model
-    #:layout layout
-    #:variant variant
-    #:rules rules
-    #:options (string-join options ",")))
+  (list
+   #:model model
+   #:layout layout
+   #:variant variant
+   #:rules rules
+   #:options (string-join options ",")))
 
 (define gwwm-default-bordercolor (make-color 255/2 255/2 255/2 255))
 (define gwwm-default-focuscolor (make-color 255 0 0 255))

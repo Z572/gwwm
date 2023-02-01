@@ -12,6 +12,7 @@
   #:use-module (ice-9 control)
   #:use-module (gwwm config)
   #:use-module (util572 box)
+  #:use-module (gwwm i18n)
   #:use-module (gwwm utils)
   #:use-module (gwwm monitor)
   #:use-module (gwwm layout)

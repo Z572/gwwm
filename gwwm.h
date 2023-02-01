@@ -78,11 +78,9 @@ SCM get_gwwm_config(void);
   (scm_to_bool(REF_CALL_1("gwwm config", "config-sloppyfocus?", gwwm_config)))
 
 #define GWWM_LOCKFULLSCREEN_P()                                                \
-  (scm_to_bool(                                                                \
-      REF_CALL_1("gwwm config", "config-lockfullscreen?", gwwm_config)))
+  (scm_to_bool(REF_CALL_1("gwwm config", "config-lockfullscreen?", get_gwwm_config())))
 #define GWWM_CURSOR_NORMAL_IMAGE()                                             \
-  (scm_to_utf8_string(                                                         \
-      REF_CALL_1("gwwm config", "config-cursor-normal-image", gwwm_config)))
+  (scm_to_utf8_string(REF_CALL_1("gwwm config", "config-cursor-normal-image", get_gwwm_config())))
 
 void xwaylandready(struct wl_listener *listener, void *data);
 Atom getatom(xcb_connection_t *xc, const char *name);

@@ -9,6 +9,7 @@
   #:use-module (wlroots types compositor)
   #:use-module (wlroots types subcompositor)
   #:use-module (wlroots types layer-shell)
+  #:use-module (wlroots time)
   #:use-module (ice-9 q)
   #:use-module (ice-9 control)
   #:use-module (srfi srfi-71)
@@ -74,11 +75,12 @@
             client-restack-surface
             client-from-wlr-surface
             super-surface->client
+            super-surface->scene
             scene-node->client
             client-set-title-notify
             client-commit-notify
             client-destroy-notify
-
+            surface->scene
             %fstack
             %clients
             %layer-clients
@@ -88,7 +90,6 @@
             <gwwm-xdg-client>
             <gwwm-layer-client>))
 
-(define-once super-surface->client (make-object-property))
 (define %layer-clients
   (make-parameter
    (make-q)
@@ -152,11 +153,24 @@
 
   (resize-configure-serial #:accessor client-resize-configure-serial #:init-value #f))
 
-(define-once %scene-node->client (make-object-property))
-(define-method (scene-node->client (node <wlr-scene-node>))
-  (%scene-node->client node))
-(define-method ((setter scene-node->client) (node <wlr-scene-node>) (c <gwwm-base-client>))
-  (set! (%scene-node->client node) c))
+(define-once super-surface->client (make-object-property))
+(define-once super-surface->scene (make-object-property))
+
+(let-syntax ((def
+              (lambda (x)
+                (syntax-case x ()
+                  ((_ n %n f s)
+                   #'(begin
+                       (define-once %n (make-object-property))
+                       (define-method (n (o f))
+                         (%n o))
+                       (define-method ((setter n) (o f) (o2 s))
+                         (set! (%n o) o2))
+                       (export n)))))))
+  (def surface->scene %surface->scene
+       <wlr-surface> <wlr-scene-tree>)
+  (def scene-node->client %scene-node->client
+       <wlr-scene-node> <gwwm-base-client>))
 
 (define client-borders (make-object-property))
 (define-method (client-set-border-color (c <gwwm-client>) (color <rgba-color>))
@@ -445,15 +459,13 @@
          (heigh (box-height geom))
          (width (box-width geom))
          (borders (client-borders c)))
-    (pk 'borders borders)
     (wlr-scene-rect-set-size (list-ref borders 0) width bw)
     (wlr-scene-rect-set-size (list-ref borders 1) width bw)
     (wlr-scene-rect-set-size (list-ref borders 2) bw (- heigh (* 2 bw)))
     (wlr-scene-rect-set-size (list-ref borders 3) bw (- heigh (* 2 bw)))
     (wlr-scene-node-set-position (.node (list-ref borders 1)) 0 (- heigh bw ) )
     (wlr-scene-node-set-position (.node (list-ref borders 2)) 0 bw )
-    (wlr-scene-node-set-position (.node (list-ref borders 3)) (- width bw) bw )
-    (pk 'borders borders)))
+    (wlr-scene-node-set-position (.node (list-ref borders 3)) (- width bw) bw )))
 
 (define-method (client-resize (c <gwwm-client>) geo (interact? <boolean>))
   (set! (client-geom c) geo)
@@ -486,6 +498,7 @@
     (set! (client-alive? c) #f)))
 
 (define-method (client-destroy-notify (c <gwwm-layer-client>))
+  (send-log DEBUG "layer client destroy" 'client c)
   (let ((next (next-method c)))
     (lambda (listener data)
       (q-remove! (%layer-clients) c)
@@ -522,7 +535,7 @@
     (run-hook surface-commit-event-hook c)))
 
 (define-method (client-commit-notify (c <gwwm-xdg-client>))
-  (pk 'client-commit-notify)
+  (send-log DEBUG "client commit" 'client c)
   (let ((next (next-method c)))
     (lambda (listener data)
       (next listener data)
@@ -535,4 +548,7 @@
                                (box-width (.geometry pending)))
                             (= (box-height (.geometry current))
                                (box-height (.geometry pending))))))
-          (set! (client-resize-configure-serial c) 0))))))
+          (set! (client-resize-configure-serial c) 0)))
+      ;; (let ((_ now (clock-gettime 1)))
+      ;;   (wlr-surface-send-frame-done (client-surface c) now))
+      )))
