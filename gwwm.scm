@@ -904,6 +904,7 @@ gwwm [options]
     (set! (super-surface->scene (client-super-surface c))
           (client-scene c))
     (pk 'bs(client-scene-surface c))
+
     (set! (scene-node->client (.node (client-scene c))) c)
     (set! (scene-node->client (.node (client-scene-surface c))) c)
     (pk 's)

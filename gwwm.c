@@ -278,12 +278,15 @@ applyexclusive(struct wlr_box *usable_area,
 	}
 }
 
-void arrange_l(SCM layersurface,SCM m, struct wlr_box *usable_area, int exclusive) {
+SCM_DEFINE(arrange_layer_client,"arrange-layer-client",4,0,0,(SCM c,SCM sm,SCM sbox,SCM sexclusive),"")
+{
 
+  struct wlr_box *usable_area=(UNWRAP_WLR_BOX(sbox));
+  bool exclusive=scm_to_bool(sexclusive);
   struct wlr_box *full_area = ((struct wlr_box *)(UNWRAP_WLR_BOX(
-      REF_CALL_1("gwwm monitor", "monitor-area", m))));
+      REF_CALL_1("gwwm monitor", "monitor-area", sm))));
   struct wlr_layer_surface_v1 *wlr_layer_surface =
-    UNWRAP_WLR_LAYER_SURFACE(scm_slot_ref(layersurface, scm_from_utf8_symbol("super-surface")));
+    UNWRAP_WLR_LAYER_SURFACE(scm_slot_ref(c, scm_from_utf8_symbol("super-surface")));
   struct wlr_layer_surface_v1_state *state = &wlr_layer_surface->current;
   struct wlr_box bounds;
   struct wlr_box box = {.width = state->desired_width,
@@ -339,25 +342,17 @@ void arrange_l(SCM layersurface,SCM m, struct wlr_box *usable_area, int exclusiv
       wlr_layer_surface_v1_destroy(wlr_layer_surface);
       /* continue; */
     } else {
-      scm_slot_set_x(layersurface,scm_from_utf8_symbol("geom"), SHALLOW_CLONE(WRAP_WLR_BOX(&box)));
+      scm_slot_set_x(c,scm_from_utf8_symbol("geom"), SHALLOW_CLONE(WRAP_WLR_BOX(&box)));
       if (state->exclusive_zone > 0)
         applyexclusive(usable_area, state->anchor, state->exclusive_zone,
                        state->margin.top, state->margin.right,
                        state->margin.bottom, state->margin.left);
       wlr_scene_node_set_position((UNWRAP_WLR_SCENE_NODE
                                    (REF_CALL_1("wlroots types scene",".node",
-                                               REF_CALL_1("gwwm client", "client-scene", layersurface)))), box.x, box.y);
+                                               REF_CALL_1("gwwm client", "client-scene", c)))), box.x, box.y);
       wlr_layer_surface_v1_configure(wlr_layer_surface, box.width, box.height);
     }
   }
-}
-
-SCM_DEFINE(arrange_layer_client,"arrange-layer-client",4,0,0,(SCM c,SCM sm,SCM box,SCM exclusive),"")
-{
-
-  struct wlr_box *usable_area=(UNWRAP_WLR_BOX(box));
-  bool b=scm_to_bool(exclusive);
-  arrange_l(c, sm, usable_area,b);
   return SCM_UNSPECIFIED;
 }
 

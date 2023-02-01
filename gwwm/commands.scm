@@ -1,5 +1,5 @@
 (define-module (gwwm commands)
-  #:autoload (gwwm) (cursor-mode gwwm-xcursor-manager grabc grabcx grabcy gwwm-cursor float-layer)
+  #:autoload (gwwm) (cursor-mode gwwm-xcursor-manager grabc grabcx grabcy gwwm-cursor float-layer gwwm-display)
   #:use-module (oop goops)
   #:use-module (wlroots backend session)
   #:use-module (wlroots backend)
@@ -156,4 +156,5 @@
    num))
 
 (define (gwwm-quit)
-  (wl-display-terminate ((@@ (gwwm) gwwm-display))))
+  (send-log INFO "try quit")
+  (wl-display-terminate (gwwm-display)))
