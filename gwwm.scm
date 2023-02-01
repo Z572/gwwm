@@ -623,7 +623,7 @@ gwwm [options]
                              (drag-move
                               (lambda _
                                 (wlr-scene-node-set-position
-                                 scene
+                                 (.node scene)
                                  (inexact->exact
                                   (round (+ (.x (gwwm-cursor))
                                             (.sx (.surface icon)))))
@@ -636,7 +636,7 @@ gwwm [options]
                     (add-listen icon 'destroy
                                 (lambda (listener data)
                                   (remove-hook! motion-notify-hook drag-move)
-                                  (wlr-scene-node-destroy scene)
+                                  (wlr-scene-node-destroy (.node scene))
                                   (focusclient (current-client) #t)
                                   (motionnotify))
                                 #:remove-when-destroy? #f))))))
@@ -771,7 +771,7 @@ gwwm [options]
 
   (gwwm-xcursor-manager (wlr-xcursor-manager-create #f 24))
   (seat-setup (gwwm-display))
-  (gwwm-xdg-shell (wlr-xdg-shell-create (gwwm-display) 4))
+  (gwwm-xdg-shell (wlr-xdg-shell-create (gwwm-display) 5))
   (add-listen (gwwm-xdg-shell) 'new-surface
               (lambda (listener data)
                 (let ((xdg-surface (wrap-wlr-xdg-surface data)))
@@ -849,6 +849,7 @@ gwwm [options]
                                   (client-list))
                         (let* ((xsurface (wrap-wlr-xwayland-surface data))
                                (c (make <gwwm-x-client> #:super-surface xsurface)))
+                          (send-log DEBUG "new x-client" 'client c)
                           (set! (super-surface->client xsurface) c)
                           (set! (client-border-width c) (gwwm-borderpx))
                           (run-hook create-client-hook c)))
@@ -925,7 +926,7 @@ gwwm [options]
     (wlr-scene-node-set-enabled (.node (client-scene-surface c)) #t)))
 
 (define ((map-layer-client-notify c) listener data)
-  (pk 'm-)
+  (send-log DEBUG "layer client map" 'client c)
   (wlr-surface-send-enter
    (client-surface c)
    (monitor-output(client-monitor c)))
@@ -1109,6 +1110,7 @@ gwwm [options]
                           #:destroy-when super-surface)
               (add-listen toplevel 'request-maximize
                           (lambda (listener data)
+                            (send-log DEBUG "client request maximize" 'client c)
                             (wlr-xdg-surface-schedule-configure
                              (client-super-surface c)))
                           #:destroy-when super-surface)

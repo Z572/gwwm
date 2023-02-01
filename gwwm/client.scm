@@ -254,9 +254,9 @@
   (wlr-xdg-toplevel-set-fullscreen
    (wlr-xdg-surface-toplevel (client-super-surface client)) fullscreen?))
 
-(define-method (client-do-set-fullscreen (client <gwwm-x-client>) fullscreen?)
+(define-method (client-do-set-fullscreen (c <gwwm-x-client>) fullscreen?)
   (next-method)
-  (wlr-xwayland-surface-set-fullscreen (client-super-surface client)
+  (wlr-xwayland-surface-set-fullscreen (client-super-surface c)
                                        fullscreen?))
 
 (define-method (client-do-set-floating (c <gwwm-client>) floating?)
@@ -492,13 +492,13 @@
 
 (define-method (client-destroy-notify (c <gwwm-base-client>))
   (lambda (listener data)
+    (send-log DEBUG "client destroy" 'client c)
     (set! (client-scene c) #f)
     (run-hook client-destroy-hook c)
     ;; mark it destroyed.
     (set! (client-alive? c) #f)))
 
 (define-method (client-destroy-notify (c <gwwm-layer-client>))
-  (send-log DEBUG "layer client destroy" 'client c)
   (let ((next (next-method c)))
     (lambda (listener data)
       (q-remove! (%layer-clients) c)
@@ -522,6 +522,7 @@
 
 (define-method (client-commit-notify (c <gwwm-client>))
   (lambda (a b)
+    (send-log DEBUG "client commit" 'client c)
     (let ((box (client-get-geometry c))
           (m (client-monitor c)))
       (when (and m (not (box-empty? box))
@@ -535,7 +536,6 @@
     (run-hook surface-commit-event-hook c)))
 
 (define-method (client-commit-notify (c <gwwm-xdg-client>))
-  (send-log DEBUG "client commit" 'client c)
   (let ((next (next-method c)))
     (lambda (listener data)
       (next listener data)
