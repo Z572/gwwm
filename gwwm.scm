@@ -957,19 +957,28 @@ gwwm [options]
   (send-log DEBUG "layer client unmap" 'client c))
 
 (define ((render-monitor m) listener data)
-  (when (.enabled (monitor-output m))
-    (let ((_ now (clock-gettime 1)))
+  (let ((output (monitor-output m)))
+    (when (.enabled output)
+      (let ((_ now (clock-gettime 1)))
 
-      (for-each (lambda (c)
-                  (wlr-surface-send-frame-done (client-surface c) now)
-                  (wlr-xdg-surface-for-each-popup-surface
-                   (lambda (surface x y)
-                     (wlr-surface-send-frame-done surface now))
-                   (client-super-surface c)))
-                (client-list m))
+        (for-each (lambda (c)
+                    (let/ec return
+                      (wl-list-for-each
+                       (lambda (obj l)
+                         (unless (eq? (.output obj) output)
+                           (return)))
+                       (.current-outputs (client-surface c))
+                       <wlr-surface-output> 'link)
+                      (wlr-surface-send-frame-done (client-surface c) now)
+                      (unless (client-is-x11? c)
+                        (wlr-xdg-surface-for-each-popup-surface
+                         (lambda (surface x y)
+                           (wlr-surface-send-frame-done surface now))
+                         (client-super-surface c)))))
+                  (client-list m))
 
-      (when (wlr-scene-output-commit (monitor-scene-output m))
-        (wlr-scene-output-send-frame-done (monitor-scene-output m) now)))))
+        (when (wlr-scene-output-commit (monitor-scene-output m))
+          (wlr-scene-output-send-frame-done (monitor-scene-output m) now))))))
 
 (define ((cleanup-monitor m) listener data)
   (q-remove! (%monitors) m)
