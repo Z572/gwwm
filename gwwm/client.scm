@@ -155,17 +155,16 @@
 
 (define-once super-surface->client (make-object-property))
 (define-once super-surface->scene (make-object-property))
-
 (let-syntax ((def
               (lambda (x)
                 (syntax-case x ()
                   ((_ n %n f s)
                    #'(begin
-                       (define-once %n (make-object-property))
+                       (define-once %n (make-hash-table 500))
                        (define-method (n (o f))
-                         (%n o))
+                         (hashq-ref %n o))
                        (define-method ((setter n) (o f) (o2 s))
-                         (set! (%n o) o2))
+                         (hashq-set! %n o o2))
                        (export n)))))))
   (def surface->scene %surface->scene
        <wlr-surface> <wlr-scene-tree>)

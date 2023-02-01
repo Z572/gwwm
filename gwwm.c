@@ -534,20 +534,6 @@ quitsignal(int signo)
   REF_CALL_0("gwwm commands","gwwm-quit");
 }
 
-SCM_DEFINE (setpsel,"setpsel",2,0,0,(SCM slistener ,SCM sdata),"")
-{
-  PRINT_FUNCTION;
-  struct wl_listener *listener=UNWRAP_WL_LISTENER(slistener);
-  void *data=TO_P(sdata);
-	/* This event is raised by the seat when a client wants to set the selection,
-	 * usually when the user copies something. wlroots allows compositors to
-	 * ignore such requests if they so choose, but in dwl we always honor
-	 */
-	struct wlr_seat_request_set_primary_selection_event *event = data;
-	wlr_seat_set_primary_selection(gwwm_seat(NULL), event->source, event->serial);
-    return SCM_UNSPECIFIED;
-}
-
 SCM_DEFINE (gwwm_setup_signal,"%gwwm-setup-signal",0,0,0,(),"")
 {
   sigchld(0);
@@ -566,10 +552,6 @@ SCM_DEFINE (gwwm_setup_othres,"%gwwm-setup-othres",0,0,0,(),"")
 }
 SCM_DEFINE (gwwm_setup,"%gwwm-setup" ,0,0,0,(),"")
 {
-    wlr_xdg_output_manager_v1_create(gwwm_display(NULL), gwwm_output_layout(NULL));
-	wlr_server_decoration_manager_set_default_mode(
-			wlr_server_decoration_manager_create(gwwm_display(NULL)),
-			WLR_SERVER_DECORATION_MANAGER_MODE_SERVER);
 	wlr_xdg_decoration_manager_v1_create(gwwm_display(NULL));
 	virtual_keyboard_mgr = wlr_virtual_keyboard_manager_v1_create(gwwm_display(NULL));
 	wl_signal_add(&virtual_keyboard_mgr->events.new_virtual_keyboard,
@@ -616,7 +598,10 @@ xytonode(double x, double y, struct wlr_surface **psurface,
                          "background-layer"};
 
   for (int layer = 0; layer < 6; layer++) {
-    if ((node = wlr_scene_node_at(UNWRAP_WLR_SCENE_NODE(REF_CALL_1("wlroots types scene",".node",REF("gwwm",focus_order[layer]))), x, y, nx, ny))) {
+    if ((node = wlr_scene_node_at(UNWRAP_WLR_SCENE_NODE
+                                  (REF_CALL_1("wlroots types scene",
+                                              ".node",REF("gwwm",focus_order[layer]))),
+                                  x, y, nx, ny))) {
       if (node->type == WLR_SCENE_NODE_BUFFER)
         surface = (wlr_scene_surface_from_buffer(wlr_scene_buffer_from_node(node)))->surface;
       /* Walk the tree to find a node that knows the client */

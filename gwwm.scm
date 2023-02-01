@@ -40,6 +40,7 @@
   #:use-module (wlroots types keyboard)
   #:use-module (wlroots types layer-shell)
   #:use-module (wlroots types output)
+  #:use-module (wlroots types server-decoration)
   #:use-module (wlroots types output-layout)
   #:use-module (wlroots types output-management)
   #:use-module (wlroots types pointer)
@@ -415,8 +416,7 @@ gwwm [options]
                                  (keybinding
                                   (wlr-keyboard-get-modifiers (wlr-keyboard-from-input-device device))
                                   (+ 8 (.keycode event))
-                                  (eq? (.state event) 'WL_KEYBOARD_KEY_STATE_PRESSED)
-                                  ))
+                                  (eq? (.state event) 'WL_KEYBOARD_KEY_STATE_PRESSED)))
                       (wlr-seat-set-keyboard seat device)
                       (wlr-seat-keyboard-notify-key
                        seat
@@ -596,7 +596,11 @@ gwwm [options]
                     (wlr-seat-set-selection seat (.source event)
                                             (.serial event)))))
     (add-listen seat 'request-start-drag request-start-drag)
-    (add-listen seat 'request-set-primary-selection setpsel)
+    (add-listen seat 'request-set-primary-selection
+                (lambda (listener data)
+                  (send-log INFO "seat request set primary selection")
+                  (let ((event (wrap-wlr-seat-request-set-primary-selection-event data)))
+                    wlr-seat-set-primary-selection seat (.source event) (.serial event))))
     (add-listen (.keyboard-state seat) 'focus-change
                 (lambda (listener data)
                   (let ((event (wrap-wlr-seat-keyboard-focus-change-event data)))
@@ -874,6 +878,13 @@ gwwm [options]
          (lambda (n)
            (wlr-scene-node-set-enabled (.node n) #f))))
 
+(define-method (client-init-geom (c <gwwm-client>))
+  (let ((geom (client-get-geometry c)))
+    (send-log DEBUG (G_ "Client init geom")  'client c 'geom geom)
+    (set! (client-geom c) geom)
+    (set! (client-prev-geom c) (shallow-clone geom))
+    (send-log DEBUG (G_ "Client init geom done")  'client c 'geom geom)))
+
 (define (map-notify* c)
   (lambda (listener data)
     (send-log DEBUG (G_ "Client mapping")  'client c)
@@ -893,19 +904,15 @@ gwwm [options]
     (set! (super-surface->scene (client-super-surface c))
           (client-scene c))
     (pk 'bs(client-scene-surface c))
+    (set! (scene-node->client (.node (client-scene c))) c)
+    (set! (scene-node->client (.node (client-scene-surface c))) c)
     (pk 's)
-    (let ((geom (client-get-geometry c)))
-      (send-log DEBUG (G_ "Client init geom")  'client c 'geom geom)
-      (set! (client-geom c) geom)
-      (set! (client-prev-geom c) (shallow-clone geom))
-      (send-log DEBUG (G_ "Client init geom done")  'client c 'geom geom))
+    (client-init-geom c)
 
-    (add-listen (client-surface c) 'commit (client-commit-notify c))
     (set! (surface->scene (client-surface c)) (client-scene c))
+    (add-listen (client-surface c) 'commit (client-commit-notify c))
     (pk 'n)
-    (let ((p (scm->pointer c)))
-      (set! (scene-node->client (.node (client-scene c))) c)
-      (set! (scene-node->client (.node (client-scene-surface c))) c))
+
     (pk 'b)
     (begin (client-init-border c)
            (q-push! (%clients) c)
@@ -945,37 +952,18 @@ gwwm [options]
 
 (define ((render-monitor m) listener data)
   (when (.enabled (monitor-output m))
-    (let ((_ now (clock-gettime 1))
-          (skip? #f))
-      ;; (for-each
-      ;;  (lambda (c)
-      ;;    (and-let* ((serial (client-resize-configure-serial c))
-      ;;               ((is-a? c <gwwm-xdg-client>))
-      ;;               (current (.current
-      ;;                         (client-super-surface c)))
-      ;;               (pending (.pending
-      ;;                         (client-super-surface c))))
-      ;;      (when (or (and (not (zero? serial))
-      ;;                     (slot-ref m 'un-map))
-      ;;                (not (= (~ pending 'geometry 'width)
-      ;;                        (~ current 'geometry 'width)))
-      ;;                (not (= (~ pending 'geometry 'height)
-      ;;                        (~ current 'geometry 'height))))
-      ;;        (wlr-surface-send-frame-done (client-surface c) now)
-      ;;        (set! skip? #t))))
+    (let ((_ now (clock-gettime 1)))
 
-      ;;  (client-list))
       (for-each (lambda (c)
-                  (wlr-surface-send-frame-done (client-surface c) now))
+                  (wlr-surface-send-frame-done (client-surface c) now)
+                  (wlr-xdg-surface-for-each-popup-surface
+                   (lambda (surface x y)
+                     (wlr-surface-send-frame-done surface now))
+                   (client-super-surface c)))
                 (client-list m))
-      (when (wlr-scene-output-commit (monitor-scene-output m))
-        (wlr-scene-output-send-frame-done (monitor-scene-output m) now))
 
-      ;; (if (and (not skip?) (not (wlr-scene-output-commit (monitor-scene-output m))))
-      ;;     #f
-      ;;     (begin (wlr-scene-output-send-frame-done (monitor-scene-output m) now)
-      ;;            (slot-set! m 'un-map #f)))
-      )))
+      (when (wlr-scene-output-commit (monitor-scene-output m))
+        (wlr-scene-output-send-frame-done (monitor-scene-output m) now)))))
 
 (define ((cleanup-monitor m) listener data)
   (q-remove! (%monitors) m)
@@ -993,7 +981,7 @@ gwwm [options]
 
 (define (scene-setup display backend)
   (let ((scene (gwwm-scene (wlr-scene-create))))
-    (pk 'scene-setup)
+    (send-log INFO "scene-setup")
     (wlr-scene-set-presentation scene (wlr-presentation-create display backend))
     (let ((create (lambda () (wlr-scene-tree-create (.tree scene)))))
       (set! background-layer (create))
@@ -1004,10 +992,9 @@ gwwm [options]
       (set! top-layer (create))
       (set! overlay-layer (create))
       (set! no-focus-layer (create)))
-    (pk 'scene-setup-done)))
+    (send-log INFO "scene-setup-done")))
 
 (define (pointerfocus c surface sx sy time)
-  ;; (pk 'pointerfocus)
   (let ((internal-call (not time)))
     (when (and c (config-sloppyfocus? (gwwm-config)) (not internal-call))
       (focusclient c #f))
@@ -1023,6 +1010,27 @@ gwwm [options]
                                           sx
                                           sy))
         (wlr-seat-pointer-notify-clear-focus (gwwm-seat)))))
+
+(define ((new-popup-notify c) listener data)
+  (send-log DEBUG "client add new popup" 'client c)
+  (and-let* ((popup (wrap-wlr-xdg-popup data))
+             (scene (surface->scene (.parent popup)))
+             (tree (wlr-scene-xdg-surface-create scene (.base popup))))
+    (set! (surface->scene (.surface (.base popup))) tree)
+    (run-hook create-popup-hook popup)
+    (and-let* (c
+               (monitor (client-monitor c))
+               (geom (shallow-clone
+                      (if (is-a? c <gwwm-layer-client>)
+                          (monitor-area monitor)
+                          (monitor-window-area (client-monitor c))))))
+      (wlr-scene-node-raise-to-top (.node (.parent (.node tree))))
+      (modify-instance* geom
+        (x (- x (box-x (client-geom c))))
+        (y (- y (box-y (client-geom c)))))
+      (wlr-xdg-popup-unconstrain-from-box popup geom))
+    (add-listen (.base popup) 'new-popup (new-popup-notify c))
+    (send-log DEBUG "popup listen 'new-popup" 'popup popup 'client c)))
 
 (define (main)
   (setlocale LC_ALL "")
@@ -1046,29 +1054,6 @@ gwwm [options]
   (add-hook! create-client-hook
              (lambda (c)
                (send-log DEBUG "client createed" 'CLIENT c)))
-  (define ((new-popup-notify c) listener data)
-    (send-log DEBUG "client add new popup" 'client c)
-    (let* ((popup (wrap-wlr-xdg-popup data))
-           (tree (pk 'bea
-                     (wlr-scene-xdg-surface-create
-                      (surface->scene (.parent popup))
-                      (.base popup)))))
-      (add-listen (.base popup) 'new-popup (new-popup-notify c))
-      (set! (surface->scene (.surface (.base popup))) tree)
-      (run-hook create-popup-hook popup)
-      (and-let* (c
-                 (monitor (client-monitor c))
-                 (geom (shallow-clone
-                        (if (is-a? c <gwwm-layer-client>)
-                            (monitor-area monitor)
-                            (monitor-window-area (client-monitor c))))))
-        (unless (or (is-a? c <gwwm-layer-client>) (client-floating? c))
-          (wlr-scene-node-raise-to-top (.node (.parent (.node tree)))))
-        (modify-instance* geom
-          (x (- x (box-x (client-geom c))))
-          (y (- y (box-y (client-geom c)))))
-        (wlr-xdg-popup-unconstrain-from-box popup geom))))
-
   (define ((request-fullscreen-notify c) listener data)
     (send-log DEBUG "client request fullscreen" 'client c)
     (let ((fullscreen? (client-wants-fullscreen? c))
@@ -1196,6 +1181,10 @@ gwwm [options]
   (gwwm-input-inhibit-manager (wlr-input-inhibit-manager-create (gwwm-display)))
   (wlr-viewporter-create (gwwm-display))
   (wlr-xdg-output-manager-v1-create (gwwm-display) (gwwm-output-layout))
+  (wlr-server-decoration-manager-set-default-mode
+   (wlr-server-decoration-manager-create (gwwm-display))
+   (bs:enum->integer %wlr-server-decoration-manager-mode-enum
+                     'WLR_SERVER_DECORATION_MANAGER_MODE_SERVER))
   (%gwwm-setup)
   (config-setup)
   (when (config-enable-xwayland? (gwwm-config))
