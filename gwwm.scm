@@ -786,8 +786,14 @@ gwwm [options]
                 (let ((xdg-surface (wrap-wlr-xdg-surface data)))
                   (when (eq? (.role xdg-surface)
                              'WLR_XDG_SURFACE_ROLE_TOPLEVEL)
-                    (let ((c (make <gwwm-xdg-client>
-                               #:super-surface xdg-surface)))
+                    (let* ((scene (wlr-scene-tree-create tile-layer))
+                           (_ (wlr-scene-node-set-enabled (.node scene) #f))
+                           (scene-surface
+                            (wlr-scene-xdg-surface-create scene xdg-surface))
+                           (c (make <gwwm-xdg-client>
+                                #:scene scene
+                                #:scene-surface scene-surface
+                                #:super-surface xdg-surface)))
                       (set! (super-surface->client xdg-surface) c)
                       (set! (client-border-width c) (gwwm-borderpx))
                       (run-hook create-client-hook c))))))
@@ -857,7 +863,11 @@ gwwm [options]
                                       (client-do-set-fullscreen c #f)))
                                   (client-list))
                         (let* ((xsurface (wrap-wlr-xwayland-surface data))
-                               (c (make <gwwm-x-client> #:super-surface xsurface)))
+                               (scene (wlr-scene-tree-create tile-layer))
+                               (_ (wlr-scene-node-set-enabled (.node scene) #f))
+                               (c (make <gwwm-x-client>
+                                    #:scene scene
+                                    #:super-surface xsurface)))
                           (send-log DEBUG "new x-client" 'client c)
                           (set! (super-surface->client xsurface) c)
                           (set! (client-border-width c) (gwwm-borderpx))
@@ -898,26 +908,19 @@ gwwm [options]
                    wrap-wlr-xwayland-surface
                    wrap-wlr-xdg-surface)
                data))
-    (set! (client-scene c) (wlr-scene-tree-create tile-layer))
-    (set! (client-scene-surface c)
-          (if (is-a? c <gwwm-xdg-client>)
-              (wlr-scene-xdg-surface-create
-               (client-scene c) (client-super-surface c))
-              (wlr-scene-subsurface-tree-create
-               (client-scene c)
-               (client-surface c))))
-    (set! (super-surface->scene (client-super-surface c))
-          (client-scene c))
-    (pk 'bs(client-scene-surface c))
-
+    (when (is-a? c <gwwm-x-client>)
+      (set! (client-scene-surface c)
+            (wlr-scene-subsurface-tree-create
+             (client-scene c)
+             (client-surface c))))
+    (wlr-scene-node-set-enabled (.node (client-scene c)) #t)
+    (set! (super-surface->scene (client-super-surface c)) (client-scene c))
     (set! (scene-node->client (.node (client-scene c))) c)
     (set! (scene-node->client (.node (client-scene-surface c))) c)
-    (pk 's)
-    (client-init-geom c)
-
     (set! (surface->scene (client-surface c)) (client-scene c))
+
+    (client-init-geom c)
     (add-listen (client-surface c) 'commit (client-commit-notify c))
-    (pk 'n)
 
     (pk 'b)
     (begin (client-init-border c)
