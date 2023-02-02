@@ -71,6 +71,7 @@
   #:use-module (gwwm utils ref)
   #:use-module (gwwm utils srfi-215)
   #:use-module (gwwm utils)
+  #:use-module (ice-9 eval-string)
   #:duplicates (merge-accessors merge-generics replace warn-override-core warn last)
   #:export (main keymap-global-set
 
@@ -165,19 +166,31 @@
   (for-each tagkeys (iota 10 0)))
 (define option-spec
   '((version (single-char #\v) (value #f))
-    (help (single-char #\h) (value #f))))
+    (help (single-char #\h) (value #f))
+    (eval (single-char #\e) (value #t))
+    (load (single-char #\l) (value #t))))
 (define-public (parse-command-line)
   (let* ((options (getopt-long (command-line) option-spec))
          (help-wanted (option-ref options 'help #f))
-         (version-wanted (option-ref options 'version #f)))
+         (version-wanted (option-ref options 'version #f))
+         (eval-wanted (option-ref options 'eval #f))
+         (load-wanted (option-ref options 'load #f)))
+    (when load-wanted
+      (let ((o (delay (primitive-load load-wanted))))
+        (add-hook! gwwm-after-init-hook (lambda _ (force o)))))
+    (when eval-wanted
+      (let ((o (delay (eval-string eval-wanted #:module (resolve-module '(gwwm))))))
+        (add-hook! gwwm-after-init-hook (lambda _ (force o)))))
     (if (or version-wanted help-wanted)
         (begin (when version-wanted
                  (display (string-append "gwwm " %version "\n")))
                (when help-wanted
                  (display (G_ "\
-gwwm [options]
+gwwm [OPTION]
   -v --version  Display version
   -h --help     Display this help
+  -l --load=FILE     load FILE after gwwm init
+  -e --eval=EXPR     eval EXPR after gwwm init
 ")))
                (exit 0)))))
 (define-once global-keymap
