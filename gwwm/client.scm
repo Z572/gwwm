@@ -535,7 +535,7 @@
 
 (define-method (client-commit-notify (c <gwwm-client>))
   (lambda (a b)
-    (send-log DEBUG "client commit" 'client c)
+    ;;(send-log DEBUG "client commit" 'client c)
     (let ((box (client-get-geometry c))
           (m (client-monitor c)))
       (when (and m (not (box-empty? box))

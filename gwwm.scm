@@ -1033,6 +1033,7 @@ gwwm [options]
     (set! (surface->scene (.surface (.base popup))) tree)
     (run-hook create-popup-hook popup)
     (and-let* (c
+               (client-mapped? c)
                (monitor (client-monitor c))
                (geom (shallow-clone
                       (if (is-a? c <gwwm-layer-client>)
@@ -1046,9 +1047,7 @@ gwwm [options]
     (add-listen (.base popup) 'new-popup (new-popup-notify c))
     (send-log DEBUG "popup listen 'new-popup" 'popup popup 'client c)))
 
-(define (main)
-  (setlocale LC_ALL "")
-  (textdomain %gettext-domain)
+(define (set-log-callback)
   (current-log-callback
    (let ((p (current-error-port)))
      (lambda (msg)
@@ -1064,7 +1063,12 @@ gwwm [options]
                      (display (object->string(cdr a)) p)
                      (display " " p))
                    msg2)
-         (newline p)))))
+         (newline p))))))
+
+(define (main)
+  (setlocale LC_ALL "")
+  (textdomain %gettext-domain)
+  (set-log-callback)
   (add-hook! create-client-hook
              (lambda (c)
                (send-log DEBUG "client createed" 'CLIENT c)))
