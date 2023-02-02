@@ -68,6 +68,7 @@ nobase_guilemodule_DATA = gwwm.scm \
 		gwwm/keymap.scm  \
 		gwwm/keybind.scm \
 		gwwm/keyboard.scm \
+		gwwm/user.scm \
 		gwwm/i18n.scm \
 		gwwm/hooks.scm \
 		gwwm/utils.scm    \

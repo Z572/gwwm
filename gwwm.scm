@@ -1220,7 +1220,7 @@ gwwm [OPTION]
   (config-setup)
   (when (config-enable-xwayland? (gwwm-config))
     (xwayland-setup (gwwm-display) (gwwm-compositor)))
-  (set-current-module (resolve-module '(guile-user)))
+  (set-current-module (resolve-module '(gwwm user)))
   (setup-server)
   (setup-socket)
   (wlr-scene-attach-output-layout (gwwm-scene) (gwwm-output-layout))
