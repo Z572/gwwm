@@ -241,7 +241,7 @@ gwwm [options]
     (unless (exclusive-focus)
       (when (and c lift)
         (pk 'foc)
-        (wlr-scene-node-raise-to-top (.node (client-scene c))))
+        (client-scene-raise-to-top c))
       (let ((old (~ (gwwm-seat) 'keyboard-state 'focused-surface)))
         (unless (and c (equal? (client-surface c) old))
           ;; is difference
@@ -889,9 +889,7 @@ gwwm [options]
   (q-remove! (%fstack) c)
   (pk 'sdf)
 
-  (and=> (client-scene c)
-         (lambda (n)
-           (wlr-scene-node-set-enabled (.node n) #f))))
+  (client-scene-set-enabled c #f))
 
 (define-method (client-init-geom (c <gwwm-client>))
   (let ((geom (client-get-geometry c)))
@@ -937,9 +935,7 @@ gwwm [options]
                    (setmon c (current-monitor) 0)
                    (client-do-set-floating c (client-is-float-type? c)))))
            (client-do-set-fullscreen c )
-           (slot-set! (client-monitor c) 'un-map #f))
-    (pk 'sc)
-    (wlr-scene-node-set-enabled (.node (client-scene-surface c)) #t)))
+           (slot-set! (client-monitor c) 'un-map #f))))
 
 (define ((map-layer-client-notify c) listener data)
   (send-log DEBUG "layer client map" 'client c)
@@ -949,7 +945,7 @@ gwwm [options]
   (motionnotify))
 (define ((unmap-layer-client-notify c) listener data)
   (send-log DEBUG "layer client unmap" 'client c)
-  (wlr-scene-node-set-enabled (.node (client-scene c)) #f)
+  (client-scene-set-enabled c #f)
   (when (equal? (client-surface c) (exclusive-focus))
     (exclusive-focus #f))
   (when (equal? (client-surface c)

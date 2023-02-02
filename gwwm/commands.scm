@@ -38,8 +38,7 @@
   (for-each
    (lambda (c)
      (when (and (client-monitor c))
-       (wlr-scene-node-set-enabled
-        (.node (client-scene c)) (visibleon c (client-monitor c )))))
+       (client-scene-set-enabled c (visibleon c (client-monitor c )))))
    (client-list))
   (and=> (list-ref (monitor-layouts m) (monitor-sellt m))
          (lambda (lay)

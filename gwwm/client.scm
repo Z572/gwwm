@@ -81,6 +81,9 @@
             client-commit-notify
             client-destroy-notify
             surface->scene
+            client-scene-set-enabled
+            client-scene-move
+            client-scene-raise-to-top
             %fstack
             %clients
             %layer-clients
@@ -466,6 +469,18 @@
     (wlr-scene-node-set-position (.node (list-ref borders 2)) 0 bw )
     (wlr-scene-node-set-position (.node (list-ref borders 3)) (- width bw) bw )))
 
+(define-method (client-scene-raise-to-top (c <gwwm-base-client>))
+  (wlr-scene-node-raise-to-top (.node (client-scene c))))
+
+(define-method (client-scene-set-enabled (c <gwwm-base-client>) n)
+  (wlr-scene-node-set-enabled (.node (client-scene c)) n))
+(define-method (client-scene-move (c <gwwm-base-client>) x y)
+  (wlr-scene-node-set-position (.node (client-scene c)) x y))
+(define-method (client-scene-move (c <gwwm-client>) x y)
+  (next-method)
+  (let ((bw (client-border-width c)))
+    (wlr-scene-node-set-position (.node (client-scene-surface c)) bw bw)))
+
 (define-method (client-resize (c <gwwm-client>) geo (interact? <boolean>))
   (set! (client-geom c) geo)
   (applybounds
@@ -477,8 +492,7 @@
          (geom (client-geom c))
          (heigh (box-height geom))
          (width (box-width geom)))
-    (wlr-scene-node-set-position (.node (client-scene c)) (box-x geo) (box-y geo))
-    (wlr-scene-node-set-position (.node (client-scene-surface c)) bw bw)
+    (client-scene-move c (box-x geo) (box-y geo))
     (client-resize-border c)
     (set! (client-resize-configure-serial c)
           (client-set-size! c
