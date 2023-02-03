@@ -18,7 +18,9 @@
  (gnu packages ibus)
  (gnu packages pkg-config)
  (gnu packages texinfo)
+ (gnu packages pciutils)
  (gnu packages wm)
+ (guix transformations)
  (gnu packages freedesktop))
 
 (define %srcdir
@@ -98,7 +100,7 @@
    (package
      (inherit wlroots)
      (name "wlroots")
-     (version "0.16.0")
+     (version "0.16.1")
      (source
       (origin
         (method git-fetch)
@@ -107,7 +109,7 @@
               (commit version)))
         (file-name (git-file-name name version))
         (sha256
-         (base32 "18rfr3wfm61dv9w8m4xjz4gzq2v3k5vx35ymbi1cggkgbk3lbc4k"))))
+         (base32 "11kcica9waj1a1xgbi12gif9z5z0b4xzycbcgawbgdmj77pws8sk"))))
      (arguments (substitute-keyword-arguments (package-arguments wlroots)
                   ;; ((#:configure-flags flags ''())
                   ;;  `(cons* "-Dbackends=['drm','libinput']" ,flags))
@@ -126,18 +128,7 @@
 
      (propagated-inputs
       (modify-inputs (package-propagated-inputs wlroots)
-        (prepend (list hwdata "pnp") ;libdrm-next
-                                        ;libglvnd
-                 ;; xcb-util-renderutil
-                 ;; ((options->transformation
-                 ;;   '((with-version . "vulkan-headers=1.3.240")))
-                 ;;  vulkan-headers)
-                 )
-        ;; (replace "wayland" wayland-next)
-        ;; (replace "libinput-minimal" libinput-next)
-        ;; (replace "wayland-protocols" wayland-protocols-next)
-        ))
-     )))
+                     (prepend (list hwdata "pnp")))))))
 
 (define freshup-wlroots
   (package-input-rewriting/spec
