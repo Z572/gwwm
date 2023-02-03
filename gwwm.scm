@@ -541,14 +541,41 @@ gwwm [OPTION]
                        source))
                     (idle-activity)))
                 #:remove-when-destroy? #f)
-    (send-log INFO "cursor start listen axis")
+    (add-listen cursor 'swipe-begin
+                (lambda (listener data)
+                  (let ((event (wrap-wlr-pointer-swipe-begin-event data)))
+                    (let-slots event (pointer time-msec fingers)
+                      (send-log INFO "swipe-begin"
+                                'pointer pointer
+                                'time-msec time-msec
+                                'fingers fingers ))))
+                #:remove-when-destroy? #f)
+    (add-listen cursor 'swipe-end
+                (lambda (listener data)
+                  (send-log INFO "swipe-end"))
+                #:remove-when-destroy? #f)
+    (add-listen cursor 'pinch-begin
+                (lambda (listener data)
+                  (send-log INFO "pinch-begin"))
+                #:remove-when-destroy? #f)
+    (add-listen cursor 'pinch-end
+                (lambda (listener data)
+                  (send-log INFO "pinch-end"))
+                #:remove-when-destroy? #f)
+    (add-listen cursor 'hold-begin
+                (lambda (listener data)
+                  (send-log INFO "hold-begin"))
+                #:remove-when-destroy? #f)
+    (add-listen cursor 'hold-end
+                (lambda (listener data)
+                  (send-log INFO "hold-end"))
+                #:remove-when-destroy? #f)
     (add-listen cursor 'frame
                 (lambda (listener data)
                   (let ((cursor (wrap-wlr-cursor data)))
                     (run-hook cursor-frame-event-hook cursor)
                     (wlr-seat-pointer-notify-frame (gwwm-seat))))
                 #:remove-when-destroy? #f)
-    (send-log INFO "cursor start listen frame")
     (add-listen cursor 'motion
                 (lambda (listener data)
                   (let ((event (wrap-wlr-pointer-motion-event data)))
@@ -558,7 +585,6 @@ gwwm [OPTION]
                                      (.delta-y event))
                     (motionnotify (.time-msec event))))
                 #:remove-when-destroy? #f)
-    (send-log INFO "cursor start listen motion")
     (add-listen cursor 'motion-absolute
                 (lambda (listener data)
                   (let ((event (wrap-wlr-pointer-motion-absolute-event data)))
@@ -569,10 +595,8 @@ gwwm [OPTION]
                       (motionnotify time-msec))
                     ))
                 #:remove-when-destroy? #f)
-    (send-log INFO "cursor start listen 'motion-absolute")
     (add-listen cursor 'button (cursor/button cursor)
-                #:remove-when-destroy? #f)
-    (send-log INFO "cursor start listen 'button")))
+                #:remove-when-destroy? #f)))
 
 (define (client-activate-surface surface activate?)
   (cond ((and (wlr-surface-is-xdg-surface surface)
