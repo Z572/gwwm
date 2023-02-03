@@ -361,10 +361,11 @@ gwwm [OPTION]
          (state (.state config-head)))
     (set! (monitor-area m) box)
     (set! (monitor-window-area m) (shallow-clone box))
-    (wlr-scene-output-set-position
-     (monitor-scene-output m)
-     (box-x box)
-     (box-y box))
+    (and=> (monitor-scene-output m)
+           (cut wlr-scene-output-set-position
+                <>
+                (box-x box)
+                (box-y box)))
     (arrangelayers m)
     (arrange m)
 
@@ -714,13 +715,15 @@ gwwm [OPTION]
           (cond ((wlr-output-is-wl wlr-output)
                  (wlr-wl-output-set-title wlr-output "gwwm/wayland")))
           (q-push! (%monitors) m)
-          (let ((scene-output
-                 (or (wlr-scene-get-scene-output (gwwm-scene) wlr-output)
-                     (wlr-scene-output-create (gwwm-scene) wlr-output))))
+
+          (wlr-output-layout-add-auto (gwwm-output-layout) wlr-output)
+          ;; This scene-output can get because 'wlr-scene-attach-output-layout'
+          ;;; create it.
+          (let ((scene-output (wlr-scene-get-scene-output (gwwm-scene) wlr-output)))
             (set! (monitor-scene-output m) scene-output)
             (add-listen scene-output 'destroy
                         (lambda _ (set! (monitor-scene-output m) #f))))
-          (wlr-output-layout-add-auto (gwwm-output-layout) wlr-output)
+
           (add-listen (monitor-output m) 'frame (render-monitor m))
           (add-listen (monitor-output m) 'destroy (cleanup-monitor m))
           (run-hook create-monitor-hook m)))))
@@ -965,29 +968,15 @@ gwwm [OPTION]
   (motionnotify)
   (send-log DEBUG "layer client unmap" 'client c))
 
+
+
 (define ((render-monitor m) listener data)
-  (let ((output (monitor-output m)))
-    (when (.enabled output)
-      (let ((_ now (clock-gettime 1)))
-
-        (for-each (lambda (c)
-                    (let/ec return
-                      (wl-list-for-each
-                       (lambda (obj l)
-                         (unless (eq? (.output obj) output)
-                           (return)))
-                       (.current-outputs (client-surface c))
-                       <wlr-surface-output> 'link)
-                      (wlr-surface-send-frame-done (client-surface c) now)
-                      (unless (client-is-x11? c)
-                        (wlr-xdg-surface-for-each-popup-surface
-                         (lambda (surface x y)
-                           (wlr-surface-send-frame-done surface now))
-                         (client-super-surface c)))))
-                  (client-list m))
-
-        (when (wlr-scene-output-commit (monitor-scene-output m))
-          (wlr-scene-output-send-frame-done (monitor-scene-output m) now))))))
+  (and-let* ((output (monitor-output m))
+             ((.enabled output))
+             (scene-output (monitor-scene-output m)))
+    (let ((_ now (clock-gettime 1)))
+      (when (wlr-scene-output-commit scene-output)
+        (wlr-scene-output-send-frame-done scene-output now)))))
 
 (define ((cleanup-monitor m) listener data)
   (q-remove! (%monitors) m)
