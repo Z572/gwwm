@@ -407,17 +407,16 @@ gwwm [OPTION]
 
     (run-hook create-keyboard-hook kb)
     ((@@ (gwwm keyboard) add-keyboard) kb)
-    (pk 'bef)
     (add-listen (wlr-keyboard-from-input-device device) 'modifiers
                 (lambda (listener data)
-                  (let ((wlr-keyboard (wrap-wlr-keyboard data)))
+                  (let* ((wlr-keyboard (wrap-wlr-keyboard data))
+                         (modifiers(.modifiers wlr-keyboard)))
                     (wlr-seat-set-keyboard
                      (gwwm-seat) device)
                     (run-hook modifiers-event-hook kb)
                     (wlr-seat-keyboard-notify-modifiers
-                     (gwwm-seat) (.modifiers wlr-keyboard))))
+                     (gwwm-seat) modifiers)))
                 #:destroy-when device)
-    (send-log INFO "keyboard start listen 'modifiers")
     (add-listen (wlr-keyboard-from-input-device device) 'key
                 (lambda (listener data)
                   (let* ((event (wrap-wlr-keyboard-key-event data))
@@ -438,12 +437,10 @@ gwwm [OPTION]
                        (if (eq? (.state event) 'WL_KEYBOARD_KEY_STATE_PRESSED)
                            1 0)))))
                 #:destroy-when device)
-    (send-log INFO "keyboard start listen 'key")
     (add-listen device 'destroy
                 (lambda (listener data)
                   (run-hook cleanup-keyboard-hook kb)
                   ((@@ (gwwm keyboard) remove-keyboard) kb)))))
-
 (define (request-start-drag listener data)
   (send-log DEBUG "request start drag")
   (let* ((event (wrap-wlr-seat-request-start-drag-event data))
