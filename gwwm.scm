@@ -8,6 +8,7 @@
   #:use-module (oop goops describe)
   #:use-module (oop goops)
   #:use-module (srfi srfi-1)
+  #:use-module (srfi srfi-145)
   #:use-module (srfi srfi-189)
   #:use-module (srfi srfi-19)
   #:use-module (srfi srfi-2)
@@ -221,6 +222,7 @@ gwwm [OPTION]
   (gwwm-config (load-init-file)))
 
 (define (closemon m)
+  (assume (is-a? m <gwwm-monitor>))
   (for-each (lambda (c)
               (let ((geom (client-geom c)))
                 (when (and (client-floating? c)
@@ -256,7 +258,6 @@ gwwm [OPTION]
   (let/ec return
     (unless (exclusive-focus)
       (when (and c lift)
-        (pk 'foc)
         (client-scene-raise-to-top c))
       (let ((old (~ (gwwm-seat) 'keyboard-state 'focused-surface)))
         (unless (and c (equal? (client-surface c) old))
@@ -274,7 +275,6 @@ gwwm [OPTION]
                            (member (~ l 'current 'layer) '(2 3)))
                       (return)))
                 (client-activate-surface old #f)))
-          (pk 'foc)
           (if c
               (begin (surface-notify-enter (client-surface c)
                                            (wlr-seat-get-keyboard (gwwm-seat)))
@@ -306,7 +306,7 @@ gwwm [OPTION]
       (focusclient (focustop (current-monitor)) #t))))
 
 (define (arrange-interactive-layer m)
-  (pk 'arrange-interactive-layer)
+  (send-log DEBUG "arrange-interactive-layer" 'm m)
   (let* ((layers (slot-ref m 'layers)))
     (any (lambda (c)
            (let* ((surface (client-surface c))

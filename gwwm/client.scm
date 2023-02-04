@@ -346,14 +346,13 @@
   *unspecified*)
 
 (define-method (client-at x y)
-  (pk 'client-at)
   (any (lambda (layer)
-         (let ((node (pk 'nod(wlr-scene-node-at (.node layer) x y))))
+         (let ((node (wlr-scene-node-at (.node layer) x y)))
            (if node
                (let loop ((node node))
                  (or (let ((o (scene-node->client node)))
                        (and ((negate (cut is-a? <> <gwwm-layer-client>)) o) o))
-                     (and=> (pk 'node (and=> (pk 'parent(.parent (pk 'bb node))) .node))
+                     (and=> (and=> (.parent node) .node)
                             loop)))
                #f)))
        (list overlay-layer top-layer
@@ -500,8 +499,7 @@
     (set! (client-resize-configure-serial c)
           (client-set-size! c
                             (- width (* 2 bw))
-                            (- heigh (* 2 bw))))
-    (pk 'resize)))
+                            (- heigh (* 2 bw))))))
 
 (define-method (client-resize (c <gwwm-client>) geo)
   (client-resize c geo #f))
@@ -520,7 +518,6 @@
       (q-remove! (%layer-clients) c)
       (for-each (cut q-remove! <> c)
                 (slot-ref (client-monitor c) 'layers))
-      (pk 'remove-l)
       (next listener data)
       (and=> (client-monitor c) arrangelayers))))
 
