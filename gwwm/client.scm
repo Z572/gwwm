@@ -177,7 +177,7 @@
   (def scene-node->client %scene-node->client
        <wlr-scene-node> <gwwm-base-client>))
 
-(define client-borders (make-object-property))
+(define-once client-borders (make-object-property))
 (define-method (client-set-border-color (c <gwwm-client>) (color <rgba-color>))
   (for-each (lambda (b) (wlr-scene-rect-set-color b color))
             (client-borders c)))
@@ -561,7 +561,4 @@
                                (box-width (.geometry pending)))
                             (= (box-height (.geometry current))
                                (box-height (.geometry pending))))))
-          (set! (client-resize-configure-serial c) 0)))
-      ;; (let ((_ now (clock-gettime 1)))
-      ;;   (wlr-surface-send-frame-done (client-surface c) now))
-      )))
+          (set! (client-resize-configure-serial c) 0))))))
