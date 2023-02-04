@@ -8,7 +8,8 @@
             .device))
 
 (define-class <gwwm-keyboard> ()
-  (device #:init-keyword #:device #:accessor .device))
+  (device #:init-keyword #:device #:accessor .device)
+  #:metaclass <redefinable-class>)
 
 (define-once %keyboards (make-q))
 

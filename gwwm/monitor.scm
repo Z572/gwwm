@@ -52,9 +52,14 @@
 (define current-monitor (make-procedure-with-setter
                          get-current-monitor
                          set-current-monitor))
+(define-inlinable (%monitor-output m)
+  (slot-ref m '%output))
 (define-class <gwwm-monitor> ()
+  (%output #:accessor monitor-output
+           #:setter set-.wlr-output!
+           #:init-keyword #:wlr-output)
   (name #:allocation #:virtual
-        #:slot-ref (lambda (m) (.name (monitor-output m)))
+        #:slot-ref (lambda (m) (.name (%monitor-output m)))
         #:slot-set! (lambda _ #f)
         #:getter monitor-name)
   (area #:accessor monitor-area
@@ -62,43 +67,41 @@
   (window-area #:accessor monitor-window-area
                #:setter set-.window-area!)
   (description #:allocation #:virtual
-               #:slot-ref (lambda (m) (.description (monitor-output m)))
+               #:slot-ref (lambda (m) (.description (%monitor-output m)))
                #:slot-set! (lambda _ #f)
                #:getter monitor-description)
   (enabled? #:allocation #:virtual
-            #:slot-ref (lambda (m) (.enabled (monitor-output m)))
+            #:slot-ref (lambda (m) (.enabled (%monitor-output m)))
             #:slot-set! (lambda _ #f)
             #:getter monitor-enabled?)
   (width  #:allocation #:virtual
-          #:slot-ref (lambda (m) (.width (monitor-output m)))
+          #:slot-ref (lambda (m) (.width (%monitor-output m)))
           #:slot-set! (lambda _ #f)
           #:getter monitor-width)
   (height #:allocation #:virtual
-          #:slot-ref (lambda (m) (.height (monitor-output m)))
+          #:slot-ref (lambda (m) (.height (%monitor-output m)))
           #:slot-set! (lambda _ #f)
           #:getter monitor-height)
   (scale #:allocation #:virtual
-         #:slot-ref (lambda (m) (.scale (monitor-output m)))
+         #:slot-ref (lambda (m) (.scale (%monitor-output m)))
          #:slot-set! (lambda _ #f)
          #:getter monitor-scale)
   (refresh #:allocation #:virtual
-           #:slot-ref (lambda (m) (.refresh (monitor-output m)))
+           #:slot-ref (lambda (m) (.refresh (%monitor-output m)))
            #:slot-set! (lambda _ #f)
            #:getter monitor-refresh)
   (physical-width #:allocation #:virtual
                   #:slot-ref (lambda (m)
-                               (.phys-width (monitor-output m)))
+                               (.phys-width (%monitor-output m)))
                   #:slot-set! (lambda _ #f)
                   #:getter monitor-physical-width)
   (physical-height #:allocation #:virtual
                    #:slot-ref (lambda (m)
-                                (.phys-height (monitor-output m)))
+                                (.phys-height (%monitor-output m)))
                    #:slot-set! (lambda _ #f)
                    #:getter monitor-physical-height)
   (scene-output #:accessor monitor-scene-output #:init-value #f )
-  (wlr-output #:accessor monitor-output
-              #:setter set-.wlr-output!
-              #:init-keyword #:wlr-output)
+
   (layouts #:init-value (list #f #f)
            #:accessor monitor-layouts
            #:setter set-.monitor-layouts
@@ -116,7 +119,8 @@
   (mfact #:init-value 1/2 #:accessor monitor-mfact)
   (seltags #:init-value 0)
   (tagset #:init-thunk (lambda () (list 1 1)))
-  (un-map #:init-value #f))
+  (un-map #:init-value #f)
+  #:metaclass <redefinable-class>)
 
 (define-method (write (o <gwwm-monitor>) port)
   (format port "#<<gwwm-monitor ~a (~a . ~a) scale: ~a>"

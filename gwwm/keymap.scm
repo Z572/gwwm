@@ -24,10 +24,12 @@
                #:accessor .modify-keys)
   (key #:init-value 0
        #:init-keyword #:k
-       #:accessor .key))
+       #:accessor .key)
+  #:metaclass <redefinable-class>)
 
 (define-class <keymap> ()
-  (keys #:init-value '() #:accessor .keys))
+  (keys #:init-value '() #:accessor .keys)
+  #:metaclass <redefinable-class>)
 
 (define (make-keymap)
   (make <keymap>))

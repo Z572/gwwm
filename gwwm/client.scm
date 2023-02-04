@@ -99,12 +99,14 @@
    (lambda (o)
      (if (q? o) o
          (error "not a q! ~A" o)))))
+
 (define %fstack
   (make-parameter
    (make-q)
    (lambda (o)
      (if (q? o) o
          (error "not a q! ~A" o)))))
+
 (eval-when (expand load eval)
   (load-extension "libgwwm" "scm_init_gwwm_client"))
 
@@ -129,7 +131,7 @@
                  #:init-keyword #:super-surface)
   (surface
    #:allocation #:virtual
-   #:slot-ref (lambda (obj) (.surface (client-super-surface obj)))
+   #:slot-ref (lambda (obj) (.surface (slot-ref obj 'super-surface)))
    #:slot-set! (const #f)
    #:getter client-surface)
   (scene #:init-value #f
@@ -139,7 +141,8 @@
   (scene-surface #:accessor client-scene-surface
                  #:init-keyword #:scene-surface
                  #:init-value #f)
-  (alive? #:init-value #t #:accessor client-alive?))
+  (alive? #:init-value #t #:accessor client-alive?)
+  #:metaclass <redefinable-class>)
 
 (define-class <gwwm-client> (<gwwm-base-client>)
   (appid #:accessor client-appid)
