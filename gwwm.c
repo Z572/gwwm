@@ -538,12 +538,9 @@ SCM_DEFINE (gwwm_setup_signal,"%gwwm-setup-signal",0,0,0,(),"")
 }
 SCM_DEFINE (gwwm_setup_othres,"%gwwm-setup-othres",0,0,0,(),"")
 {
-  	wlr_export_dmabuf_manager_v1_create(gwwm_display(NULL));
-	wlr_screencopy_manager_v1_create(gwwm_display(NULL));
-	wlr_data_control_manager_v1_create(gwwm_display(NULL));
-	wlr_data_device_manager_create(gwwm_display(NULL));
-	wlr_gamma_control_manager_v1_create(gwwm_display(NULL));
-    return SCM_UNSPECIFIED;
+  wlr_export_dmabuf_manager_v1_create(gwwm_display(NULL));
+  wlr_gamma_control_manager_v1_create(gwwm_display(NULL));
+  return SCM_UNSPECIFIED;
 }
 SCM_DEFINE (gwwm_setup,"%gwwm-setup" ,0,0,0,(),"")
 {
