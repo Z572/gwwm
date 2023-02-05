@@ -593,8 +593,10 @@ xytonode(double x, double y, struct wlr_surface **psurface,
                                   (REF_CALL_1("wlroots types scene",
                                               ".node",REF("gwwm",focus_order[layer]))),
                                   x, y, nx, ny))) {
-      if (node->type == WLR_SCENE_NODE_BUFFER)
-        surface = (wlr_scene_surface_from_buffer(wlr_scene_buffer_from_node(node)))->surface;
+      struct wlr_scene_surface *scene_surface;
+      if (node->type == WLR_SCENE_NODE_BUFFER
+          && (scene_surface=wlr_scene_surface_from_buffer(wlr_scene_buffer_from_node(node))))
+        surface = scene_surface? scene_surface->surface :NULL;
       /* Walk the tree to find a node that knows the client */
       for (pnode = node; pnode && !c; pnode = &pnode->parent->node)
         c = pnode->data;
