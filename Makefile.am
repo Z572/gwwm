@@ -10,6 +10,7 @@ libgwwm_la_SOURCES= %D%/gwwm.c \
 					%D%/gwwm.h \
 					%D%/client.h \
 					%D%/client.c \
+					%D%/buffer.c \
 					%D%/config.h \
 					%D%/util.h \
 					%D%/util.c \
@@ -30,7 +31,7 @@ $(SOURCES): $(lib_LTLIBRARIES)
 	guile-snarf -o $@ $< $(snarfcppopts)
 CLEANFILES = %D%/*.x $(protocols_h)
 
-BUILT_SOURCES = %D%/gwwm.x %D%/client.x $(protocols_h) \
+BUILT_SOURCES = %D%/gwwm.x %D%/client.x %D%/buffer.x $(protocols_h) \
  $(c_sources)
 xdg-shell-protocol.h:
 	$(AM_V_GEN) $(WAYLAND_SCANNER) server-header \
@@ -69,6 +70,7 @@ nobase_guilemodule_DATA = gwwm.scm \
 		gwwm/keybind.scm \
 		gwwm/keyboard.scm \
 		gwwm/user.scm \
+		gwwm/buffer.scm \
 		gwwm/i18n.scm \
 		gwwm/hooks.scm \
 		gwwm/utils.scm    \
