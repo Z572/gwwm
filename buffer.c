@@ -69,7 +69,7 @@ static struct gwwm_buffer *gwwm_buffer_create(int width, int height) {
   scm_slot_set_x(buffer->scm, scm_from_utf8_symbol("format"),
                  scm_from_unsigned_integer(DRM_FORMAT_ARGB8888));
   wlr_buffer_lock(&buffer->base);
-  wlr_buffer_drop(&buffer->base)
+  wlr_buffer_drop(&buffer->base);
   return buffer;
 }
 SCM_DEFINE(cairo_buffer_create, "cairo-buffer-create", 2, 0, 0,
