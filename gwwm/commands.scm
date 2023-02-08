@@ -1,5 +1,5 @@
 (define-module (gwwm commands)
-  #:autoload (gwwm) (cursor-mode gwwm-xcursor-manager grabc grabcx grabcy gwwm-cursor float-layer gwwm-display)
+  #:autoload (gwwm) (cursor-mode gwwm-xcursor-manager grabc grabcx grabcy gwwm-cursor float-layer gwwm-display gwwm-scene)
   #:use-module (oop goops)
   #:use-module (wlroots backend session)
   #:use-module (wlroots backend)
@@ -33,6 +33,15 @@
             moveresize
             incmaster
             view))
+
+(define* (list-scene-graph #:optional (tree (.tree (gwwm-scene))))
+  (let loop ((obj tree))
+    (cons obj
+          (if (wlr-scene-tree? obj)
+              (list (map (compose loop wlr-scene-object-from-node)
+                         (wlr-scene-tree-children obj)))
+              (list)))))
+(export list-scene-graph)
 
 (define (arrange m)
   (for-each
