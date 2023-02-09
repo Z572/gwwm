@@ -392,7 +392,8 @@ gwwm [OPTION]
 
 (define (create-keyboard device)
   (send-log INFO "new keyboard create" 'device device)
-  (let* ((kb (make <gwwm-keyboard> #:device device))
+  (let* ((wl-kb (wlr-keyboard-from-input-device device))
+         (kb (make <gwwm-keyboard> #:device device))
          (context (pk 'c(xkb-context-new XKB_CONTEXT_NO_FLAGS)))
          (xkb-rule-names
           (apply make <xkb-rule-names> (config-xkb-rules (gwwm-config))))
@@ -400,29 +401,25 @@ gwwm [OPTION]
                              context
                              xkb-rule-names
                              XKB_KEYMAP_COMPILE_NO_FLAGS))))
-    (wlr-keyboard-set-keymap (pk 'n(wlr-keyboard-from-input-device device))
-                             keymap)
-    (pk 'bef)
+    (wlr-keyboard-set-keymap wl-kb keymap)
     (xkb-keymap-unref keymap)
     (xkb-context-unref context)
     (wlr-keyboard-set-repeat-info
-     (wlr-keyboard-from-input-device device)
-     (config-repeat-rate (gwwm-config))
-     600)
+     wl-kb (config-repeat-rate (gwwm-config)) 600)
 
     (run-hook create-keyboard-hook kb)
     ((@@ (gwwm keyboard) add-keyboard) kb)
-    (add-listen (wlr-keyboard-from-input-device device) 'modifiers
+    (add-listen wl-kb 'modifiers
                 (lambda (listener data)
                   (let* ((wlr-keyboard (wrap-wlr-keyboard data))
                          (modifiers(.modifiers wlr-keyboard)))
                     (wlr-seat-set-keyboard
-                     (gwwm-seat) device)
+                     (gwwm-seat) wl-kb)
                     (run-hook modifiers-event-hook kb)
                     (wlr-seat-keyboard-notify-modifiers
                      (gwwm-seat) modifiers)))
                 #:destroy-when device)
-    (add-listen (wlr-keyboard-from-input-device device) 'key
+    (add-listen wl-kb 'key
                 (lambda (listener data)
                   (let* ((event (wrap-wlr-keyboard-key-event data))
                          (seat (gwwm-seat))
@@ -431,10 +428,10 @@ gwwm [OPTION]
                     (unless (and (not (.active-inhibitor
                                        (gwwm-input-inhibit-manager)))
                                  (keybinding
-                                  (wlr-keyboard-get-modifiers (wlr-keyboard-from-input-device device))
+                                  (wlr-keyboard-get-modifiers wl-kb)
                                   (+ 8 (.keycode event))
                                   (eq? (.state event) 'WL_KEYBOARD_KEY_STATE_PRESSED)))
-                      (wlr-seat-set-keyboard seat device)
+                      (wlr-seat-set-keyboard seat wl-kb)
                       (wlr-seat-keyboard-notify-key
                        seat
                        (.time-msec event)
