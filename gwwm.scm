@@ -275,11 +275,11 @@ gwwm [OPTION]
                   (if (and (.mapped l)
                            (member (~ l 'current 'layer) '(2 3)))
                       (return)))
-                (client-activate-surface old #f)))
+                (activate-surface old #f)))
           (if c
               (begin (surface-notify-enter (client-surface c)
                                            (wlr-seat-get-keyboard (gwwm-seat)))
-                     (client-activate-surface (client-surface c) #t ))
+                     (activate-surface (client-surface c) #t ))
               (wlr-seat-keyboard-notify-clear-focus (gwwm-seat))))))))
 
 (define (setmon c m newtag)
@@ -599,7 +599,7 @@ gwwm [OPTION]
     (add-listen cursor 'button (cursor/button cursor)
                 #:remove-when-destroy? #f)))
 
-(define (client-activate-surface surface activate?)
+(define (activate-surface surface activate?)
   (cond ((and (wlr-surface-is-xdg-surface surface)
               (wlr-xdg-surface-from-wlr-surface surface)
               (eq? (.role (wlr-xdg-surface-from-wlr-surface surface))
