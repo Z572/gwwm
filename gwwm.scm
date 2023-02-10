@@ -394,13 +394,13 @@ gwwm [OPTION]
   (send-log INFO "new keyboard create" 'device device)
   (let* ((wl-kb (wlr-keyboard-from-input-device device))
          (kb (make <gwwm-keyboard> #:device device))
-         (context (pk 'c(xkb-context-new XKB_CONTEXT_NO_FLAGS)))
+         (context (xkb-context-new XKB_CONTEXT_NO_FLAGS))
          (xkb-rule-names
           (apply make <xkb-rule-names> (config-xkb-rules (gwwm-config))))
-         (keymap (pk 'keymap(xkb-keymap-new-from-names
-                             context
-                             xkb-rule-names
-                             XKB_KEYMAP_COMPILE_NO_FLAGS))))
+         (keymap (xkb-keymap-new-from-names
+                  context
+                  xkb-rule-names
+                  XKB_KEYMAP_COMPILE_NO_FLAGS)))
     (wlr-keyboard-set-keymap wl-kb keymap)
     (xkb-keymap-unref keymap)
     (xkb-context-unref context)
@@ -957,13 +957,11 @@ gwwm [OPTION]
 
     (client-init-geom c)
     (add-listen (client-surface c) 'commit (client-commit-notify c))
-
-    (pk 'b)
     (begin (client-init-border c)
            (q-push! (%clients) c)
            (q-push! (%fstack) c)
-           (pk 'bb)
-           (let ((parent (pk 'bapr(client-get-parent c))))
+           (let ((parent (client-get-parent c)))
+             (send-log DEBUG "client's parent" 'client c 'parent parent)
              (if parent
                  (begin (setmon c (or (client-monitor parent)
                                       (current-monitor))
@@ -1113,12 +1111,17 @@ gwwm [OPTION]
    (lambda (c)
      (add-listen (client-super-surface c) 'destroy
                  (client-destroy-notify c))
-     (pk 'new-)
      (when (is-a? c <gwwm-client>)
        (set! (client-appid c) (client-get-appid c))
        (set! (client-title c) (client-get-title c))
        (add-listen (client-super-surface c) 'unmap (unmap-notify* c))
        (add-listen (client-super-surface c) 'map (map-notify* c)))
+     (define (update-appid listener data)
+       (let ((new (client-get-appid c)))
+         (send-log DEBUG "client update appid"
+                   'client c
+                   'old (client-appid c))
+         (set! (client-appid c) new)))
      (cond ((is-a? c <gwwm-xdg-client>)
             (let* ((super-surface (client-super-surface c))
                    (toplevel (wlr-xdg-surface-toplevel super-surface)))
@@ -1128,12 +1131,7 @@ gwwm [OPTION]
                           (client-set-title-notify c)
                           #:destroy-when super-surface)
               (add-listen toplevel 'set-app-id
-                          (lambda (listener data)
-                            (let ((new (client-get-appid c)))
-                              (send-log DEBUG "client update appid"
-                                        'client c
-                                        'old (client-appid c))
-                              (set! (client-appid c) new)))
+                          update-appid
                           #:destroy-when super-surface)
               (add-listen toplevel 'request-maximize
                           (lambda (listener data)
@@ -1147,11 +1145,7 @@ gwwm [OPTION]
            ((is-a? c <gwwm-x-client>)
             (let ((super-surface (client-super-surface c)))
               (add-listen super-surface 'set-class
-                          (lambda (listener data)
-                            (pk 'set-class)
-                            (set! (client-appid c)
-                                  (client-get-appid c)))
-                          #:destroy-when (client-super-surface c))
+                          update-appid #:destroy-when (client-super-surface c))
               (add-listen super-surface 'request-activate
                           (lambda (listener data)
                             (let ((xsurface (wrap-wlr-xwayland-surface data)))
@@ -1175,13 +1169,11 @@ gwwm [OPTION]
                           (client-set-title-notify c))))
            ((is-a? c <gwwm-layer-client>)
             (q-push! (%layer-clients) c)
-            (pk 'map)
             (add-listen (client-super-surface c) 'map
                         (map-layer-client-notify c))
 
             (add-listen (client-super-surface c) 'new-popup
                         (new-popup-notify c))
-            (pk 'com)
             (add-listen (.surface (client-super-surface c)) 'commit
                         (lambda (listener data)
                           (and-let* ((m (client-monitor c))
@@ -1203,10 +1195,8 @@ gwwm [OPTION]
                                         'current
                                         'committed))
                               (arrangelayers m)))))
-            (pk 'com)
             (add-listen (client-super-surface c) 'unmap
-                        (unmap-layer-client-notify c))))
-     (pk 'df)))
+                        (unmap-layer-client-notify c))))))
   (parse-command-line)
   (send-log DEBUG (G_ "init global keybind ..."))
   (init-global-keybind)
