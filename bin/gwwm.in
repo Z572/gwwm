@@ -3,7 +3,7 @@
 (use-modules (gwwm))
 
 (bindtextdomain "gwwm" "@localedir@")
-(main)
+(apply main (command-line))
 ;;; Local Variables:
 ;;; mode: scheme
 ;;; End:

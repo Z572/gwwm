@@ -174,8 +174,8 @@
     (help (single-char #\h) (value #f))
     (eval (single-char #\e) (value #t))
     (load (single-char #\l) (value #t))))
-(define-public (parse-command-line)
-  (let* ((options (getopt-long (command-line) option-spec))
+(define-public (parse-command-line args)
+  (let* ((options (getopt-long args option-spec))
          (help-wanted (option-ref options 'help #f))
          (version-wanted (option-ref options 'version #f))
          (eval-wanted (option-ref options 'eval #f))
@@ -1087,7 +1087,7 @@ gwwm [OPTION]
                    msg2)
          (newline p))))))
 
-(define (main)
+(define (main . args)
   (setlocale LC_ALL "")
   (textdomain %gettext-domain)
   (set-log-callback)
@@ -1197,7 +1197,7 @@ gwwm [OPTION]
                               (arrangelayers m)))))
             (add-listen (client-super-surface c) 'unmap
                         (unmap-layer-client-notify c))))))
-  (parse-command-line)
+  (parse-command-line args)
   (send-log DEBUG (G_ "init global keybind ..."))
   (init-global-keybind)
   (unless (getenv "XDG_RUNTIME_DIR")
