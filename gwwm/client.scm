@@ -404,19 +404,18 @@
   *unspecified*)
 
 (define (client-from-wlr-surface s)
-  (if s
-      (or (and-let* (((wlr-surface-is-xdg-surface s))
-                     (super-surface (wlr-xdg-surface-from-wlr-surface s))
-                     ((eq? (.role super-surface) 'WLR_XDG_SURFACE_ROLE_TOPLEVEL)))
-            (super-surface->client super-surface))
-          (and-let* (((wlr-surface-is-xwayland-surface s))
-                     (super-surface (wlr-xwayland-surface-from-wlr-surface s)))
-            (super-surface->client super-surface))
-          (if (wlr-surface-is-subsurface s)
-              (client-from-wlr-surface
-               (wlr-surface-get-root-surface s))
-              #f))
-      #f))
+  (and s
+       (or (and-let* (((wlr-surface-is-xdg-surface s))
+                      (super-surface (wlr-xdg-surface-from-wlr-surface s))
+                      ((eq? (.role super-surface) 'WLR_XDG_SURFACE_ROLE_TOPLEVEL)))
+             (super-surface->client super-surface))
+           (and-let* (((wlr-surface-is-xwayland-surface s))
+                      (super-surface (wlr-xwayland-surface-from-wlr-surface s)))
+             (super-surface->client super-surface))
+           (if (wlr-surface-is-subsurface s)
+               (client-from-wlr-surface
+                (wlr-surface-get-root-surface s))
+               #f))))
 
 (define-method (client-get-geometry (c <gwwm-xdg-client>))
   (wlr-xdg-surface-get-geometry (client-super-surface c)))
