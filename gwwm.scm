@@ -409,7 +409,6 @@ gwwm [OPTION]
      wl-kb (config-repeat-rate (gwwm-config)) 600)
 
     (run-hook create-keyboard-hook kb)
-    ((@@ (gwwm keyboard) add-keyboard) kb)
     (add-listen wl-kb 'modifiers
                 (lambda (listener data)
                   (let* ((wlr-keyboard (wrap-wlr-keyboard data))
@@ -439,11 +438,7 @@ gwwm [OPTION]
                        (.keycode event)
                        (if (eq? (.state event) 'WL_KEYBOARD_KEY_STATE_PRESSED)
                            1 0)))))
-                #:destroy-when device)
-    (add-listen device 'destroy
-                (lambda (listener data)
-                  (run-hook cleanup-keyboard-hook kb)
-                  ((@@ (gwwm keyboard) remove-keyboard) kb)))))
+                #:destroy-when device)))
 (define (request-start-drag listener data)
   (send-log DEBUG "request start drag")
   (let* ((event (wrap-wlr-seat-request-start-drag-event data))
