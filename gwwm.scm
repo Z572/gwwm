@@ -67,6 +67,7 @@
   #:use-module (gwwm hooks)
   #:use-module (gwwm i18n)
   #:use-module (gwwm keyboard)
+  #:use-module (gwwm pointer)
   #:use-module (gwwm keymap)
   #:use-module (gwwm layout tile)
   #:use-module (gwwm layout)
@@ -684,6 +685,7 @@ gwwm [OPTION]
 
 (define non-zero? (negate zero?))
 (define (create-pointer device)
+  (make <gwwm-pointer> #:device device)
   (and-let* (((wlr-input-device-is-libinput device))
              (libinput-device (wlr-libinput-get-device-handle device)))
     (when (non-zero? (libinput-device-config-tap-get-finger-count libinput-device))
