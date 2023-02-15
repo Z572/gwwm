@@ -4,6 +4,9 @@
   #:use-module (ice-9 q)
   #:use-module (gwwm listener)
   #:use-module (gwwm hooks)
+  #:use-module (wlroots types keyboard)
+  #:use-module (bytestructure-class)
+  #:use-module (bytestructures guile)
   #:duplicates (merge-accessors merge-generics replace warn-override-core warn last)
   #:export (keyboard-list
             <gwwm-keyboard>
@@ -11,6 +14,32 @@
 
 (define-class <gwwm-keyboard> ()
   (device #:init-keyword #:device #:accessor .device)
+  (rate #:allocation #:virtual
+        #:slot-ref (lambda (o)
+                     (let ((k (wlr-keyboard-from-input-device
+                               (slot-ref o 'device))))
+                       (bytestructure-ref
+                        (get-bytestructure k)
+                        'repeat-info
+                        'rate)))
+        #:slot-set! (lambda (o value)
+                      (let ((k (wlr-keyboard-from-input-device
+                                (slot-ref o 'device))))
+                        (wlr-keyboard-set-repeat-info
+                         k value (slot-ref o 'delay)))))
+  (delay #:allocation #:virtual
+         #:slot-ref (lambda (o)
+                      (let ((k (wlr-keyboard-from-input-device
+                                (slot-ref o 'device))))
+                        (bytestructure-ref
+                         (get-bytestructure k)
+                         'repeat-info
+                         'delay)))
+         #:slot-set! (lambda (o value)
+                       (let ((k (wlr-keyboard-from-input-device
+                                 (slot-ref o 'device))))
+                         (wlr-keyboard-set-repeat-info
+                          k (slot-ref o 'rate) value))))
   #:metaclass <redefinable-class>)
 
 (define-once %keyboards (make-q))
