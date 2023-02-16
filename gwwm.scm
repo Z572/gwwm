@@ -759,7 +759,7 @@ gwwm [OPTION]
 
 (define non-zero? (negate zero?))
 (define (create-pointer device)
-  (make <gwwm-pointer> #:device device)
+  (define p (make <gwwm-pointer> #:device device))
   (and-let* (((wlr-input-device-is-libinput device))
              (libinput-device (wlr-libinput-get-device-handle device)))
     (when (non-zero? (libinput-device-config-tap-get-finger-count libinput-device))
@@ -771,8 +771,8 @@ gwwm [OPTION]
        libinput-device 'LIBINPUT_CONFIG_DRAG_LOCK_ENABLED))
     (when (libinput-device-config-scroll-has-natural-scroll libinput-device)
       (libinput-device-config-scroll-set-natural-scroll-enabled libinput-device 0))
-    (when (libinput-device-config-dwt-is-available libinput-device)
-      (libinput-device-config-dwt-set-enabled libinput-device 'LIBINPUT_CONFIG_DWT_ENABLED))
+
+    (set! (pointer-disable-while-typing? p) #t)
     (when (libinput-device-config-left-handed-is-available libinput-device)
       (libinput-device-config-left-handed-set libinput-device 0))
     (when (libinput-device-config-middle-emulation-is-available libinput-device)
