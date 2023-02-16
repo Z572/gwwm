@@ -48,6 +48,7 @@
   #:use-module (wlroots types output-layout)
   #:use-module (wlroots types output-management)
   #:use-module (wlroots types pointer)
+  #:use-module (wlroots types pointer-gestures)
   #:use-module (wlroots types presentation-time)
   #:use-module (wlroots types primary-selection)
   #:use-module (wlroots types seat)
@@ -127,6 +128,7 @@
 (define-dy gwwm-layer-shell layer-shell)
 (define-dy gwwm-idle idle)
 (define-dy gwwm-data-control-manager m)
+(define-dy gwwm-pointer-gestures g)
 (define-dy gwwm-input-inhibit-manager input-inhibit-manager)
 (define-dy grabc c)
 (define-dy grabcx x)
@@ -543,27 +545,106 @@ gwwm [OPTION]
                       (send-log INFO "swipe-begin"
                                 'pointer pointer
                                 'time-msec time-msec
-                                'fingers fingers ))))
+                                'fingers fingers)
+                      (wlr-pointer-gestures-v1-send-swipe-begin
+                       (gwwm-pointer-gestures)
+                       (gwwm-seat)
+                       time-msec
+                       fingers))))
+                #:remove-when-destroy? #f)
+    (add-listen cursor 'swipe-update
+                (lambda (listener data)
+                  (let ((event (wrap-wlr-pointer-swipe-update-event data)))
+                    (let-slots event (pointer time-msec fingers dx dy)
+                      (wlr-pointer-gestures-v1-send-swipe-update
+                       (gwwm-pointer-gestures)
+                       (gwwm-seat)
+                       fingers
+                       dx
+                       dy))))
                 #:remove-when-destroy? #f)
     (add-listen cursor 'swipe-end
                 (lambda (listener data)
-                  (send-log INFO "swipe-end"))
+                  (let ((event (wrap-wlr-pointer-swipe-end-event data)))
+                    (let-slots event (pointer time-msec cancelled)
+                      (send-log INFO "swipe-end"
+                                'pointer pointer
+                                'time-msec time-msec
+                                'cancelled cancelled)
+                      (wlr-pointer-gestures-v1-send-swipe-end
+                       (gwwm-pointer-gestures)
+                       (gwwm-seat)
+                       time-msec
+                       cancelled))))
                 #:remove-when-destroy? #f)
     (add-listen cursor 'pinch-begin
                 (lambda (listener data)
-                  (send-log INFO "pinch-begin"))
+                  (let ((event (wrap-wlr-pointer-pinch-begin-event data)))
+                    (let-slots event (pointer time-msec fingers)
+                      (send-log INFO "pinch-begin"
+                                'pointer pointer
+                                'time-msec time-msec
+                                'fingers fingers )
+                      (wlr-pointer-gestures-v1-send-pinch-begin
+                       (gwwm-pointer-gestures)
+                       (gwwm-seat)
+                       time-msec
+                       fingers))))
+                #:remove-when-destroy? #f)
+    (add-listen cursor 'pinch-update
+                (lambda (listener data)
+                  (let ((event (wrap-wlr-pointer-pinch-update-event data)))
+                    (let-slots event (pointer time-msec fingers dx dy scale rotation)
+                      (wlr-pointer-gestures-v1-send-pinch-update
+                       (gwwm-pointer-gestures)
+                       (gwwm-seat)
+                       fingers
+                       dx
+                       dy
+                       scale
+                       rotation))))
                 #:remove-when-destroy? #f)
     (add-listen cursor 'pinch-end
                 (lambda (listener data)
-                  (send-log INFO "pinch-end"))
+                  (let ((event (wrap-wlr-pointer-pinch-end-event data)))
+                    (let-slots event (pointer time-msec cancelled)
+                      (send-log INFO "pinch-end"
+                                'pointer pointer
+                                'time-msec time-msec
+                                'cancelled cancelled)
+                      (wlr-pointer-gestures-v1-send-pinch-end
+                       (gwwm-pointer-gestures)
+                       (gwwm-seat)
+                       time-msec
+                       cancelled))))
                 #:remove-when-destroy? #f)
     (add-listen cursor 'hold-begin
                 (lambda (listener data)
-                  (send-log INFO "hold-begin"))
+                  (let ((event (wrap-wlr-pointer-hold-begin-event data)))
+                    (let-slots event (pointer time-msec fingers)
+                      (send-log INFO "hold-begin"
+                                'pointer pointer
+                                'time-msec time-msec
+                                'fingers fingers )
+                      (wlr-pointer-gestures-v1-send-hold-begin
+                       (gwwm-pointer-gestures)
+                       (gwwm-seat)
+                       time-msec
+                       fingers))))
                 #:remove-when-destroy? #f)
     (add-listen cursor 'hold-end
                 (lambda (listener data)
-                  (send-log INFO "hold-end"))
+                  (let ((event (wrap-wlr-pointer-hold-end-event data)))
+                    (let-slots event (pointer time-msec cancelled)
+                      (send-log INFO "hold-end"
+                                'pointer pointer
+                                'time-msec time-msec
+                                'cancelled cancelled)
+                      (wlr-pointer-gestures-v1-send-hold-end
+                       (gwwm-pointer-gestures)
+                       (gwwm-seat)
+                       time-msec
+                       cancelled))))
                 #:remove-when-destroy? #f)
     (add-listen cursor 'frame
                 (lambda (listener data)
@@ -813,6 +894,7 @@ gwwm [OPTION]
 
   (gwwm-xcursor-manager (wlr-xcursor-manager-create #f 24))
   (seat-setup (gwwm-display))
+  (gwwm-pointer-gestures (wlr-pointer-gestures-v1-create (gwwm-display)))
   (gwwm-xdg-shell (wlr-xdg-shell-create (gwwm-display) 5))
   (add-listen (gwwm-xdg-shell) 'new-surface
               (lambda (listener data)
