@@ -12,6 +12,7 @@
             <gwwm-keyboard>
             keyboard-rate
             keyboard-delay
+            keyboard-set-repeat-info
             .device))
 
 (define-class <gwwm-keyboard> ()
@@ -45,6 +46,10 @@
                           k (slot-ref o 'rate) value)))
          #:accessor keyboard-delay)
   #:metaclass <redefinable-class>)
+
+(define-method (keyboard-set-repeat-info (k <gwwm-keyboard>) rate delay)
+  (wlr-keyboard-set-repeat-info
+   (wlr-keyboard-from-input-device (.device k)) rate delay))
 
 (define-once %keyboards (make-q))
 

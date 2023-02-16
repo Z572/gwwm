@@ -405,9 +405,7 @@ gwwm [OPTION]
     (wlr-keyboard-set-keymap wl-kb keymap)
     (xkb-keymap-unref keymap)
     (xkb-context-unref context)
-    (wlr-keyboard-set-repeat-info
-     wl-kb (config-repeat-rate (gwwm-config)) 600)
-
+    (keyboard-set-repeat-info kb (config-repeat-rate (gwwm-config)) 600)
     (run-hook create-keyboard-hook kb)
     (add-listen wl-kb 'modifiers
                 (lambda (listener data)
