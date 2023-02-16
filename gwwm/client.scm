@@ -506,8 +506,9 @@
 (define-method (client-destroy-notify (c <gwwm-base-client>))
   (lambda (listener data)
     (send-log DEBUG "client destroy" 'client c)
-    (set! (client-scene c) #f)
     (run-hook client-destroy-hook c)
+    (wlr-scene-node-destroy (.node (client-scene c)))
+    (set! (client-scene c) #f)
     ;; mark it destroyed.
     (set! (client-alive? c) #f)))
 
