@@ -10,6 +10,8 @@
   #:duplicates (merge-accessors merge-generics replace warn-override-core warn last)
   #:export (keyboard-list
             <gwwm-keyboard>
+            keyboard-rate
+            keyboard-delay
             .device))
 
 (define-class <gwwm-keyboard> ()
@@ -26,7 +28,8 @@
                       (let ((k (wlr-keyboard-from-input-device
                                 (slot-ref o 'device))))
                         (wlr-keyboard-set-repeat-info
-                         k value (slot-ref o 'delay)))))
+                         k value (slot-ref o 'delay))))
+        #:accessor keyboard-rate)
   (delay #:allocation #:virtual
          #:slot-ref (lambda (o)
                       (let ((k (wlr-keyboard-from-input-device
@@ -39,7 +42,8 @@
                        (let ((k (wlr-keyboard-from-input-device
                                  (slot-ref o 'device))))
                          (wlr-keyboard-set-repeat-info
-                          k (slot-ref o 'rate) value))))
+                          k (slot-ref o 'rate) value)))
+         #:accessor keyboard-delay)
   #:metaclass <redefinable-class>)
 
 (define-once %keyboards (make-q))
