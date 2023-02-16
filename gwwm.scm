@@ -902,7 +902,6 @@ gwwm [OPTION]
                   (when (eq? (.role xdg-surface)
                              'WLR_XDG_SURFACE_ROLE_TOPLEVEL)
                     (let* ((scene (wlr-scene-tree-create tile-layer))
-                           (_ (wlr-scene-node-set-enabled (.node scene) #f))
                            (scene-surface
                             (wlr-scene-xdg-surface-create scene xdg-surface))
                            (c (make <gwwm-xdg-client>
@@ -911,6 +910,7 @@ gwwm [OPTION]
                                 #:super-surface xdg-surface)))
                       (set! (super-surface->client xdg-surface) c)
                       (set! (client-border-width c) (gwwm-borderpx))
+
                       (run-hook create-client-hook c))))))
   (gwwm-compositor (wlr-compositor-create (gwwm-display) (gwwm-renderer)))
   (wlr-subcompositor-create (gwwm-display))
@@ -979,7 +979,6 @@ gwwm [OPTION]
                                   (client-list))
                         (let* ((xsurface (wrap-wlr-xwayland-surface data))
                                (scene (wlr-scene-tree-create tile-layer))
-                               (_ (wlr-scene-node-set-enabled (.node scene) #f))
                                (c (make <gwwm-x-client>
                                     #:scene scene
                                     #:super-surface xsurface)))
@@ -1002,8 +1001,6 @@ gwwm [OPTION]
   (setmon c #f 0)
   (q-remove! (%clients) c)
   (q-remove! (%fstack) c)
-  (pk 'sdf)
-
   (client-scene-set-enabled c #f))
 
 (define-method (client-init-geom (c <gwwm-client>))
