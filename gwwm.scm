@@ -714,19 +714,14 @@ gwwm [OPTION]
                     wlr-seat-set-primary-selection seat (.source event) (.serial event))))
     (add-listen (.keyboard-state seat) 'focus-change
                 (lambda (listener data)
-                  (let ((event (wrap-wlr-seat-keyboard-focus-change-event data)))
-                    (and=> (and=> (.old-surface event)
-                                  client-from-wlr-surface)
-                           (cut client-set-border-color <>
-                                (config-bordercolor (g-config))))
-                    (and=> (and=> (.new-surface event)
-                                  client-from-wlr-surface)
-                           (lambda (c)
-                             (q-remove! (%fstack) c)
-                             (q-push! (%fstack) c)
-                             (client-set-border-color
-                              c
-                              (config-focuscolor (g-config)))))))
+                  (let* ((event (wrap-wlr-seat-keyboard-focus-change-event data))
+                         (old-client (and=> (.old-surface event)
+                                            client-from-wlr-surface))
+                         (new-client (and=> (.new-surface event)
+                                            client-from-wlr-surface)))
+
+                    (run-hook keyboard-focus-change-hook
+                              seat old-client new-client)))
                 #:destroy-when seat)
     (add-listen seat 'start-drag
                 (lambda (listener data)
@@ -1177,6 +1172,20 @@ gwwm [OPTION]
           (client-do-set-fullscreen c fullscreen?)
           (set! (client-fullscreen? c) fullscreen?))
       (run-hook fullscreen-event-hook c event-or-xsurface)))
+  (add-hook! keyboard-focus-change-hook
+             (lambda (seat old new)
+               (when new
+                 (q-remove! (%fstack) new)
+                 (q-push! (%fstack) new))))
+  (add-hook! keyboard-focus-change-hook
+             (lambda (seat old new)
+               (and=> old
+                      (cut client-set-border-color <>
+                           (config-bordercolor (g-config))))
+               (and=> new
+                      (cut client-set-border-color
+                           <>
+                           (config-focuscolor (g-config))))))
   (add-hook!
    create-client-hook
    (lambda (c)

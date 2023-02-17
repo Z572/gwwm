@@ -18,6 +18,7 @@
             gwwm-after-init-hook
             client-fullscreen-hook
             client-destroy-hook
+            keyboard-focus-change-hook
             motion-notify-hook))
 
 (define-public create-monitor-hook (make-hook 1))
@@ -40,5 +41,5 @@
 (define-public client-map-event-hook (make-hook 2))
 (define-public client-fullscreen-hook (make-hook 2))
 (define-public client-destroy-hook (make-hook 1))
-
+(define-public keyboard-focus-change-hook (make-hook 3))
 (define-public motion-notify-hook (make-hook 1))
