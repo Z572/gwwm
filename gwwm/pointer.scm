@@ -15,6 +15,7 @@
             <gwwm-pointer>
             pointer-disable-while-typing?
             pointer-left-handed?
+            pointer-middle-emulation?
             pointer-natural-scroll?
             .device))
 
@@ -32,63 +33,95 @@
    (libinput-device-config-dwt-is-available libinput-device)
    "disable-while-typing? is unavailable"))
 
+(define (middle-emulation-is-available? device)
+  (truth->either
+   (libinput-device-config-middle-emulation-is-available device)
+   "middle emulation is unavailable"))
+
+(define (s-ref-f has? get handle)
+  (lambda (o)
+    (either-let* ((device (get-libinput-device o))
+                  ((has? device)))
+      (handle (get device)))))
+
+(define (s-set-f has? set handle)
+  (lambda (o v)
+    (either-let* ((v (or (and (either? v) v) (right v)))
+                  (device (get-libinput-device o))
+                  ((has? device)))
+      (set
+       device
+       (handle v device)))))
+
+(define-inlinable (not-zero? v)
+  (not (zero? v)))
 (define-class <gwwm-pointer> ()
   (device #:init-keyword #:device #:accessor .device)
   (disable-while-typing?
    #:accessor pointer-disable-while-typing?
    #:allocation #:virtual
-   #:slot-ref (lambda (o)
-                (either-let* ((libinput-device (get-libinput-device o))
-                              ((dwt-is-available? libinput-device)))
-                  (not (zero? (%libinput-config-dwt-state-enum->number
-                               (libinput-device-config-dwt-get-enabled libinput-device))))))
-   #:slot-set! (lambda (o v)
-                 (either-let* ((v (or (and (either? v) v) (right v)))
-                               (libinput-device (get-libinput-device o))
-                               ((dwt-is-available? libinput-device)))
-                   (libinput-device-config-dwt-set-enabled
-                    libinput-device
-                    (case v
-                      ((#t) 'LIBINPUT_CONFIG_DWT_ENABLED)
-                      ((#f) 'LIBINPUT_CONFIG_DWT_DISABLED)
-                      ((reset) (libinput-device-config-dwt-get-default-enabled libinput-device)))))))
+   #:slot-ref
+   (s-ref-f dwt-is-available?
+            libinput-device-config-dwt-get-enabled
+            (compose not-zero?
+                     %libinput-config-dwt-state-enum->number))
+   #:slot-set!
+   (s-set-f dwt-is-available?
+            libinput-device-config-dwt-set-enabled
+            (lambda (v d)(case v
+                           ((#t) 'LIBINPUT_CONFIG_DWT_ENABLED)
+                           ((#f) 'LIBINPUT_CONFIG_DWT_DISABLED)
+                           ((reset) (libinput-device-config-dwt-get-default-enabled d))))))
   (left-handed?
    #:accessor pointer-left-handed?
    #:allocation #:virtual
-   #:slot-ref (lambda (o)
-                (either-let* ((device (get-libinput-device o))
-                              ((left-handed-is-available? device)))
-                  (not (zero? (libinput-device-config-left-handed-get device)))))
-   #:slot-set! (lambda (o v)
-                 (either-let* ((v (or (and (either? v) v) (right v)))
-                               (device (get-libinput-device o))
-                               ((left-handed-is-available? device)))
-                   (libinput-device-config-left-handed-set
-                    device
-                    (case v
-                      ((#t) 1)
-                      ((#f) 0)
-                      ((reset) (libinput-device-config-left-handed-get-default device)))))))
+   #:slot-ref
+   (s-ref-f left-handed-is-available?
+            libinput-device-config-left-handed-get
+            not-zero?)
+   #:slot-set!
+   (s-set-f left-handed-is-available?
+            libinput-device-config-left-handed-set
+            (lambda (v device)
+              (case v
+                ((#t) 1)
+                ((#f) 0)
+                ((reset) (libinput-device-config-left-handed-get-default device))))))
+  (middle-emulation?
+   #:accessor pointer-middle-emulation?
+   #:allocation #:virtual
+   #:slot-ref
+   (s-ref-f
+    middle-emulation-is-available?
+    libinput-device-config-middle-emulation-get-enabled
+    (compose not-zero?
+             %libinput-config-middle-emulation-state-enum->number))
+   #:slot-set!
+   (s-set-f
+    middle-emulation-is-available?
+    libinput-device-config-middle-emulation-get-enabled
+    (lambda (v d)
+      (case v
+        ((#t) 1)
+        ((#f) 0)
+        ((reset) libinput-device-config-middle-emulation-get-default-enabled d)) )))
   (natural-scroll?
    #:accessor pointer-natural-scroll?
    #:allocation #:virtual
-   #:slot-ref (lambda (o)
-                (either-let* ((device (get-libinput-device o))
-                              ((has-natural-scroll? device)))
-                  (not (zero? (libinput-device-config-scroll-get-natural-scroll-enabled
-                               device)))))
-   #:slot-set! (lambda (o v)
-                 (either-let* ((v (or (and (either? v) v) (right v)))
-                               (device (get-libinput-device o))
-                               ((has-natural-scroll? device)))
-                   (libinput-device-config-scroll-set-natural-scroll-enabled
-                    device
-                    (case v
-                      ((#t) 1)
-                      ((#f) 0)
-                      ((reset)
-                       (libinput-device-config-scroll-get-default-natural-scroll-enabled
-                        device)))))))
+   #:slot-ref
+   (s-ref-f has-natural-scroll?
+            libinput-device-config-scroll-get-natural-scroll-enabled
+            not-zero?)
+   #:slot-set!
+   (s-set-f has-natural-scroll?
+            libinput-device-config-scroll-set-natural-scroll-enabled
+            (lambda (v d)
+              (case v
+                ((#t) 1)
+                ((#f) 0)
+                ((reset)
+                 (libinput-device-config-scroll-get-default-natural-scroll-enabled
+                  d))))))
   #:metaclass <redefinable-class>)
 
 (define-method (write (o <gwwm-pointer>) port)
