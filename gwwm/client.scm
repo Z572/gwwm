@@ -12,6 +12,7 @@
   #:use-module (wlroots time)
   #:use-module (ice-9 q)
   #:use-module (ice-9 control)
+  #:use-module (ice-9 format)
   #:use-module (srfi srfi-71)
   #:use-module (gwwm utils)
   #:use-module (util572 color)
@@ -278,11 +279,12 @@
   (arrange (client-monitor c)))
 
 (define-method (write (client <gwwm-client>) port)
-  (format port "#<~s ~a>"
+  (format port "#<~s ~a ~x>"
           (class-name (class-of client))
           (if (client-alive? client)
               (client-get-appid client)
-              "*deaded*")))
+              "*deaded*")
+          (object-address client)))
 
 (define-method (client-get-parent (c <gwwm-xdg-client>))
   (and=> (.parent (wlr-xdg-surface-toplevel
