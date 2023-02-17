@@ -772,9 +772,8 @@ gwwm [OPTION]
 
     (set! (pointer-natural-scroll? p) #t)
     (set! (pointer-disable-while-typing? p) #t)
+    (set! (pointer-left-handed? p) #f)
 
-    (when (libinput-device-config-left-handed-is-available libinput-device)
-      (libinput-device-config-left-handed-set libinput-device 0))
     (when (libinput-device-config-middle-emulation-is-available libinput-device)
       (libinput-device-config-middle-emulation-set-enabled
        libinput-device 'LIBINPUT_CONFIG_MIDDLE_EMULATION_DISABLED))

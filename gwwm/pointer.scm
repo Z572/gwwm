@@ -13,6 +13,7 @@
   #:export (pointer-list
             <gwwm-pointer>
             pointer-disable-while-typing?
+            pointer-left-handed?
             pointer-natural-scroll?
             .device))
 
@@ -21,6 +22,10 @@
    (libinput-device-config-scroll-has-natural-scroll device)
    "device is not has natural-scroll"))
 
+(define (left-handed-is-available? device)
+  (truth->either
+   (libinput-device-config-left-handed-is-available device)
+   "left-handed is unavailable"))
 (define (dwt-is-available? libinput-device)
   (truth->either
    (libinput-device-config-dwt-is-available libinput-device)
@@ -46,6 +51,23 @@
                       ((#t) 'LIBINPUT_CONFIG_DWT_ENABLED)
                       ((#f) 'LIBINPUT_CONFIG_DWT_DISABLED)
                       ((reset) (libinput-device-config-dwt-get-default-enabled libinput-device)))))))
+  (left-handed?
+   #:accessor pointer-left-handed?
+   #:allocation #:virtual
+   #:slot-ref (lambda (o)
+                (either-let* ((device (get-libinput-device o))
+                              ((left-handed-is-available? device)))
+                  (not (zero? (libinput-device-config-left-handed-get device)))))
+   #:slot-set! (lambda (o v)
+                 (either-let* ((v (or (and (either? v) v) (right v)))
+                               (device (get-libinput-device o))
+                               ((left-handed-is-available? device)))
+                   (libinput-device-config-left-handed-set
+                    device
+                    (case v
+                      ((#t) 1)
+                      ((#f) 0)
+                      ((reset) (libinput-device-config-left-handed-get-default device)))))))
   (natural-scroll?
    #:accessor pointer-natural-scroll?
    #:allocation #:virtual
