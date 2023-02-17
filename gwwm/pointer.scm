@@ -99,7 +99,7 @@
    #:slot-set!
    (s-set-f
     middle-emulation-is-available?
-    libinput-device-config-middle-emulation-get-enabled
+    libinput-device-config-middle-emulation-set-enabled
     (lambda (v d)
       (case v
         ((#t) 1)
