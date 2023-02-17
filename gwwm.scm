@@ -1005,6 +1005,8 @@ gwwm [OPTION]
 (define (map-notify* c)
   (lambda (listener data)
     (send-log DEBUG (G_ "Client mapping")  'client c)
+    (client-init-geom c)
+    (client-init-border c)
     (run-hook client-map-event-hook c
               ((if (client-is-x11? c)
                    wrap-wlr-xwayland-surface
@@ -1015,29 +1017,27 @@ gwwm [OPTION]
             (wlr-scene-subsurface-tree-create
              (client-scene c)
              (client-surface c))))
-    (wlr-scene-node-set-enabled (.node (client-scene c)) #t)
+    (client-scene-set-enabled c #t)
     (set! (super-surface->scene (client-super-surface c)) (client-scene c))
     (set! (scene-node->client (.node (client-scene c))) c)
     (set! (scene-node->client (.node (client-scene-surface c))) c)
     (set! (surface->scene (client-surface c)) (client-scene c))
 
-    (client-init-geom c)
     (add-listen (client-surface c) 'commit (client-commit-notify c))
-    (begin (client-init-border c)
-           (q-push! (%clients) c)
-           (q-push! (%fstack) c)
-           (let ((parent (client-get-parent c)))
-             (send-log DEBUG "client's parent" 'client c 'parent parent)
-             (if parent
-                 (begin (setmon c (or (client-monitor parent)
-                                      (current-monitor))
-                                (client-tags parent))
-                        (client-do-set-floating c #t))
-                 (begin
-                   (setmon c (current-monitor) 0)
-                   (client-do-set-floating c (client-is-float-type? c)))))
-           (client-do-set-fullscreen c )
-           (slot-set! (client-monitor c) 'un-map #f))))
+    (q-push! (%clients) c)
+    (q-push! (%fstack) c)
+    (let ((parent (client-get-parent c)))
+      (send-log DEBUG "client's parent" 'client c 'parent parent)
+      (if parent
+          (begin (setmon c (or (client-monitor parent)
+                               (current-monitor))
+                         (client-tags parent))
+                 (client-do-set-floating c #t))
+          (begin
+            (setmon c (current-monitor) 0)
+            (client-do-set-floating c (client-is-float-type? c)))))
+    (client-do-set-fullscreen c )
+    (slot-set! (client-monitor c) 'un-map #f)))
 
 (define ((map-layer-client-notify c) listener data)
   (send-log DEBUG "layer client map" 'client c)
