@@ -16,6 +16,16 @@
             pointer-natural-scroll?
             .device))
 
+(define (has-natural-scroll? device)
+  (truth->either
+   (libinput-device-config-scroll-has-natural-scroll device)
+   "device is not has natural-scroll"))
+
+(define (dwt-is-available? libinput-device)
+  (truth->either
+   (libinput-device-config-dwt-is-available libinput-device)
+   "disable-while-typing? is unavailable"))
+
 (define-class <gwwm-pointer> ()
   (device #:init-keyword #:device #:accessor .device)
   (disable-while-typing?
@@ -23,15 +33,13 @@
    #:allocation #:virtual
    #:slot-ref (lambda (o)
                 (either-let* ((libinput-device (get-libinput-device o))
-                              ((truth->either (libinput-device-config-dwt-is-available libinput-device)
-                                              "disable-while-typing? is unavailable")))
+                              ((dwt-is-available? libinput-device)))
                   (not (zero? (%libinput-config-dwt-state-enum->number
                                (libinput-device-config-dwt-get-enabled libinput-device))))))
    #:slot-set! (lambda (o v)
                  (either-let* ((v (or (and (either? v) v) (right v)))
                                (libinput-device (get-libinput-device o))
-                               ((truth->either (libinput-device-config-dwt-is-available libinput-device)
-                                               "disable-while-typing? is unavailable")))
+                               ((dwt-is-available? libinput-device)))
                    (libinput-device-config-dwt-set-enabled
                     libinput-device
                     (case v
@@ -43,17 +51,13 @@
    #:allocation #:virtual
    #:slot-ref (lambda (o)
                 (either-let* ((device (get-libinput-device o))
-                              ((truth->either
-                                (libinput-device-config-scroll-has-natural-scroll device)
-                                "device is not has natural-scroll")))
+                              ((has-natural-scroll? device)))
                   (not (zero? (libinput-device-config-scroll-get-natural-scroll-enabled
                                device)))))
    #:slot-set! (lambda (o v)
                  (either-let* ((v (or (and (either? v) v) (right v)))
                                (device (get-libinput-device o))
-                               ((truth->either
-                                 (libinput-device-config-scroll-has-natural-scroll device)
-                                 "device is not has natural-scroll")))
+                               ((has-natural-scroll? device)))
                    (libinput-device-config-scroll-set-natural-scroll-enabled
                     device
                     (case v
