@@ -13,38 +13,62 @@
   #:export (pointer-list
             <gwwm-pointer>
             pointer-disable-while-typing?
+            pointer-natural-scroll?
             .device))
-
-(define (get-disable-while-typing? o)
-  (let ((device (slot-ref o 'device)))
-    (if (wlr-input-device-is-libinput device)
-        (let* ((libinput-device (wlr-libinput-get-device-handle device)))
-          (if (libinput-device-config-dwt-is-available libinput-device)
-              (right
-               (not (zero? (%libinput-config-dwt-state-enum->number
-                            (libinput-device-config-dwt-get-enabled libinput-device)))))
-              (left "disable-while-typing? is unavailable")))
-        (left "device is not libinput"))))
-(define (set-disable-while-typing? o v)
-  (let ((device (slot-ref o 'device)))
-    (and-let* (((wlr-input-device-is-libinput device))
-               (libinput-device (wlr-libinput-get-device-handle device))
-               ((libinput-device-config-dwt-is-available libinput-device)))
-      (libinput-device-config-dwt-set-enabled
-       libinput-device
-       (case v
-         ((#t) 'LIBINPUT_CONFIG_DWT_ENABLED)
-         ((#f) 'LIBINPUT_CONFIG_DWT_DISABLED)
-         ((reset) (libinput-device-config-dwt-get-default-enabled libinput-device)))))))
 
 (define-class <gwwm-pointer> ()
   (device #:init-keyword #:device #:accessor .device)
   (disable-while-typing?
    #:accessor pointer-disable-while-typing?
    #:allocation #:virtual
-   #:slot-ref get-disable-while-typing?
-   #:slot-set! set-disable-while-typing?)
+   #:slot-ref (lambda (o)
+                (either-let* ((libinput-device (get-libinput-device o))
+                              ((truth->either (libinput-device-config-dwt-is-available libinput-device)
+                                              "disable-while-typing? is unavailable")))
+                  (not (zero? (%libinput-config-dwt-state-enum->number
+                               (libinput-device-config-dwt-get-enabled libinput-device))))))
+   #:slot-set! (lambda (o v)
+                 (either-let* ((v (or (and (either? v) v) (right v)))
+                               (libinput-device (get-libinput-device o))
+                               ((truth->either (libinput-device-config-dwt-is-available libinput-device)
+                                               "disable-while-typing? is unavailable")))
+                   (libinput-device-config-dwt-set-enabled
+                    libinput-device
+                    (case v
+                      ((#t) 'LIBINPUT_CONFIG_DWT_ENABLED)
+                      ((#f) 'LIBINPUT_CONFIG_DWT_DISABLED)
+                      ((reset) (libinput-device-config-dwt-get-default-enabled libinput-device)))))))
+  (natural-scroll?
+   #:accessor pointer-natural-scroll?
+   #:allocation #:virtual
+   #:slot-ref (lambda (o)
+                (either-let* ((device (get-libinput-device o))
+                              ((truth->either
+                                (libinput-device-config-scroll-has-natural-scroll device)
+                                "device is not has natural-scroll")))
+                  (not (zero? (libinput-device-config-scroll-get-natural-scroll-enabled
+                               device)))))
+   #:slot-set! (lambda (o v)
+                 (either-let* ((v (or (and (either? v) v) (right v)))
+                               (device (get-libinput-device o))
+                               ((truth->either
+                                 (libinput-device-config-scroll-has-natural-scroll device)
+                                 "device is not has natural-scroll")))
+                   (libinput-device-config-scroll-set-natural-scroll-enabled
+                    device
+                    (case v
+                      ((#t) 1)
+                      ((#f) 0)
+                      ((reset)
+                       (libinput-device-config-scroll-get-default-natural-scroll-enabled
+                        device)))))))
   #:metaclass <redefinable-class>)
+
+(define-method (get-libinput-device (p <gwwm-pointer>))
+  (let ((device (slot-ref p 'device)))
+    (if (wlr-input-device-is-libinput device)
+        (right (wlr-libinput-get-device-handle device))
+        (left "device is not libinput"))))
 
 (define-once %pointers (make-q))
 (define (pointer-list)

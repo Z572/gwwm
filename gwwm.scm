@@ -769,10 +769,10 @@ gwwm [OPTION]
        libinput-device 'LIBINPUT_CONFIG_DRAG_ENABLED)
       (libinput-device-config-tap-set-drag-lock-enabled
        libinput-device 'LIBINPUT_CONFIG_DRAG_LOCK_ENABLED))
-    (when (libinput-device-config-scroll-has-natural-scroll libinput-device)
-      (libinput-device-config-scroll-set-natural-scroll-enabled libinput-device 0))
 
+    (set! (pointer-natural-scroll? p) #t)
     (set! (pointer-disable-while-typing? p) #t)
+
     (when (libinput-device-config-left-handed-is-available libinput-device)
       (libinput-device-config-left-handed-set libinput-device 0))
     (when (libinput-device-config-middle-emulation-is-available libinput-device)
