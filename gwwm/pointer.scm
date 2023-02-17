@@ -8,6 +8,7 @@
   #:use-module (libinput)
   #:use-module (srfi srfi-2)
   #:use-module (srfi srfi-189)
+  #:use-module (ice-9 format)
   #:use-module (ice-9 q)
   #:duplicates (merge-accessors merge-generics replace warn-override-core warn last)
   #:export (pointer-list
@@ -89,6 +90,12 @@
                        (libinput-device-config-scroll-get-default-natural-scroll-enabled
                         device)))))))
   #:metaclass <redefinable-class>)
+
+(define-method (write (o <gwwm-pointer>) port)
+  (format port "#<~s ~S ~x>"
+          (class-name (class-of o))
+          (.name (.device o))
+          (object-address o)))
 
 (define-method (get-libinput-device (p <gwwm-pointer>))
   (let ((device (slot-ref p 'device)))

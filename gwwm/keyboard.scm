@@ -1,6 +1,7 @@
 (define-module (gwwm keyboard)
   #:use-module (oop goops)
   #:use-module (wlroots types input-device)
+  #:use-module (ice-9 format)
   #:use-module (ice-9 q)
   #:use-module (gwwm listener)
   #:use-module (gwwm hooks)
@@ -63,8 +64,10 @@
   (car %keyboards))
 
 (define-method (write (o <gwwm-keyboard>) port)
-  (format port "#<<gwwm-keyboard> ~S>"
-          (.name (.device o))))
+  (format port "#<~s ~S ~x>"
+          (class-name (class-of o))
+          (.name (.device o))
+          (object-address o)))
 
 (define-method (initialize (o <gwwm-keyboard>) args)
   (let ((obj (next-method)))

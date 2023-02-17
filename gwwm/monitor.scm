@@ -1,6 +1,7 @@
 (define-module (gwwm monitor)
   #:autoload (gwwm) (gwwm-output-layout)
   #:use-module (srfi srfi-1)
+  #:use-module (ice-9 format)
   #:use-module (ice-9 q)
   #:use-module (oop goops)
   #:use-module (util572 box)
@@ -123,8 +124,10 @@
   #:metaclass <redefinable-class>)
 
 (define-method (write (o <gwwm-monitor>) port)
-  (format port "#<<gwwm-monitor ~a (~a . ~a) scale: ~a>"
+  (format port "#<~a ~a ~x (~a . ~a) scale: ~a>"
+          (class-name (class-of o))
           (monitor-name o)
+          (object-address o)
           (monitor-width o)
           (monitor-height o)
           (monitor-scale o)))
