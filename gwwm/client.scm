@@ -84,6 +84,7 @@
             surface->scene
             client-scene-set-enabled
             client-scene-move
+            client-scene-move/relatively
             client-scene-raise-to-top
             %fstack
             %clients
@@ -483,6 +484,12 @@
   (next-method)
   (let ((bw (client-border-width c)))
     (wlr-scene-node-set-position (.node (client-scene-surface c)) bw bw)))
+(define-method (client-scene-move/relatively (c <gwwm-base-client>) x y)
+  (let ((node (.node (client-scene c))))
+    (wlr-scene-node-set-position
+     (.node (client-scene c))
+     (+ (.x node) x)
+     (+ (.y node) y))))
 
 (define-method (client-resize (c <gwwm-client>) geo (interact? <boolean>))
   (set! (client-geom c) geo)
