@@ -1074,9 +1074,10 @@ gwwm [OPTION]
   (let* ((ms (monitor-list))
          (l (length ms)))
     (unless (zero? l)
-      (and=> (find (lambda (m)
-                     (.enabled (monitor-output m))) ms)
-             current-monitor)))
+      (let  ((m (find (lambda (m)
+                        (.enabled (monitor-output m))) ms)))
+        (when m
+          (set! (current-monitor) m)))))
 
   (focusclient (focustop (current-monitor)) #t)
   (closemon m))
