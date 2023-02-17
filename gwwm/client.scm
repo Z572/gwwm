@@ -206,7 +206,7 @@
 
 (define-method (client-init-border (c <gwwm-client>))
   (send-log DEBUG (G_ "client init border") 'c c)
-  (define scene (client-scene c))
+  (define scene (client-scene-surface c))
   (define (create)
     (let ((rect (wlr-scene-rect-create scene 0 0 (make-rgba-color 0 0 0 0))))
       rect))
@@ -465,13 +465,18 @@
          (heigh (box-height geom))
          (width (box-width geom))
          (borders (client-borders c)))
+
     (wlr-scene-rect-set-size (list-ref borders 0) width bw)
+    (wlr-scene-node-set-position (.node (list-ref borders 0)) (- bw) (- bw))
+
     (wlr-scene-rect-set-size (list-ref borders 1) width bw)
-    (wlr-scene-rect-set-size (list-ref borders 2) bw (- heigh (* 2 bw)))
-    (wlr-scene-rect-set-size (list-ref borders 3) bw (- heigh (* 2 bw)))
-    (wlr-scene-node-set-position (.node (list-ref borders 1)) 0 (- heigh bw ) )
-    (wlr-scene-node-set-position (.node (list-ref borders 2)) 0 bw )
-    (wlr-scene-node-set-position (.node (list-ref borders 3)) (- width bw) bw )))
+    (wlr-scene-node-set-position (.node (list-ref borders 1)) (- bw) (- heigh bw bw ))
+
+    (wlr-scene-rect-set-size (list-ref borders 2) bw heigh)
+    (wlr-scene-node-set-position (.node (list-ref borders 2)) (- bw) (- bw ) )
+
+    (wlr-scene-rect-set-size (list-ref borders 3) bw heigh)
+    (wlr-scene-node-set-position (.node (list-ref borders 3)) (- width bw bw) (- bw))))
 
 (define-method (client-scene-raise-to-top (c <gwwm-base-client>))
   (wlr-scene-node-raise-to-top (.node (client-scene c))))
