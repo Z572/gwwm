@@ -251,13 +251,11 @@
     (if fullscreen?
         (begin (set! (client-prev-geom c)
                      (shallow-clone (client-geom c)))
-               (wlr-scene-node-reparent (.node (client-scene c)) (.node fullscreen-layer))
                (client-resize
                 c
                 (shallow-clone
                  (monitor-area (client-monitor c))) #f))
-        (begin (wlr-scene-node-reparent (.node (client-scene c)) (.node tile-layer))
-               (client-resize c (shallow-clone (client-prev-geom c)))))
+        (client-resize c (shallow-clone (client-prev-geom c))))
     (run-hook client-fullscreen-hook c fullscreen?)
     (arrange (client-monitor c))))
 
@@ -276,12 +274,6 @@
   (when (client-fullscreen? c)
     (client-do-set-fullscreen c #f))
   (set! (client-floating? c) floating?)
-  (pk 'b-r)
-  (wlr-scene-node-reparent (.node (client-scene c))
-                           (if (client-floating? c)
-                               (.node float-layer)
-                               (.node tile-layer)))
-  (pk 'a-r)
   (arrange (client-monitor c)))
 
 (define-method (write (client <gwwm-client>) port)

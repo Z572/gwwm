@@ -1,5 +1,9 @@
 (define-module (gwwm commands)
-  #:autoload (gwwm) (cursor-mode gwwm-xcursor-manager grabc grabcx grabcy gwwm-cursor float-layer gwwm-display gwwm-scene)
+  #:autoload (gwwm) (cursor-mode gwwm-xcursor-manager
+                                 fullscreen-layer
+                                 tile-layer
+                                 grabc grabcx
+                                 grabcy gwwm-cursor float-layer gwwm-display gwwm-scene)
   #:use-module (oop goops)
   #:use-module (wlroots backend session)
   #:use-module (wlroots backend)
@@ -67,8 +71,18 @@
 (define (arrange m)
   (for-each
    (lambda (c)
-     (when (and (client-monitor c))
-       (client-scene-set-enabled c (visibleon c (client-monitor c )))))
+     (let ((cm (client-monitor c)))
+       (when cm
+         (client-scene-set-enabled c (visibleon c cm))
+         (cond ((client-fullscreen? c)
+                (client-resize c (shallow-clone (monitor-area cm)) #f)
+                (wlr-scene-node-reparent
+                 (.node (client-scene c))
+                 (.node fullscreen-layer)))
+               ((client-floating? c)
+                (wlr-scene-node-reparent (.node (client-scene c)) (.node float-layer)))
+               (else
+                (wlr-scene-node-reparent (.node (client-scene c)) (.node tile-layer)))))))
    (client-list))
   (and=> (list-ref (monitor-layouts m) (monitor-sellt m))
          (lambda (lay)
