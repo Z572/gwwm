@@ -329,10 +329,10 @@
   (wlr-xwayland-surface-override-redirect (client-super-surface client)))
 
 (define* (client-list #:optional (m #f))
-  "return all clients. if provide M, return M's visibleoned clients."
+  "return all clients. if provide M, return M's clients."
   (let ((clients (car (%clients))))
     (if m
-        (filter (cut visibleon <> m) clients)
+        (filter (lambda (c) (eq? (client-monitor c) m)) clients)
         clients)))
 
 (define (current-client)
