@@ -41,5 +41,6 @@
 (define-public client-map-event-hook (make-hook 2))
 (define-public client-fullscreen-hook (make-hook 2))
 (define-public client-destroy-hook (make-hook 1))
+(define-public client-set-monitor-hook (make-hook 3))
 (define-public keyboard-focus-change-hook (make-hook 3))
 (define-public motion-notify-hook (make-hook 1))

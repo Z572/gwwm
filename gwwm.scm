@@ -237,8 +237,7 @@ gwwm [OPTION]
                 (when (equal? (client-monitor c) m)
                   (setmon
                    c
-                   (current-monitor)
-                   (client-tags c)))))
+                   (current-monitor)))))
             (client-list)))
 
 (define-once background-layer #f)
@@ -285,28 +284,21 @@ gwwm [OPTION]
                      (activate-surface (client-surface c) #t ))
               (wlr-seat-keyboard-notify-clear-focus (gwwm-seat))))))))
 
-(define (setmon c m newtag)
+(define (setmon c m)
   (pk 'setmon)
   (let ((old (client-monitor c))
         (surface (client-surface c)))
     (unless (equal? old m)
+      (run-hook client-set-monitor-hook c old m)
       (set! (client-monitor c) m)
       (when old
-        (wlr-surface-send-leave surface
-                                (monitor-output old))
+        (wlr-surface-send-leave
+         surface
+         (monitor-output old))
         (arrange old))
       (when m
-        (client-resize c (client-geom c) #f)
         (wlr-surface-send-enter surface (monitor-output m))
-        (pk 'b)
-        (set! (client-tags c)
-              (if (zero? newtag)
-                  (list-ref (slot-ref m 'tagset)
-                            (slot-ref m 'seltags))
-                  newtag))
-        (pk 'sd)
-        (arrange m)
-        (pk 'sd))
+        (arrange m))
       (focusclient (focustop (current-monitor)) #t))))
 
 (define (arrange-interactive-layer m)
@@ -390,7 +382,7 @@ gwwm [OPTION]
                ((.enabled (monitor-output m))))
       (for-each (lambda (c)
                   (when (and (not (client-monitor c)) (client-mapped? c))
-                    (setmon c m (client-tags c)))) (client-list)))
+                    (setmon c m))) (client-list)))
     (wlr-output-manager-v1-set-configuration (gwwm-output-manager) config)))
 
 (define (create-keyboard device)
@@ -520,7 +512,7 @@ gwwm [OPTION]
                      (cursor-mode 'normal)
                      (set! (current-monitor)
                            (monitor-at (.x cursor) (.y cursor)))
-                     (setmon (grabc) (current-monitor) 0)))))))
+                     (setmon (grabc) (current-monitor))))))))
 
   (let ((cursor (gwwm-cursor (wlr-cursor-create))))
     (add-listen cursor 'axis
@@ -953,6 +945,13 @@ gwwm [OPTION]
   (gwwm-output-layout (wlr-output-layout-create))
   (add-listen (gwwm-output-layout) 'change update-monitors)
   (add-hook! keypress-event-hook idle-activity)
+  (add-hook! client-set-monitor-hook
+             (lambda (c old new)
+               (when new
+                 (set! (client-tags c)
+                       (or (and=> (client-get-parent c) client-tags)
+                           (list-ref (slot-ref new 'tagset)
+                                     (slot-ref new 'seltags)))))))
   (output-manager-setup (gwwm-display))
   (wlr-cursor-attach-output-layout (gwwm-cursor) (gwwm-output-layout)))
 
@@ -990,7 +989,7 @@ gwwm [OPTION]
   (and=> (client-monitor c)
          (cut slot-set! <> 'un-map #t))
 
-  (setmon c #f 0)
+  (setmon c #f)
   (q-remove! (%clients) c)
   (q-remove! (%fstack) c)
   (client-scene-set-enabled c #f))
@@ -1030,11 +1029,10 @@ gwwm [OPTION]
       (send-log DEBUG "client's parent" 'client c 'parent parent)
       (if parent
           (begin (setmon c (or (client-monitor parent)
-                               (current-monitor))
-                         (client-tags parent))
+                               (current-monitor)))
                  (client-do-set-floating c #t))
           (begin
-            (setmon c (current-monitor) 0)
+            (setmon c (current-monitor))
             (client-do-set-floating c (client-is-float-type? c)))))
     (client-do-set-fullscreen c )
     (slot-set! (client-monitor c) 'un-map #f)))

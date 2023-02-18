@@ -34,6 +34,27 @@
             incmaster
             view))
 
+(define* (tag int #:optional (client (current-client)))
+  (when client
+    (set! (client-tags client) int)
+    (focusclient (focustop (current-monitor)) #t)
+    (arrange (current-monitor))))
+
+(define (view i)
+  (send-log DEBUG (G_ "view"))
+  (let ((m(current-monitor)))
+    (unless (= i (list-ref (slot-ref m 'tagset) (slot-ref m 'seltags)))
+      (slot-set! m 'seltags (if (= 1 (slot-ref m 'seltags)) 0 1))
+      (list-set! (slot-ref m 'tagset)  (slot-ref m 'seltags) i)
+      (focusclient (focustop (current-monitor)) #t)
+      (arrange (current-monitor)))))
+(define* (toggletag tag #:optional (client (current-client)))
+  (when client
+    (set! (client-tags client) tag)
+    (focusclient (focustop (current-monitor)) #t)
+    (arrange (current-monitor))))
+
+
 (define* (list-scene-graph #:optional (tree (.tree (gwwm-scene))))
   (let loop ((obj tree))
     (cons obj
@@ -53,25 +74,11 @@
          (lambda (lay)
            (and=> (layout-procedure lay)
                   (cut <> m))))
-  ((@@ (gwwm) %motionnotify) 0))
+  ((@@ (gwwm) motionnotify) 0))
 
-(define* (tag int #:optional (client (current-client)))
-  (when client
-    (set! (client-tags client) int)
-    (focusclient (focustop (current-monitor)) #t)
-    (arrange (current-monitor))))
-
-(define (view i)
-  (send-log DEBUG (G_ "view"))
-  (let ((m(current-monitor)))
-    (unless (= i (list-ref (slot-ref m 'tagset) (slot-ref m 'seltags)))
-      (slot-set! m 'seltags (if (= 1 (slot-ref m 'seltags)) 0 1))
-      (list-set! (slot-ref m 'tagset)  (slot-ref m 'seltags) i)
-      (focusclient (focustop (current-monitor)) #t)
-      (arrange (current-monitor)))))
 (define* (togglefullscreen #:optional (client (current-client)))
   (when client
-    ((@@ (gwwm client) client-do-set-fullscreen)
+    (client-do-set-fullscreen
      client (not (client-fullscreen? client)))))
 
 (define* (setlayout layout #:optional (m (current-monitor)))
@@ -80,11 +87,6 @@
     (list-set! (monitor-layouts m) (monitor-sellt m) layout)
     (arrange m)))
 
-(define* (toggletag tag #:optional (client (current-client)))
-  (when client
-    (set! (client-tags client) tag)
-    (focusclient (focustop (current-monitor)) #t)
-    (arrange (current-monitor))))
 
 (define* (togglefloating #:optional (client (current-client)))
   (when (and client (not (client-fullscreen? client)))
