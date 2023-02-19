@@ -187,7 +187,7 @@
 (define-once client-borders (make-object-property))
 (define-method (client-set-border-color (c <gwwm-client>) (color <rgba-color>))
   (for-each (lambda (b) (wlr-scene-rect-set-color b color))
-            (client-borders c)))
+            (or (client-borders c) '())))
 ;; (define-public (client-is-render-on-monitor c m)
 ;;   (let ((mo (monitor-output m)))
 ;;     (let/ec return
@@ -457,11 +457,12 @@
   0)
 
 (define-method (client-resize-border (c <gwwm-client>))
-  (let* ((bw (client-border-width c))
-         (geom (client-geom c))
-         (heigh (box-height geom))
-         (width (box-width geom))
-         (borders (client-borders c)))
+  (and-let* ((borders (client-borders c))
+             ((not (null-list? borders)))
+             (bw (client-border-width c))
+             (geom (client-geom c))
+             (heigh (box-height geom))
+             (width (box-width geom)))
 
     (wlr-scene-rect-set-size (list-ref borders 0) width bw)
     (wlr-scene-node-set-position (.node (list-ref borders 0)) (- bw) (- bw))
