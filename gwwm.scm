@@ -1002,17 +1002,18 @@ gwwm [OPTION]
   (lambda (listener data)
     (send-log DEBUG (G_ "Client mapping")  'client c)
     (client-init-geom c)
+    (when (is-a? c <gwwm-x-client>)
+      (set! (client-scene-surface c)
+            (wlr-scene-subsurface-tree-create
+             (client-scene c)
+             (client-surface c))))
     (client-init-border c)
     (run-hook client-map-event-hook c
               ((if (client-is-x11? c)
                    wrap-wlr-xwayland-surface
                    wrap-wlr-xdg-surface)
                data))
-    (when (is-a? c <gwwm-x-client>)
-      (set! (client-scene-surface c)
-            (wlr-scene-subsurface-tree-create
-             (client-scene c)
-             (client-surface c))))
+
     (client-scene-set-enabled c #t)
     (set! (super-surface->scene (client-super-surface c)) (client-scene c))
     (set! (scene-node->client (.node (client-scene c))) c)
