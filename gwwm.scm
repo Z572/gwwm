@@ -311,28 +311,7 @@ gwwm [OPTION]
                         #t)
                  #f)))
          (append (car (list-ref layers 3)) (car (list-ref layers 2))))))
-;; (define (arrangelayer m q-list box exclusive?)
-;;   (let ((m-area (monitor-area m)))
-;;     (for-each
 
-;;      (lambda (c)
-;;        (let* ((scene-surface (client-scene-surface c))
-;;               (super-surface (.layer-surface scene-surface)))
-;;          (if (equal? exclusive? (> (pk 'exclusive-zone (.exclusive-zone (.current super-surface))) 0))
-;;              (begin
-;;                (describe c)
-;;                (pk 'm1 m-area)
-;;                (wlr-scene-layer-surface-v1-configure
-;;                 scene-surface
-;;                 (pk 'm2 m-area) (pk 'box box) ;; (pk 'm-b (shallow-clone ))
-;;                 )
-;;                (pk 'box2 box)
-;;                (modify-instance* (pk 'geom (client-geom (pk 'bb c)))
-;;                  (x (pk 'v (.x (.node (pk 'b (client-scene c))))))
-;;                  (y (~ c 'scene 'node 'y))))
-;;              ))
-;;        )
-;;      (car q-list))))
 (define (arrangelayer m q-list box exclusive?)
   (for-each (cut arrange-layer-client <> m box exclusive?)
             (car q-list)))
@@ -882,12 +861,11 @@ gwwm [OPTION]
                 (let ((xdg-surface (wrap-wlr-xdg-surface data)))
                   (when (eq? (.role xdg-surface)
                              'WLR_XDG_SURFACE_ROLE_TOPLEVEL)
-                    (let* ((scene (wlr-scene-tree-create tile-layer))
-                           (scene-surface
-                            (wlr-scene-xdg-surface-create scene xdg-surface))
+                    (let* ((scene
+                            (wlr-scene-xdg-surface-create tile-layer
+                                                          xdg-surface))
                            (c (make <gwwm-xdg-client>
                                 #:scene scene
-                                #:scene-surface scene-surface
                                 #:super-surface xdg-surface)))
                       (set! (super-surface->client xdg-surface) c)
                       (set! (client-border-width c) (gwwm-borderpx))
@@ -920,9 +898,7 @@ gwwm [OPTION]
                          (c (make <gwwm-layer-client>
                               #:super-surface layer-surface
                               #:scene scene
-                              #:scene-surface scene-surface
                               #:monitor (wlr-output->monitor (.output layer-surface)))))
-                    (pk 'new-layer-c c)
                     (set! (surface->scene (client-surface c)) (client-scene c))
                     (set! (super-surface->client layer-surface) c)
                     (set! (scene-node->client (.node (client-scene c))) c)
@@ -966,9 +942,7 @@ gwwm [OPTION]
                                       (client-do-set-fullscreen c #f)))
                                   (client-list))
                         (let* ((xsurface (wrap-wlr-xwayland-surface data))
-                               (scene (wlr-scene-tree-create tile-layer))
                                (c (make <gwwm-x-client>
-                                    #:scene scene
                                     #:super-surface xsurface)))
                           (send-log DEBUG "new x-client" 'client c)
                           (set! (super-surface->client xsurface) c)
@@ -1003,9 +977,9 @@ gwwm [OPTION]
     (send-log DEBUG (G_ "Client mapping")  'client c)
     (client-init-geom c)
     (when (is-a? c <gwwm-x-client>)
-      (set! (client-scene-surface c)
+      (set! (client-scene c)
             (wlr-scene-subsurface-tree-create
-             (client-scene c)
+             tile-layer
              (client-surface c))))
     (client-init-border c)
     (run-hook client-map-event-hook c
@@ -1017,7 +991,6 @@ gwwm [OPTION]
     (client-scene-set-enabled c #t)
     (set! (super-surface->scene (client-super-surface c)) (client-scene c))
     (set! (scene-node->client (.node (client-scene c))) c)
-    (set! (scene-node->client (.node (client-scene-surface c))) c)
     (set! (surface->scene (client-surface c)) (client-scene c))
 
     (add-listen (client-surface c) 'commit (client-commit-notify c))

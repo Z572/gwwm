@@ -69,7 +69,6 @@
             client-wants-fullscreen?
             client-do-set-fullscreen
             client-do-set-floating
-            client-scene-surface
             client-resize-configure-serial
             client-init-border
             client-set-border-color
@@ -145,9 +144,6 @@
          #:accessor client-scene
          #:setter client-set-scene!
          #:init-keyword #:scene)
-  (scene-surface #:accessor client-scene-surface
-                 #:init-keyword #:scene-surface
-                 #:init-value #f)
   (alive? #:init-value #t #:accessor client-alive?)
   #:metaclass <redefinable-class>)
 
@@ -211,7 +207,7 @@
 
 (define-method (client-init-border (c <gwwm-client>))
   (send-log DEBUG (G_ "client init border") 'c c)
-  (define scene (client-scene-surface c))
+  (define scene (client-scene c))
   (define (create)
     (let ((rect (wlr-scene-rect-create scene 0 0 (make-rgba-color 0 0 0 0))))
       rect))
@@ -484,9 +480,8 @@
 (define-method (client-scene-move (c <gwwm-base-client>) x y)
   (wlr-scene-node-set-position (.node (client-scene c)) x y))
 (define-method (client-scene-move (c <gwwm-client>) x y)
-  (next-method)
   (let ((bw (client-border-width c)))
-    (wlr-scene-node-set-position (.node (client-scene-surface c)) bw bw)))
+    (next-method c (+ bw x) (+ bw y))))
 (define-method (client-scene-move/relatively (c <gwwm-base-client>) x y)
   (let ((node (.node (client-scene c))))
     (wlr-scene-node-set-position
@@ -526,7 +521,6 @@
   (let ((next (next-method c)))
     (lambda (listener data)
       (next listener data)
-      (wlr-scene-node-destroy (.node (client-scene c)))
       (set! (client-scene c) #f))))
 
 (define-method (client-destroy-notify (c <gwwm-layer-client>))
