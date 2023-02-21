@@ -42,6 +42,7 @@
   #:use-module (wlroots types input-inhibitor)
   #:use-module (wlroots types keyboard)
   #:use-module (wlroots types layer-shell)
+  #:use-module (wlroots types touch)
   #:use-module (wlroots types output)
   #:use-module (wlroots types server-decoration)
   #:use-module (wlroots types screencopy)
@@ -491,6 +492,51 @@ gwwm [OPTION]
                      (setmon (grabc) (current-monitor))))))))
 
   (let ((cursor (gwwm-cursor (wlr-cursor-create))))
+    (add-listen cursor 'touch-up
+                (lambda (listener data)
+                  (let ((event (wrap-wlr-touch-up-event data)))
+                    (let-slots event (touch time-msec touch-id)
+                      (send-log INFO "touch-up"
+                                'touch touch
+                                'time-msec time-msec
+                                'touch-id touch-id))))
+                #:remove-when-destroy? #f)
+    (add-listen cursor 'touch-down
+                (lambda (listener data)
+                  (let ((event (wrap-wlr-touch-down-event data)))
+                    (let-slots event (touch time-msec touch-id x y)
+                      (send-log INFO "touch-down"
+                                'touch touch
+                                'time-msec time-msec
+                                'touch-id touch-id
+                                'x x
+                                'y y))))
+                #:remove-when-destroy? #f)
+    (add-listen cursor 'touch-motion
+                (lambda (listener data)
+                  (let ((event (wrap-wlr-touch-motion-event data)))
+                    (let-slots event (touch time-msec touch-id x y)
+                      (send-log INFO "touch-motion"
+                                'touch touch
+                                'time-msec time-msec
+                                'touch-id touch-id
+                                'x x
+                                'y y))))
+                #:remove-when-destroy? #f)
+    (add-listen cursor 'touch-cancel
+                (lambda (listener data)
+                  (let ((event (wrap-wlr-touch-cancel-event data)))
+                    (let-slots event (touch time-msec touch-id)
+                      (send-log INFO "touch-cancel"
+                                'touch touch
+                                'time-msec time-msec
+                                'touch-id touch-id))))
+                #:remove-when-destroy? #f)
+    (add-listen cursor 'touch-frame
+                (lambda (listener data)
+                  (send-log INFO "touch-frame" ))
+                #:remove-when-destroy? #f)
+
     (add-listen cursor 'axis
                 (lambda (listener data)
                   (let ((event (wrap-wlr-pointer-axis-event data)))
@@ -805,7 +851,10 @@ gwwm [OPTION]
           (gwwm-seat)
           'WL_SEAT_CAPABILITY_POINTER))
         ((WLR_INPUT_DEVICE_TOUCH)
-         (send-log WARNING "TODO"))
+         (wlr-cursor-attach-input-device (gwwm-cursor) device)
+         (add-seat-capabilitie
+          (gwwm-seat)
+          'WL_SEAT_CAPABILITY_TOUCH))
         ((WLR_INPUT_DEVICE_SWITCH)
          (send-log WARNING "TODO"))
         ((WLR_INPUT_DEVICE_TABLET_TOOL)
