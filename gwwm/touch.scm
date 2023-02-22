@@ -1,6 +1,7 @@
 (define-module (gwwm touch)
   #:use-module (oop goops)
   #:use-module (gwwm listener)
+  #:use-module (wlroots types touch)
   #:use-module (ice-9 q)
   #:export (<gwwm-touch>
             <gwwm-touch-point>
@@ -28,9 +29,10 @@
 (define-once wlr-touch->touch (make-object-property))
 (define-method (initialize (o <gwwm-touch>) args)
   (let* ((obj (next-method))
-         (device (.device)))
+         (device (.device obj)))
     (add-touch obj)
-    (set! (wlr-touch->touch device) obj)
+    (set! (wlr-touch->touch
+           (wlr-touch-from-input-device device)) obj)
     (add-listen device 'destroy
                 (lambda (listener data)
                   (set! (wlr-touch->touch device) #f)
