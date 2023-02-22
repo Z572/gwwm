@@ -12,6 +12,7 @@
   #:use-module (wlroots types xcursor)
   #:use-module (wayland display)
   #:use-module (srfi srfi-26)
+  #:use-module (srfi srfi-189)
   #:use-module (gwwm utils srfi-215)
   #:use-module (ice-9 control)
   #:use-module (gwwm config)
@@ -144,7 +145,7 @@
 
 (define (moveresize n)
   (when (eq? (cursor-mode) 'normal)
-    (grabc (client-at (gwwm-cursor)))
+    (grabc (maybe-ref (client-at (gwwm-cursor)) (const #f)))
     (let ((c (grabc))
           (cursor (gwwm-cursor)))
       (when (and c

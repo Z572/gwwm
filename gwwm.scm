@@ -69,6 +69,7 @@
   #:use-module (gwwm hooks)
   #:use-module (gwwm i18n)
   #:use-module (gwwm keyboard)
+  #:use-module (gwwm touch)
   #:use-module (gwwm pointer)
   #:use-module (gwwm keymap)
   #:use-module (gwwm layout tile)
@@ -450,7 +451,15 @@ gwwm [OPTION]
                               (box-y (client-geom (grabc)))))))
 
                  #t))
-      ((normal) (%motionnotify time)))))
+      ((normal)
+       (maybe-let*-values
+        (((c surface sx sy) (client-at cursor)))
+        (when (and (not surface) (zero? time))
+          (wlr-xcursor-manager-set-cursor-image
+           (gwwm-xcursor-manager)
+           (config-cursor-normal-image (gwwm-config))
+           (gwwm-cursor)))
+        (pointerfocus c surface sx sy time))))))
 
 (define (idle-activity . _)
   (wlr-idle-notify-activity (gwwm-idle) (gwwm-seat)))
@@ -462,9 +471,10 @@ gwwm [OPTION]
       (idle-activity)
       (run-hook cursor-button-event-hook event)
       (case (cursor-mode)
-        ((normal) (and=> (client-at cursor)
-                         (lambda (c)
-                           (focusclient c #t)))
+        ((normal)
+         (maybe-let*-values
+          (((c scene-obj sx sy) (client-at cursor)))
+          (focusclient c #t))
          (let* ((keyboard (wlr-seat-get-keyboard (gwwm-seat)))
                 (mods (if keyboard (wlr-keyboard-get-modifiers
                                     keyboard) 0)))
@@ -499,7 +509,9 @@ gwwm [OPTION]
                       (send-log INFO "touch-up"
                                 'touch touch
                                 'time-msec time-msec
-                                'touch-id touch-id))))
+                                'touch-id touch-id)
+                      (wlr-seat-touch-notify-up (gwwm-seat) time-msec touch-id)
+                      (wlr-seat-touch-point-clear-focus (gwwm-seat) time-msec touch-id))))
                 #:remove-when-destroy? #f)
     (add-listen cursor 'touch-down
                 (lambda (listener data)
@@ -510,18 +522,36 @@ gwwm [OPTION]
                                 'time-msec time-msec
                                 'touch-id touch-id
                                 'x x
-                                'y y))))
+                                'y y)
+                      (let* ((o (wlr-cursor-absolute-to-layout-coords
+                                 (gwwm-cursor)
+                                 (.base touch)
+                                 x
+                                 y)))
+                        (maybe-let*-values
+                         (((c surface sx sy) (client-at (car o) (cdr o))))
+                         (when (wlr-surface? surface)
+                           (wlr-seat-touch-point-focus
+                            (gwwm-seat)
+                            surface
+                            time-msec touch-id sx sy)
+                           (wlr-seat-touch-notify-down
+                            (gwwm-seat)
+                            surface
+                            time-msec touch-id sx sy)))))))
                 #:remove-when-destroy? #f)
     (add-listen cursor 'touch-motion
                 (lambda (listener data)
                   (let ((event (wrap-wlr-touch-motion-event data)))
                     (let-slots event (touch time-msec touch-id x y)
-                      (send-log INFO "touch-motion"
-                                'touch touch
-                                'time-msec time-msec
-                                'touch-id touch-id
-                                'x x
-                                'y y))))
+                      (let ((o (wlr-cursor-absolute-to-layout-coords
+                                (gwwm-cursor)
+                                (.base touch)
+                                x
+                                y)))
+                        (maybe-let*-values
+                         (((c surface sx sy) (client-at (car o) (cdr o))))
+                         (wlr-seat-touch-notify-motion (gwwm-seat) time-msec touch-id sx sy))))))
                 #:remove-when-destroy? #f)
     (add-listen cursor 'touch-cancel
                 (lambda (listener data)
@@ -530,11 +560,18 @@ gwwm [OPTION]
                       (send-log INFO "touch-cancel"
                                 'touch touch
                                 'time-msec time-msec
-                                'touch-id touch-id))))
+                                'touch-id touch-id)
+                      (maybe-let*-values
+                       (((c surface sx sy) (client-at (gwwm-cursor))))
+                       (when (wlr-surface? surface)
+                         (wlr-seat-touch-notify-cancel
+                          (gwwm-seat)
+                          surface))))))
                 #:remove-when-destroy? #f)
     (add-listen cursor 'touch-frame
                 (lambda (listener data)
-                  (send-log INFO "touch-frame" ))
+                  ;; (send-log INFO "touch-frame" )
+                  (wlr-seat-touch-notify-frame (gwwm-seat)))
                 #:remove-when-destroy? #f)
 
     (add-listen cursor 'axis
@@ -851,6 +888,7 @@ gwwm [OPTION]
           (gwwm-seat)
           'WL_SEAT_CAPABILITY_POINTER))
         ((WLR_INPUT_DEVICE_TOUCH)
+         (make <gwwm-touch> #:device device)
          (wlr-cursor-attach-input-device (gwwm-cursor) device)
          (add-seat-capabilitie
           (gwwm-seat)

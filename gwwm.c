@@ -416,31 +416,6 @@ SCM_DEFINE (gwwm_focusmon ,"focusmon",1,0,0,(SCM a),"" )
 }
 #undef FUNC_NAME
 
-SCM_DEFINE (gwwm_motionnotify, "%motionnotify" , 1,0,0,
-            (SCM stime), "")
-#define FUNC_NAME s_gwwm_motionnotify
-{
-  uint32_t time=scm_to_uint32( stime);
-  /* PRINT_FUNCTION; */
-	double sx = 0, sy = 0;
-	SCM c = NULL;
-	struct wlr_surface *surface = NULL;
-	struct wlr_drag_icon *icon;
-    struct wlr_cursor *cursor=gwwm_cursor(NULL);
-
-	/* Find the client under the pointer and send the event along. */
-	xytonode(cursor->x, cursor->y, &surface, &c, NULL, &sx, &sy);
-
-	/* If there's no client surface under the cursor, set the cursor image to a
-	 * default. This is what makes the cursor image appear when you move it
-	 * off of a client or over its border. */
-	if (!surface && time)
-      wlr_xcursor_manager_set_cursor_image(gwwm_xcursor_manager(NULL), GWWM_CURSOR_NORMAL_IMAGE(), cursor);
-
-    scm_call_5(REFP("gwwm", "pointerfocus"), c, WRAP_WLR_SURFACE(surface), scm_from_int(sx), scm_from_int(sy), scm_from_uint32(time));
-  return SCM_UNSPECIFIED;
-}
-#undef FUNC_NAME
 
 SCM_DEFINE(gwwm_outputmgrapplyortest,"output-manager-apply-or-test",2,0,0,
            (SCM sconfig,SCM test_p),"")

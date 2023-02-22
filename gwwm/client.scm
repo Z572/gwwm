@@ -5,6 +5,10 @@
   #:duplicates (merge-generics replace warn-override-core warn last)
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-2)
+  #:use-module (srfi srfi-26)
+  #:use-module (srfi srfi-71)
+  #:use-module (srfi srfi-189)
+  #:use-module (gwwm utils srfi-215)
   #:use-module (wlroots types scene)
   #:use-module (wlroots types compositor)
   #:use-module (wlroots types subcompositor)
@@ -13,7 +17,6 @@
   #:use-module (ice-9 q)
   #:use-module (ice-9 control)
   #:use-module (ice-9 format)
-  #:use-module (srfi srfi-71)
   #:use-module (gwwm utils)
   #:use-module (util572 color)
   #:use-module (wlroots xwayland)
@@ -28,8 +31,6 @@
   #:use-module (wlroots types cursor)
   #:use-module (gwwm listener)
   #:use-module (gwwm i18n)
-  #:use-module (srfi srfi-26)
-  #:use-module (gwwm utils srfi-215)
   #:use-module (oop goops)
   #:use-module (oop goops describe)
 
@@ -342,20 +343,27 @@
   *unspecified*)
 
 (define-method (client-at x y)
-  (any (lambda (layer)
-         (let ((node (wlr-scene-node-at (.node layer) x y)))
-           (if node
-               (let loop ((node node))
-                 (or (let ((o (scene-node->client node)))
-                       (and ((negate (cut is-a? <> <gwwm-layer-client>)) o) o))
-                     (and=> (and=> (.parent node) .node)
-                            loop)))
-               #f)))
-       (list overlay-layer top-layer
-             float-layer
-             fullscreen-layer
-             tile-layer
-             bottom-layer background-layer)))
+  (or (any (lambda (layer)
+             (let* ((node p (wlr-scene-node-at (.node layer) x y)))
+               (if node
+                   (let loop ((node* node))
+                     (or (let ((o (scene-node->client node*)))
+                           (and ((negate (cut is-a? <> <gwwm-layer-client>)) o)
+                                o
+                                (just o (and=> (wlr-scene-object-from-node node)
+                                               (lambda (o)
+                                                 (and (wlr-scene-surface? o)
+                                                      (.surface o))))
+                                      (car p) (cdr p))))
+                         (and=> (and=> (.parent node*) .node)
+                                loop)))
+                   #f)))
+           (list overlay-layer top-layer
+                 float-layer
+                 fullscreen-layer
+                 tile-layer
+                 bottom-layer background-layer))
+      (nothing)))
 
 (define-method (client-at (cursor <wlr-cursor>))
   (client-at (.x cursor) (.y cursor)))
@@ -500,12 +508,14 @@
          (geom (client-geom c))
          (heigh (box-height geom))
          (width (box-width geom)))
-    (client-scene-move c (box-x geo) (box-y geo))
-    (client-resize-border c)
+
+
     (set! (client-resize-configure-serial c)
           (client-set-size! c
                             (- width (* 2 bw))
-                            (- heigh (* 2 bw))))))
+                            (- heigh (* 2 bw))))
+    (client-resize-border c)
+    (client-scene-move c (box-x geo) (box-y geo))))
 
 (define-method (client-resize (c <gwwm-client>) geo)
   (client-resize c geo #f))
