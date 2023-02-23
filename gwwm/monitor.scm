@@ -73,8 +73,10 @@
                #:getter monitor-description)
   (enabled? #:allocation #:virtual
             #:slot-ref (lambda (m) (.enabled (%monitor-output m)))
-            #:slot-set! (lambda _ #f)
-            #:getter monitor-enabled?)
+            #:slot-set! (lambda (m b)
+                          (wlr-output-enable
+                           (%monitor-output m) b))
+            #:accessor monitor-enabled?)
   (width  #:allocation #:virtual
           #:slot-ref (lambda (m) (.width (%monitor-output m)))
           #:slot-set! (lambda _ #f)
@@ -85,8 +87,9 @@
           #:getter monitor-height)
   (scale #:allocation #:virtual
          #:slot-ref (lambda (m) (.scale (%monitor-output m)))
-         #:slot-set! (lambda _ #f)
-         #:getter monitor-scale)
+         #:slot-set! (lambda (m o)
+                       (wlr-output-set-scale (%monitor-output m) o))
+         #:accessor monitor-scale)
   (refresh #:allocation #:virtual
            #:slot-ref (lambda (m) (.refresh (%monitor-output m)))
            #:slot-set! (lambda _ #f)
