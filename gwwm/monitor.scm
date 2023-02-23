@@ -120,7 +120,6 @@
   (mfact #:init-value 1/2 #:accessor monitor-mfact)
   (seltags #:init-value 0)
   (tagset #:init-thunk (lambda () (list 1 1)))
-  (un-map #:init-value #f)
   #:metaclass <redefinable-class>)
 
 (define-method (write (o <gwwm-monitor>) port)

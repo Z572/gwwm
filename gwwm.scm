@@ -1044,9 +1044,6 @@ gwwm [OPTION]
   (when (equal? c (grabc))
     (cursor-mode 'normal)
     (grabc #f))
-  (and=> (client-monitor c)
-         (cut slot-set! <> 'un-map #t))
-
   (setmon c #f)
   (q-remove! (%clients) c)
   (q-remove! (%fstack) c)
@@ -1092,8 +1089,7 @@ gwwm [OPTION]
           (begin
             (setmon c (current-monitor))
             (client-do-set-floating c (client-is-float-type? c)))))
-    (client-do-set-fullscreen c )
-    (slot-set! (client-monitor c) 'un-map #f)))
+    (client-do-set-fullscreen c )))
 
 (define ((map-layer-client-notify c) listener data)
   (send-log DEBUG "layer client map" 'client c)
