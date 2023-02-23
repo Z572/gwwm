@@ -66,9 +66,6 @@ void quitsignal(int signo);
 void sigchld(int unused);
 void logout_monitor(SCM m);
 void virtualkeyboard(struct wl_listener *listener, void *data);
-struct wlr_scene_node *xytonode(double x, double y,
-                                struct wlr_surface **psurface, SCM *pc,
-                                SCM *pl, double *nx, double *ny);
 struct wlr_seat *get_gloabl_seat(void);
 SCM get_gwwm_config(void);
 #define GWWM_BORDERPX()                                                        \

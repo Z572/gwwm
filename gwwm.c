@@ -546,50 +546,6 @@ virtualkeyboard(struct wl_listener *listener, void *data)
     scm_call_1(REFP("gwwm","create-keyboard"), WRAP_WLR_INPUT_DEVICE(device));
 }
 
-struct wlr_scene_node *
-xytonode(double x, double y, struct wlr_surface **psurface,
-         SCM *pc, SCM *pl, double *nx, double *ny)
-{
-  /* PRINT_FUNCTION; */
-  struct wlr_scene_node *node, *pnode;
-  struct wlr_surface *surface = NULL;
-  SCM c = NULL;
-  SCM l = NULL;
-  char* focus_order[] = {"overlay-layer",
-                         "top-layer",
-                         "float-layer",
-                         "fullscreen-layer",
-                         "tile-layer",
-                         "bottom-layer",
-                         "background-layer"};
-
-  for (int layer = 0; layer < 6; layer++) {
-    if ((node = wlr_scene_node_at(UNWRAP_WLR_SCENE_NODE
-                                  (REF_CALL_1("wlroots types scene",
-                                              ".node",REF("gwwm",focus_order[layer]))),
-                                  x, y, nx, ny))) {
-      struct wlr_scene_surface *scene_surface;
-      if (node->type == WLR_SCENE_NODE_BUFFER
-          && (scene_surface=wlr_scene_surface_from_buffer(wlr_scene_buffer_from_node(node))))
-        surface = scene_surface? scene_surface->surface :NULL;
-      /* Walk the tree to find a node that knows the client */
-      for (pnode = node; pnode && !c; pnode = &pnode->parent->node)
-        c = pnode->data;
-      if (c && CLIENT_IS_LAYER_SHELL(c)) {
-        l = c;
-        c = NULL;
-      }
-    }
-    if (surface)
-      break;
-  }
-
-  if (psurface) *psurface = surface;
-  if (pc) *pc = c ? c: SCM_BOOL_F;
-  if (pl) *pl = l ? l: SCM_BOOL_F;
-  return node;
-}
-
 Atom
 getatom(xcb_connection_t *xc, const char *name)
 {
