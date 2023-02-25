@@ -1043,8 +1043,7 @@ gwwm [OPTION]
     (grabc #f))
   (setmon c #f)
   (q-remove! (%clients) c)
-  (q-remove! (%fstack) c)
-  (client-scene-set-enabled c #f))
+  (q-remove! (%fstack) c))
 
 (define-method (client-init-geom (c <gwwm-client>))
   (let ((geom (client-get-geometry c)))
@@ -1068,8 +1067,6 @@ gwwm [OPTION]
                    wrap-wlr-xwayland-surface
                    wrap-wlr-xdg-surface)
                data))
-
-    (client-scene-set-enabled c #t)
     (set! (super-surface->scene (client-super-surface c)) (client-scene c))
     (set! (scene-node->client (.node (client-scene c))) c)
     (set! (surface->scene (client-surface c)) (client-scene c))
@@ -1096,7 +1093,6 @@ gwwm [OPTION]
   (motionnotify))
 (define ((unmap-layer-client-notify c) listener data)
   (send-log DEBUG "layer client unmap" 'client c)
-  (client-scene-set-enabled c #f)
   (when (equal? (client-surface c) (exclusive-focus))
     (exclusive-focus #f))
   (when (equal? (client-surface c)
