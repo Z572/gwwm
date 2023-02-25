@@ -315,15 +315,30 @@ gwwm [OPTION]
          (append (car (list-ref layers 3)) (car (list-ref layers 2))))))
 
 (define (arrangelayer m q-list box exclusive?)
-  (for-each (cut arrange-layer-client <> m box exclusive?)
-            (car q-list)))
+  (define (arrange-layer-client c)
+    (let ((exclusive-zone
+           (.exclusive-zone
+            (.current (client-super-surface c)))))
+      (when (eq? exclusive? (> exclusive-zone 0) )
+        (wlr-scene-layer-surface-v1-configure
+         (slot-ref c 'scene-layer-surface)
+         (monitor-area m)
+         box)
+        (modify-instance* (client-geom c)
+          (x (.x (.node (client-scene c))))
+          (y (.y (.node (client-scene c)))))
+        (client-scene-move
+         c
+         (box-x (client-geom c))
+         (box-y (client-geom c))))))
+  (for-each arrange-layer-client (car q-list)))
 
 (define-public (arrangelayers m)
   (pk 'arrangelayers)
   (let* ((l (reverse (slot-ref m 'layers)))
          (box (shallow-clone (monitor-area m))))
     (for-each (cut arrangelayer m <> box #t) l)
-    (unless (pk 'saem? (equal? box (monitor-window-area m)))
+    (unless (equal? box (monitor-window-area m))
       (pk box)
       (set! (monitor-window-area m) (shallow-clone box))
       (arrange m))
@@ -984,20 +999,13 @@ gwwm [OPTION]
                          (c (make <gwwm-layer-client>
                               #:super-surface layer-surface
                               #:scene scene
-                              #:monitor (wlr-output->monitor (.output layer-surface)))))
+                              #:monitor (wlr-output->monitor (.output layer-surface))
+                              #:scene-layer-surface scene-surface)))
                     (set! (surface->scene (client-surface c)) (client-scene c))
                     (set! (scene-node->client (.node (client-scene c))) c)
                     (q-push! (list-ref (slot-ref (client-monitor c) 'layers)
                                        (~ layer-surface 'pending 'layer))
                              c)
-                    ;; Temporarily set the layer's current state to pending
-                    ;; so that we can easily arrange it
-                    (let ((old-state (~ layer-surface 'current))
-                          (new-state (~ layer-surface 'pending)))
-                      (set! (.current layer-surface) new-state)
-                      (arrangelayers (wlr-output->monitor (.output layer-surface)))
-                      (set! (.current layer-surface) old-state))
-
                     (run-hook create-client-hook c)))))
   (gwwm-idle (wlr-idle-create (gwwm-display)))
   (gwwm-output-layout (wlr-output-layout-create))
@@ -1090,6 +1098,7 @@ gwwm [OPTION]
   (wlr-surface-send-enter
    (client-surface c)
    (monitor-output(client-monitor c)))
+  (arrangelayers (client-monitor c))
   (motionnotify))
 (define ((unmap-layer-client-notify c) listener data)
   (send-log DEBUG "layer client unmap" 'client c)

@@ -186,7 +186,8 @@
 (define-method (client-set-border-color (c <gwwm-client>) (color <rgba-color>))
   (for-each (lambda (b) (wlr-scene-rect-set-color b color))
             (or (client-borders c) '())))
-(define-class <gwwm-layer-client> (<gwwm-base-client>))
+(define-class <gwwm-layer-client> (<gwwm-base-client>)
+  (scene-layer-surface #:init-keyword #:scene-layer-surface))
 
 (define-class <gwwm-x-client> (<gwwm-client>))
 (define-class <gwwm-xdg-client> (<gwwm-client>))
