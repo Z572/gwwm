@@ -954,7 +954,6 @@ gwwm [OPTION]
                            (c (make <gwwm-xdg-client>
                                 #:scene scene
                                 #:super-surface xdg-surface)))
-                      (set! (super-surface->client xdg-surface) c)
                       (set! (client-border-width c) (gwwm-borderpx))
 
                       (run-hook create-client-hook c))))))
@@ -987,7 +986,6 @@ gwwm [OPTION]
                               #:scene scene
                               #:monitor (wlr-output->monitor (.output layer-surface)))))
                     (set! (surface->scene (client-surface c)) (client-scene c))
-                    (set! (super-surface->client layer-surface) c)
                     (set! (scene-node->client (.node (client-scene c))) c)
                     (q-push! (list-ref (slot-ref (client-monitor c) 'layers)
                                        (~ layer-surface 'pending 'layer))
@@ -1032,7 +1030,6 @@ gwwm [OPTION]
                                (c (make <gwwm-x-client>
                                     #:super-surface xsurface)))
                           (send-log DEBUG "new x-client" 'client c)
-                          (set! (super-surface->client xsurface) c)
                           (set! (client-border-width c) (gwwm-borderpx))
                           (run-hook create-client-hook c)))
                       #:remove-when-destroy? #f)
@@ -1245,8 +1242,6 @@ gwwm [OPTION]
      (add-listen (client-super-surface c) 'destroy
                  (client-destroy-notify c))
      (when (is-a? c <gwwm-client>)
-       (set! (client-appid c) (client-get-appid c))
-       (set! (client-title c) (client-get-title c))
        (add-listen (client-super-surface c) 'unmap (unmap-notify* c))
        (add-listen (client-super-surface c) 'map (map-notify* c)))
      (define (update-appid listener data)
@@ -1278,7 +1273,7 @@ gwwm [OPTION]
            ((is-a? c <gwwm-x-client>)
             (let ((super-surface (client-super-surface c)))
               (add-listen super-surface 'set-class
-                          update-appid #:destroy-when (client-super-surface c))
+                          update-appid #:destroy-when super-surface)
               (add-listen super-surface 'request-activate
                           (lambda (listener data)
                             (let ((xsurface (wrap-wlr-xwayland-surface data)))
@@ -1298,10 +1293,9 @@ gwwm [OPTION]
                                       (.hints-urgency xsurface))))))
               (add-listen super-surface 'request-fullscreen
                           (request-fullscreen-notify c))
-              (add-listen (client-super-surface c) 'set-title
+              (add-listen super-surface 'set-title
                           (client-set-title-notify c))))
            ((is-a? c <gwwm-layer-client>)
-            (q-push! (%layer-clients) c)
             (add-listen (client-super-surface c) 'map
                         (map-layer-client-notify c))
 

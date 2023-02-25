@@ -160,8 +160,9 @@
   (tags #:init-value 0 #:accessor client-tags)
   (border-width #:init-value 1 #:accessor client-border-width)
   (prev-geom #:accessor client-prev-geom)
-
   (resize-configure-serial #:accessor client-resize-configure-serial #:init-value #f))
+
+
 
 (define-once super-surface->client (make-object-property))
 (define-once super-surface->scene (make-object-property))
@@ -185,21 +186,22 @@
 (define-method (client-set-border-color (c <gwwm-client>) (color <rgba-color>))
   (for-each (lambda (b) (wlr-scene-rect-set-color b color))
             (or (client-borders c) '())))
-;; (define-public (client-is-render-on-monitor c m)
-;;   (let ((mo (monitor-output m)))
-;;     (let/ec return
-;;       (and (.enabled (.node (client-scene c)))
-;;            (wl-list-for-each
-;;             (lambda (o list) (when (eq? (.output o) mo)
-;;                                (return #t)))
-;;             (.current-outputs (client-surface c))
-;;             <wlr-surface-output> 'link)
-;;            )
-;;       #f)))
 (define-class <gwwm-layer-client> (<gwwm-base-client>))
 
 (define-class <gwwm-x-client> (<gwwm-client>))
 (define-class <gwwm-xdg-client> (<gwwm-client>))
+
+(define-method (initialize (c <gwwm-base-client>) initargs)
+  (next-method)
+  (set! (super-surface->client (client-super-surface c)) c))
+(define-method (initialize (c <gwwm-client>) initargs)
+  (next-method)
+  (set! (client-appid c) (client-get-appid c))
+  (set! (client-title c) (client-get-title c)))
+
+(define-method (initialize (c <gwwm-layer-client>) initargs)
+  (next-method)
+  (q-push! (%layer-clients) c))
 
 (define-method (client-mapped? (c <gwwm-xdg-client>))
   (.mapped (client-super-surface c)))
