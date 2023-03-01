@@ -351,8 +351,7 @@
                (if node
                    (let loop ((node* node))
                      (or (let ((o (scene-node->client node*)))
-                           (and ((negate (cut is-a? <> <gwwm-layer-client>)) o)
-                                o
+                           (and o
                                 (just o (and=> (wlr-scene-object-from-node node)
                                                (lambda (o)
                                                  (and (wlr-scene-surface? o)
