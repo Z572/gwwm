@@ -1216,18 +1216,7 @@ gwwm [OPTION]
   (add-hook! create-client-hook
              (lambda (c)
                (send-log DEBUG "client createed" 'CLIENT c)))
-  (define ((request-fullscreen-notify c) listener data)
-    (send-log DEBUG "client request fullscreen" 'client c)
-    (let ((fullscreen? (client-wants-fullscreen? c))
-          (event-or-xsurface ((if (client-is-x11? c)
-                                  wrap-wlr-xwayland-surface
-                                  wrap-wlr-xdg-toplevel-set-fullscreen-event)
 
-                              data)))
-      (if (client-monitor c)
-          (client-do-set-fullscreen c fullscreen?)
-          (set! (client-fullscreen? c) fullscreen?))
-      (run-hook fullscreen-event-hook c event-or-xsurface)))
   (add-hook! keyboard-focus-change-hook
              (lambda (seat old new)
                (when new
@@ -1273,8 +1262,7 @@ gwwm [OPTION]
                             (wlr-xdg-surface-schedule-configure
                              (client-super-surface c)))
                           #:destroy-when super-surface)
-              (add-listen toplevel 'request-fullscreen
-                          (request-fullscreen-notify c)
+              (add-listen toplevel 'request-fullscreen (client-request-fullscreen-notify c)
                           #:destroy-when super-surface)))
            ((is-a? c <gwwm-x-client>)
             (let ((super-surface (client-super-surface c)))
@@ -1298,7 +1286,7 @@ gwwm [OPTION]
                                 (set! (client-urgent? c)
                                       (.hints-urgency xsurface))))))
               (add-listen super-surface 'request-fullscreen
-                          (request-fullscreen-notify c))
+                          (client-request-fullscreen-notify c))
               (add-listen super-surface 'set-title
                           (client-set-title-notify c))))
            ((is-a? c <gwwm-layer-client>)

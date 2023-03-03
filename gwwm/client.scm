@@ -81,6 +81,7 @@
             client-set-title-notify
             client-commit-notify
             client-destroy-notify
+            client-request-fullscreen-notify
             surface->scene
             client-scene-set-enabled
             client-scene-move
@@ -555,6 +556,21 @@
                 'client c
                 'old title
                 'new (client-title c)))))
+
+(define-method (client-request-fullscreen-notify (c <gwwm-client>))
+  (lambda (listener data)
+    (send-log DEBUG "client request fullscreen" 'client c)
+    (let ((fullscreen? (client-wants-fullscreen? c))
+          (event-or-xsurface ((if (client-is-x11? c)
+                                  wrap-wlr-xwayland-surface
+                                  wrap-wlr-xdg-toplevel-set-fullscreen-event)
+
+                              data)))
+      (if (client-monitor c)
+          (client-do-set-fullscreen c fullscreen?)
+          (set! (client-fullscreen? c) fullscreen?))
+      (run-hook fullscreen-event-hook c event-or-xsurface))))
+
 
 (define-method (client-commit-notify (c <gwwm-client>))
   (lambda (a b)
