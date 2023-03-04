@@ -1175,8 +1175,10 @@ gwwm [OPTION]
              (scene (surface->scene (.parent popup)))
              (tree (wlr-scene-xdg-surface-create scene (.base popup))))
     (set! (surface->scene (.surface (.base popup))) tree)
+    (if (is-a? c <gwwm-layer-client>)
+        (wlr-scene-node-reparent (.node tree) (.node top-layer)))
     (run-hook create-popup-hook popup)
-    (and-let* (c
+    (and-let* ((client-alive? c)
                (client-mapped? c)
                (monitor (client-monitor c))
                (geom (shallow-clone
@@ -1189,6 +1191,10 @@ gwwm [OPTION]
         (y (- y (box-y (client-geom c)))))
       (wlr-xdg-popup-unconstrain-from-box popup geom))
     (add-listen (.base popup) 'new-popup (new-popup-notify c))
+    (add-listen popup 'reposition
+                (lambda (listener data)
+                  (send-log DEBUG "popup reposition" 'popup popup 'client c))
+                #:destroy-when (.base popup))
     (send-log DEBUG "popup listen 'new-popup" 'popup popup 'client c)))
 
 (define (set-log-callback)
