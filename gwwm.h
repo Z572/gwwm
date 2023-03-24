@@ -66,7 +66,6 @@ void quitsignal(int signo);
 void sigchld(int unused);
 void logout_monitor(SCM m);
 void virtualkeyboard(struct wl_listener *listener, void *data);
-struct wlr_seat *get_gloabl_seat(void);
 SCM get_gwwm_config(void);
 #define GWWM_BORDERPX()                                                        \
   (scm_to_unsigned_integer(                                                    \
