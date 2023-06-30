@@ -58,6 +58,7 @@
   #:use-module (wlroots types xcursor)
   #:use-module (wlroots types xdg-activation)
   #:use-module (wlroots types xdg-output)
+  #:use-module (wlroots types xdg-decoration)
   #:use-module (wlroots types xdg-shell)
   #:use-module (wlroots types)
   #:use-module (wlroots util box)
@@ -206,7 +207,8 @@ gwwm [OPTION]
 (define-once global-keymap
   (make-parameter (make-keymap)))
 (define (setup-server)
-  (false-if-exception (spawn-server (make-tcp-server-socket))))
+  (or (false-if-exception (spawn-server (make-tcp-server-socket)))
+      (send-log DEBUG (G_ "repl setup fail."))))
 ;; (primitive-load-path "gwwm/startup.scm")
 
 (define (setup-socket)
@@ -1336,6 +1338,7 @@ gwwm [OPTION]
   (scene-setup (gwwm-display) (gwwm-backend))
   (%gwwm-setup-signal)
   (%gwwm-setup-othres)
+  (wlr-xdg-decoration-manager-v1-create (gwwm-display))
   (wlr-gamma-control-manager-v1-create (gwwm-display))
   (wlr-screencopy-manager-v1-create (gwwm-display))
   (wlr-data-device-manager-create (gwwm-display))
