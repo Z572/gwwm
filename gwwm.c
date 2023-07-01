@@ -295,19 +295,6 @@ SCM_DEFINE(gwwm_outputmgrapplyortest,"output-manager-apply-or-test",2,0,0,
     return SCM_UNSPECIFIED;
 }
 
-void
-quitsignal(int signo)
-{
-  REF_CALL_0("gwwm commands","gwwm-quit");
-}
-
-SCM_DEFINE (gwwm_setup_signal,"%gwwm-setup-signal",0,0,0,(),"")
-{
-  sigchld(0);
-  signal(SIGINT, quitsignal);
-  signal(SIGTERM, quitsignal);
-  return SCM_UNSPECIFIED;
-}
 SCM_DEFINE (gwwm_setup_othres,"%gwwm-setup-othres",0,0,0,(),"")
 {
   wlr_export_dmabuf_manager_v1_create(gwwm_display(NULL));
@@ -319,18 +306,6 @@ SCM_DEFINE (gwwm_setup,"%gwwm-setup" ,0,0,0,(),"")
 	wl_signal_add(&virtual_keyboard_mgr->events.new_virtual_keyboard,
 			&new_virtual_keyboard);
     return SCM_UNSPECIFIED;
-}
-
-void
-sigchld(int unused)
-{
-	/* We should be able to remove this function in favor of a simple
-	 *     signal(SIGCHLD, SIG_IGN);
-	 * but the Xwayland implementation in wlroots currently prevents us from
-	 * setting our own disposition for SIGCHLD.
-	 */
-	if (signal(SIGCHLD, sigchld) == SIG_ERR)
-		die("can't install SIGCHLD handler:");
 }
 
 void
