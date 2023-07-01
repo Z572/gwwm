@@ -295,11 +295,6 @@ SCM_DEFINE(gwwm_outputmgrapplyortest,"output-manager-apply-or-test",2,0,0,
     return SCM_UNSPECIFIED;
 }
 
-SCM_DEFINE (gwwm_setup_othres,"%gwwm-setup-othres",0,0,0,(),"")
-{
-  wlr_export_dmabuf_manager_v1_create(gwwm_display(NULL));
-  return SCM_UNSPECIFIED;
-}
 SCM_DEFINE (gwwm_setup,"%gwwm-setup" ,0,0,0,(),"")
 {
 	virtual_keyboard_mgr = wlr_virtual_keyboard_manager_v1_create(gwwm_display(NULL));
