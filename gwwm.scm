@@ -56,7 +56,7 @@
   #:use-module (wlroots types seat)
   #:use-module (wlroots types subcompositor)
   #:use-module (wlroots types viewporter)
-  #:use-module (wlroots types xcursor)
+  #:use-module (wlroots types xcursor-manager)
   #:use-module (wlroots types xdg-activation)
   #:use-module (wlroots types xdg-output)
   #:use-module (wlroots types xdg-decoration)

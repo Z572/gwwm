@@ -9,7 +9,7 @@
   #:use-module (wlroots backend)
   #:use-module (wlroots types scene)
   #:use-module (wlroots types cursor)
-  #:use-module (wlroots types xcursor)
+  #:use-module (wlroots types xcursor-manager)
   #:use-module (wayland display)
   #:use-module (srfi srfi-26)
   #:use-module (srfi srfi-189)
