@@ -1218,6 +1218,12 @@ gwwm [OPTION]
                    msg2)
          (newline p))))))
 
+(define (cleanup)
+  (run-hook gwwm-cleanup-hook)
+  (and=> (gwwm-xwayland) wlr-xwayland-destroy)
+  (wl-display-destroy-clients (gwwm-display))
+  (wl-display-destroy (gwwm-display)))
+
 (define (main . args)
   (setlocale LC_ALL "")
   (textdomain %gettext-domain)
@@ -1384,4 +1390,4 @@ gwwm [OPTION]
    (gwwm-cursor))
   (run-hook gwwm-after-init-hook)
   (wl-display-run (gwwm-display))
-  (%gwwm-cleanup))
+  (cleanup))

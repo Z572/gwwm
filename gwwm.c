@@ -153,29 +153,6 @@ gwwm_output_layout(struct wlr_output_layout *o) {
   }
 }
 
-SCM_DEFINE (gwwm_cleanup, "%gwwm-cleanup",0,0,0, () ,"")
-#define D(funcname,args , ...) (funcname(args ,##__VA_ARGS__));; send_log(DEBUG,#funcname " done");
-{
-
-  PRINT_FUNCTION;
-  scm_c_run_hook(REF("gwwm hooks", "gwwm-cleanup-hook"),
-                 scm_make_list(scm_from_int(0), SCM_UNSPECIFIED));
-#ifdef XWAYLAND
-    D(wlr_xwayland_destroy,gwwm_xwayland(NULL));
-#endif
-	D(wl_display_destroy_clients,(gwwm_display(NULL)));
-	D(wlr_backend_destroy,(gwwm_backend(NULL)));
-    D(wlr_renderer_destroy,(gwwm_renderer(NULL)));
-	D(wlr_allocator_destroy,(gwwm_allocator(NULL)));
-	D(wlr_xcursor_manager_destroy,(gwwm_xcursor_manager(NULL)));
-    D(wlr_cursor_destroy,(gwwm_cursor(NULL)));
-    D(wlr_output_layout_destroy,(gwwm_output_layout(NULL)));
-	D(wlr_seat_destroy,(gwwm_seat(NULL)));
-	D(wl_display_destroy,(gwwm_display(NULL)));
-    return SCM_UNSPECIFIED;
-}
-#undef D
-
 SCM_DEFINE (init_output,"init-output",1,0,0,(SCM swlr_output),"")
 {
   struct wlr_output *wlr_output=UNWRAP_WLR_OUTPUT(swlr_output);
