@@ -1225,7 +1225,7 @@ gwwm [OPTION]
   (wl-display-destroy (gwwm-display)))
 
 (define (main . args)
-  (setlocale LC_ALL "")
+  (setlocale LC_ALL)
   (textdomain %gettext-domain)
   (set-log-callback)
   (add-hook! create-client-hook
