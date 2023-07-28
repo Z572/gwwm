@@ -124,7 +124,7 @@
     (unless (or (not c)
                 (<= (length c-l) 1)
                 (and (client-fullscreen? c)
-                     (config-lockfullscreen? ((@@ (gwwm) gwwm-config)) )))
+                     (lockfullscreen? )))
       (and=> (let/ec return
                (for-each (lambda (o)
                            (if (equal? c o)

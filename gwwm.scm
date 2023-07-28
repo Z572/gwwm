@@ -387,7 +387,7 @@ gwwm [OPTION]
          (kb (make <gwwm-keyboard> #:device device))
          (context (xkb-context-new XKB_CONTEXT_NO_FLAGS))
          (xkb-rule-names
-          (apply make <xkb-rule-names> (config-xkb-rules (gwwm-config))))
+          (xkb-rules))
          (keymap (xkb-keymap-new-from-names
                   context
                   xkb-rule-names
@@ -395,7 +395,7 @@ gwwm [OPTION]
     (wlr-keyboard-set-keymap wl-kb keymap)
     (xkb-keymap-unref keymap)
     (xkb-context-unref context)
-    (keyboard-set-repeat-info kb (config-repeat-rate (gwwm-config)) 600)
+    (keyboard-set-repeat-info kb (repeat-rate) 600)
     (run-hook create-keyboard-hook kb)
     (add-listen wl-kb 'modifiers
                 (lambda (listener data)
@@ -441,7 +441,7 @@ gwwm [OPTION]
 (define* (motionnotify #:optional (time 0))
   (when (zero? time)
     (idle-activity))
-  (when (gwwm-sloppyfocus?)
+  (when (sloppyfocus?)
     (set! (current-monitor) (monitor-at (.x (gwwm-cursor)) (.y (gwwm-cursor)))))
   (run-hook motion-notify-hook time)
   (let ((cursor (gwwm-cursor)))
@@ -475,7 +475,7 @@ gwwm [OPTION]
         (when (and (not surface) (zero? time))
           (wlr-xcursor-manager-set-cursor-image
            (gwwm-xcursor-manager)
-           (config-cursor-normal-image (gwwm-config))
+           (cursor-normal-image)
            (gwwm-cursor)))
         (pointerfocus c surface sx sy time))))))
 
@@ -512,7 +512,7 @@ gwwm [OPTION]
                        (client-set-resizing! c #f))
                      (wlr-xcursor-manager-set-cursor-image
                       (gwwm-xcursor-manager)
-                      (config-cursor-normal-image (gwwm-config))
+                      (cursor-normal-image)
                       cursor)
                      (cursor-mode 'normal)
                      (set! (current-monitor)
@@ -973,7 +973,7 @@ gwwm [OPTION]
                            (c (make <gwwm-xdg-client>
                                 #:scene scene
                                 #:super-surface xdg-surface)))
-                      (set! (client-border-width c) (gwwm-borderpx))
+                      (set! (client-border-width c) (borderpx))
 
                       (run-hook create-client-hook c))))))
   (gwwm-compositor (wlr-compositor-create (gwwm-display) (gwwm-renderer)))
@@ -1042,7 +1042,7 @@ gwwm [OPTION]
                                (c (make <gwwm-x-client>
                                     #:super-surface xsurface)))
                           (send-log DEBUG "new x-client" 'client c)
-                          (set! (client-border-width c) (gwwm-borderpx))
+                          (set! (client-border-width c) (borderpx))
                           (run-hook create-client-hook c)))
                       #:remove-when-destroy? #f)
           (setenv "DISPLAY" (wlr-xwayland-display-name x)))
@@ -1157,7 +1157,7 @@ gwwm [OPTION]
 
 (define (pointerfocus c surface sx sy time)
   (let ((internal-call (not time)))
-    (when (and c (config-sloppyfocus? (gwwm-config)) (not internal-call))
+    (when (and c (sloppyfocus?) (not internal-call))
       (focusclient c #f))
     (if surface
         (let* ((_ now (clock-gettime 1))
@@ -1241,11 +1241,11 @@ gwwm [OPTION]
              (lambda (seat old new)
                (and=> old
                       (cut client-set-border-color <>
-                           (config-bordercolor (g-config))))
+                           (bordercolor)))
                (and=> new
                       (cut client-set-border-color
                            <>
-                           (config-focuscolor (g-config))))))
+                           (focuscolor)))))
   (add-hook!
    create-client-hook
    (lambda (c)
@@ -1365,10 +1365,8 @@ gwwm [OPTION]
                      'WLR_SERVER_DECORATION_MANAGER_MODE_SERVER))
   (%gwwm-setup)
   (config-setup)
-  (when (config-enable-xwayland? (gwwm-config))
+  (when (enable-xwayland?)
     (xwayland-setup (gwwm-display) (gwwm-compositor)))
-  (set-current-module (resolve-module '(gwwm user)))
-  (setup-server)
   (setup-socket)
   (wlr-scene-attach-output-layout (gwwm-scene) (gwwm-output-layout))
   ;; Start the backend. This will enumerate outputs and inputs, become the DRM
@@ -1386,8 +1384,10 @@ gwwm [OPTION]
    (.y (gwwm-cursor)))
   (wlr-xcursor-manager-set-cursor-image
    (gwwm-xcursor-manager)
-   (config-cursor-normal-image (gwwm-config) )
+   (cursor-normal-image )
    (gwwm-cursor))
   (run-hook gwwm-after-init-hook)
+  (set-current-module (resolve-module '(gwwm user)))
+  (setup-server)
   (wl-display-run (gwwm-display))
   (cleanup))

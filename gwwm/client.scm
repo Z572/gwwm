@@ -1,7 +1,7 @@
 (define-module (gwwm client)
   #:autoload (gwwm) (fullscreen-layer float-layer tile-layer overlay-layer top-layer bottom-layer background-layer  gwwm-seat arrangelayers)
   #:autoload (gwwm commands) (arrange)
-  #:autoload (gwwm config) (gwwm-borderpx g-config)
+  #:use-module (gwwm config)
   #:duplicates (merge-generics replace warn-override-core warn last)
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-2)
@@ -219,8 +219,8 @@
   (set! (client-borders c)  (list (create) (create) (create) (create)))
   (client-set-tiled c (list 1 2 4 8))
   (modify-instance* (client-geom c)
-    (width (+ width (* 2 (gwwm-borderpx))))
-    (height (+ height (* 2 (gwwm-borderpx))))))
+                    (width (+ width (* 2 (borderpx))))
+                    (height (+ height (* 2 (borderpx))))))
 
 (define-method (describe (c <gwwm-base-client>))
   (if (client-alive? c)
@@ -248,7 +248,7 @@
   (send-log DEBUG (G_ "client do fullscreen") 'client c 'fullscreen? fullscreen?)
   (let ((fullscreen? (->bool fullscreen?)))
     (set! (client-fullscreen? c) fullscreen?)
-    (set! (client-border-width c) (if fullscreen? 0 (gwwm-borderpx)))
+    (set! (client-border-width c) (if fullscreen? 0 (borderpx)))
     (if fullscreen?
         (begin (set! (client-prev-geom c)
                      (shallow-clone (client-geom c)))
