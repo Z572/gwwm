@@ -1131,12 +1131,13 @@ gwwm [OPTION]
   (set! (monitor-scene-output m) #f)
   (let* ((ms (monitor-list))
          (l (length ms)))
-    (unless (zero? l)
-      (let  ((m (find (lambda (m)
-                        (.enabled (monitor-output m))) ms)))
-        (when m
-          (set! (current-monitor) m)))))
-
+    (if (zero? l)
+        (when (quit-when-no-monitor?)
+          (gwwm-quit))
+        (let  ((m (find (lambda (m)
+                          (.enabled (monitor-output m))) ms)))
+          (when m
+            (set! (current-monitor) m)))))
   (focusclient (focustop (current-monitor)) #t)
   (closemon m))
 

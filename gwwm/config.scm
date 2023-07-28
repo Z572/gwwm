@@ -119,5 +119,10 @@
 (define-config-option focuscolor (make-color 255 0 0 255) "")
 (define-config-option cursor-normal-image "right_ptr" "")
 (define-config-option lockfullscreen? #t "")
+
+(define-config-option quit-when-no-monitor? #t
+  "if set to #t, when no monitor found, quit gwwm"
+  #:conv ->bool)
+
 (define-syntax-rule (gwwm (init value) ...)
   (begin (init value) ...))
