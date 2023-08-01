@@ -65,6 +65,7 @@
   #:use-module (wlroots util box)
   #:use-module (wlroots xwayland)
   #:use-module (gwwm client)
+  #:use-module (gwwm x-client)
   #:use-module (gwwm commands)
   #:use-module (gwwm config)
   #:use-module (gwwm configuration)
@@ -1076,7 +1077,7 @@ gwwm [OPTION]
              (client-surface c))))
     (client-init-border c)
     (run-hook client-map-event-hook c
-              ((if (client-is-x11? c)
+              ((if (is-a? c <gwwm-x-client>)
                    wrap-wlr-xwayland-surface
                    wrap-wlr-xdg-surface)
                data))

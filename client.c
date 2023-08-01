@@ -28,7 +28,7 @@ SCM_DEFINE (gwwm_client_is_float_type_p,"client-is-float-type?",1,0,0,
   max = *(UNWRAP_WLR_BOX(scm_c_value_ref(values, 0)));
   min = *(UNWRAP_WLR_BOX(scm_c_value_ref(values, 1)));
 
-  if (scm_to_bool(REF_CALL_1("gwwm client", "client-is-x11?", c))) {
+  if (scm_to_bool(scm_call_2(scm_c_eval_string("is-a?"),c ,scm_c_private_ref("gwwm x-client", "<gwwm-x-client>")))) {
     struct wlr_xwayland_surface *surface =
       UNWRAP_WLR_XWAYLAND_SURFACE(REF_CALL_1("gwwm client", "client-super-surface", c));
     if (surface->modal)

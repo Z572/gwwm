@@ -47,7 +47,6 @@
             client-at
             client=?
             client-get-parent
-            client-is-x11?
             client-is-unmanaged?
             client-is-float-type?
             client-send-close
@@ -92,7 +91,6 @@
             %layer-clients
             <gwwm-base-client>
             <gwwm-client>
-            <gwwm-x-client>
             <gwwm-xdg-client>
             <gwwm-layer-client>))
 
@@ -190,7 +188,6 @@
 (define-class <gwwm-layer-client> (<gwwm-base-client>)
   (scene-layer-surface #:init-keyword #:scene-layer-surface))
 
-(define-class <gwwm-x-client> (<gwwm-client>))
 (define-class <gwwm-xdg-client> (<gwwm-client>))
 
 (define-method (initialize (c <gwwm-base-client>) initargs)
@@ -207,8 +204,6 @@
 
 (define-method (client-mapped? (c <gwwm-xdg-client>))
   (.mapped (client-super-surface c)))
-(define-method (client-mapped? (c <gwwm-x-client>))
-  (wlr-xwayland-surface-mapped? (client-super-surface c)))
 
 (define-method (client-init-border (c <gwwm-client>))
   (send-log DEBUG (G_ "client init border") 'c c)
@@ -238,9 +233,6 @@
 (define-method (client-wants-fullscreen? (c <gwwm-xdg-client>))
   (.fullscreen (.requested (wlr-xdg-surface-toplevel (client-super-surface c)))))
 
-(define-method (client-wants-fullscreen? (c <gwwm-x-client>))
-  (.fullscreen (client-super-surface c)))
-
 (define-method (client-do-set-fullscreen (c <gwwm-client>))
   (client-do-set-fullscreen c (client-fullscreen? c)))
 
@@ -265,11 +257,6 @@
   (wlr-xdg-toplevel-set-fullscreen
    (wlr-xdg-surface-toplevel (client-super-surface client)) fullscreen?))
 
-(define-method (client-do-set-fullscreen (c <gwwm-x-client>) fullscreen?)
-  (next-method)
-  (wlr-xwayland-surface-set-fullscreen (client-super-surface c)
-                                       fullscreen?))
-
 (define-method (client-do-set-floating (c <gwwm-client>) floating?)
   (send-log DEBUG (G_ "client do floating") 'client c )
   (when (client-fullscreen? c)
@@ -290,10 +277,6 @@
                    (client-super-surface c)))
          (lambda (x) (client-from-wlr-surface (.surface x)))))
 
-(define-method (client-get-parent (c <gwwm-x-client>))
-  (and=> (.parent (client-super-surface c))
-         (lambda (x) (client-from-wlr-surface (.surface x)))))
-
 (define-method (client-get-appid (c <gwwm-xdg-client>))
   (or (and=> (client-super-surface c)
              (lambda (o)
@@ -302,32 +285,16 @@
                  o))))
       "*unknow*"))
 
-(define-method (client-get-appid (c <gwwm-x-client>))
-  (or (and=> (client-super-surface c)
-             wlr-xwayland-surface-class)
-      "*unknow*"))
-
 (define-method (client-get-title (c <gwwm-xdg-client>))
   (.title
    (wlr-xdg-surface-toplevel
     (client-super-surface c))))
 
-(define-method (client-get-title (c <gwwm-x-client>))
-  (wlr-xwayland-surface-title
-   (client-super-surface c)))
-
 (define-method (client-send-close (c <gwwm-xdg-client>))
   (wlr-xdg-toplevel-send-close (wlr-xdg-surface-toplevel(client-super-surface c))))
-(define-method (client-send-close (c <gwwm-x-client>))
-  (wlr-xwayland-surface-close (client-super-surface c)))
-
-(define (client-is-x11? client)
-  (is-a? client <gwwm-x-client>))
 
 (define-method (client-is-unmanaged? client)
   #f)
-(define-method (client-is-unmanaged? (client <gwwm-x-client>))
-  (wlr-xwayland-surface-override-redirect (client-super-surface client)))
 
 (define* (client-list #:optional (m #f))
   "return all clients. if provide M, return M's clients."
@@ -343,8 +310,6 @@
 
 (define-method (client-set-resizing! (c <gwwm-xdg-client>) resizing?)
   (wlr-xdg-toplevel-set-resizing (wlr-xdg-surface-toplevel (client-super-surface c)) resizing?))
-(define-method (client-set-resizing! (c <gwwm-x-client>) resizing?)
-  *unspecified*)
 
 (define-method (client-at x y)
   (or (any (lambda (layer)
@@ -391,8 +356,6 @@
     (wlr-xdg-surface-toplevel
      (client-super-surface c)))))
 
-(define-method (client-get-size-hints (c <gwwm-x-client>))
-  (%get-size-hints-helper (.size-hints (client-super-surface c))))
 
 (define-method (client-set-tiled c (edges <list>))
   (client-set-tiled c (apply logior edges)))
@@ -403,11 +366,6 @@
    edges))
 
 (define-method (client-restack-surface c)
-  *unspecified*)
-(define-method (client-restack-surface (c <gwwm-x-client>))
-  (wlr-xwayland-surface-restack (client-super-surface c) #f 0))
-
-(define-method (client-set-tiled (c <gwwm-x-client>) edges)
   *unspecified*)
 
 (define (client-from-wlr-surface s)
@@ -426,12 +384,6 @@
 
 (define-method (client-get-geometry (c <gwwm-xdg-client>))
   (wlr-xdg-surface-get-geometry (client-super-surface c)))
-(define-method (client-get-geometry (c <gwwm-x-client>))
-  (let ((s (client-super-surface c)))
-    (make-wlr-box (wlr-xwayland-surface-x s)
-                  (wlr-xwayland-surface-y s)
-                  (wlr-xwayland-surface-width s)
-                  (wlr-xwayland-surface-height s))))
 
 (define-method (applybounds (c <gwwm-client>) geom)
   (unless (client-fullscreen? c)
@@ -456,12 +408,6 @@
 (define-method (client-set-size! (c <gwwm-xdg-client>) width height)
   (wlr-xdg-toplevel-set-size (wlr-xdg-surface-toplevel (client-super-surface c)) width height))
 
-(define-method (client-set-size! (c <gwwm-x-client>) width height)
-  (wlr-xwayland-surface-configure (client-super-surface c)
-                                  (box-x (client-geom c))
-                                  (box-y (client-geom c))
-                                  width height)
-  0)
 
 (define-method (client-resize-border (c <gwwm-client>))
   (and-let* ((borders (client-borders c))
@@ -561,15 +507,11 @@
   (lambda (listener data)
     (send-log DEBUG "client request fullscreen" 'client c)
     (let ((fullscreen? (client-wants-fullscreen? c))
-          (event-or-xsurface ((if (client-is-x11? c)
-                                  wrap-wlr-xwayland-surface
-                                  wrap-wlr-xdg-toplevel-set-fullscreen-event)
-
-                              data)))
+          (event (wrap-wlr-xdg-toplevel-set-fullscreen-event data)))
       (if (client-monitor c)
           (client-do-set-fullscreen c fullscreen?)
           (set! (client-fullscreen? c) fullscreen?))
-      (run-hook fullscreen-event-hook c event-or-xsurface))))
+      (run-hook fullscreen-event-hook c event))))
 
 
 (define-method (client-commit-notify (c <gwwm-client>))
