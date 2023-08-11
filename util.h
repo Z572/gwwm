@@ -5,7 +5,6 @@
 #include <libguile.h>
 #include <stdarg.h>
 #include <string.h>
-void die(const char *fmt, ...);
 
 #define REF(A, B) (scm_c_public_ref(A, B))
 #define REFP(A, B) (scm_c_private_ref(A, B))
