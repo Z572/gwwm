@@ -3,7 +3,7 @@
   #:use-module (wlroots types)
   #:use-module (wayland signal)
   #:use-module (wayland list)
-  #:use-module (wayland listener)
+  #:use-module (wayland server listener)
   #:use-module (gwwm utils srfi-215)
   #:use-module (oop goops)
   #:export (add-listen))

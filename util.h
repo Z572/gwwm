@@ -27,13 +27,13 @@ void die(const char *fmt, ...);
 #define UNWRAP_WLR_INPUT_DEVICE(p)                                             \
   ((struct wlr_input_device *)(TO_P(REF_CALL_1("wlroots types input-device", "unwrap-wlr-input-device", p))))
 #define WRAP_WL_DISPLAY(p)                                                     \
-  (REF_CALL_1("wayland display", "wrap-wl-display", FROM_P(p)))
+  (REF_CALL_1("wayland server display", "wrap-wl-display", FROM_P(p)))
 #define UNWRAP_WL_DISPLAY(p)                                                   \
-  (TO_P(REF_CALL_1("wayland display", "unwrap-wl-display", p)))
+  (TO_P(REF_CALL_1("wayland server display", "unwrap-wl-display", p)))
 #define UNWRAP_WL_LISTENER(p)                                       \
-  (TO_P(REF_CALL_1("wayland listener", "unwrap-wl-listener", p)))
+  (TO_P(REF_CALL_1("wayland server listener", "unwrap-wl-listener", p)))
 #define WRAP_WL_LISTENER(p)                                       \
-  (REF_CALL_1("wayland listener", "wrap-wl-listener", FROM_P(p)))
+  (REF_CALL_1("wayland server listener", "wrap-wl-listener", FROM_P(p)))
 #define UNWRAP_WL_LIST(p)                                       \
   ((struct wl_list*)(TO_P(REF_CALL_1("wayland list", "unwrap-wl-list", p))))
 #define WRAP_WL_LIST(p)                                       \

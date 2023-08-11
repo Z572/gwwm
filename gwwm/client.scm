@@ -22,7 +22,7 @@
   #:use-module (wlroots xwayland)
   #:use-module (gwwm monitor)
   #:use-module (gwwm hooks)
-  #:use-module (wayland listener)
+  #:use-module (wayland server listener)
   #:use-module (wayland list)
   #:use-module (wlroots types seat)
   #:use-module (wlroots util box)
