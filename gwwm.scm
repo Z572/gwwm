@@ -390,13 +390,12 @@ gwwm [OPTION]
          (context (xkb-context-new XKB_CONTEXT_NO_FLAGS))
          (xkb-rule-names
           (xkb-rules))
-         (keymap (xkb-keymap-new-from-names
+         (keymap (xkb-keymap-new
                   context
                   xkb-rule-names
+                  #:flags
                   XKB_KEYMAP_COMPILE_NO_FLAGS)))
     (wlr-keyboard-set-keymap wl-kb keymap)
-    (xkb-keymap-unref keymap)
-    (xkb-context-unref context)
     (keyboard-set-repeat-info kb (repeat-rate) 600)
     (run-hook create-keyboard-hook kb)
     (add-listen wl-kb 'modifiers

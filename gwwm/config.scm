@@ -104,7 +104,6 @@
     #:variant variant
     #:rules rules
     #:options (string-join options ",")))
-(define-public abccc (make-xkb-rules #f #f "bcc"))
 
 (define-config-option xkb-rules (make-xkb-rules)
   "")
