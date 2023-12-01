@@ -370,17 +370,8 @@
 
 (define (client-from-wlr-surface s)
   (and s
-       (or (and-let* (((wlr-surface-is-xdg-surface s))
-                      (super-surface (wlr-xdg-surface-from-wlr-surface s))
-                      ((eq? (.role super-surface) 'WLR_XDG_SURFACE_ROLE_TOPLEVEL)))
-             (super-surface->client super-surface))
-           (and-let* (((wlr-surface-is-xwayland-surface s))
-                      (super-surface (wlr-xwayland-surface-from-wlr-surface s)))
-             (super-surface->client super-surface))
-           (if (wlr-surface-is-subsurface s)
-               (client-from-wlr-surface
-                (wlr-surface-get-root-surface s))
-               #f))))
+       (super-surface->client
+        (super-surface-try-from-wlr-surface s))))
 
 (define-method (client-get-geometry (c <gwwm-xdg-client>))
   (wlr-xdg-surface-get-geometry (client-super-surface c)))
@@ -506,12 +497,11 @@
 (define-method (client-request-fullscreen-notify (c <gwwm-client>))
   (lambda (listener data)
     (send-log DEBUG "client request fullscreen" 'client c)
-    (let ((fullscreen? (client-wants-fullscreen? c))
-          (event (wrap-wlr-xdg-toplevel-set-fullscreen-event data)))
+    (let ((fullscreen? (client-wants-fullscreen? c)))
       (if (client-monitor c)
           (client-do-set-fullscreen c fullscreen?)
           (set! (client-fullscreen? c) fullscreen?))
-      (run-hook fullscreen-event-hook c event))))
+      (run-hook fullscreen-event-hook c))))
 
 
 (define-method (client-commit-notify (c <gwwm-client>))

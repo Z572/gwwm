@@ -1,6 +1,7 @@
 (define-module (gwwm)
   #:use-module ((system foreign) #:select (make-pointer scm->pointer))
   #:use-module (ice-9 control)
+  #:use-module ((rnrs base) #:select (assert))
   #:use-module (ice-9 curried-definitions)
   #:use-module (ice-9 format)
   #:use-module (ice-9 getopt-long)
@@ -33,12 +34,12 @@
   #:use-module (wlroots render allocator)
   #:use-module (wlroots render renderer)
   #:use-module (wlroots time)
+  #:use-module (wlroots types idle-notify)
   #:use-module (wlroots types compositor)
   #:use-module (wlroots types export-dmabuf)
   #:use-module (wlroots types cursor)
   #:use-module (wlroots types data-control)
   #:use-module (wlroots types data-device)
-  #:use-module (wlroots types idle)
   #:use-module (wlroots types input-device)
   #:use-module (wlroots types input-inhibitor)
   #:use-module (wlroots types keyboard)
@@ -63,9 +64,8 @@
   #:use-module (wlroots types xdg-shell)
   #:use-module (wlroots types)
   #:use-module (wlroots util box)
-  #:use-module (wlroots xwayland)
   #:use-module (gwwm client)
-  #:use-module (gwwm x-client)
+  ;; #:use-module (gwwm x-client)
   #:use-module (gwwm commands)
   #:use-module (gwwm config)
   #:use-module (gwwm configuration)
@@ -118,6 +118,7 @@
 (define-dy gwwm-config config)
 (define-dy gwwm-display display)
 (define-dy gwwm-backend backend)
+(define-dy gwwm-session session)
 (define-dy gwwm-output-layout output-layout)
 (define-dy entire-layout-box box)
 (define-dy gwwm-renderer renderer)
@@ -128,13 +129,13 @@
 (define-dy gwwm-xdg-shell xdg-shell)
 (define-dy gwwm-xcursor-manager manager)
 (define-dy gwwm-compositor compositor)
-(define-dy gwwm-xwayland xwayland)
 (define-dy gwwm-activation activation)
 (define-dy gwwm-layer-shell layer-shell)
 (define-dy gwwm-idle idle)
 (define-dy gwwm-data-control-manager m)
 (define-dy gwwm-pointer-gestures g)
 (define-dy gwwm-input-inhibit-manager input-inhibit-manager)
+(define-dy gwwm-scene-output-layout l)
 (define-dy grabc c)
 (define-dy grabcx x)
 (define-dy grabcy y)
@@ -209,7 +210,7 @@ gwwm [OPTION]
 (define-once global-keymap
   (make-parameter (make-keymap)))
 (define (setup-server)
-  (or (false-if-exception (and (spawn-server (make-tcp-server-socket))
+  (or (false-if-exception (and (spawn-server (make-unix-domain-server-socket))
                                (add-hook! gwwm-cleanup-hook stop-server-and-clients! )))
       (send-log DEBUG (G_ "repl setup fail."))))
 ;; (primitive-load-path "gwwm/startup.scm")
@@ -277,12 +278,12 @@ gwwm [OPTION]
                 (set! (client-urgent? c) 0)
                 (client-restack-surface c))
               (when old
-                (if (wlr-surface-is-layer-surface old)
-                    (let ((l (wlr-layer-surface-v1-from-wlr-surface old)))
-                      (if (and (.mapped l)
-                               (member (~ l 'current 'layer) '(2 3)))
-                          (return)))
-                    (activate-surface old #f)))
+                (or
+                 (and-let* ((l (wlr-layer-surface-v1-try-from-wlr-surface old)))
+                   (if (and (.mapped old)
+                            (member (~ l 'current 'layer) '(2 3)))
+                       (return)))
+                 (activate-surface old #f)))
               (surface-notify-enter (client-surface c)
                                     (wlr-seat-get-keyboard (gwwm-seat)))
               (activate-surface (client-surface c) #t)))
@@ -399,9 +400,8 @@ gwwm [OPTION]
     (keyboard-set-repeat-info kb (repeat-rate) 600)
     (run-hook create-keyboard-hook kb)
     (add-listen wl-kb 'modifiers
-                (lambda (listener data)
-                  (let* ((wlr-keyboard (wrap-wlr-keyboard data))
-                         (modifiers(.modifiers wlr-keyboard)))
+                (lambda (listener wlr-keyboard)
+                  (let* ((modifiers(.modifiers wlr-keyboard)))
                     (wlr-seat-set-keyboard
                      (gwwm-seat) wl-kb)
                     (run-hook modifiers-event-hook kb)
@@ -409,9 +409,8 @@ gwwm [OPTION]
                      (gwwm-seat) modifiers)))
                 #:destroy-when device)
     (add-listen wl-kb 'key
-                (lambda (listener data)
-                  (let* ((event (wrap-wlr-keyboard-key-event data))
-                         (seat (gwwm-seat))
+                (lambda (listener event)
+                  (let* ((seat (gwwm-seat))
                          (keybinding (@@ (gwwm keybind) keybinding)))
                     (run-hook keypress-event-hook kb event)
                     (unless (and (not (.active-inhibitor
@@ -428,10 +427,9 @@ gwwm [OPTION]
                        (if (eq? (.state event) 'WL_KEYBOARD_KEY_STATE_PRESSED)
                            1 0)))))
                 #:destroy-when device)))
-(define (request-start-drag listener data)
+(define (request-start-drag listener event)
   (send-log DEBUG "request start drag")
-  (let* ((event (wrap-wlr-seat-request-start-drag-event data))
-         (seat (~ event 'drag 'seat)))
+  (let* ((seat (~ event 'drag 'seat)))
     (if (wlr-seat-validate-pointer-grab-serial
          seat
          (.origin event)
@@ -474,19 +472,18 @@ gwwm [OPTION]
        (maybe-let*-values
         (((c surface sx sy) (client-at cursor)))
         (when (and (not surface) (zero? time))
-          (wlr-xcursor-manager-set-cursor-image
+          (wlr-cursor-set-xcursor
+           (gwwm-cursor)
            (gwwm-xcursor-manager)
-           (cursor-normal-image)
-           (gwwm-cursor)))
+           (cursor-normal-image)))
         (pointerfocus c surface sx sy time))))))
 
 (define (idle-activity . _)
-  (wlr-idle-notify-activity (gwwm-idle) (gwwm-seat)))
+  (wlr-idle-notifier-v1-notify-activity (gwwm-idle) (gwwm-seat)))
 
 (define (cursor-setup)
-  (define ((cursor/button cursor) listener data)
-    (let* ((event (wrap-wlr-pointer-button-event data))
-           (pressed (eq? (.state event) 'WLR_BUTTON_PRESSED)))
+  (define ((cursor/button cursor) listener event)
+    (let* ((pressed (eq? (.state event) 'WLR_BUTTON_PRESSED)))
       (idle-activity)
       (run-hook cursor-button-event-hook event)
       (case (cursor-mode)
@@ -511,10 +508,10 @@ gwwm [OPTION]
                      (and-let* (((eq? o 'resize))
                                 (c (grabc)))
                        (client-set-resizing! c #f))
-                     (wlr-xcursor-manager-set-cursor-image
+                     (wlr-cursor-set-xcursor
+                      cursor
                       (gwwm-xcursor-manager)
-                      (cursor-normal-image)
-                      cursor)
+                      (cursor-normal-image))
                      (cursor-mode 'normal)
                      (set! (current-monitor)
                            (monitor-at (.x cursor) (.y cursor)))
@@ -522,70 +519,66 @@ gwwm [OPTION]
 
   (let ((cursor (gwwm-cursor (wlr-cursor-create))))
     (add-listen cursor 'touch-up
-                (lambda (listener data)
-                  (let ((event (wrap-wlr-touch-up-event data)))
-                    (let-slots event (touch time-msec touch-id)
-                      (send-log INFO "touch-up"
-                                'touch touch
-                                'time-msec time-msec
-                                'touch-id touch-id)
-                      (wlr-seat-touch-notify-up (gwwm-seat) time-msec touch-id)
-                      (wlr-seat-touch-point-clear-focus (gwwm-seat) time-msec touch-id))))
+                (lambda (listener event)
+                  (let-slots event (touch time-msec touch-id)
+                    (send-log INFO "touch-up"
+                              'touch touch
+                              'time-msec time-msec
+                              'touch-id touch-id)
+                    (wlr-seat-touch-notify-up (gwwm-seat) time-msec touch-id)
+                    (wlr-seat-touch-point-clear-focus (gwwm-seat) time-msec touch-id)))
                 #:remove-when-destroy? #f)
     (add-listen cursor 'touch-down
-                (lambda (listener data)
-                  (let ((event (wrap-wlr-touch-down-event data)))
-                    (let-slots event (touch time-msec touch-id x y)
-                      (send-log INFO "touch-down"
-                                'touch touch
-                                'time-msec time-msec
-                                'touch-id touch-id
-                                'x x
-                                'y y)
-                      (let* ((o (wlr-cursor-absolute-to-layout-coords
-                                 (gwwm-cursor)
-                                 (.base touch)
-                                 x
-                                 y)))
-                        (maybe-let*-values
-                         (((c surface sx sy) (client-at (car o) (cdr o))))
-                         (when (wlr-surface? surface)
-                           (wlr-seat-touch-point-focus
-                            (gwwm-seat)
-                            surface
-                            time-msec touch-id sx sy)
-                           (wlr-seat-touch-notify-down
-                            (gwwm-seat)
-                            surface
-                            time-msec touch-id sx sy)))))))
+                (lambda (listener event)
+                  (let-slots event (touch time-msec touch-id x y)
+                    (send-log INFO "touch-down"
+                              'touch touch
+                              'time-msec time-msec
+                              'touch-id touch-id
+                              'x x
+                              'y y)
+                    (let* ((o (wlr-cursor-absolute-to-layout-coords
+                               (gwwm-cursor)
+                               (.base touch)
+                               x
+                               y)))
+                      (maybe-let*-values
+                       (((c surface sx sy) (client-at (car o) (cdr o))))
+                       (when (wlr-surface? surface)
+                         (wlr-seat-touch-point-focus
+                          (gwwm-seat)
+                          surface
+                          time-msec touch-id sx sy)
+                         (wlr-seat-touch-notify-down
+                          (gwwm-seat)
+                          surface
+                          time-msec touch-id sx sy))))))
                 #:remove-when-destroy? #f)
     (add-listen cursor 'touch-motion
-                (lambda (listener data)
-                  (let ((event (wrap-wlr-touch-motion-event data)))
-                    (let-slots event (touch time-msec touch-id x y)
-                      (let ((o (wlr-cursor-absolute-to-layout-coords
-                                (gwwm-cursor)
-                                (.base touch)
-                                x
-                                y)))
-                        (maybe-let*-values
-                         (((c surface sx sy) (client-at (car o) (cdr o))))
-                         (wlr-seat-touch-notify-motion (gwwm-seat) time-msec touch-id sx sy))))))
+                (lambda (listener event)
+                  (let-slots event (touch time-msec touch-id x y)
+                    (let ((o (wlr-cursor-absolute-to-layout-coords
+                              (gwwm-cursor)
+                              (.base touch)
+                              x
+                              y)))
+                      (maybe-let*-values
+                       (((c surface sx sy) (client-at (car o) (cdr o))))
+                       (wlr-seat-touch-notify-motion (gwwm-seat) time-msec touch-id sx sy)))))
                 #:remove-when-destroy? #f)
     (add-listen cursor 'touch-cancel
-                (lambda (listener data)
-                  (let ((event (wrap-wlr-touch-cancel-event data)))
-                    (let-slots event (touch time-msec touch-id)
-                      (send-log INFO "touch-cancel"
-                                'touch touch
-                                'time-msec time-msec
-                                'touch-id touch-id)
-                      (maybe-let*-values
-                       (((c surface sx sy) (client-at (gwwm-cursor))))
-                       (when (wlr-surface? surface)
-                         (wlr-seat-touch-notify-cancel
-                          (gwwm-seat)
-                          surface))))))
+                (lambda (listener event)
+                  (let-slots event (touch time-msec touch-id)
+                    (send-log INFO "touch-cancel"
+                              'touch touch
+                              'time-msec time-msec
+                              'touch-id touch-id)
+                    (maybe-let*-values
+                     (((c surface sx sy) (client-at (gwwm-cursor))))
+                     (when (wlr-surface? surface)
+                       (wlr-seat-touch-notify-cancel
+                        (gwwm-seat)
+                        surface)))))
                 #:remove-when-destroy? #f)
     (add-listen cursor 'touch-frame
                 (lambda (listener data)
@@ -594,158 +587,146 @@ gwwm [OPTION]
                 #:remove-when-destroy? #f)
 
     (add-listen cursor 'axis
-                (lambda (listener data)
-                  (let ((event (wrap-wlr-pointer-axis-event data)))
-                    (run-hook axis-event-hook event)
-                    (let-slots event (time-msec orientation delta delta-discrete
-                                                source)
-                      (wlr-seat-pointer-notify-axis
-                       (gwwm-seat)
-                       time-msec
-                       orientation
-                       delta
-                       delta-discrete
-                       source))
-                    (idle-activity)))
+                (lambda (listener event)
+                  (run-hook axis-event-hook event)
+                  (let-slots event (time-msec orientation delta delta-discrete
+                                              source)
+                    (wlr-seat-pointer-notify-axis
+                     (gwwm-seat)
+                     time-msec
+                     orientation
+                     delta
+                     delta-discrete
+                     source))
+                  (idle-activity))
                 #:remove-when-destroy? #f)
     (add-listen cursor 'swipe-begin
-                (lambda (listener data)
-                  (let ((event (wrap-wlr-pointer-swipe-begin-event data)))
-                    (let-slots event (pointer time-msec fingers)
-                      (send-log INFO "swipe-begin"
-                                'pointer pointer
-                                'time-msec time-msec
-                                'fingers fingers)
-                      (wlr-pointer-gestures-v1-send-swipe-begin
-                       (gwwm-pointer-gestures)
-                       (gwwm-seat)
-                       time-msec
-                       fingers))))
+                (lambda (listener event)
+                  (let-slots event (pointer time-msec fingers)
+                    (send-log INFO "swipe-begin"
+                              'pointer pointer
+                              'time-msec time-msec
+                              'fingers fingers)
+                    (wlr-pointer-gestures-v1-send-swipe-begin
+                     (gwwm-pointer-gestures)
+                     (gwwm-seat)
+                     time-msec
+                     fingers)))
                 #:remove-when-destroy? #f)
     (add-listen cursor 'swipe-update
-                (lambda (listener data)
-                  (let ((event (wrap-wlr-pointer-swipe-update-event data)))
-                    (let-slots event (pointer time-msec fingers dx dy)
-                      (wlr-pointer-gestures-v1-send-swipe-update
-                       (gwwm-pointer-gestures)
-                       (gwwm-seat)
-                       fingers
-                       dx
-                       dy))))
+                (lambda (listener event)
+                  (let-slots event (pointer time-msec fingers dx dy)
+                    (wlr-pointer-gestures-v1-send-swipe-update
+                     (gwwm-pointer-gestures)
+                     (gwwm-seat)
+                     fingers
+                     dx
+                     dy)))
                 #:remove-when-destroy? #f)
     (add-listen cursor 'swipe-end
-                (lambda (listener data)
-                  (let ((event (wrap-wlr-pointer-swipe-end-event data)))
-                    (let-slots event (pointer time-msec cancelled)
-                      (send-log INFO "swipe-end"
-                                'pointer pointer
-                                'time-msec time-msec
-                                'cancelled cancelled)
-                      (wlr-pointer-gestures-v1-send-swipe-end
-                       (gwwm-pointer-gestures)
-                       (gwwm-seat)
-                       time-msec
-                       cancelled))))
+                (lambda (listener event)
+                  (let-slots event (pointer time-msec cancelled)
+                    (send-log INFO "swipe-end"
+                              'pointer pointer
+                              'time-msec time-msec
+                              'cancelled cancelled)
+                    (wlr-pointer-gestures-v1-send-swipe-end
+                     (gwwm-pointer-gestures)
+                     (gwwm-seat)
+                     time-msec
+                     cancelled)))
                 #:remove-when-destroy? #f)
     (add-listen cursor 'pinch-begin
-                (lambda (listener data)
-                  (let ((event (wrap-wlr-pointer-pinch-begin-event data)))
-                    (let-slots event (pointer time-msec fingers)
-                      (send-log INFO "pinch-begin"
-                                'pointer pointer
-                                'time-msec time-msec
-                                'fingers fingers )
-                      (wlr-pointer-gestures-v1-send-pinch-begin
-                       (gwwm-pointer-gestures)
-                       (gwwm-seat)
-                       time-msec
-                       fingers))))
+                (lambda (listener event)
+                  (let-slots event (pointer time-msec fingers)
+                    (send-log INFO "pinch-begin"
+                              'pointer pointer
+                              'time-msec time-msec
+                              'fingers fingers )
+                    (wlr-pointer-gestures-v1-send-pinch-begin
+                     (gwwm-pointer-gestures)
+                     (gwwm-seat)
+                     time-msec
+                     fingers)))
                 #:remove-when-destroy? #f)
     (add-listen cursor 'pinch-update
-                (lambda (listener data)
-                  (let ((event (wrap-wlr-pointer-pinch-update-event data)))
-                    (let-slots event (pointer time-msec fingers dx dy scale rotation)
-                      (wlr-pointer-gestures-v1-send-pinch-update
-                       (gwwm-pointer-gestures)
-                       (gwwm-seat)
-                       fingers
-                       dx
-                       dy
-                       scale
-                       rotation))))
+                (lambda (listener event)
+                  (let-slots event (pointer time-msec fingers dx dy scale rotation)
+                    (wlr-pointer-gestures-v1-send-pinch-update
+                     (gwwm-pointer-gestures)
+                     (gwwm-seat)
+                     fingers
+                     dx
+                     dy
+                     scale
+                     rotation)))
                 #:remove-when-destroy? #f)
     (add-listen cursor 'pinch-end
-                (lambda (listener data)
-                  (let ((event (wrap-wlr-pointer-pinch-end-event data)))
-                    (let-slots event (pointer time-msec cancelled)
-                      (send-log INFO "pinch-end"
-                                'pointer pointer
-                                'time-msec time-msec
-                                'cancelled cancelled)
-                      (wlr-pointer-gestures-v1-send-pinch-end
-                       (gwwm-pointer-gestures)
-                       (gwwm-seat)
-                       time-msec
-                       cancelled))))
+                (lambda (listener event)
+                  (let-slots event (pointer time-msec cancelled)
+                    (send-log INFO "pinch-end"
+                              'pointer pointer
+                              'time-msec time-msec
+                              'cancelled cancelled)
+                    (wlr-pointer-gestures-v1-send-pinch-end
+                     (gwwm-pointer-gestures)
+                     (gwwm-seat)
+                     time-msec
+                     cancelled)))
                 #:remove-when-destroy? #f)
     (add-listen cursor 'hold-begin
-                (lambda (listener data)
-                  (let ((event (wrap-wlr-pointer-hold-begin-event data)))
-                    (let-slots event (pointer time-msec fingers)
-                      (send-log INFO "hold-begin"
-                                'pointer pointer
-                                'time-msec time-msec
-                                'fingers fingers )
-                      (wlr-pointer-gestures-v1-send-hold-begin
-                       (gwwm-pointer-gestures)
-                       (gwwm-seat)
-                       time-msec
-                       fingers))))
+                (lambda (listener event)
+                  (let-slots event (pointer time-msec fingers)
+                    (send-log INFO "hold-begin"
+                              'pointer pointer
+                              'time-msec time-msec
+                              'fingers fingers )
+                    (wlr-pointer-gestures-v1-send-hold-begin
+                     (gwwm-pointer-gestures)
+                     (gwwm-seat)
+                     time-msec
+                     fingers)))
                 #:remove-when-destroy? #f)
     (add-listen cursor 'hold-end
-                (lambda (listener data)
-                  (let ((event (wrap-wlr-pointer-hold-end-event data)))
-                    (let-slots event (pointer time-msec cancelled)
-                      (send-log INFO "hold-end"
-                                'pointer pointer
-                                'time-msec time-msec
-                                'cancelled cancelled)
-                      (wlr-pointer-gestures-v1-send-hold-end
-                       (gwwm-pointer-gestures)
-                       (gwwm-seat)
-                       time-msec
-                       cancelled))))
+                (lambda (listener event)
+                  (let-slots event (pointer time-msec cancelled)
+                    (send-log INFO "hold-end"
+                              'pointer pointer
+                              'time-msec time-msec
+                              'cancelled cancelled)
+                    (wlr-pointer-gestures-v1-send-hold-end
+                     (gwwm-pointer-gestures)
+                     (gwwm-seat)
+                     time-msec
+                     cancelled)))
                 #:remove-when-destroy? #f)
     (add-listen cursor 'frame
-                (lambda (listener data)
-                  (let ((cursor (wrap-wlr-cursor data)))
-                    (run-hook cursor-frame-event-hook cursor)
-                    (wlr-seat-pointer-notify-frame (gwwm-seat))))
+                (lambda (listener cursor)
+                  (run-hook cursor-frame-event-hook cursor)
+                  (wlr-seat-pointer-notify-frame (gwwm-seat)))
                 #:remove-when-destroy? #f)
     (add-listen cursor 'motion
-                (lambda (listener data)
-                  (let ((event (wrap-wlr-pointer-motion-event data)))
-                    (wlr-cursor-move (gwwm-cursor)
-                                     (.base (.pointer event))
-                                     (.delta-x event)
-                                     (.delta-y event))
-                    (motionnotify (.time-msec event))))
+                (lambda (listener event)
+                  (wlr-cursor-move (gwwm-cursor)
+                                   (.base (.pointer event))
+                                   (.delta-x event)
+                                   (.delta-y event))
+                  (motionnotify (.time-msec event)))
                 #:remove-when-destroy? #f)
     (add-listen cursor 'motion-absolute
-                (lambda (listener data)
-                  (let ((event (wrap-wlr-pointer-motion-absolute-event data)))
-                    (let-slots event (pointer x y time-msec)
-                      (wlr-cursor-warp-absolute
-                       (gwwm-cursor)
-                       (.base pointer) x y)
-                      (motionnotify time-msec))
-                    ))
+                (lambda (listener event)
+                  (let-slots event (pointer x y time-msec)
+                    (wlr-cursor-warp-absolute
+                     (gwwm-cursor)
+                     (.base pointer) x y)
+                    (motionnotify time-msec)))
                 #:remove-when-destroy? #f)
     (add-listen cursor 'button (cursor/button cursor)
                 #:remove-when-destroy? #f)))
 
 (define (activate-surface surface activate?)
-  (let ((super-surface (super-surface-from-wlr-surface surface)))
+  ;; (assert (wlr-surface? surface))
+  (let ((super-surface (super-surface-try-from-wlr-surface surface)))
     (cond ((and
             (wlr-xdg-surface? super-surface)
             (eq? (.role super-surface)
@@ -753,40 +734,33 @@ gwwm [OPTION]
 
            (wlr-xdg-toplevel-set-activated
             (wlr-xdg-surface-toplevel super-surface)
-            activate? ))
-          ((wlr-xwayland-surface? super-surface)
-           (wlr-xwayland-surface-activate super-surface activate?)))))
+            activate? )))))
 
 (define (seat-setup display)
   (let ((seat (gwwm-seat (wlr-seat-create (gwwm-display) "seat0"))))
     (add-listen seat 'request-set-cursor
-                (lambda (listener data)
-                  (let ((event (wrap-wlr-seat-pointer-request-set-cursor-event
-                                data)))
-                    (when (eq? (cursor-mode) 'normal)
-                      (let-slots event (seat-client surface hostpot-x hostpot-y)
-                        (when (equal? seat-client
-                                      (~ seat 'pointer-state 'focused-client))
-                          (wlr-cursor-set-surface (gwwm-cursor)
-                                                  surface
-                                                  hostpot-x
-                                                  hostpot-y)))))))
+                (lambda (listener event)
+                  (when (eq? (cursor-mode) 'normal)
+                    (let-slots event (seat-client surface hostpot-x hostpot-y)
+                      (when (equal? seat-client
+                                    (~ seat 'pointer-state 'focused-client))
+                        (wlr-cursor-set-surface (gwwm-cursor)
+                                                surface
+                                                hostpot-x
+                                                hostpot-y))))))
     (add-listen seat 'request-set-selection
-                (lambda (listener data)
-                  (let ((event (wrap-wlr-seat-request-set-selection-event data)))
-                    (run-hook selection-hook event)
-                    (wlr-seat-set-selection seat (.source event)
-                                            (.serial event)))))
+                (lambda (listener event)
+                  (run-hook selection-hook event)
+                  (wlr-seat-set-selection seat (.source event)
+                                          (.serial event))))
     (add-listen seat 'request-start-drag request-start-drag)
     (add-listen seat 'request-set-primary-selection
-                (lambda (listener data)
+                (lambda (listener event)
                   (send-log INFO "seat request set primary selection")
-                  (let ((event (wrap-wlr-seat-request-set-primary-selection-event data)))
-                    wlr-seat-set-primary-selection seat (.source event) (.serial event))))
+                  (wlr-seat-set-primary-selection seat (.source event) (.serial event))))
     (add-listen (.keyboard-state seat) 'focus-change
-                (lambda (listener data)
-                  (let* ((event (wrap-wlr-seat-keyboard-focus-change-event data))
-                         (old-client (and=> (.old-surface event)
+                (lambda (listener event)
+                  (let* ((old-client (and=> (.old-surface event)
                                             client-from-wlr-surface))
                          (new-client (and=> (.new-surface event)
                                             client-from-wlr-surface)))
@@ -795,8 +769,8 @@ gwwm [OPTION]
                               seat old-client new-client)))
                 #:destroy-when seat)
     (add-listen seat 'start-drag
-                (lambda (listener data)
-                  (and-let* ((drag (wrap-wlr-drag data))
+                (lambda (listener drag)
+                  (and-let* (drag
                              (icon (.icon drag))
                              (scene (wlr-scene-subsurface-tree-create
                                      no-focus-layer
@@ -858,9 +832,8 @@ gwwm [OPTION]
                                (logior (.capabilities seat)
                                        (bs:enum->integer
                                         %wl-seat-capability-enum o))))
-  (define (backend/new-output listener data)
-    (let* ((wlr-output (wrap-wlr-output data))
-           (m (make <gwwm-monitor>
+  (define (backend/new-output listener wlr-output)
+    (let* ((m (make <gwwm-monitor>
                 #:wlr-output wlr-output
                 #:layouts (make-list 2 tile-layout))))
       (set! (wlr-output->monitor wlr-output) m)
@@ -869,60 +842,78 @@ gwwm [OPTION]
         (wlr-output-set-mode wlr-output (wlr-output-preferred-mode wlr-output))
         (wlr-output-enable wlr-output #t)
         (let ((state (make <wlr-output-state>)))
+          (wlr-output-state-set-enabled state #t)
           (send-log INFO "enable adaptive-sync" 'monitor m)
           (wlr-output-state-set-adaptive-sync-enabled state #t)
           (unless (wlr-output-test-state wlr-output state)
             (send-log INFO "enable adaptive-sync fail" 'monitor m))
-          (unless (wlr-output-commit-state wlr-output state)
-            (send-log WARNING "fail commit state" 'monitor m 'state state)))
-        (when (wlr-output-commit wlr-output)
-          (cond ((wlr-output-is-wl wlr-output)
-                 (wlr-wl-output-set-title wlr-output "gwwm/wayland")))
-          (q-push! (%monitors) m)
+          (when (wlr-output-commit-state wlr-output state)
+            (cond ((wlr-output-is-wl wlr-output)
+                   (wlr-wl-output-set-title wlr-output "gwwm/wayland")))
+            (q-push! (%monitors) m)
 
-          (wlr-output-layout-add-auto (gwwm-output-layout) wlr-output)
-          ;; This scene-output can get because 'wlr-scene-attach-output-layout'
+
+            ;; wlr-scene-output-layout-add-output
+            ;; This scene-output can get because 'wlr-scene-attach-output-layout'
           ;;; create it.
-          (let ((scene-output (wlr-scene-get-scene-output (gwwm-scene) wlr-output)))
-            (set! (monitor-scene-output m) scene-output)
-            (add-listen scene-output 'destroy
-                        (lambda _ (set! (monitor-scene-output m) #f))))
+            (let ((lo (wlr-output-layout-add-auto (gwwm-output-layout) wlr-output))
+                  (scene-output (wlr-scene-output-create (gwwm-scene) wlr-output)
 
-          (add-listen (monitor-output m) 'frame (render-monitor m))
-          (add-listen (monitor-output m) 'destroy (cleanup-monitor m))
-          (run-hook create-monitor-hook m)))))
+                                ))
 
-  (define (backend/new-input listener data)
-    (let ((device (wrap-wlr-input-device data)))
-      (case (.type device)
-        ((WLR_INPUT_DEVICE_KEYBOARD)
-         (create-keyboard device)
-         (unless (zero? (length (keyboard-list)))
+              (wlr-scene-output-layout-add-output
+               (gwwm-scene-output-layout)
+               lo
+                                        ;(wlr-scene-get-scene-output (gwwm-scene) wlr-output)
+               scene-output)
+              (set! (monitor-scene-output m) scene-output)
+              (add-listen scene-output 'destroy
+                          (lambda _ (set! (monitor-scene-output m) #f))))
 
-           (add-seat-capabilitie
-            (gwwm-seat)
-            'WL_SEAT_CAPABILITY_KEYBOARD)))
-        ((WLR_INPUT_DEVICE_POINTER)
-         (create-pointer device)
+            (add-listen (monitor-output m) 'frame (render-monitor m))
+            (add-listen (monitor-output m) 'request-state
+                        (lambda (listener event)
+                          (send-log INFO "request-state")
+                          (wlr-output-commit-state wlr-output (.state event))))
+            (add-listen (monitor-output m) 'destroy (cleanup-monitor m))
+            (wlr-output-commit-state wlr-output  state)
+            (run-hook create-monitor-hook m)
+            (wlr-output-state-finish state)))
+        )))
+
+  (define (backend/new-input listener device)
+    (case (.type device)
+      ((WLR_INPUT_DEVICE_KEYBOARD)
+       (create-keyboard device)
+       (unless (zero? (length (keyboard-list)))
+
          (add-seat-capabilitie
           (gwwm-seat)
-          'WL_SEAT_CAPABILITY_POINTER))
-        ((WLR_INPUT_DEVICE_TOUCH)
-         (make <gwwm-touch> #:device device)
-         (wlr-cursor-attach-input-device (gwwm-cursor) device)
-         (add-seat-capabilitie
-          (gwwm-seat)
-          'WL_SEAT_CAPABILITY_TOUCH))
-        ((WLR_INPUT_DEVICE_SWITCH)
-         (send-log WARNING "TODO"))
-        ((WLR_INPUT_DEVICE_TABLET_TOOL)
-         (send-log WARNING "TODO"))
-        ((WLR_INPUT_DEVICE_TABLET_PAD)
-         (send-log WARNING "TODO"))
-        (else (send-log WARNING "unknow input device")))))
-  (let ((backend (or (and=> (wlr-backend-autocreate(gwwm-display)) gwwm-backend)
-                     (begin (send-log ERROR (G_ "gwwm Couldn't create backend"))
-                            (exit 1)))))
+          'WL_SEAT_CAPABILITY_KEYBOARD)))
+      ((WLR_INPUT_DEVICE_POINTER)
+       (create-pointer device)
+       (add-seat-capabilitie
+        (gwwm-seat)
+        'WL_SEAT_CAPABILITY_POINTER))
+      ((WLR_INPUT_DEVICE_TOUCH)
+       (make <gwwm-touch> #:device device)
+       (wlr-cursor-attach-input-device (gwwm-cursor) device)
+       (add-seat-capabilitie
+        (gwwm-seat)
+        'WL_SEAT_CAPABILITY_TOUCH))
+      ((WLR_INPUT_DEVICE_SWITCH)
+       (send-log WARNING "TODO"))
+      ((WLR_INPUT_DEVICE_TABLET_TOOL)
+       (send-log WARNING "TODO"))
+      ((WLR_INPUT_DEVICE_TABLET_PAD)
+       (send-log WARNING "TODO"))
+      (else (send-log WARNING "unknow input device"))))
+  (let* ((backend session (wlr-backend-autocreate(gwwm-display))))
+    (unless backend
+      (send-log ERROR (G_ "gwwm Couldn't create backend"))
+      (exit 1))
+    (and=> backend gwwm-backend)
+    (and=> session gwwm-session)
     (add-listen backend 'new-input backend/new-input)
     (add-listen backend 'new-output backend/new-output)))
 
@@ -931,13 +922,11 @@ gwwm [OPTION]
 
 
     (add-listen output-manager 'apply
-                (lambda (listener data)
-                  (let ((config (wrap-wlr-output-configuration-v1 data)))
-                    (output-manager-apply-or-test config #f))))
+                (lambda (listener config)
+                  (output-manager-apply-or-test config #f)))
     (add-listen output-manager 'test
-                (lambda (listener data)
-                  (let ((config (wrap-wlr-output-configuration-v1 data)))
-                    (output-manager-apply-or-test config #t))))))
+                (lambda (listener config)
+                  (output-manager-apply-or-test config #t)))))
 
 (define (return-scene-node n)
   (case n
@@ -964,55 +953,50 @@ gwwm [OPTION]
   (gwwm-pointer-gestures (wlr-pointer-gestures-v1-create (gwwm-display)))
   (gwwm-xdg-shell (wlr-xdg-shell-create (gwwm-display) 5))
   (add-listen (gwwm-xdg-shell) 'new-surface
-              (lambda (listener data)
-                (let ((xdg-surface (wrap-wlr-xdg-surface data)))
-                  (when (eq? (.role xdg-surface)
-                             'WLR_XDG_SURFACE_ROLE_TOPLEVEL)
-                    (let* ((scene
-                            (wlr-scene-xdg-surface-create tile-layer
-                                                          xdg-surface))
-                           (c (make <gwwm-xdg-client>
-                                #:scene scene
-                                #:super-surface xdg-surface)))
-                      (set! (client-border-width c) (borderpx))
+              (lambda (listener xdg-surface)
+                (when (eq? (.role xdg-surface)
+                           'WLR_XDG_SURFACE_ROLE_TOPLEVEL)
+                  (let* ((scene
+                          (wlr-scene-xdg-surface-create tile-layer
+                                                        xdg-surface))
+                         (c (make <gwwm-xdg-client>
+                              #:scene scene
+                              #:super-surface xdg-surface)))
+                    (set! (client-border-width c) (borderpx))
 
-                      (run-hook create-client-hook c))))))
-  (gwwm-compositor (wlr-compositor-create (gwwm-display) (gwwm-renderer)))
+                    (run-hook create-client-hook c)))))
+  (gwwm-compositor (wlr-compositor-create (gwwm-display) 5 (gwwm-renderer)))
   (wlr-subcompositor-create (gwwm-display))
   (gwwm-activation (wlr-xdg-activation-v1-create (gwwm-display)))
   (add-listen (gwwm-activation) 'request-activate
-              (lambda (listener data)
-                (let* ((event (wrap-wlr-xdg-activation-v1-request-activate-event data))
-                       (c (client-from-wlr-surface (.surface event))))
+              (lambda (listener event)
+                (let* ((c (client-from-wlr-surface (.surface event))))
                   (unless (equal? c (current-client))
                     (set! (client-urgent? c) #t)))))
-  (gwwm-layer-shell (wlr-layer-shell-v1-create (gwwm-display)))
+  (gwwm-layer-shell (wlr-layer-shell-v1-create (gwwm-display) 4))
   (add-listen (gwwm-layer-shell) 'new-surface
-              (lambda (listener data)
-                (pk 'h)
-                (let ((layer-surface (wrap-wlr-layer-surface-v1 data)))
-                  (unless (.output layer-surface)
-                    (set! (.output layer-surface)
-                          (monitor-output (current-monitor))))
-                  (let* ((scene-surface (pk 'scene-surface
-                                            (wlr-scene-layer-surface-v1-create
-                                             (pk 'ret
-                                                 (return-scene-node
-                                                  (~ layer-surface 'pending 'layer)))
-                                             layer-surface)))
-                         (scene  (.tree scene-surface))
-                         (c (make <gwwm-layer-client>
-                              #:super-surface layer-surface
-                              #:scene scene
-                              #:monitor (wlr-output->monitor (.output layer-surface))
-                              #:scene-layer-surface scene-surface)))
-                    (set! (surface->scene (client-surface c)) (client-scene c))
-                    (set! (scene-node->client (.node (client-scene c))) c)
-                    (q-push! (list-ref (slot-ref (client-monitor c) 'layers)
-                                       (~ layer-surface 'pending 'layer))
-                             c)
-                    (run-hook create-client-hook c)))))
-  (gwwm-idle (wlr-idle-create (gwwm-display)))
+              (lambda (listener layer-surface)
+                (unless (.output layer-surface)
+                  (set! (.output layer-surface)
+                        (monitor-output (current-monitor))))
+                (let* ((scene-surface (wlr-scene-layer-surface-v1-create
+                                       (pk 'ret
+                                           (return-scene-node
+                                            (~ layer-surface 'pending 'layer)))
+                                       layer-surface))
+                       (scene  (.tree scene-surface))
+                       (c (make <gwwm-layer-client>
+                            #:super-surface layer-surface
+                            #:scene scene
+                            #:monitor (wlr-output->monitor (.output layer-surface))
+                            #:scene-layer-surface scene-surface)))
+                  (set! (surface->scene (client-surface c)) (client-scene c))
+                  (set! (scene-node->client (.node (client-scene c))) c)
+                  (q-push! (list-ref (slot-ref (client-monitor c) 'layers)
+                                     (~ layer-surface 'pending 'layer))
+                           c)
+                  (run-hook create-client-hook c))))
+  (gwwm-idle (wlr-idle-notifier-v1-create (gwwm-display)))
   (gwwm-output-layout (wlr-output-layout-create))
   (add-listen (gwwm-output-layout) 'change update-monitors)
   (add-hook! keypress-event-hook idle-activity)
@@ -1026,28 +1010,6 @@ gwwm [OPTION]
   (output-manager-setup (gwwm-display))
   (wlr-cursor-attach-output-layout (gwwm-cursor) (gwwm-output-layout)))
 
-(define (xwayland-setup display compositor)
-  (let ((x (gwwm-xwayland (wlr-xwayland-create display compositor #t))))
-    (if x
-        (begin
-          (wl-signal-add (get-event-signal x 'ready)
-                         xwaylandready)
-          (add-listen x 'new-surface
-                      (lambda (listener data)
-                        (for-each (lambda (c)
-                                    (when (and (client-fullscreen? c)
-                                               (visibleon c (client-monitor c)))
-                                      (client-do-set-fullscreen c #f)))
-                                  (client-list))
-                        (let* ((xsurface (wrap-wlr-xwayland-surface data))
-                               (c (make <gwwm-x-client>
-                                    #:super-surface xsurface)))
-                          (send-log DEBUG "new x-client" 'client c)
-                          (set! (client-border-width c) (borderpx))
-                          (run-hook create-client-hook c)))
-                      #:remove-when-destroy? #f)
-          (setenv "DISPLAY" (wlr-xwayland-display-name x)))
-        (send-log INFO (G_ "failed to setup XWayland X server, continuing without it.")))))
 
 (define ((unmap-notify* c) listener data)
   (send-log DEBUG (G_ "Client unmapping")  'client c)
@@ -1067,19 +1029,13 @@ gwwm [OPTION]
 
 (define (map-notify* c)
   (lambda (listener data)
-    (send-log DEBUG (G_ "Client mapping")  'client c)
+    (define surface (client-surface c))
+    (send-log DEBUG (G_ "Client mapping")  'client c 'c surface)
+    (assert (and (wlr-surface? surface) surface "map-notify*"))
     (client-init-geom c)
-    (when (is-a? c <gwwm-x-client>)
-      (set! (client-scene c)
-            (wlr-scene-subsurface-tree-create
-             tile-layer
-             (client-surface c))))
     (client-init-border c)
     (run-hook client-map-event-hook c
-              ((if (is-a? c <gwwm-x-client>)
-                   wrap-wlr-xwayland-surface
-                   wrap-wlr-xdg-surface)
-               data))
+              (super-surface-try-from-wlr-surface surface))
     (set! (super-surface->scene (client-super-surface c)) (client-scene c))
     (set! (scene-node->client (.node (client-scene c))) c)
     (set! (surface->scene (client-surface c)) (client-scene c))
@@ -1174,9 +1130,9 @@ gwwm [OPTION]
                                           sy))
         (wlr-seat-pointer-notify-clear-focus (gwwm-seat)))))
 
-(define ((new-popup-notify c) listener data)
+(define ((new-popup-notify c) listener popup)
   (send-log DEBUG "client add new popup" 'client c)
-  (and-let* ((popup (wrap-wlr-xdg-popup data))
+  (and-let* (popup
              (scene (surface->scene (.parent popup)))
              (tree (wlr-scene-xdg-surface-create scene (.base popup))))
     (set! (surface->scene (.surface (.base popup))) tree)
@@ -1192,8 +1148,8 @@ gwwm [OPTION]
                           (monitor-window-area (client-monitor c))))))
       (wlr-scene-node-raise-to-top (.node (.parent (.node tree))))
       (modify-instance* geom
-        (x (- x (box-x (client-geom c))))
-        (y (- y (box-y (client-geom c)))))
+                        (x (- x (box-x (client-geom c))))
+                        (y (- y (box-y (client-geom c)))))
       (wlr-xdg-popup-unconstrain-from-box popup geom))
     (add-listen (.base popup) 'new-popup (new-popup-notify c))
     (add-listen popup 'reposition
@@ -1222,7 +1178,6 @@ gwwm [OPTION]
 
 (define (cleanup)
   (run-hook gwwm-cleanup-hook)
-  (and=> (gwwm-xwayland) wlr-xwayland-destroy)
   (wl-display-destroy-clients (gwwm-display))
   (wl-display-destroy (gwwm-display)))
 
@@ -1254,8 +1209,8 @@ gwwm [OPTION]
      (add-listen (client-super-surface c) 'destroy
                  (client-destroy-notify c))
      (when (is-a? c <gwwm-client>)
-       (add-listen (client-super-surface c) 'unmap (unmap-notify* c))
-       (add-listen (client-super-surface c) 'map (map-notify* c)))
+       (add-listen (client-surface c) 'unmap (unmap-notify* c))
+       (add-listen (client-surface c) 'map (map-notify* c)))
      (define (update-appid listener data)
        (let ((new (client-get-appid c)))
          (send-log DEBUG "client update appid"
@@ -1281,33 +1236,8 @@ gwwm [OPTION]
                           #:destroy-when super-surface)
               (add-listen toplevel 'request-fullscreen (client-request-fullscreen-notify c)
                           #:destroy-when super-surface)))
-           ((is-a? c <gwwm-x-client>)
-            (let ((super-surface (client-super-surface c)))
-              (add-listen super-surface 'set-class
-                          update-appid #:destroy-when super-surface)
-              (add-listen super-surface 'request-activate
-                          (lambda (listener data)
-                            (let ((xsurface (wrap-wlr-xwayland-surface data)))
-                              (when (.mapped xsurface)
-                                (wlr-xwayland-surface-activate xsurface #t)))))
-              (add-listen super-surface 'request-configure
-                          (lambda (listener data)
-                            (let ((event (wrap-wlr-xwayland-surface-configure-event data)))
-                              (let-slots event (surface x y width height)
-                                (wlr-xwayland-surface-configure surface x y width height)))))
-              (add-listen super-surface 'set-hints
-                          (lambda (listener data)
-                            (let ((xsurface (wrap-wlr-xwayland-surface data)))
-                              (when (and (.mapped xsurface)
-                                         (.surface xsurface))
-                                (set! (client-urgent? c)
-                                      (.hints-urgency xsurface))))))
-              (add-listen super-surface 'request-fullscreen
-                          (client-request-fullscreen-notify c))
-              (add-listen super-surface 'set-title
-                          (client-set-title-notify c))))
            ((is-a? c <gwwm-layer-client>)
-            (add-listen (client-super-surface c) 'map
+            (add-listen (client-surface c) 'map
                         (map-layer-client-notify c))
 
             (add-listen (client-super-surface c) 'new-popup
@@ -1333,7 +1263,7 @@ gwwm [OPTION]
                                         'current
                                         'committed))
                               (arrangelayers m)))))
-            (add-listen (client-super-surface c) 'unmap
+            (add-listen (client-surface c) 'unmap
                         (unmap-layer-client-notify c))))))
   (parse-command-line args)
   (send-log DEBUG (G_ "init global keybind ..."))
@@ -1353,9 +1283,9 @@ gwwm [OPTION]
   (wlr-screencopy-manager-v1-create (gwwm-display))
   (wlr-data-device-manager-create (gwwm-display))
   (let ((dcm (gwwm-data-control-manager (wlr-data-control-manager-v1-create (gwwm-display)))))
-    (add-listen dcm 'new-device (lambda (listener data)
-                                  (let ((device (wrap-wlr-data-control-device-v1 data)))
-                                    (send-log INFO "new data control device" 'device device))) ))
+    (add-listen dcm 'new-device
+                (lambda (listener device)
+                  (send-log INFO "new data control device" 'device device))))
 
   (wlr-primary-selection-v1-device-manager-create (gwwm-display))
   (gwwm-input-inhibit-manager (wlr-input-inhibit-manager-create (gwwm-display)))
@@ -1365,12 +1295,10 @@ gwwm [OPTION]
    (wlr-server-decoration-manager-create (gwwm-display))
    (bs:enum->integer %wlr-server-decoration-manager-mode-enum
                      'WLR_SERVER_DECORATION_MANAGER_MODE_SERVER))
-  (%gwwm-setup)
   (config-setup)
-  (when (enable-xwayland?)
-    (xwayland-setup (gwwm-display) (gwwm-compositor)))
   (setup-socket)
-  (wlr-scene-attach-output-layout (gwwm-scene) (gwwm-output-layout))
+  ;; wlr-scene-output-layout-add-output
+  (gwwm-scene-output-layout (wlr-scene-attach-output-layout (gwwm-scene) (gwwm-output-layout)))
   ;; Start the backend. This will enumerate outputs and inputs, become the DRM
   ;; master, etc
   (if (wlr-backend-start (gwwm-backend))
@@ -1384,10 +1312,10 @@ gwwm [OPTION]
    (gwwm-cursor) #f
    (.x (gwwm-cursor))
    (.y (gwwm-cursor)))
-  (wlr-xcursor-manager-set-cursor-image
+  (wlr-cursor-set-xcursor
+   (gwwm-cursor)
    (gwwm-xcursor-manager)
-   (cursor-normal-image )
-   (gwwm-cursor))
+   (cursor-normal-image))
   (run-hook gwwm-after-init-hook)
   (set-current-module (resolve-module '(gwwm user)))
   (setup-server)

@@ -26,6 +26,11 @@
 (define %srcdir
   (dirname (current-filename)))
 
+(define guile-wlroots
+  (primitive-load
+   (string-append (dirname (dirname (current-filename)))
+                  "/guile-wlroots/guix.scm")))
+
 (define-public gwwm
   (package
     (name "gwwm")
@@ -93,25 +98,16 @@
            guile-3.0-latest
            bash-minimal
            texinfo))
-    (inputs (list guile-3.0-latest wlroots xorg-server-xwayland
+    (inputs (list guile-3.0-latest
                   guile-cairo
                   guile-bytestructures
                   guile-srfi-189
-                  (primitive-load
-                   (string-append (dirname (dirname (current-filename)))
-                                  "/guile-wayland/guix.scm"))
-                  (primitive-load
-                   (string-append (dirname (dirname (current-filename)))
-                                  "/util572/guix.scm"))
-                  (primitive-load
-                   (string-append (dirname (dirname (current-filename)))
-                                  "/guile-xkbcommon/guix.scm"))
-                  (primitive-load
-                   (string-append (dirname (dirname (current-filename)))
-                                  "/guile-wlroots/guix.scm"))
-                  (primitive-load
-                   (string-append (dirname (dirname (current-filename)))
-                                  "/guile-libinput/guix.scm"))))
+                  guile-wlroots
+                  (lookup-package-input guile-wlroots "wlroots")
+                  (lookup-package-input guile-wlroots "util572")
+                  (lookup-package-input guile-wlroots "guile-xkbcommon")
+                  (lookup-package-input guile-wlroots "guile-libinput")
+                  (lookup-package-input guile-wlroots "guile-wayland")))
     (synopsis "")
     (description "")
     (home-page "")

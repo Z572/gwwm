@@ -1,6 +1,7 @@
 (define-module (gwwm utils)
   #:use-module (oop goops)
   #:use-module (oop goops describe)
+  #:use-module ((rnrs base) #:select (assert))
   #:use-module (ice-9 format)
   #:use-module (gwwm i18n)
   #:export (->symbol
@@ -56,6 +57,7 @@
             (with-syntax (((%get ...) (generate-temporaries #'(name ...)))
                           ((%set ...) (generate-temporaries #'(name ...))))
               #`(let ((%obj obj))
+                  (assert (instance? %obj))
                   (let ((%get (get-slot-getter %obj 'name)) ...
                         (%set (get-slot-set %obj 'name)) ...)
                     (letrec-syntax

@@ -6,7 +6,7 @@ fork from dwl, add guile to configure it.
 * WARN
 - Is a WIP project.
 - Both api changes and errors occur.
-- I don't use X11 app at basically, so I can't find some bugs about xwayland.
+- no xwayland for now
 
 * how to build
 you need
@@ -22,7 +22,6 @@ you need
 - pkg-config
 - texinfo
 - wlroots
-- xorg-server-xwayland
 
 optional:
 - [[https://www.nongnu.org/guile-cairo/][guile-cairo]]

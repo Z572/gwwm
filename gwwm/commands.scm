@@ -1,5 +1,6 @@
 (define-module (gwwm commands)
   #:autoload (gwwm) (cursor-mode gwwm-xcursor-manager
+                                 gwwm-session
                                  fullscreen-layer
                                  tile-layer
                                  grabc grabcx
@@ -160,8 +161,8 @@
            (grabcy (inexact->exact
                     (round (- (.y cursor)
                               (box-y (client-geom c))))))
-           (wlr-xcursor-manager-set-cursor-image
-            (gwwm-xcursor-manager) "fleur" cursor)
+           (wlr-cursor-set-xcursor
+            cursor (gwwm-xcursor-manager) "fleur")
            (arrange (current-monitor)))
           ;; ((0) 'do-nothing)
           ((resize)
@@ -170,14 +171,16 @@
              (wlr-cursor-warp-closest cursor #f
                                       (+ x width)
                                       (+ y height)))
-           (wlr-xcursor-manager-set-cursor-image (gwwm-xcursor-manager)
-                                                 "bottom_right_corner" cursor)))))))
+           (wlr-cursor-set-xcursor
+            cursor
+            (gwwm-xcursor-manager)
+            "bottom_right_corner")))))))
 
 (define* (killclient #:optional (client (current-client)))
   (and=> client client-send-close))
 (define (chvt num)
   (wlr-session-change-vt
-   (wlr-backend-get-session ((@@ (gwwm) gwwm-backend)))
+   (gwwm-session)
    num))
 
 (define (gwwm-quit)

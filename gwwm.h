@@ -22,7 +22,7 @@
 #define LENGTH(X) (sizeof X / sizeof X[0])
 #define END(A) ((A) + LENGTH(A))
 #define TAGMASK ((1 << LENGTH(tags)) - 1)
-#define LISTEN(E, L, H) wl_signal_add((E), ((L)->notify = (H), (L)))
+
 typedef struct Client Client;
 enum {
   NetWMWindowTypeDialog,
@@ -65,7 +65,6 @@ void pointerfocus(SCM c, struct wlr_surface *surface, double sx, double sy,
 void quitsignal(int signo);
 void sigchld(int unused);
 void logout_monitor(SCM m);
-void virtualkeyboard(struct wl_listener *listener, void *data);
 SCM get_gwwm_config(void);
 #define GWWM_BORDERPX()                                                        \
   (scm_to_unsigned_integer(                                                    \

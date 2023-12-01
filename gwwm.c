@@ -1,25 +1,12 @@
 /*
  * See LICENSE file for copyright and license details.
  */
-#include "libguile/boolean.h"
-#include "libguile/eq.h"
-#include "libguile/eval.h"
-#include "libguile/foreign.h"
-#include "libguile/gc.h"
-#include "libguile/goops.h"
-#include "libguile/gsubr.h"
-#include "libguile/keywords.h"
-#include "libguile/list.h"
-#include "libguile/modules.h"
-#include "libguile/numbers.h"
-#include "libguile/scm.h"
-#include "libguile/symbols.h"
+#define _POSIX_C_SOURCE 200809L
 #include "wlr-layer-shell-unstable-v1-protocol.h"
 #include "wlr/util/box.h"
 #include <math.h>
 #include <stdbool.h>
 #include <stdint.h>
-#define _POSIX_C_SOURCE 200809L
 #include <getopt.h>
 #include <libinput.h>
 #include <limits.h>
@@ -43,7 +30,7 @@
 #include <wlr/types/wlr_data_device.h>
 #include <wlr/types/wlr_export_dmabuf_v1.h>
 #include <wlr/types/wlr_gamma_control_v1.h>
-#include <wlr/types/wlr_idle.h>
+#include <wlr/types/wlr_idle_notify_v1.h>
 #include <wlr/types/wlr_idle_inhibit_v1.h>
 #include <wlr/types/wlr_input_device.h>
 #include <wlr/types/wlr_input_inhibitor.h>
@@ -71,7 +58,6 @@
 #include "util.h"
 
 #include <X11/Xlib.h>
-#include <wlr/xwayland.h>
 #include "gwwm.h"
 #include "client.h"
 /* configuration, allows nested code to access above variables */
@@ -79,44 +65,10 @@
 
 const char broken[] = "broken";
 struct wlr_virtual_keyboard_manager_v1 *virtual_keyboard_mgr;
-Atom netatom[NetLast];
-Atom get_netatom_n(int n){
-  return netatom[n];
-};
 
 SCM get_gwwm_config(void) {
   return REF_CALL_0("gwwm","gwwm-config");
 }
-
-struct wl_listener new_virtual_keyboard = {.notify = virtualkeyboard};
-
-#define define_wlr_v(module ,v) struct wlr_ ##v * gwwm_##v          \
-  (struct wlr_##v* var)                                             \
-  {                                                                 \
-    SCM b;                                                          \
-    const char* m=module;                                           \
-    SCM v=scm_c_public_ref("gwwm", "gwwm-" #v);                     \
-    if (var) {                                                      \
-      b=scm_call_1(v,                              \
-                   (REF_CALL_1(m, "wrap-wlr-" #v, FROM_P(var))));   \
-      return var;                                                   \
-    } else {                                                        \
-      b=scm_call_0(v);                             \
-      return scm_is_false(b) ? NULL :                               \
-        ((struct wlr_ ##v *)                                        \
-         (TO_P(REF_CALL_1(m, "unwrap-wlr-" #v, b))));               \
-    }                                                               \
-}
-define_wlr_v("wlroots backend",backend);
-define_wlr_v("wlroots render allocator",allocator);
-define_wlr_v("wlroots render renderer",renderer);
-define_wlr_v("wlroots types idle",idle);
-define_wlr_v("wlroots types cursor",cursor);
-define_wlr_v("wlroots types seat",seat);
-define_wlr_v("wlroots types scene",scene);
-define_wlr_v("wlroots types compositor",compositor);
-define_wlr_v("wlroots xwayland",xwayland);
-#undef define_wlr_v
 
 struct wlr_xcursor_manager*
 gwwm_xcursor_manager(struct wlr_xcursor_manager *o) {
@@ -127,17 +79,6 @@ gwwm_xcursor_manager(struct wlr_xcursor_manager *o) {
   } else {
     d = REF_CALL_0("gwwm", "gwwm-xcursor-manager");
     return scm_is_false(d) ? NULL : UNWRAP_WLR_XCURSOR_MANAGER(d);
-  }
-}
-
-struct wl_display *gwwm_display(struct wl_display *display) {
-  SCM d;
-  if (display) {
-    d = REF_CALL_1("gwwm", "gwwm-display", WRAP_WL_DISPLAY(display));
-    return display;
-  } else {
-    d = REF_CALL_0("gwwm", "gwwm-display");
-    return scm_is_false(d) ? NULL : UNWRAP_WL_DISPLAY(d);
   }
 }
 
@@ -235,7 +176,7 @@ SCM_DEFINE(gwwm_outputmgrapplyortest,"output-manager-apply-or-test",2,0,0,
 					config_head->state.custom_mode.height,
 					config_head->state.custom_mode.refresh);
 
-		wlr_output_layout_move(gwwm_output_layout(NULL), wlr_output,
+		wlr_output_layout_add(gwwm_output_layout(NULL), wlr_output,
 				config_head->state.x, config_head->state.y);
 		wlr_output_set_transform(wlr_output, config_head->state.transform);
 		wlr_output_set_scale(wlr_output, config_head->state.scale);
@@ -272,80 +213,9 @@ SCM_DEFINE(gwwm_outputmgrapplyortest,"output-manager-apply-or-test",2,0,0,
     return SCM_UNSPECIFIED;
 }
 
-SCM_DEFINE (gwwm_setup,"%gwwm-setup" ,0,0,0,(),"")
-{
-	virtual_keyboard_mgr = wlr_virtual_keyboard_manager_v1_create(gwwm_display(NULL));
-	wl_signal_add(&virtual_keyboard_mgr->events.new_virtual_keyboard,
-			&new_virtual_keyboard);
-    return SCM_UNSPECIFIED;
-}
-
-void
-virtualkeyboard(struct wl_listener *listener, void *data)
-{
-  PRINT_FUNCTION
-	struct wlr_virtual_keyboard_v1 *keyboard = data;
-	struct wlr_input_device *device = &keyboard->keyboard.base;
-    scm_call_1(REFP("gwwm","create-keyboard"), WRAP_WLR_INPUT_DEVICE(device));
-}
-
-Atom
-getatom(xcb_connection_t *xc, const char *name)
-{
-  PRINT_FUNCTION
-	Atom atom = 0;
-	xcb_intern_atom_reply_t *reply;
-	xcb_intern_atom_cookie_t cookie = xcb_intern_atom(xc, 0, strlen(name), name);
-	if ((reply = xcb_intern_atom_reply(xc, cookie, NULL)))
-		atom = reply->atom;
-	free(reply);
-
-	return atom;
-}
-
-void
-xwaylandready(struct wl_listener *listener,void *data)
-{
-  PRINT_FUNCTION;
-  struct wlr_xcursor *xcursor;
-	xcb_connection_t *xc = xcb_connect(gwwm_xwayland(NULL)->display_name, NULL);
-	int err = xcb_connection_has_error(xc);
-	if (err) {
-		fprintf(stderr, "xcb_connect to X server failed with code %d\n. Continuing with degraded functionality.\n", err);
-		return;
-	}
-
-	/* Collect atoms we are interested in.  If getatom returns 0, we will
-	 * not detect that window type. */
-	netatom[NetWMWindowTypeDialog] = getatom(xc, "_NET_WM_WINDOW_TYPE_DIALOG");
-	netatom[NetWMWindowTypeSplash] = getatom(xc, "_NET_WM_WINDOW_TYPE_SPLASH");
-	netatom[NetWMWindowTypeToolbar] = getatom(xc, "_NET_WM_WINDOW_TYPE_TOOLBAR");
-	netatom[NetWMWindowTypeUtility] = getatom(xc, "_NET_WM_WINDOW_TYPE_UTILITY");
-
-	/* assign the one and only seat */
-	wlr_xwayland_set_seat(gwwm_xwayland(NULL), gwwm_seat(NULL));
-
-	/* Set the default XWayland cursor to match the rest of dwl. */
-	if ((xcursor = wlr_xcursor_manager_get_xcursor(gwwm_xcursor_manager(NULL), GWWM_CURSOR_NORMAL_IMAGE(), 1)))
-		wlr_xwayland_set_cursor(gwwm_xwayland(NULL),
-				xcursor->images[0]->buffer, xcursor->images[0]->width * 4,
-				xcursor->images[0]->width, xcursor->images[0]->height,
-				xcursor->images[0]->hotspot_x, xcursor->images[0]->hotspot_y);
-
-	xcb_disconnect(xc);
-    return;
-}
-
 void
 scm_init_gwwm(void)
 {
-#define define_listener(name,scm_name,func) struct wl_listener *name=   \
-    scm_gc_calloc(sizeof(struct wl_listener),                           \
-                  "wl_listener");                                       \
-  name->notify = func;                                                  \
-  scm_c_define(scm_name, (WRAP_WL_LISTENER(name)));
-  define_listener(xwayland_ready,"xwaylandready",xwaylandready);
-#undef define_listener
 #ifndef SCM_MAGIC_SNARFER
 #include "gwwm.x"
 #endif
