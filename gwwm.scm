@@ -781,10 +781,10 @@ gwwm [OPTION]
                                  (.node scene)
                                  (inexact->exact
                                   (round (+ (.x (gwwm-cursor))
-                                            (.sx (.surface icon)))))
+                                            (.dx (.current (.surface icon))))))
                                  (inexact->exact
                                   (round (+ (.y (gwwm-cursor))
-                                            (.sy (.surface icon)))))))))
+                                            (.dy (.current (.surface icon))))))))))
 
                     (add-hook! motion-notify-hook drag-move)
                     (motionnotify)
@@ -984,7 +984,7 @@ gwwm [OPTION]
   (gwwm-activation (wlr-xdg-activation-v1-create (gwwm-display)))
   (add-listen (gwwm-activation) 'request-activate
               (lambda (listener event)
-                (let* ((c (client-from-wlr-surface (.surface event))))
+                (and-let* ((c (client-from-wlr-surface (.surface event))))
                   (unless (equal? c (current-client))
                     (set! (client-urgent? c) #t)))))
   (gwwm-layer-shell (wlr-layer-shell-v1-create (gwwm-display) 4))
