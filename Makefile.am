@@ -11,7 +11,6 @@ libgwwm_la_SOURCES= %D%/gwwm.c \
 					%D%/client.h \
 					%D%/client.c \
 					%D%/buffer.c \
-					%D%/config.h \
 					%D%/util.h \
 					%D%/util.c \
 					%D%/config.h

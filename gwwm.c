@@ -57,30 +57,9 @@
 #include <xkbcommon/xkbcommon.h>
 #include "util.h"
 
-#include <X11/Xlib.h>
 #include "gwwm.h"
 #include "client.h"
 /* configuration, allows nested code to access above variables */
-#include "config.h"
-
-const char broken[] = "broken";
-struct wlr_virtual_keyboard_manager_v1 *virtual_keyboard_mgr;
-
-SCM get_gwwm_config(void) {
-  return REF_CALL_0("gwwm","gwwm-config");
-}
-
-struct wlr_xcursor_manager*
-gwwm_xcursor_manager(struct wlr_xcursor_manager *o) {
-  SCM d;
-  if (o) {
-    d = REF_CALL_1("gwwm", "gwwm-xcursor-manager", WRAP_WLR_XCURSOR_MANAGER(o));
-    return o;
-  } else {
-    d = REF_CALL_0("gwwm", "gwwm-xcursor-manager");
-    return scm_is_false(d) ? NULL : UNWRAP_WLR_XCURSOR_MANAGER(d);
-  }
-}
 
 struct wlr_output_layout*
 gwwm_output_layout(struct wlr_output_layout *o) {

@@ -1087,8 +1087,6 @@ gwwm [OPTION]
   (motionnotify)
   (send-log DEBUG "layer client unmap" 'client c))
 
-
-
 (define (render-monitor listener output)
   (and-let* ((m (wlr-output->monitor output))
              (scene-output (monitor-scene-output m)))

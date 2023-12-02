@@ -37,17 +37,6 @@ SCM_DEFINE (gwwm_client_is_float_type_p,"client-is-float-type?",1,0,0,
 }
 #undef FUNC_NAME
 
-struct wlr_surface *client_surface_at(SCM c, double cx, double cy,
-                                      double *sx, double *sy) {
-  return wlr_xdg_surface_surface_at(
-      wlr_xdg_surface_from_wlr_surface(
-          (scm_to_pointer((scm_call_1(
-              (scm_c_public_ref("wlroots types surface", "unwrap-wlr-surface")),
-              (scm_call_1((scm_c_public_ref("gwwm client", "client-surface")),
-                          c))))))),
-      cx, cy, sx, sy);
-}
-
 void
 scm_init_gwwm_client(void)
 {
