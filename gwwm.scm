@@ -864,20 +864,12 @@ gwwm [OPTION]
             (cond ((wlr-output-is-wl wlr-output)
                    (wlr-wl-output-set-title wlr-output "gwwm/wayland")))
             (q-push! (%monitors) m)
-
-
-            ;; wlr-scene-output-layout-add-output
-            ;; This scene-output can get because 'wlr-scene-attach-output-layout'
-          ;;; create it.
             (let ((lo (wlr-output-layout-add-auto (gwwm-output-layout) wlr-output))
-                  (scene-output (wlr-scene-output-create (gwwm-scene) wlr-output)
-
-                                ))
+                  (scene-output (wlr-scene-output-create (gwwm-scene) wlr-output)))
 
               (wlr-scene-output-layout-add-output
                (gwwm-scene-output-layout)
                lo
-                                        ;(wlr-scene-get-scene-output (gwwm-scene) wlr-output)
                scene-output)
               (set! (monitor-scene-output m) scene-output)
               (add-listen scene-output 'destroy
@@ -898,7 +890,7 @@ gwwm [OPTION]
     (case (.type device)
       ((WLR_INPUT_DEVICE_KEYBOARD)
        (create-keyboard device)
-       (unless (zero? (length (keyboard-list)))
+       (unless (null? (keyboard-list))
 
          (add-seat-capabilitie
           (gwwm-seat)
