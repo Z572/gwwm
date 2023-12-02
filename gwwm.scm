@@ -870,12 +870,12 @@ gwwm [OPTION]
               (add-listen scene-output 'destroy
                           (lambda _ (set! (monitor-scene-output m) #f))))
 
-            (add-listen (monitor-output m) 'frame (render-monitor m))
+            (add-listen (monitor-output m) 'frame render-monitor)
             (add-listen (monitor-output m) 'request-state
                         (lambda (listener event)
                           (send-log INFO "request-state")
                           (wlr-output-commit-state wlr-output (.state event))))
-            (add-listen (monitor-output m) 'destroy (cleanup-monitor m))
+            (add-listen (monitor-output m) 'destroy cleanup-monitor)
             (wlr-output-commit-state wlr-output  state)
             (run-hook create-monitor-hook m)
             (wlr-output-state-finish state)))
@@ -934,6 +934,7 @@ gwwm [OPTION]
     ((1) bottom-layer)
     ((2) top-layer)
     ((3) overlay-layer)))
+
 (define (gwwm-setup)
   (gwwm-display (wl-display-create))
   (backend-setup (gwwm-display))
@@ -1063,9 +1064,10 @@ gwwm [OPTION]
   (motionnotify))
 (define ((unmap-layer-client-notify c) listener data)
   (send-log DEBUG "layer client unmap" 'client c)
-  (when (equal? (client-surface c) (exclusive-focus))
+  (define surface (client-surface c))
+  (when (equal? surface (exclusive-focus))
     (exclusive-focus #f))
-  (when (equal? (client-surface c)
+  (when (equal? surface
                 (.focused-surface
                  (.keyboard-state (gwwm-seat))))
     (focusclient (current-client) #f))
@@ -1074,15 +1076,16 @@ gwwm [OPTION]
 
 
 
-(define ((render-monitor m) listener data)
-  (and-let* ((output (monitor-output m))
-             ((.enabled output))
+(define (render-monitor listener output)
+  (and-let* ((m (wlr-output->monitor output))
              (scene-output (monitor-scene-output m)))
     (let ((_ now (clock-gettime 1)))
       (when (wlr-scene-output-commit scene-output)
         (wlr-scene-output-send-frame-done scene-output now)))))
 
-(define ((cleanup-monitor m) listener data)
+(define (cleanup-monitor listener wlr-output)
+  (assert (wlr-output? wlr-output))
+  (define m (wlr-output->monitor wlr-output))
   (q-remove! (%monitors) m)
   (wlr-output-layout-remove (gwwm-output-layout) (monitor-output m))
   (set! (monitor-scene-output m) #f)
