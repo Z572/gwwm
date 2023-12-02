@@ -1003,7 +1003,7 @@ gwwm [OPTION]
   (add-hook! keypress-event-hook idle-activity)
   (add-hook! client-set-monitor-hook
              (lambda (c old new)
-               (when new
+               (when (and new (not (is-a? c <gwwm-layer-client>)))
                  (set! (client-tags c)
                        (or (and=> (client-get-parent c) client-tags)
                            (list-ref (slot-ref new 'tagset)
