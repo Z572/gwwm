@@ -7,7 +7,7 @@
  (guix transformations))
 
 (concatenate-manifests (list (specifications->manifest
-                              (list "gdb" "guile:debug"))
+                              (list "bear" "gdb" "guile:debug"))
 
                              (package->development-manifest
                               (primitive-load (string-append (dirname (current-filename))"/guix.scm") ))))
