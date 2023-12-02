@@ -94,21 +94,6 @@ gwwm_output_layout(struct wlr_output_layout *o) {
   }
 }
 
-SCM_DEFINE (init_output,"init-output",1,0,0,(SCM swlr_output),"")
-{
-  struct wlr_output *wlr_output=UNWRAP_WLR_OUTPUT(swlr_output);
-  const MonitorRule *r;
-  for (r = monrules; r < END(monrules); r++) {
-    if (!r->name || strstr(wlr_output->name, r->name)) {
-      wlr_output_set_scale(wlr_output, r->scale);
-      wlr_xcursor_manager_load(gwwm_xcursor_manager(NULL), r->scale);
-      wlr_output_set_transform(wlr_output, r->rr);
-      break;
-    }
-  }
-  return SCM_UNSPECIFIED;
-}
-
 SCM_DEFINE (gwwm_focusmon ,"focusmon",1,0,0,(SCM a),"" )
 #define FUNC_NAME s_gwwm_focusmon
 {

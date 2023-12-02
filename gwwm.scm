@@ -826,6 +826,18 @@ gwwm [OPTION]
       (libinput-device-config-accel-set-profile libinput-device 'LIBINPUT_CONFIG_ACCEL_PROFILE_ADAPTIVE)
       (libinput-device-config-accel-set-speed libinput-device 0.0)))
   (wlr-cursor-attach-input-device (gwwm-cursor) device))
+
+(define (init-monitor m)
+  (assert (is-a? m <gwwm-monitor>))
+  (let* ((name (monitor-name m))
+         (rule (or (find (lambda (x) (equal? x name)) (monitor-rules))
+                   (default-monitor-rules)))
+         (output (monitor-output m))
+         (scale (.scale rule)))
+    (wlr-output-set-scale output scale)
+    (wlr-xcursor-manager-load (gwwm-xcursor-manager) scale)
+    (wlr-output-set-transform output (.reflect rule))))
+
 (define (backend-setup display)
   (define (add-seat-capabilitie seat o)
     (wlr-seat-set-capabilities seat
@@ -837,7 +849,8 @@ gwwm [OPTION]
                 #:wlr-output wlr-output
                 #:layouts (make-list 2 tile-layout))))
       (set! (wlr-output->monitor wlr-output) m)
-      (init-output wlr-output)
+      (init-monitor m)
+
       (when (wlr-output-init-render wlr-output (gwwm-allocator) (gwwm-renderer))
         (wlr-output-set-mode wlr-output (wlr-output-preferred-mode wlr-output))
         (wlr-output-enable wlr-output #t)

@@ -14,7 +14,12 @@
             make-xkb-rules
             get-option-value*
             get-option-value
-            get-option-default-value*)
+            get-option-default-value*
+            .name
+            .mfact
+            .nmaster
+            .scale
+            .reflect)
   #:export-syntax (define-config-option))
 
 (define-once %config-options (make-object-property))
@@ -68,6 +73,25 @@
     (if o
         (right (get-keyword #:default-value o))
         (left (simple-format #f "option `~a' no exits." name)))))
+
+(define-class <monitor-rule> ()
+  (name #:init-value #f
+        #:init-keyword #:name #:getter .name)
+  (mfact #:init-value 0.55
+         #:init-keyword #:mfact #:getter .mfact)
+  (nmaster #:init-value 1
+           #:init-keyword #:nmaster #:getter .nmaster)
+  (scale #:init-value 1
+         #:init-keyword #:scale #:getter .scale)
+  (reflect #:init-value 'WL_OUTPUT_TRANSFORM_NORMAL
+           #:init-keyword #:reflect #:getter .reflect))
+
+(define-config-option monitor-rules
+  (list)
+  "")
+(define-config-option default-monitor-rules
+  (make <monitor-rule>)
+  "")
 
 (define-config-option enable-xwayland? #f
   "if set to #t, enable xwayland.")
