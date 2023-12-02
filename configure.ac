@@ -47,7 +47,7 @@ AC_SUBST([XCB_LIBDIR])
 GUILE_MODULE_REQUIRED([bytestructures guile])
 GUILE_MODULE_REQUIRED([srfi srfi-189])
 GUILE_MODULE_REQUIRED([libinput])
-GUILE_MODULE_REQUIRED([wayland])
+GUILE_MODULE_REQUIRED([wayland server display])
 GUILE_MODULE_REQUIRED([wlroots])
 GUILE_MODULE_REQUIRED([util572 color])
 
