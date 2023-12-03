@@ -1076,6 +1076,7 @@ gwwm [OPTION]
                 (.focused-surface
                  (.keyboard-state (gwwm-seat))))
     (focusclient (current-client) #f))
+  (arrangelayers (client-monitor c))
   (motionnotify)
   (send-log DEBUG "layer client unmap" 'client c))
 
