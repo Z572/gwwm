@@ -16,9 +16,11 @@
     (send-log DEBUG "listener added" 'object obj 'event symbol)
     (wl-signal-add (get-event-signal obj symbol) listener)
     (when remove-when-destroy?
-      (wl-signal-add
-       (get-event-signal destroy-when 'destroy)
-       (make-wl-listener
-        (lambda _
-          (send-log DEBUG "listener removed" 'object obj 'event symbol)
-          (wl-listener-remove listener)))))))
+      (letrec ((remove-listener
+                (make-wl-listener
+                 (lambda _
+                   (send-log DEBUG "listener removed" 'object obj 'event symbol)
+                   (wl-listener-remove listener)
+                   (wl-listener-remove remove-listener)))))
+        (wl-signal-add
+         (get-event-signal destroy-when 'destroy) remove-listener)))))
