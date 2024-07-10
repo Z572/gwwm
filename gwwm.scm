@@ -83,6 +83,7 @@
   #:use-module (gwwm utils srfi-215)
   #:use-module (gwwm utils)
   #:use-module (ice-9 eval-string)
+  #:use-module (ice-9 suspendable-ports)
   #:duplicates (merge-accessors merge-generics replace warn-override-core warn last)
   #:export (main keymap-global-set
 
@@ -1191,6 +1192,7 @@ gwwm [OPTION]
 (define (main . args)
   (setlocale LC_ALL)
   (textdomain %gettext-domain)
+  (install-suspendable-ports!)
   (set-log-callback)
   (add-hook! create-client-hook
              (lambda (c)
