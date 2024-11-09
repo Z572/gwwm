@@ -42,7 +42,11 @@ If you use guix:
   git clone https://github.com/Z572/guile-wlroots
   git clone https://github.com/Z572/util572
   cd gwwm
-  guix shell -D -f guix.scm
+  guix time-machine --channels=channels-lock.scm -- shell -D -f guix.scm
+  autoreconf -fiv
+  ./configure
+  make -j
+  make run
 #+end_src
 
 * configure

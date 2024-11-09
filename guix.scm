@@ -1,4 +1,6 @@
 (use-modules
+ (guile-wayland packages guile-wayland)
+ (guile-wayland packages guile-xyz)
  (guix utils) (guix packages)
  ((guix licenses) #:prefix license:)
  (gnu packages xorg)
@@ -25,11 +27,6 @@
 
 (define %srcdir
   (dirname (current-filename)))
-
-(define guile-wlroots
-  (primitive-load
-   (string-append (dirname (dirname (current-filename)))
-                  "/guile-wlroots/guix.scm")))
 
 (define-public gwwm
   (package
@@ -71,7 +68,7 @@
                                      '("guile-wayland"
                                        "guile-wlroots"
                                        "guile-bytestructures"
-                                       "util572"
+                                       "guile-util572"
                                        "guile-srfi-189"
                                        "guile-srfi-145"
                                        "guile-xkbcommon"
@@ -106,7 +103,7 @@
                   guile-srfi-145
                   guile-wlroots
                   (lookup-package-input guile-wlroots "wlroots")
-                  (lookup-package-input guile-wlroots "util572")
+                  (lookup-package-input guile-wlroots "guile-util572")
                   (lookup-package-input guile-wlroots "guile-xkbcommon")
                   (lookup-package-input guile-wlroots "guile-libinput")
                   (lookup-package-input guile-wlroots "guile-wayland")))
