@@ -73,6 +73,7 @@
                                        "guile-bytestructures"
                                        "util572"
                                        "guile-srfi-189"
+                                       "guile-srfi-145"
                                        "guile-xkbcommon"
                                        "guile-libinput")))
                           (effective (target-guile-effective-version))
@@ -102,6 +103,7 @@
                   guile-cairo
                   guile-bytestructures
                   guile-srfi-189
+                  guile-srfi-145
                   guile-wlroots
                   (lookup-package-input guile-wlroots "wlroots")
                   (lookup-package-input guile-wlroots "util572")
