@@ -100,7 +100,6 @@ SCM_DEFINE(set_cairo_buffer_base, "set-cairo-buffer-base!", 2, 0, 0,
   return SCM_UNSPECIFIED;
 }
 void scm_init_gwwm_buffer(void) {
-  scm_make_foreign_object_type
 #ifndef SCM_MAGIC_SNARFER
 #include "buffer.x"
 #endif
