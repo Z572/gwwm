@@ -125,6 +125,9 @@
        (and-map (lambda (v) (v c m))
                 visibleon-functions)))
 
+(define-class <destroyed-client> ()
+  #:metaclass <redefinable-class>)
+
 (define-class <gwwm-base-client> ()
   (geom #:accessor client-geom
         #:init-thunk (lambda ()
@@ -144,8 +147,13 @@
          #:accessor client-scene
          #:setter client-set-scene!
          #:init-keyword #:scene)
-  (alive? #:init-value #t #:accessor client-alive?)
   #:metaclass <redefinable-class>)
+
+(define-method (client-alive? (o <gwwm-base-client>))
+  #t)
+
+(define-method (client-alive? (o <destroyed-client>))
+  #f)
 
 (define-class <gwwm-client> (<gwwm-base-client>)
   (appid #:accessor client-appid)
@@ -464,14 +472,14 @@
   (lambda (listener data)
     (send-log DEBUG "client destroy" 'client c)
     (run-hook client-destroy-hook c)
-    ;; mark it destroyed.
-    (set! (client-alive? c) #f)))
+    ;; make it destroyed.
+    (change-class c <destroyed-client>)))
 
 (define-method (client-destroy-notify (c <gwwm-client>))
   (let ((next (next-method c)))
     (lambda (listener data)
-      (next listener data)
-      (set! (client-scene c) #f))))
+      (set! (client-scene c) #f)
+      (next listener data))))
 
 (define-method (client-destroy-notify (c <gwwm-layer-client>))
   (let ((next (next-method c)))
@@ -479,9 +487,8 @@
       (q-remove! (%layer-clients) c)
       (for-each (cut q-remove! <> c)
                 (slot-ref (client-monitor c) 'layers))
-      (next listener data)
-      (and=> (client-monitor c) arrangelayers))))
-
+      (and=> (client-monitor c) arrangelayers)
+      (next listener data))))
 
 (define-method (client-set-title-notify (c <gwwm-client>))
   (lambda (listener data)
