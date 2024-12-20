@@ -211,7 +211,7 @@ gwwm [OPTION]
 (define-once global-keymap
   (make-parameter (make-keymap)))
 (define (setup-server)
-  (or (false-if-exception (and (spawn-server (make-unix-domain-server-socket))
+  (or (false-if-exception (and (spawn-server)
                                (add-hook! gwwm-cleanup-hook stop-server-and-clients! )))
       (send-log DEBUG (G_ "repl setup fail."))))
 ;; (primitive-load-path "gwwm/startup.scm")
