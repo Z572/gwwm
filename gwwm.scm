@@ -63,6 +63,7 @@
   #:use-module (wlroots types xdg-output)
   #:use-module (wlroots types xdg-decoration)
   #:use-module (wlroots types xdg-shell)
+  #:use-module (wlroots types buffer)
   #:use-module (wlroots types)
   #:use-module (wlroots util box)
   #:use-module (gwwm client)
@@ -86,6 +87,20 @@
   #:use-module (ice-9 eval-string)
   #:use-module (ice-9 suspendable-ports)
   #:duplicates (merge-accessors merge-generics replace warn-override-core warn last)
+
+  #:use-module  (gwwm buffer)
+  #:autoload  (cairo) (cairo-buffer-create
+                       cairo-buffer-cairo
+                       cairo-get-target
+                       cairo-select-font-face
+                       cairo-set-font-size
+                       cairo-set-source-rgba
+                       cairo-set-fill-rule
+                       cairo-move-to
+                       cairo-show-text
+                       cairo-fill
+                       cairo-surface-flush)
+
   #:export (main keymap-global-set
 
                  background-layer
@@ -884,6 +899,28 @@ gwwm [OPTION]
                           (wlr-output-commit-state wlr-output (.state event))))
             (add-listen (monitor-output m) 'destroy cleanup-monitor)
             (wlr-output-commit-state wlr-output  state)
+            (when (getenv "GWWM_DEBUG")
+              (let* ((buf (cairo-buffer-create 120 58))
+                     (cr (cairo-buffer-cairo buf))
+                     (target (cairo-get-target cr)))
+                (cairo-select-font-face cr "" 'normal 'bold)
+                (cairo-set-font-size cr 24)
+                (cairo-set-source-rgba cr 1.0 0.0 0.0 0.8)
+                (cairo-set-fill-rule cr 'winding)
+                (cairo-move-to cr 5 24)
+                (cairo-show-text cr (monitor-name m))
+                (cairo-fill cr)
+                (cairo-surface-flush target)
+                (letrec* ((buffer (wlr-scene-buffer-create
+                                   overlay-layer
+                                   (cairo-buffer-base buf)))
+                          (node (.node buffer))
+                          (listener (make-wl-listener
+                                     (lambda _
+                                       (wlr-buffer-drop (cairo-buffer-base buf))
+                                       (wl-listener-remove listener)))))
+                  (wl-signal-add (get-event-signal node 'destroy)
+                                 listener))))
             (run-hook create-monitor-hook m)
             (wlr-output-state-finish state)))
         )))

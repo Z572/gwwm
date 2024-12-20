@@ -111,7 +111,7 @@ GUILE_WARNINGS =                                          \
 	$(AM_V_GEN)$(top_builddir)/pre-inst-env $(GUILE_TOOLS) compile $(GUILE_TARGET) $(GUILE_WARNINGS) -o "$@" "$<"
 .PHONY: run
 run: all
-	exec $(top_builddir)/pre-inst-env $(top_srcdir)/bin/gwwm
+	GWWM_DEBUG=1 exec $(top_builddir)/pre-inst-env $(top_srcdir)/bin/gwwm
 
 TESTS = tests/config.scm tests/keymap.scm tests/utils.scm tests/utils/ref.scm
 TEST_EXTENSIONS = .scm
@@ -125,4 +125,4 @@ AM_TESTS_ENVIRONMENT = abs_top_srcdir="$(abs_top_srcdir)"
 CLEANFILES += $(TESTS:tests/%.scm=%.log)
 
 gdb: all
-	exec $(top_builddir)/pre-inst-env gdb guile -ex "run $(top_builddir)/bin/gwwm"
+	GWWM_DEBUG=1 exec $(top_builddir)/pre-inst-env gdb guile -ex "run $(top_builddir)/bin/gwwm"
