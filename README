@@ -19,12 +19,10 @@ you need
 - [[https://github.com/Z572/guile-libinput][guile-libinput]]
 - [[https://github.com/scheme-requests-for-implementation/srfi-189][srfi-189]]
 - [[https://github.com/Z572/util572][util572]]
+- [[https://www.nongnu.org/guile-cairo/][guile-cairo]]
 - pkg-config
 - texinfo
 - wlroots
-
-optional:
-- [[https://www.nongnu.org/guile-cairo/][guile-cairo]]
 
 #+begin_src sh
   autoreconf -fiv

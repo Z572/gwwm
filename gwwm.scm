@@ -89,17 +89,7 @@
   #:duplicates (merge-accessors merge-generics replace warn-override-core warn last)
 
   #:use-module  (gwwm buffer)
-  #:autoload  (cairo) (cairo-buffer-create
-                       cairo-buffer-cairo
-                       cairo-get-target
-                       cairo-select-font-face
-                       cairo-set-font-size
-                       cairo-set-source-rgba
-                       cairo-set-fill-rule
-                       cairo-move-to
-                       cairo-show-text
-                       cairo-fill
-                       cairo-surface-flush)
+  #:use-module  (cairo)
 
   #:export (main keymap-global-set
 
