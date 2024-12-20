@@ -68,9 +68,11 @@
                                      '("guile-wayland"
                                        "guile-wlroots"
                                        "guile-bytestructures"
+                                       "guile-bytestructure-class"
                                        "guile-util572"
                                        "guile-srfi-189"
                                        "guile-srfi-145"
+                                       "guile-cairo"
                                        "guile-xkbcommon"
                                        "guile-libinput")))
                           (effective (target-guile-effective-version))
@@ -99,14 +101,15 @@
     (inputs (list guile-3.0-latest
                   guile-cairo
                   guile-bytestructures
+                  guile-bytestructure-class
                   guile-srfi-189
                   guile-srfi-145
                   guile-wlroots
-                  (lookup-package-input guile-wlroots "wlroots")
-                  (lookup-package-input guile-wlroots "guile-util572")
-                  (lookup-package-input guile-wlroots "guile-xkbcommon")
-                  (lookup-package-input guile-wlroots "guile-libinput")
-                  (lookup-package-input guile-wlroots "guile-wayland")))
+                  wlroots-0.17
+                  guile-util572
+                  guile-xkbcommon
+                  guile-libinput
+                  guile-wayland))
     (synopsis "")
     (description "")
     (home-page "")
