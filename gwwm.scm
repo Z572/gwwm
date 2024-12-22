@@ -867,7 +867,11 @@ gwwm [OPTION]
           (wlr-output-state-set-adaptive-sync-enabled state #t)
           (unless (wlr-output-test-state wlr-output state)
             (send-log INFO "enable adaptive-sync fail" 'monitor m))
-          (when (wlr-output-commit-state wlr-output state)
+          (begin
+            (unless (wlr-output-commit-state wlr-output state)
+              (send-log WARNING "wlr-output-commit-state fail!"
+                        'monitor m
+                        'state state))
             (cond ((wlr-output-is-wl wlr-output)
                    (wlr-wl-output-set-title wlr-output "gwwm/wayland")))
             (q-push! (%monitors) m)
@@ -912,8 +916,7 @@ gwwm [OPTION]
                   (wl-signal-add (get-event-signal node 'destroy)
                                  listener))))
             (run-hook create-monitor-hook m)
-            (wlr-output-state-finish state)))
-        )))
+            (wlr-output-state-finish state))))))
 
   (define (backend/new-input listener device)
     (case (.type device)
