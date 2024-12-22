@@ -1321,8 +1321,12 @@ gwwm [OPTION]
   (setvbuf (current-error-port) 'line)
   (gwwm-setup)
   (scene-setup (gwwm-display) (gwwm-backend))
-  (sigaction SIGINT (lambda _ (gwwm-quit)))
-  (sigaction SIGTERM (lambda _ (gwwm-quit)))
+  (sigaction SIGINT (lambda _
+                      (send-log INFO "get SIGINT")
+                      (gwwm-quit)))
+  (sigaction SIGTERM (lambda _
+                       (send-log INFO "get SIGTERM")
+                       (gwwm-quit)))
   (wlr-export-dmabuf-manager-v1-create (gwwm-display))
   (wlr-xdg-decoration-manager-v1-create (gwwm-display))
   (wlr-gamma-control-manager-v1-create (gwwm-display))
