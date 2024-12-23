@@ -863,7 +863,7 @@ gwwm [OPTION]
         (let ((state (make <wlr-output-state>))
               (preferred-mode (wlr-output-preferred-mode wlr-output)))
           (wlr-output-state-set-mode state preferred-mode)
-          (unless #f ;(wlr-output-test-state wlr-output state)
+          (unless (wlr-output-test-state wlr-output state)
             (send-log DEBUG "preferred mode rejected, try fallback to another mode"
                       'mode
                       preferred-mode)
