@@ -859,9 +859,26 @@ gwwm [OPTION]
       (init-monitor m)
 
       (when (wlr-output-init-render wlr-output (gwwm-allocator) (gwwm-renderer))
-        (wlr-output-set-mode wlr-output (wlr-output-preferred-mode wlr-output))
-        (wlr-output-enable wlr-output #t)
-        (let ((state (make <wlr-output-state>)))
+
+        (let ((state (make <wlr-output-state>))
+              (preferred-mode (wlr-output-preferred-mode wlr-output)))
+          (wlr-output-state-set-mode state preferred-mode)
+          (unless #f ;(wlr-output-test-state wlr-output state)
+            (send-log DEBUG "preferred mode rejected, try fallback to another mode"
+                      'mode
+                      preferred-mode)
+            (let ((success (find (lambda (mode)
+                                   (unless (equal? mode preferred-mode)
+                                     (wlr-output-state-set-mode state mode)
+                                     (wlr-output-test-state wlr-output state)))
+                                 (wl-list->list (.modes wlr-output)
+                                                <wlr-output-mode>
+                                                'link))))
+              (apply send-log DEBUG
+                     (if success
+                         (list "fallback to" 'mode success)
+                         (list "fallback fail!")))))
+          (wlr-output-commit-state wlr-output state)
           (wlr-output-state-set-enabled state #t)
           (send-log INFO "enable adaptive-sync" 'monitor m)
           (wlr-output-state-set-adaptive-sync-enabled state #t)
