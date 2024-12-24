@@ -8,8 +8,6 @@ lib_LTLIBRARIES= libgwwm.la
 # bin_PROGRAMS= gwwm
 libgwwm_la_SOURCES= %D%/gwwm.c \
 					%D%/gwwm.h \
-					%D%/client.h \
-					%D%/client.c \
 					%D%/buffer.c \
 					%D%/util.h \
 					%D%/util.c \

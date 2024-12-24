@@ -58,7 +58,6 @@
 #include "util.h"
 
 #include "gwwm.h"
-#include "client.h"
 /* configuration, allows nested code to access above variables */
 
 struct wlr_output_layout*

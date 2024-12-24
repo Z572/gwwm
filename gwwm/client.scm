@@ -108,8 +108,15 @@
      (if (q? o) o
          (error "not a q! ~A" o)))))
 
-(eval-when (expand load eval)
-  (load-extension "libgwwm" "scm_init_gwwm_client"))
+(define (client-is-float-type? client)
+  (let ((max min (client-get-size-hints client)))
+    (or (and (or (> (box-width min) 0)
+                 (> (box-height min) 0)
+                 (> (box-width max) 0)
+                 (> (box-height max) 0))
+             (or (= (box-width min) (box-width max))
+                 (= (box-height min) (box-height max))))
+        (.parent (wlr-xdg-surface-toplevel (client-super-surface client))))))
 
 (define-method (client-set-border-color c (color <rgba-color>))
   #t)

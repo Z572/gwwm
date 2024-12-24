@@ -1,6 +1,5 @@
 #ifndef GWWM_H
 #define GWWM_H
-#include "client.h"
 #include "util.h"
 #include <X11/Xlib.h>
 #include <libguile.h>
