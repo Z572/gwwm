@@ -28,7 +28,7 @@ $(SOURCES): $(lib_LTLIBRARIES)
 	guile-snarf -o $@ $< $(snarfcppopts)
 CLEANFILES = %D%/*.x $(protocols_h)
 
-BUILT_SOURCES = %D%/gwwm.x %D%/client.x %D%/buffer.x $(protocols_h) \
+BUILT_SOURCES = %D%/gwwm.x %D%/buffer.x $(protocols_h) \
  $(c_sources)
 xdg-shell-protocol.h:
 	$(AM_V_GEN) $(WAYLAND_SCANNER) server-header \
