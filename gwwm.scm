@@ -30,6 +30,7 @@
   #:use-module ((wlroots types scene) #:hide (.state))
   #:use-module (wlroots backend libinput)
   #:use-module (wlroots backend wayland)
+  #:use-module (wlroots backend multi)
   #:use-module (wlroots backend)
   #:use-module (wlroots types gamma-control)
   #:use-module (wlroots render allocator)
@@ -966,6 +967,11 @@ gwwm [OPTION]
     (unless backend
       (send-log ERROR (G_ "gwwm Couldn't create backend"))
       (exit 1))
+    (when (and (getenv "GWWM_DEBUG") (wlr-backend-is-multi backend))
+      (wlr-multi-for-each-backend
+       backend (lambda (backend)
+                 (cond ((wlr-backend-is-wl backend)
+                        (wlr-wl-output-create backend))))))
     (and=> backend gwwm-backend)
     (and=> session gwwm-session)
     (add-listen backend 'new-input backend/new-input)
