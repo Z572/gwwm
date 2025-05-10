@@ -971,6 +971,49 @@ gwwm [OPTION]
     (add-listen backend 'new-input backend/new-input)
     (add-listen backend 'new-output backend/new-output)))
 
+(define-syntax-rule (begin0 body0 body ...)
+  (let ((a body0))
+    body
+    ...
+    a))
+
+(define (output-manager-apply-or-test config test?)
+  (let ((heads (wl-list->list (.heads config)
+                              <wlr-output-configuration-head-v1>
+                              'link)))
+    (if (every (lambda (obj)
+                 (let* ((state (.state obj))
+                        (output (.output state))
+                        (mode (.mode state))
+                        (is-output (.enabled state))
+                        (scale (.scale state)))
+                   (wlr-output-enable output is-output)
+                   (if is-output
+                       (wlr-output-layout-add (gwwm-output-layout)
+                                              output
+                                              (.x state)
+                                              (.y state))
+                       (wlr-output-layout-remove (gwwm-output-layout)
+                                                 output))
+                   (if mode
+                       (wlr-output-set-mode output mode)
+                       (send-log
+                        WARNING
+                        (G_ "for now, not support custom mode" )))
+                   (wlr-output-set-transform output (.transform state))
+                   (when (> scale 0)
+                     (wlr-output-set-scale output scale))
+                   (if test?
+                       (begin0
+                        (wlr-output-test output)
+                        (wlr-output-rollback output))
+                       (wlr-output-commit output))))
+               heads)
+        (wlr-output-configuration-v1-send-succeeded config)
+        (wlr-output-configuration-v1-send-failed config))
+    )
+
+  (wlr-output-configuration-v1-destroy config))
 (define (output-manager-setup display)
   (let ((output-manager (gwwm-output-manager (wlr-output-manager-v1-create display))))
 
