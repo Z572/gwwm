@@ -932,7 +932,11 @@ gwwm [OPTION]
                                        (wlr-buffer-drop (cairo-buffer-base buf))
                                        (wl-listener-remove listener)))))
                   (wl-signal-add (get-event-signal node 'destroy)
-                                 listener))))
+                                 listener)
+                  (let ((area (monitor-window-area m)))
+                    (wlr-scene-node-set-position node
+                                                 (box-x area)
+                                                 (box-y area))))))
             (run-hook create-monitor-hook m)
             (wlr-output-state-finish state))))))
 
