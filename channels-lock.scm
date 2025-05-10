@@ -3,7 +3,7 @@
         (url "https://codeberg.org/guix/guix-mirror")
         (branch "master")
         (commit
-          "30fdffc4b5605431b28a23b03330e850b2184a76")
+          "ede407920553f5d1ec58944db949ae13e94c6c56")
         (introduction
           (make-channel-introduction
             "9edb3f66fd807b096b48283debdcddccfea34bad"
@@ -14,4 +14,8 @@
         (url "https://github.com/guile-wayland/channel")
         (branch "master")
         (commit
-          "f294222313a5d38d938a02a6108baf118b63fdb6")))
+          "777adcc7f61294a320f089a3d45b0d9ca41c1d89")))
+
+;; Local Variables:
+;; mode: lisp-data
+;; End:
