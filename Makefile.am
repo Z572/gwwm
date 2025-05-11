@@ -65,6 +65,7 @@ nobase_guilemodule_DATA = gwwm.scm \
 		gwwm/keybind.scm \
 		gwwm/keyboard.scm \
 		gwwm/pointer.scm \
+		gwwm/web.scm \
 		gwwm/popup.scm \
 		gwwm/touch.scm \
 		gwwm/user.scm \

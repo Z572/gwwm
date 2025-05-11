@@ -68,6 +68,7 @@
   #:use-module (wlroots types)
   #:use-module (wlroots util box)
   #:use-module (gwwm client)
+  #:use-module (gwwm web)
   ;; #:use-module (gwwm x-client)
   #:use-module (gwwm commands)
   #:use-module (gwwm config)
@@ -91,7 +92,8 @@
 
   #:use-module  (gwwm buffer)
   #:use-module  (cairo)
-
+  #:use-module ((web server) #:prefix web:)
+  #:autoload (ice-9 threads) (call-with-new-thread)
   #:export (main keymap-global-set
 
                  background-layer
@@ -1309,6 +1311,7 @@ gwwm [OPTION]
   (wl-display-destroy-clients (gwwm-display))
   (wl-display-destroy (gwwm-display)))
 
+
 (define (main . args)
   (setlocale LC_ALL)
   (textdomain %gettext-domain)
@@ -1451,6 +1454,10 @@ gwwm [OPTION]
    (cursor-normal-image))
   (run-hook gwwm-after-init-hook)
   (set-current-module (resolve-module '(gwwm user)))
+  (when (getenv "GWWM_DEBUG")
+    (call-with-new-thread
+     (lambda ()
+       (run-debug-web-server))))
   (setup-server)
   (wl-display-run (gwwm-display))
   (cleanup))
