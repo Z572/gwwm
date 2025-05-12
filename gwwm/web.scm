@@ -72,6 +72,12 @@
                   (client-monitor x))))))
        (client-list)))
 
+(define (web-build-cursor)
+  (define cursor (gwwm-cursor))
+  `(p ,(string-append "cursor: "
+                      (object->string
+                       (cons (.x cursor) (.y cursor))))))
+
 (define (web-build-variables)
   `((p ,(string-append "current-monitor: "
                        (object->string (current-monitor))))
@@ -144,6 +150,7 @@
    (list (web-build-variables)
          (web-build-monitor)
          (web-build-client)
+         (web-build-cursor)
          (let* ((box (wlr-output-layout-get-box (gwwm-output-layout))))
            `(svg (@ (width ,(box-width box))
                     (height ,(box-height box))
