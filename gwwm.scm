@@ -105,10 +105,6 @@
                  overlay-layer
                  no-focus-layer))
 
-(eval-when (expand load eval)
-  (load-extension "libgwwm" "scm_init_gwwm"))
-
-
 (define* (keymap-global-set key command #:optional release-command)
   (if release-command
       (keymap-set (global-keymap) key command release-command)

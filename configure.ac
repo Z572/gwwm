@@ -1,6 +1,5 @@
 AC_INIT([gwwm], [0.0.1], [873216071@qq.com])
 AC_CONFIG_SRCDIR([gwwm])
-AC_CONFIG_SRCDIR([gwwm.c])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_AUX_DIR([build-aux])
 AM_INIT_AUTOMAKE([1.14 gnu tar-ustar silent-rules subdir-objects \
